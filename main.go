@@ -16,6 +16,38 @@ limitations under the License.
 
 package main
 
-func main() {
+import (
+	"fmt"
+)
 
+func main() {
+	InitImageGlobal()
+	err := InitSDLGlobal()
+	if err != nil {
+		fmt.Printf("InitSDLGlobal() failed: %v\n", err)
+		return
+	}
+	defer DestroySDLGlobal()
+
+	ui, err := NewUi()
+	if err != nil {
+		fmt.Printf("NewUi() failed: %v\n", err)
+		return
+	}
+	defer ui.Destroy()
+
+	run := true
+	for run {
+		run, _, err = ui.UpdateIO()
+		if err != nil {
+			fmt.Printf("UpdateIO() failed: %v\n", err)
+			return
+		}
+
+		ui.StartRender(OsCd{220, 220, 220, 255})
+
+		//time.Sleep(2 * time.Millisecond) //render app ...
+
+		ui.EndRender(true)
+	}
 }
