@@ -22,6 +22,8 @@ import (
 
 func main() {
 	InitImageGlobal()
+
+	//SDL
 	err := InitSDLGlobal()
 	if err != nil {
 		fmt.Printf("InitSDLGlobal() failed: %v\n", err)
@@ -29,25 +31,41 @@ func main() {
 	}
 	defer DestroySDLGlobal()
 
-	ui, err := NewUi()
+	//Databases
+	err = InitSQLiteGlobal()
+	if err != nil {
+		fmt.Printf("InitSQLiteGlobal() failed: %v\n", err)
+		return
+	}
+	dbs, err := NewDbs("databases")
+	if err != nil {
+		fmt.Printf("NewDbs() failed: %v\n", err)
+		return
+	}
+	defer dbs.Destroy()
+
+	//Window(GL)
+	win, err := NewWin()
 	if err != nil {
 		fmt.Printf("NewUi() failed: %v\n", err)
 		return
 	}
-	defer ui.Destroy()
+	defer win.Destroy()
 
+	//Main loop
 	run := true
 	for run {
-		run, _, err = ui.UpdateIO()
+		run, _, err = win.UpdateIO()
 		if err != nil {
 			fmt.Printf("UpdateIO() failed: %v\n", err)
 			return
 		}
 
-		ui.StartRender(OsCd{220, 220, 220, 255})
+		win.StartRender(OsCd{220, 220, 220, 255})
 
+		dbs.Tick()
 		//time.Sleep(2 * time.Millisecond) //render app ...
 
-		ui.EndRender(true)
+		win.EndRender(true)
 	}
 }
