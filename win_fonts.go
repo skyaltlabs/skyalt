@@ -36,7 +36,7 @@ type UiFontFamilyName struct {
 }
 
 // add "Italic" for italics
-var g_FontFamilyNames = []UiFontFamilyName{
+var g_WinFontFamilyNames = []UiFontFamilyName{
 	{100, "Thin"},
 	{200, "ExtraLight"},
 	{300, "Light"},
@@ -48,9 +48,9 @@ var g_FontFamilyNames = []UiFontFamilyName{
 	{900, "Black"},
 }
 
-var g_Font_DEFAULT_Weight = 400
+var g_WinFont_DEFAULT_Weight = 400
 
-func GetFontFamilyNamesIndex(weight int) int {
+func GetWinFontFamilyNamesIndex(weight int) int {
 	weight = OsClamp(weight, 100, 900)
 	i := (weight / 100) - 1
 	if weight%100 >= 50 {
@@ -59,16 +59,16 @@ func GetFontFamilyNamesIndex(weight int) int {
 	return i
 }
 
-type UiFontLetter struct {
-	texture *UiTexture
+type WinFontLetter struct {
+	texture *WinTexture
 	x       int
 	y       int
 	h       int
 	len     int
 }
 
-func NewFontLetter(ch rune, font *ttf.Font, style ttf.Style, ui *Ui) (*UiFontLetter, int, error) {
-	var self UiFontLetter
+func NewWinFontLetter(ch rune, font *ttf.Font, style ttf.Style, win *Win) (*WinFontLetter, int, error) {
+	var self WinFontLetter
 	var bytes int
 
 	tab := (ch == '\t')
@@ -80,7 +80,7 @@ func NewFontLetter(ch rune, font *ttf.Font, style ttf.Style, ui *Ui) (*UiFontLet
 	font.SetHinting(ttf.HINTING_LIGHT)
 
 	// texture
-	if ui != nil {
+	if win != nil {
 		surface, err := font.RenderGlyphBlended(ch, sdl.Color{R: 255, G: 255, B: 255, A: 255})
 		if err != nil {
 			return nil, 0, fmt.Errorf("RenderGlyphBlended() failed: %w", err)
@@ -97,7 +97,7 @@ func NewFontLetter(ch rune, font *ttf.Font, style ttf.Style, ui *Ui) (*UiFontLet
 		}
 		surface.Unlock()
 
-		self.texture, err = InitUiTextureFromImageRGBA(rgba)
+		self.texture, err = InitWinTextureFromImageRGBA(rgba)
 		if err != nil {
 			return nil, 0, fmt.Errorf("InitUiTextureFromImageRGBA() failed: %w", err)
 		}
@@ -120,41 +120,41 @@ func NewFontLetter(ch rune, font *ttf.Font, style ttf.Style, ui *Ui) (*UiFontLet
 	return &self, bytes, nil
 }
 
-func (font *UiFontLetter) Destroy() {
+func (font *WinFontLetter) Destroy() {
 	if font.texture != nil {
 		font.texture.Destroy()
 	}
 }
 
-func (font *UiFontLetter) Size() (OsV2, error) {
+func (font *WinFontLetter) Size() (OsV2, error) {
 	if font.texture != nil {
 		return font.texture.size, nil
 	}
 	return OsV2{}, nil
 }
 
-type UiFont struct {
+type WinFont struct {
 	isFamily bool
 	path     string
 
-	files   map[int]*ttf.Font          //[height]
-	letters map[[16]byte]*UiFontLetter //[height + weight(bold) + (regular/italic) + ch]
+	files   map[int]*ttf.Font           //[height]
+	letters map[[16]byte]*WinFontLetter //[height + weight(bold) + (regular/italic) + ch]
 
 	bytes int
 }
 
-func NewFont(path string) *UiFont {
-	var font UiFont
+func NewWinFont(path string) *WinFont {
+	var font WinFont
 
 	font.isFamily = OsFolderExists(path)
 	font.path = path
 
 	font.files = make(map[int]*ttf.Font)
-	font.letters = make(map[[16]byte]*UiFontLetter)
+	font.letters = make(map[[16]byte]*WinFontLetter)
 
 	return &font
 }
-func (font *UiFont) Destroy() {
+func (font *WinFont) Destroy() {
 	for _, it := range font.files {
 		it.Close()
 	}
@@ -164,10 +164,10 @@ func (font *UiFont) Destroy() {
 	}
 }
 
-func (font *UiFont) GetStyle(weight int, italic bool) ttf.Style {
+func (font *WinFont) GetStyle(weight int, italic bool) ttf.Style {
 	style := ttf.STYLE_NORMAL
 	if !font.isFamily {
-		if weight > g_Font_DEFAULT_Weight {
+		if weight > g_WinFont_DEFAULT_Weight {
 			style = ttf.STYLE_BOLD
 		}
 		if italic {
@@ -177,15 +177,15 @@ func (font *UiFont) GetStyle(weight int, italic bool) ttf.Style {
 	return style
 }
 
-func (font *UiFont) findFile(height int, weight int) (*ttf.Font, error) {
+func (font *WinFont) findFile(height int, weight int) (*ttf.Font, error) {
 
 	file, found := font.files[height]
 	if !found {
 		//add font
 		path := font.path
 		if font.isFamily {
-			family_i := GetFontFamilyNamesIndex(weight)
-			path += "-" + g_FontFamilyNames[family_i].Name + ".otf" //bug: It's not "path/Inter", ale pouze "path/" ... + check finish "/" ...
+			family_i := GetWinFontFamilyNamesIndex(weight)
+			path += "-" + g_WinFontFamilyNames[family_i].Name + ".otf" //bug: It's not "path/Inter", ale pouze "path/" ... + check finish "/" ...
 		}
 
 		var err error
@@ -198,7 +198,7 @@ func (font *UiFont) findFile(height int, weight int) (*ttf.Font, error) {
 	return file, nil
 }
 
-func (font *UiFont) addLetter(letterId [16]byte, ch rune, height int, weight int, italic bool, ui *Ui) (*UiFontLetter, error) {
+func (font *WinFont) addLetter(letterId [16]byte, ch rune, height int, weight int, italic bool, win *Win) (*WinFontLetter, error) {
 
 	//find file
 	var err error
@@ -208,7 +208,7 @@ func (font *UiFont) addLetter(letterId [16]byte, ch rune, height int, weight int
 	}
 
 	//add
-	letter, bytes, err := NewFontLetter(ch, file, font.GetStyle(weight, italic), ui)
+	letter, bytes, err := NewWinFontLetter(ch, file, font.GetStyle(weight, italic), win)
 	if err != nil {
 		return nil, fmt.Errorf("NewFontLetter() failed: %w", err)
 	}
@@ -217,7 +217,7 @@ func (font *UiFont) addLetter(letterId [16]byte, ch rune, height int, weight int
 	return letter, nil
 }
 
-func (font *UiFont) Get(ch rune, height int, weight int, italic bool, ui *Ui) (*UiFontLetter, error) {
+func (font *WinFont) Get(ch rune, height int, weight int, italic bool, win *Win) (*WinFontLetter, error) {
 
 	var letterId [16]byte
 	binary.LittleEndian.PutUint32(letterId[0:4], uint32(ch))
@@ -228,11 +228,11 @@ func (font *UiFont) Get(ch rune, height int, weight int, italic bool, ui *Ui) (*
 	//find letter
 	letter, found := font.letters[letterId]
 	if found {
-		if letter.len == 0 || (ui != nil && letter.texture == nil) {
+		if letter.len == 0 || (win != nil && letter.texture == nil) {
 
 			//reload again(with texture)
 			var err error
-			letter, err = font.addLetter(letterId, ch, height, weight, italic, ui)
+			letter, err = font.addLetter(letterId, ch, height, weight, italic, win)
 			if err != nil {
 				return nil, fmt.Errorf("addLetter() failed: %w", err)
 			}
@@ -243,7 +243,7 @@ func (font *UiFont) Get(ch rune, height int, weight int, italic bool, ui *Ui) (*
 
 	//add letter
 	var err error
-	letter, err = font.addLetter(letterId, ch, height, weight, italic, ui)
+	letter, err = font.addLetter(letterId, ch, height, weight, italic, win)
 	if err != nil {
 		return nil, fmt.Errorf("addLetter() failed: %w", err)
 	}
@@ -251,7 +251,7 @@ func (font *UiFont) Get(ch rune, height int, weight int, italic bool, ui *Ui) (*
 	return letter, nil
 }
 
-func (font *UiFont) processLetter(text string, origW int, origH int, weight *int, italic *bool, height *int, skip *int) bool {
+func (font *WinFont) processLetter(text string, origW int, origH int, weight *int, italic *bool, height *int, skip *int) bool {
 
 	if *skip > 0 {
 		*skip -= 1
@@ -304,7 +304,7 @@ func (font *UiFont) processLetter(text string, origW int, origH int, weight *int
 	return true
 }
 
-func (font *UiFont) GetPxPos(text string, w int, h int, ch_pos int, enableFormating bool) (int, error) {
+func (font *WinFont) GetPxPos(text string, w int, h int, ch_pos int, enableFormating bool) (int, error) {
 
 	px := 0
 
@@ -334,7 +334,7 @@ func (font *UiFont) GetPxPos(text string, w int, h int, ch_pos int, enableFormat
 	return px, nil
 }
 
-func (font *UiFont) GetDownY(text string, w int, h int, enableFormating bool, ui *Ui) (int, error) {
+func (font *WinFont) GetDownY(text string, w int, h int, enableFormating bool, win *Win) (int, error) {
 
 	weight := w
 	italic := false
@@ -347,7 +347,7 @@ func (font *UiFont) GetDownY(text string, w int, h int, enableFormating bool, ui
 			continue
 		}
 
-		l, err := font.Get(ch, height, weight, italic, ui)
+		l, err := font.Get(ch, height, weight, italic, win)
 		if err != nil {
 			return 0, fmt.Errorf("Start.Get() failed: %w", err)
 		}
@@ -358,7 +358,7 @@ func (font *UiFont) GetDownY(text string, w int, h int, enableFormating bool, ui
 	return down_y, nil
 }
 
-func (font *UiFont) Start(text string, w int, h int, coord OsV4, align OsV2, enableFormating bool, ui *Ui) (OsV2, error) {
+func (font *WinFont) Start(text string, w int, h int, coord OsV4, align OsV2, enableFormating bool, win *Win) (OsV2, error) {
 	word_space := 0
 	len := 0
 	//down_y := 0
@@ -374,7 +374,7 @@ func (font *UiFont) Start(text string, w int, h int, coord OsV4, align OsV2, ena
 			continue
 		}
 
-		l, err := font.Get(ch, height, weight, italic, ui)
+		l, err := font.Get(ch, height, weight, italic, win)
 		if err != nil {
 			return OsV2{}, fmt.Errorf("Start.Get() failed: %w", err)
 		}
@@ -423,7 +423,7 @@ func (font *UiFont) Start(text string, w int, h int, coord OsV4, align OsV2, ena
 	return pos, nil
 }
 
-func (font *UiFont) GetChPos(text string, w int, h int, px int, enableFormating bool) (int, error) {
+func (font *WinFont) GetChPos(text string, w int, h int, px int, enableFormating bool) (int, error) {
 
 	px_act := 0
 
@@ -454,7 +454,7 @@ func (font *UiFont) GetChPos(text string, w int, h int, px int, enableFormating 
 	return len(text), nil
 }
 
-func (font *UiFont) GetTouchPos(touchPos OsV2, text string, coord OsV4, w int, h int, align OsV2, enableFormating bool) (int, error) {
+func (font *WinFont) GetTouchPos(touchPos OsV2, text string, coord OsV4, w int, h int, align OsV2, enableFormating bool) (int, error) {
 
 	start, err := font.Start(text, w, h, coord, align, enableFormating, nil)
 	if err != nil {
@@ -463,7 +463,7 @@ func (font *UiFont) GetTouchPos(touchPos OsV2, text string, coord OsV4, w int, h
 	return font.GetChPos(text, w, h, touchPos.X-start.X, enableFormating)
 }
 
-func (font *UiFont) GetTextSize(text string, w int, h int, lineH int, enableFormating bool) (OsV2, error) {
+func (font *WinFont) GetTextSize(text string, w int, h int, lineH int, enableFormating bool) (OsV2, error) {
 
 	nlines := 0
 	maxLineWidth := 0
@@ -481,8 +481,8 @@ func (font *UiFont) GetTextSize(text string, w int, h int, lineH int, enableForm
 	return OsV2{x, y}, nil
 }
 
-func (font *UiFont) Print(text string, w int, h int, coord OsV4, depth int, align OsV2, color OsCd, cds []OsCd, blendingOn bool, enableFormating bool, ui *Ui) error {
-	pos, err := font.Start(text, w, h, coord, align, enableFormating, ui)
+func (font *WinFont) Print(text string, w int, h int, coord OsV4, depth int, align OsV2, color OsCd, cds []OsCd, blendingOn bool, enableFormating bool, win *Win) error {
+	pos, err := font.Start(text, w, h, coord, align, enableFormating, win)
 	if err != nil {
 		return fmt.Errorf("Print.Start() failed: %w", err)
 	}
@@ -509,7 +509,7 @@ func (font *UiFont) Print(text string, w int, h int, coord OsV4, depth int, alig
 			continue
 		}
 
-		l, err := font.Get(ch, height, weight, italic, ui)
+		l, err := font.Get(ch, height, weight, italic, win)
 		if err != nil {
 			return fmt.Errorf("Print.Get() failed: %w", err)
 		}
@@ -535,22 +535,22 @@ func (font *UiFont) Print(text string, w int, h int, coord OsV4, depth int, alig
 	return nil
 }
 
-type UiFonts struct {
-	fonts map[string]*UiFont
+type WinFonts struct {
+	fonts map[string]*WinFont
 }
 
-func NewFonts() *UiFonts {
-	var fonts UiFonts
-	fonts.fonts = make(map[string]*UiFont)
+func NewWinFonts() *WinFonts {
+	var fonts WinFonts
+	fonts.fonts = make(map[string]*WinFont)
 	return &fonts
 }
-func (fonts *UiFonts) Destroy() {
+func (fonts *WinFonts) Destroy() {
 	for _, it := range fonts.fonts {
 		it.Destroy()
 	}
 }
 
-func (fonts *UiFonts) Bytes() int {
+func (fonts *WinFonts) Bytes() int {
 	bytes := 0
 	for _, it := range fonts.fonts {
 		bytes += it.bytes
@@ -558,7 +558,7 @@ func (fonts *UiFonts) Bytes() int {
 	return bytes
 }
 
-func (fonts *UiFonts) Maintenance() {
+func (fonts *WinFonts) Maintenance() {
 	for k, it := range fonts.fonts {
 		if it.bytes > 2*1024*1024 { //over 2MB
 			it.Destroy()
@@ -567,7 +567,7 @@ func (fonts *UiFonts) Maintenance() {
 	}
 }
 
-func (fonts *UiFonts) Get(path string) *UiFont {
+func (fonts *WinFonts) Get(path string) *WinFont {
 
 	if len(path) == 0 {
 		path = SKYALT_FONT_PATH
@@ -580,7 +580,7 @@ func (fonts *UiFonts) Get(path string) *UiFont {
 	}
 
 	//add
-	font = NewFont(path)
+	font = NewWinFont(path)
 	fonts.fonts[path] = font
 	return font
 }

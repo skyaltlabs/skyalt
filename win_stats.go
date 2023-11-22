@@ -16,7 +16,7 @@ limitations under the License.
 
 package main
 
-type UiStat struct {
+type WinStats struct {
 	sum_frames int
 	sum_time   int
 
@@ -30,31 +30,31 @@ type UiStat struct {
 	out_avg_fps   float64
 }
 
-func (ui *UiStat) Update(dt int) {
+func (sts *WinStats) Update(dt int) {
 
 	time := OsTicks()
 
-	ui.sum_time += OsMax(0, dt)
+	sts.sum_time += OsMax(0, dt)
 
-	if dt < ui.min_dt {
-		ui.min_dt = dt
+	if dt < sts.min_dt {
+		sts.min_dt = dt
 	}
-	if dt > ui.max_dt {
-		ui.max_dt = dt
-	}
-
-	if ui.last_show_time+1000 < time { // every 1sec
-
-		ui.out_best_fps = OsTrnFloat(ui.min_dt > 0, 1/(float64(ui.min_dt)/1000.0), 1000)
-		ui.out_worst_fps = OsTrnFloat(ui.max_dt > 0, 1/(float64(ui.max_dt)/1000.0), 1000)
-		ui.out_avg_fps = OsTrnFloat(ui.sum_time > 0, float64(ui.sum_frames)/(float64(ui.sum_time)/1000.0), 1000)
-
-		ui.sum_frames = 0
-		ui.sum_time = 0
-		ui.last_show_time = time
-		ui.min_dt = 10000
-		ui.max_dt = 0
+	if dt > sts.max_dt {
+		sts.max_dt = dt
 	}
 
-	ui.sum_frames++
+	if sts.last_show_time+1000 < time { // every 1sec
+
+		sts.out_best_fps = OsTrnFloat(sts.min_dt > 0, 1/(float64(sts.min_dt)/1000.0), 1000)
+		sts.out_worst_fps = OsTrnFloat(sts.max_dt > 0, 1/(float64(sts.max_dt)/1000.0), 1000)
+		sts.out_avg_fps = OsTrnFloat(sts.sum_time > 0, float64(sts.sum_frames)/(float64(sts.sum_time)/1000.0), 1000)
+
+		sts.sum_frames = 0
+		sts.sum_time = 0
+		sts.last_show_time = time
+		sts.min_dt = 10000
+		sts.max_dt = 0
+	}
+
+	sts.sum_frames++
 }

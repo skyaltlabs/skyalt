@@ -24,7 +24,7 @@ import (
 	"strings"
 )
 
-type MediaPath struct {
+type WinMediaPath struct {
 	isAppPath bool
 	path      string
 
@@ -34,8 +34,8 @@ type MediaPath struct {
 	row    int
 }
 
-func MediaParseUrl(url string) (MediaPath, error) {
-	var ip MediaPath
+func InitWinMedia(url string) (WinMediaPath, error) {
+	var ip WinMediaPath
 
 	//get type + cut
 	url, ip.isAppPath = strings.CutPrefix(url, "app:")
@@ -82,22 +82,22 @@ func MediaParseUrl(url string) (MediaPath, error) {
 	return ip, nil
 }
 
-func (ip *MediaPath) IsDb() bool {
+func (ip *WinMediaPath) IsDb() bool {
 	return len(ip.table) > 0
 }
-func (ip *MediaPath) IsFile() bool {
+func (ip *WinMediaPath) IsFile() bool {
 	return !ip.IsDb()
 }
 
-func (ip *MediaPath) GetString() string {
+func (ip *WinMediaPath) GetString() string {
 	return fmt.Sprintf("%s - %s/%s/%d", ip.path, ip.table, ip.column, ip.row)
 }
 
-func (a *MediaPath) Cmp(b *MediaPath) bool {
+func (a *WinMediaPath) Cmp(b *WinMediaPath) bool {
 	return a.path == b.path && a.table == b.table && a.column == b.column && a.row == b.row
 }
 
-func (ip *MediaPath) GetFileBlob() ([]byte, error) {
+func (ip *WinMediaPath) GetFileBlob() ([]byte, error) {
 	var data []byte
 	var err error
 

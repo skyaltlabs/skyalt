@@ -25,13 +25,13 @@ import (
 	"github.com/go-gl/gl/v2.1/gl"
 )
 
-type UiTexture struct {
+type WinTexture struct {
 	id   uint32
 	size OsV2
 }
 
-func InitUiTextureSize(size OsV2) (*UiTexture, error) {
-	var tex UiTexture
+func InitWinTextureSize(size OsV2) (*WinTexture, error) {
+	var tex WinTexture
 
 	gl.GenTextures(1, &tex.id)
 
@@ -46,8 +46,8 @@ func InitUiTextureSize(size OsV2) (*UiTexture, error) {
 	return &tex, nil
 }
 
-func InitUiTextureFromImageRGBA(rgba *image.RGBA) (*UiTexture, error) {
-	var tex UiTexture
+func InitWinTextureFromImageRGBA(rgba *image.RGBA) (*WinTexture, error) {
+	var tex WinTexture
 
 	gl.GenTextures(1, &tex.id)
 
@@ -65,25 +65,25 @@ func InitUiTextureFromImageRGBA(rgba *image.RGBA) (*UiTexture, error) {
 	return &tex, nil
 }
 
-func InitUiTextureFromImage(img image.Image) (*UiTexture, error) {
+func InitWinTextureFromImage(img image.Image) (*WinTexture, error) {
 
 	rgba := image.NewRGBA(img.Bounds())
 	draw.Draw(rgba, rgba.Bounds(), img, image.Pt(0, 0), draw.Src)
 
-	return InitUiTextureFromImageRGBA(rgba)
+	return InitWinTextureFromImageRGBA(rgba)
 }
 
-func InitUiTextureFromBlob(blob []byte) (*UiTexture, image.Image, error) {
+func InitWinTextureFromBlob(blob []byte) (*WinTexture, image.Image, error) {
 	img, _, err := image.Decode(bytes.NewReader(blob))
 	if err != nil {
 		return nil, nil, err
 	}
 
-	tex, err := InitUiTextureFromImage(img)
+	tex, err := InitWinTextureFromImage(img)
 	return tex, img, err
 }
 
-func InitUiTextureFromFile(path string) (*UiTexture, image.Image, error) {
+func InitWinTextureFromFile(path string) (*WinTexture, image.Image, error) {
 	imgFile, err := os.Open(path)
 	if err != nil {
 		return nil, nil, err
@@ -95,17 +95,17 @@ func InitUiTextureFromFile(path string) (*UiTexture, image.Image, error) {
 		return nil, nil, err
 	}
 
-	tex, err := InitUiTextureFromImage(img)
+	tex, err := InitWinTextureFromImage(img)
 	return tex, img, err
 }
 
-func (tex *UiTexture) Destroy() {
+func (tex *WinTexture) Destroy() {
 	if tex.id > 0 {
 		gl.DeleteTextures(1, &tex.id)
 	}
 }
 
-func (tex *UiTexture) DrawQuad(coord OsV4, depth int, cd OsCd) {
+func (tex *WinTexture) DrawQuad(coord OsV4, depth int, cd OsCd) {
 	gl.Color4ub(cd.R, cd.G, cd.B, cd.A)
 
 	gl.ActiveTexture(gl.TEXTURE0)

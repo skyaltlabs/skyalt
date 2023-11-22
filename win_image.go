@@ -38,22 +38,22 @@ func InitImageGlobal() {
 	image.RegisterFormat("bmp", "bmp", bmp.Decode, bmp.DecodeConfig)
 }
 
-type Image struct {
+type WinImage struct {
 	origSize   OsV2
 	maxUseSize OsV2
 
-	path            MediaPath
+	path            WinMediaPath
 	blobDbLoadTicks int64
 	blobHash        OsHash
 
-	texture *UiTexture
+	texture *WinTexture
 
 	lastDrawTick int64
 }
 
-func NewImage(path MediaPath) (*Image, error) {
+func NewWinImage(path WinMediaPath) (*WinImage, error) {
 
-	var img Image
+	var img WinImage
 
 	img.path = path
 	img.blobDbLoadTicks = -1
@@ -73,7 +73,7 @@ func NewImage(path MediaPath) (*Image, error) {
 	return &img, nil
 }
 
-func (img *Image) FreeTexture() error {
+func (img *WinImage) FreeTexture() error {
 	if img.texture != nil {
 		img.texture.Destroy()
 	}
@@ -82,7 +82,7 @@ func (img *Image) FreeTexture() error {
 	return nil
 }
 
-func (img *Image) GetBytes() int {
+func (img *WinImage) GetBytes() int {
 	if img.texture != nil {
 		sz := img.texture.size
 		return sz.X * sz.Y * 4
@@ -91,11 +91,11 @@ func (img *Image) GetBytes() int {
 	return 0
 }
 
-func (img *Image) Destroy() error {
+func (img *WinImage) Destroy() error {
 	return img.FreeTexture()
 }
 
-func (img *Image) SetBlob(blob []byte) error {
+func (img *WinImage) SetBlob(blob []byte) error {
 	if len(blob) == 0 {
 		return nil //empty = no error
 	}
@@ -106,7 +106,7 @@ func (img *Image) SetBlob(blob []byte) error {
 		return fmt.Errorf("InitOsHash() failed: %w", err)
 	}
 
-	img.texture, _, err = InitUiTextureFromBlob(blob)
+	img.texture, _, err = InitWinTextureFromBlob(blob)
 	if err != nil {
 		return fmt.Errorf("InitUiTextureFromBlob() failed: %w", err)
 	}
@@ -116,11 +116,11 @@ func (img *Image) SetBlob(blob []byte) error {
 	return nil
 }
 
-func (img *Image) NeedDbChanged(blobDbLoadTicks int64) bool {
+func (img *WinImage) NeedDbChanged(blobDbLoadTicks int64) bool {
 	return img.path.IsDb() && img.blobDbLoadTicks != blobDbLoadTicks
 }
 
-func (img *Image) Maintenance(ui *Ui) (bool, error) {
+func (img *WinImage) Maintenance(win *Win) (bool, error) {
 
 	//is used
 	if !img.maxUseSize.Is() && !OsIsTicksIn(img.lastDrawTick, 10000) {
@@ -136,7 +136,7 @@ func (img *Image) Maintenance(ui *Ui) (bool, error) {
 	return true, nil
 }
 
-func (img *Image) Draw(coord OsV4, depth int, cd OsCd) error {
+func (img *WinImage) Draw(coord OsV4, depth int, cd OsCd) error {
 
 	img.maxUseSize = coord.Size.Max(img.maxUseSize)
 

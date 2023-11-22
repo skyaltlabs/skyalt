@@ -25,20 +25,20 @@ import (
 
 const Win_SKYALT_LOGO = "resources/logo.png"
 
-type Particles struct {
-	ui *Ui
+type WinParticles struct {
+	win *Win
 
 	poses  []OsV2f
 	vels   []OsV2f
 	alphas []float32
 	num    int
 	time   float64
-	noiseX *Noise
-	noiseY *Noise
+	noiseX *WinNoise
+	noiseY *WinNoise
 
 	num_draw int
 
-	logo *UiTexture
+	logo *WinTexture
 	img  image.Image
 
 	anim_max_time float32 // zero = deactivated
@@ -48,23 +48,23 @@ type Particles struct {
 	oldDone float32
 }
 
-func NewParticles(ui *Ui) (*Particles, error) {
-	var ptcs Particles
-	ptcs.ui = ui
+func NewWinParticles(win *Win) (*WinParticles, error) {
+	var ptcs WinParticles
+	ptcs.win = win
 
 	var err error
-	ptcs.logo, ptcs.img, err = InitUiTextureFromFile(Win_SKYALT_LOGO)
+	ptcs.logo, ptcs.img, err = InitWinTextureFromFile(Win_SKYALT_LOGO)
 	if err != nil {
 		return nil, fmt.Errorf("CreateTextureFromImage() failed: %w", err)
 	}
 
-	ptcs.noiseX = NewNoise(ptcs.logo.size)
-	ptcs.noiseY = NewNoise(ptcs.logo.size)
+	ptcs.noiseX = NewWinNoise(ptcs.logo.size)
+	ptcs.noiseY = NewWinNoise(ptcs.logo.size)
 
 	return &ptcs, nil
 }
 
-func (ptcs *Particles) Destroy() error {
+func (ptcs *WinParticles) Destroy() error {
 	ptcs.Clear()
 
 	ptcs.logo.Destroy()
@@ -74,7 +74,7 @@ func (ptcs *Particles) Destroy() error {
 	return nil
 }
 
-func (ptcs *Particles) Clear() {
+func (ptcs *WinParticles) Clear() {
 	ptcs.poses = nil
 	ptcs.vels = nil
 	ptcs.alphas = nil
@@ -83,9 +83,9 @@ func (ptcs *Particles) Clear() {
 	ptcs.time = 0
 }
 
-func (ptcs *Particles) Tick(ui *Ui) bool {
+func (ptcs *WinParticles) Tick(win *Win) bool {
 	ptcs.Update()
-	_, err := ptcs.Draw(OsCd{255, 255, 255, 255}, ui)
+	_, err := ptcs.Draw(OsCd{255, 255, 255, 255}, win)
 	if err != nil {
 		fmt.Printf("Particles.Draw() failed: %v\n", err)
 		return false
@@ -93,12 +93,12 @@ func (ptcs *Particles) Tick(ui *Ui) bool {
 	return ptcs.num_draw > 0
 }
 
-func (ptcs *Particles) GetImageAlpha(x, y int) float32 {
+func (ptcs *WinParticles) GetImageAlpha(x, y int) float32 {
 	_, _, _, cdA := ptcs.img.At(x, y).RGBA()
 	return float32(cdA >> 8)
 }
 
-func (ptcs *Particles) Emit() error {
+func (ptcs *WinParticles) Emit() error {
 	ptcs.Clear()
 
 	// get num particles
@@ -148,14 +148,14 @@ func (ptcs *Particles) Emit() error {
 	return nil
 }
 
-func (ptcs *Particles) StartAnim(time_sec float32) {
+func (ptcs *WinParticles) StartAnim(time_sec float32) {
 
 	ptcs.anim_max_time = time_sec
 	ptcs.anim_act_time = 0
 	ptcs.Emit()
 }
 
-func (ptcs *Particles) UpdateTime() float64 {
+func (ptcs *WinParticles) UpdateTime() float64 {
 	t := OsTime()
 	dt := t - ptcs.time
 	ptcs.time = t
@@ -165,7 +165,7 @@ func (ptcs *Particles) UpdateTime() float64 {
 	return dt
 }
 
-func (ptcs *Particles) UpdateDone(DT float32) float32 {
+func (ptcs *WinParticles) UpdateDone(DT float32) float32 {
 
 	if ptcs.anim_max_time != 0 {
 		ptcs.anim_act_time += DT
@@ -180,8 +180,8 @@ func (ptcs *Particles) UpdateDone(DT float32) float32 {
 	return ptcs.done
 }
 
-func (ptcs *Particles) GetLogoCoord() (OsV4, error) {
-	w, h := ptcs.ui.GetOutputSize()
+func (ptcs *WinParticles) GetLogoCoord() (OsV4, error) {
+	w, h := ptcs.win.GetOutputSize()
 
 	screen := OsV2{int(w), int(h)}
 	SX := float32(screen.X) / 4
@@ -192,7 +192,7 @@ func (ptcs *Particles) GetLogoCoord() (OsV4, error) {
 	return OsV4{start, size}, nil
 }
 
-func (ptcs *Particles) GetPosSmoothRepeat(noise *Noise, p OsV2) byte {
+func (ptcs *WinParticles) GetPosSmoothRepeat(noise *WinNoise, p OsV2) byte {
 
 	// repeat
 	x := OsAbs(p.X) % ptcs.logo.size.X
@@ -209,7 +209,7 @@ func (ptcs *Particles) GetPosSmoothRepeat(noise *Noise, p OsV2) byte {
 	return noise.noise[y*ptcs.logo.size.X+x]
 }
 
-func (ptcs *Particles) Draw(cd_theme OsCd, ui *Ui) (bool, error) {
+func (ptcs *WinParticles) Draw(cd_theme OsCd, win *Win) (bool, error) {
 
 	front_cd := OsCd{50, 50, 50, 255}
 
@@ -234,7 +234,7 @@ func (ptcs *Particles) Draw(cd_theme OsCd, ui *Ui) (bool, error) {
 	ratio := OsV2f{float32(coord.Size.X) / float32(ptcs.logo.size.X), float32(coord.Size.Y) / float32(ptcs.logo.size.Y)}
 	last_p := OsV2{0, 0}
 
-	ui.DrawPointStart()
+	win.DrawPointStart()
 	for i := 0; i < ptcs.num; i++ {
 
 		a := OsFAbs(ptcs.alphas[i])
@@ -244,17 +244,17 @@ func (ptcs *Particles) Draw(cd_theme OsCd, ui *Ui) (bool, error) {
 			p.Y = float32(coord.Start.Y) + ptcs.poses[i].Y*ratio.Y
 
 			front_cd.A = uint8(a * 255)
-			ui.DrawPointCdF(p, 1, front_cd)
+			win.DrawPointCdF(p, 1, front_cd)
 
 			last_p = ptcs.poses[i].toV2()
 		}
 	}
-	ui.DrawPointEnd()
+	win.DrawPointEnd()
 
 	return ptcs.num_draw > 0, nil
 }
 
-func (ptcs *Particles) Update() {
+func (ptcs *WinParticles) Update() {
 	DT := float32(ptcs.UpdateTime())
 	FADE := DT * 0.4
 
@@ -301,26 +301,26 @@ func (ptcs *Particles) Update() {
 	}
 }
 
-type Noise struct {
+type WinNoise struct {
 	noise []byte
 	size  OsV2
 }
 
-func NewNoise(size OsV2) *Noise {
-	var self Noise
+func NewWinNoise(size OsV2) *WinNoise {
+	var self WinNoise
 	self.size = size
 	self.noise = make([]byte, size.X*size.Y)
 	return &self
 }
 
-func (ptcs *Noise) Draw(offset OsV2, zoom int, octaves int, p float32) {
-	for y := 0; y < ptcs.size.Y; y++ {
-		for x := 0; x < ptcs.size.X; x++ {
+func (ns *WinNoise) Draw(offset OsV2, zoom int, octaves int, p float32) {
+	for y := 0; y < ns.size.Y; y++ {
+		for x := 0; x < ns.size.X; x++ {
 			getnoise := float32(0)
 			for i := 0; i < octaves-1; i++ {
 				frequency := float32(math.Pow(2.0, float64(i)))
 				amplitude := float32(math.Pow(float64(p), float64(i)))
-				getnoise += _Noise_get(float32(x+offset.X)*frequency/float32(zoom), float32(y+offset.Y)/float32(zoom)*frequency) * amplitude
+				getnoise += _WinNoise_get(float32(x+offset.X)*frequency/float32(zoom), float32(y+offset.Y)/float32(zoom)*frequency) * amplitude
 			}
 			getnoise = (getnoise + 1) * 0.5
 			if getnoise < 0 {
@@ -330,35 +330,35 @@ func (ptcs *Noise) Draw(offset OsV2, zoom int, octaves int, p float32) {
 				getnoise = 1
 			}
 
-			ptcs.noise[y*ptcs.size.X+x] = byte(255.0 * getnoise)
+			ns.noise[y*ns.size.X+x] = byte(255.0 * getnoise)
 		}
 	}
 }
 
-func _Noise_find(x float32, y float32) float32 {
+func _WinNoise_find(x float32, y float32) float32 {
 	n := int(x + y*57)
 	n = (n << 13) ^ n
 	nn := (n*(n*n*60493+19990303) + 1376312589) & 0x7fffffff
 	return 1.0 - (float32(nn) / 1073741824.0)
 }
 
-func _Noise_interpolate(a float32, b float32, x float32) float32 {
+func _WinNoise_interpolate(a float32, b float32, x float32) float32 {
 	ft := float32(x) * 3.1415927
 	f := float32(1.0-math.Cos(float64(ft))) * 0.5
 	return a*(1.0-f) + b*f
 }
 
-func _Noise_get(x float32, y float32) float32 {
+func _WinNoise_get(x float32, y float32) float32 {
 
 	floorx := float32(int(x))
 	floory := float32(int(y))
 
-	s := _Noise_find(floorx, floory)
-	t := _Noise_find(floorx+1, floory)
-	u := _Noise_find(floorx, floory+1)
-	v := _Noise_find(floorx+1, floory+1)
+	s := _WinNoise_find(floorx, floory)
+	t := _WinNoise_find(floorx+1, floory)
+	u := _WinNoise_find(floorx, floory+1)
+	v := _WinNoise_find(floorx+1, floory+1)
 
-	i1 := _Noise_interpolate(s, t, x-floorx)
-	i2 := _Noise_interpolate(u, v, x-floorx)
-	return _Noise_interpolate(i1, i2, y-floory)
+	i1 := _WinNoise_interpolate(s, t, x-floorx)
+	i2 := _WinNoise_interpolate(u, v, x-floorx)
+	return _WinNoise_interpolate(i1, i2, y-floory)
 }

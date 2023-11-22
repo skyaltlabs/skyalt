@@ -24,7 +24,7 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-type Keys struct {
+type WinKeys struct {
 	hasChanged bool
 
 	text string
@@ -75,7 +75,7 @@ type Keys struct {
 	f12 bool
 }
 
-type Touch struct {
+type WinTouch struct {
 	pos       OsV2
 	wheel     int
 	numClicks uint8
@@ -88,28 +88,13 @@ type Touch struct {
 	drop_ext  string
 }
 
-type Poly struct {
-	x []int16
-	y []int16
-}
-
-func (poly *Poly) Clear() {
-	poly.x = poly.x[0:0]
-	poly.y = poly.y[0:0]
-}
-
-func (poly *Poly) Add(pos OsV2) {
-	poly.x = append(poly.x, int16(pos.X))
-	poly.y = append(poly.y, int16(pos.Y))
-}
-
-type Cursor struct {
+type WinCursor struct {
 	name   string
 	tp     sdl.SystemCursor
 	cursor *sdl.Cursor
 }
 
-type Ini struct {
+type WinIni struct {
 	Dpi         int
 	Dpi_default int
 
@@ -124,18 +109,17 @@ type Ini struct {
 	WinX, WinY, WinW, WinH int
 
 	Theme    int
-	Palettes []CdPalette //don't save, only custom colors ...
+	Palettes []WinCdPalette //don't save, only custom colors ...
 }
 
-type IO struct {
-	touch Touch
-	keys  Keys
-
-	ini Ini
+type WinIO struct {
+	touch WinTouch
+	keys  WinKeys
+	ini   WinIni
 }
 
-func NewIO() (*IO, error) {
-	var io IO
+func NewWinIO() (*WinIO, error) {
+	var io WinIO
 
 	err := io._IO_setDefault()
 	if err != nil {
@@ -145,17 +129,16 @@ func NewIO() (*IO, error) {
 	return &io, nil
 }
 
-func (io *IO) Destroy() error {
+func (io *WinIO) Destroy() error {
 	return nil
 }
 
-func (io *IO) ResetTouchAndKeys() {
-	io.touch = Touch{}
-	io.keys = Keys{}
+func (io *WinIO) ResetTouchAndKeys() {
+	io.touch = WinTouch{}
+	io.keys = WinKeys{}
 }
 
-func (io *IO) Open(path string) error {
-
+func (io *WinIO) Open(path string) error {
 	//create ini if not exist
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDONLY, 0644)
 	if err != nil {
@@ -183,7 +166,7 @@ func (io *IO) Open(path string) error {
 	return nil
 }
 
-func (io *IO) Save(path string) error {
+func (io *WinIO) Save(path string) error {
 
 	file, err := json.MarshalIndent(&io.ini, "", "")
 	if err != nil {
@@ -205,7 +188,7 @@ func _IO_getDPI() (int, error) {
 	return int(dpi), nil
 }
 
-func (io *IO) _IO_setDefault() error {
+func (io *WinIO) _IO_setDefault() error {
 
 	isDefault := (io.ini.Dpi_default == 0)
 
@@ -232,8 +215,8 @@ func (io *IO) _IO_setDefault() error {
 
 	io.ini.Palettes = nil
 	//if len(io.ini.Palettes) == 0 {	//...
-	io.ini.Palettes = append(io.ini.Palettes, InitCdPalette_light())
-	io.ini.Palettes = append(io.ini.Palettes, InitCdPalette_dark())
+	io.ini.Palettes = append(io.ini.Palettes, InitWinCdPalette_light())
+	io.ini.Palettes = append(io.ini.Palettes, InitWinCdPalette_dark())
 	//}
 	if io.ini.Theme >= len(io.ini.Palettes) {
 		io.ini.Theme = len(io.ini.Palettes) - 1
@@ -255,7 +238,7 @@ func (io *IO) _IO_setDefault() error {
 	return nil
 }
 
-func (io *IO) GetLanguagesString() string {
+func (io *WinIO) GetLanguagesString() string {
 	str := ""
 	for _, l := range io.ini.Languages {
 		str += l
@@ -263,29 +246,29 @@ func (io *IO) GetLanguagesString() string {
 	return str
 }
 
-func (io *IO) GetDPI() int {
+func (io *WinIO) GetDPI() int {
 	return OsClamp(io.ini.Dpi, 30, 5000)
 }
-func (io *IO) SetDPI(dpi int) {
+func (io *WinIO) SetDPI(dpi int) {
 	io.ini.Dpi = OsClamp(dpi, 30, 5000)
 }
 
-func (io *IO) Cell() int {
+func (io *WinIO) Cell() int {
 	return int(float32(io.GetDPI()) / 2.5) // 2.9f
 }
 
-func (io *IO) GetPalette() *CdPalette {
+func (io *WinIO) GetPalette() *WinCdPalette {
 	if io.ini.Theme >= len(io.ini.Palettes) {
 		io.ini.Theme = len(io.ini.Palettes) - 1
 	}
 	return &io.ini.Palettes[io.ini.Theme]
 }
 
-func (io *IO) GetCoord() OsV4 {
+func (io *WinIO) GetCoord() OsV4 {
 	return OsV4{Start: OsV2{}, Size: OsV2{X: io.ini.WinW, Y: io.ini.WinH}}
 }
 
-func (io *IO) SetDeviceDPI() error {
+func (io *WinIO) SetDeviceDPI() error {
 	dpi, err := _IO_getDPI()
 	if err != nil {
 		return fmt.Errorf("_IO_getDPI() failed: %w", err)
@@ -294,7 +277,7 @@ func (io *IO) SetDeviceDPI() error {
 	return nil
 }
 
-type CdPalette struct {
+type WinCdPalette struct {
 	P, S, T, E, B           OsCd
 	OnP, OnS, OnT, OnE, OnB OsCd
 }
@@ -308,8 +291,8 @@ const (
 )
 
 // light
-func InitCdPalette_light() CdPalette {
-	var pl CdPalette
+func InitWinCdPalette_light() WinCdPalette {
+	var pl WinCdPalette
 	//Primary
 	pl.P = InitOsCd32(37, 100, 120, 255)
 	pl.OnP = InitOsCd32(255, 255, 255, 255)
@@ -329,8 +312,8 @@ func InitCdPalette_light() CdPalette {
 }
 
 // dark
-func InitCdPalette_dark() CdPalette {
-	var pl CdPalette
+func InitWinCdPalette_dark() WinCdPalette {
+	var pl WinCdPalette
 	pl.P = InitOsCd32(150, 205, 225, 255)
 	pl.OnP = InitOsCd32(0, 50, 65, 255)
 
@@ -348,11 +331,11 @@ func InitCdPalette_dark() CdPalette {
 	return pl
 }
 
-func (pl *CdPalette) GetGrey(t float32) OsCd {
+func (pl *WinCdPalette) GetGrey(t float32) OsCd {
 	return pl.S.Aprox(pl.OnS, t)
 }
 
-func (pl *CdPalette) GetCdOver(cd OsCd, inside bool, active bool) OsCd {
+func (pl *WinCdPalette) GetCdOver(cd OsCd, inside bool, active bool) OsCd {
 	if active {
 		if inside {
 			cd = cd.Aprox(pl.OnS, 0.4)
@@ -368,7 +351,7 @@ func (pl *CdPalette) GetCdOver(cd OsCd, inside bool, active bool) OsCd {
 	return cd
 }
 
-func (pl *CdPalette) GetCd2(cd OsCd, fade, enable, inside, active bool) OsCd {
+func (pl *WinCdPalette) GetCd2(cd OsCd, fade, enable, inside, active bool) OsCd {
 	if fade || !enable {
 		cd.A = 100
 	}
@@ -378,7 +361,7 @@ func (pl *CdPalette) GetCd2(cd OsCd, fade, enable, inside, active bool) OsCd {
 	return cd
 }
 
-func (pl *CdPalette) GetCdI(i uint8) (OsCd, OsCd) {
+func (pl *WinCdPalette) GetCdI(i uint8) (OsCd, OsCd) {
 	switch i {
 	case 0:
 		return pl.P, pl.OnP
@@ -395,7 +378,7 @@ func (pl *CdPalette) GetCdI(i uint8) (OsCd, OsCd) {
 	return pl.P, pl.OnP
 }
 
-func (pl *CdPalette) GetCd(i uint8, fade, enable, inside, active bool) (OsCd, OsCd) {
+func (pl *WinCdPalette) GetCd(i uint8, fade, enable, inside, active bool) (OsCd, OsCd) {
 
 	cd, onCd := pl.GetCdI(i)
 
