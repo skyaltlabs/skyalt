@@ -80,6 +80,7 @@ type Win struct {
 	cursors  []WinCursor
 	cursorId int
 
+	//blinking cursor
 	cursorEdit          bool
 	cursorTimeStart     float64
 	cursorTimeEnd       float64
