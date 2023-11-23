@@ -30,13 +30,13 @@ const SKYALT_FONT_PATH = "resources/arial.ttf"
 const SKYALT_FONT_HEIGHT = 0.36
 const SKYALT_FONT_TAB_WIDTH = 4
 
-type UiFontFamilyName struct {
+type WinFontFamilyName struct {
 	Weight int
 	Name   string
 }
 
 // add "Italic" for italics
-var g_WinFontFamilyNames = []UiFontFamilyName{
+var g_WinFontFamilyNames = []WinFontFamilyName{
 	{100, "Thin"},
 	{200, "ExtraLight"},
 	{300, "Light"},
