@@ -469,6 +469,23 @@ func (v *OsV4) Relative(q OsV4) (x, y, w, h float32) {
 	return s.X, s.Y, (e.X - s.X), (e.Y - s.Y)
 }
 
+func (v OsV4) Cut(x, y, w, h float64) OsV4 {
+
+	return InitOsQuad(
+		v.Start.X+int(float64(v.Size.X)*x),
+		v.Start.Y+int(float64(v.Size.Y)*y),
+		int(float64(v.Size.X)*w),
+		int(float64(v.Size.Y)*h))
+}
+
+func (v OsV4) CutEx(x, y, w, h float64, space, spaceX, spaceY int) OsV4 {
+
+	v = v.Cut(x, y, w, h)
+	v = v.AddSpaceX(spaceX)
+	v = v.AddSpaceY(spaceY)
+	return v.AddSpace(space)
+}
+
 type OsCd struct {
 	R byte
 	G byte
