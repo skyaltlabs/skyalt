@@ -70,7 +70,7 @@ const (
 	SA_DIV_SET_scrollHnarrow = 31
 )
 
-func (levels *UiLayoutLevels) DivInfo_get(cmd uint8, uid float64) float64 {
+func (levels *Ui) DivInfo_get(cmd uint8, uid float64) float64 {
 
 	lv := levels.GetCall()
 
@@ -186,7 +186,7 @@ func (levels *UiLayoutLevels) DivInfo_get(cmd uint8, uid float64) float64 {
 	return -1
 }
 
-func (levels *UiLayoutLevels) DivInfo_set(cmd uint8, val float64, uid float64) float64 {
+func (levels *Ui) DivInfo_set(cmd uint8, val float64, uid float64) float64 {
 
 	lv := levels.GetCall()
 

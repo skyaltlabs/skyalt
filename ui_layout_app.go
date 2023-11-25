@@ -65,7 +65,9 @@ func NewUiLayoutApp(name string, js []byte) (*UiLayoutApp, error) {
 
 	return &app, nil
 }
+func (app *UiLayoutApp) Destroy() {
 
+}
 func (app *UiLayoutApp) AddLogErr(err error) bool {
 	if err != nil {
 		//print

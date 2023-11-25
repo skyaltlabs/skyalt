@@ -21,7 +21,7 @@ import (
 	"fmt"
 )
 
-func (levels *UiLayoutLevels) _render_touchScrollEnabled(packLayout *UiLayoutDiv) (bool, bool) {
+func (levels *Ui) _render_touchScrollEnabled(packLayout *UiLayoutDiv) (bool, bool) {
 
 	//root := app.root
 
@@ -39,7 +39,7 @@ func (levels *UiLayoutLevels) _render_touchScrollEnabled(packLayout *UiLayoutDiv
 	return insideScrollV, insideScrollH
 }
 
-func (levels *UiLayoutLevels) _render_touchScroll(packLayout *UiLayoutDiv, enableInput bool) {
+func (levels *Ui) _render_touchScroll(packLayout *UiLayoutDiv, enableInput bool) {
 
 	hasScrollV := packLayout.data.scrollV.IsPure()
 	hasScrollH := packLayout.data.scrollH.IsPure()
@@ -57,7 +57,7 @@ func (levels *UiLayoutLevels) _render_touchScroll(packLayout *UiLayoutDiv, enabl
 	}
 }
 
-func (levels *UiLayoutLevels) _renderScroll(packLayout *UiLayoutDiv, showBackground bool) {
+func (levels *Ui) _renderScroll(packLayout *UiLayoutDiv, showBackground bool) {
 
 	if packLayout.data.scrollV.Is() {
 		scrollQuad := packLayout.data.scrollV.GetScrollBackCoordV(packLayout.crop, levels.win)
@@ -70,7 +70,7 @@ func (levels *UiLayoutLevels) _renderScroll(packLayout *UiLayoutDiv, showBackgro
 	}
 }
 
-func (levels *UiLayoutLevels) renderStart(rx, ry, rw, rh float64, drawBack bool) {
+func (levels *Ui) renderStart(rx, ry, rw, rh float64, drawBack bool) {
 
 	lv := levels.GetCall()
 
@@ -145,7 +145,7 @@ func (levels *UiLayoutLevels) renderStart(rx, ry, rw, rh float64, drawBack bool)
 	lv.call.data.touch_enabled = true //reset for next tick
 }
 
-func (levels *UiLayoutLevels) renderGrid() {
+func (levels *Ui) renderGrid() {
 
 	lv := levels.GetCall()
 
@@ -182,7 +182,7 @@ func (levels *UiLayoutLevels) renderGrid() {
 
 }
 
-func (levels *UiLayoutLevels) renderEnd(baseDiv bool) {
+func (levels *Ui) renderEnd(baseDiv bool) {
 
 	lv := levels.GetCall()
 

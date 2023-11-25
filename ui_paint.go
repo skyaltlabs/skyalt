@@ -16,12 +16,12 @@ limitations under the License.
 
 package main
 
-func (levels *UiLayoutLevels) getCoord(x, y, w, h float64, margin float64, marginX float64, marginY float64) OsV4 {
+func (levels *Ui) getCoord(x, y, w, h float64, margin float64, marginX float64, marginY float64) OsV4 {
 
 	return levels.GetCall().call.canvas.CutEx(x, y, w, h, levels.CellWidth(margin), levels.CellWidth(marginX), levels.CellWidth(marginY))
 }
 
-func (levels *UiLayoutLevels) Paint_rect(x, y, w, h float64, margin float64, cd OsCd, borderWidth float64) bool {
+func (levels *Ui) Paint_rect(x, y, w, h float64, margin float64, cd OsCd, borderWidth float64) bool {
 
 	lv := levels.GetCall()
 	if lv.call == nil || lv.call.crop.IsZero() {
@@ -31,7 +31,7 @@ func (levels *UiLayoutLevels) Paint_rect(x, y, w, h float64, margin float64, cd 
 	return true
 }
 
-func (levels *UiLayoutLevels) Paint_line(x, y, w, h float64, margin float64, sx, sy, ex, ey float64, cd OsCd, width float64) bool {
+func (levels *Ui) Paint_line(x, y, w, h float64, margin float64, sx, sy, ex, ey float64, cd OsCd, width float64) bool {
 
 	lv := levels.GetCall()
 	if lv.call == nil || lv.call.crop.IsZero() {
@@ -51,7 +51,7 @@ func (levels *UiLayoutLevels) Paint_line(x, y, w, h float64, margin float64, sx,
 	return true
 }
 
-func (levels *UiLayoutLevels) Paint_circle(x, y, w, h float64, margin float64, sx, sy, rad float64, cd OsCd, borderWidth float64) bool {
+func (levels *Ui) Paint_circle(x, y, w, h float64, margin float64, sx, sy, rad float64, cd OsCd, borderWidth float64) bool {
 
 	lv := levels.GetCall()
 	if lv.call == nil || lv.call.crop.IsZero() {
@@ -69,7 +69,7 @@ func (levels *UiLayoutLevels) Paint_circle(x, y, w, h float64, margin float64, s
 	return true
 }
 
-func (levels *UiLayoutLevels) Paint_file(x, y, w, h float64, margin float64, url string, cd OsCd, alignV, alignH int, fill bool) bool {
+func (levels *Ui) Paint_file(x, y, w, h float64, margin float64, url string, cd OsCd, alignV, alignH int, fill bool) bool {
 
 	lv := levels.GetCall()
 	if lv.call == nil || lv.call.crop.IsZero() {
@@ -89,7 +89,7 @@ func (levels *UiLayoutLevels) Paint_file(x, y, w, h float64, margin float64, url
 	return true
 }
 
-func (levels *UiLayoutLevels) Paint_tooltip(x, y, w, h float64, text string) bool {
+func (levels *Ui) Paint_tooltip(x, y, w, h float64, text string) bool {
 
 	lv := levels.GetCall()
 	if lv.call == nil || lv.call.crop.IsZero() {
@@ -106,7 +106,7 @@ func (levels *UiLayoutLevels) Paint_tooltip(x, y, w, h float64, text string) boo
 	return true
 }
 
-func (levels *UiLayoutLevels) Paint_cursor(name string) bool {
+func (levels *Ui) Paint_cursor(name string) bool {
 
 	lv := levels.GetCall()
 	if lv.call == nil || lv.call.crop.IsZero() {

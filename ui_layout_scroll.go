@@ -191,7 +191,7 @@ func (scroll *UiLayoutScroll) _GetTempScroll(srcl int, win *Win) int {
 	return win.Cell() * srcl
 }
 
-func (scroll *UiLayoutScroll) IsMove(packLayout *UiLayoutDiv, levels *UiLayoutLevels, wheel_add int, deep int, onlyH bool) bool {
+func (scroll *UiLayoutScroll) IsMove(packLayout *UiLayoutDiv, levels *Ui, wheel_add int, deep int, onlyH bool) bool {
 
 	inside := packLayout.CropWithScroll(levels.buff.win).Inside(levels.buff.win.io.touch.pos)
 	if inside {
@@ -215,7 +215,7 @@ func (scroll *UiLayoutScroll) IsMove(packLayout *UiLayoutDiv, levels *UiLayoutLe
 	return false
 }
 
-func (scroll *UiLayoutScroll) TouchV(packLayout *UiLayoutDiv, levels *UiLayoutLevels) {
+func (scroll *UiLayoutScroll) TouchV(packLayout *UiLayoutDiv, levels *Ui) {
 
 	win := levels.buff.win
 
@@ -302,7 +302,7 @@ func (scroll *UiLayoutScroll) TouchV(packLayout *UiLayoutDiv, levels *UiLayoutLe
 	scroll.attach = nil //reset
 }
 
-func (scroll *UiLayoutScroll) TouchH(needShiftWheel bool, packLayout *UiLayoutDiv, levels *UiLayoutLevels) {
+func (scroll *UiLayoutScroll) TouchH(needShiftWheel bool, packLayout *UiLayoutDiv, levels *Ui) {
 	win := levels.buff.win
 
 	canLeft := scroll.IsMove(packLayout, levels, -1, 0, win.io.keys.shift)

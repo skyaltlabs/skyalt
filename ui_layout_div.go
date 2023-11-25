@@ -339,7 +339,7 @@ func (div *UiLayoutDiv) RenderResizeDraw(layoutScreen OsV4, i int, cd OsCd, vert
 	buff.AddRect(layoutScreen.AddSpace(4), cd, 0)
 }
 
-func (div *UiLayoutDiv) RenderResizeSpliter(levels *UiLayoutLevels) {
+func (div *UiLayoutDiv) RenderResizeSpliter(levels *Ui) {
 
 	enableInput := div.enableInput
 

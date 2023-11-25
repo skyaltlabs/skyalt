@@ -18,11 +18,11 @@ package main
 
 import "errors"
 
-func (levels *UiLayoutLevels) Dialog_close() {
+func (levels *Ui) Dialog_close() {
 	levels.CloseAndAbove(levels.GetCall())
 }
 
-func (levels *UiLayoutLevels) Dialog_end() {
+func (levels *Ui) Dialog_end() {
 
 	//fmt.Println(OsTime() - a)
 
@@ -57,7 +57,7 @@ func (levels *UiLayoutLevels) Dialog_end() {
 
 }
 
-func (levels *UiLayoutLevels) Dialog_open(name string, tp uint8) bool {
+func (levels *Ui) Dialog_open(name string, tp uint8) bool {
 	lv := levels.GetCall()
 
 	//name
@@ -94,7 +94,7 @@ func (levels *UiLayoutLevels) Dialog_open(name string, tp uint8) bool {
 	return true
 }
 
-func (levels *UiLayoutLevels) Dialog_start(name string) bool {
+func (levels *Ui) Dialog_start(name string) bool {
 	lv := levels.GetCall()
 
 	//name

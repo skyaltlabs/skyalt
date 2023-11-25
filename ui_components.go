@@ -40,7 +40,7 @@ type UiComp struct {
 	tooltip         string
 }
 
-func (levels *UiLayoutLevels) compIsClicked(enable bool) (int, int, bool, bool, bool) {
+func (levels *Ui) compIsClicked(enable bool) (int, int, bool, bool, bool) {
 	var click, rclick int
 	var inside, active, end bool
 	if enable {
@@ -68,7 +68,7 @@ func (levels *UiLayoutLevels) compIsClicked(enable bool) (int, int, bool, bool, 
 	return click, rclick, inside, active, end
 }
 
-func (levels *UiLayoutLevels) compGetTextImageCoord(coord OsV4, image_width float64, imageAlignH uint8, isImg bool, isText bool) (OsV4, OsV4) {
+func (levels *Ui) compGetTextImageCoord(coord OsV4, image_width float64, imageAlignH uint8, isImg bool, isText bool) (OsV4, OsV4) {
 
 	lv := levels.GetCall()
 
@@ -97,7 +97,7 @@ func (levels *UiLayoutLevels) compGetTextImageCoord(coord OsV4, image_width floa
 	return coordImg, coordText
 }
 
-func (levels *UiLayoutLevels) compDrawShape(coord OsV4, shape uint8, cd OsCd, margin float64, border float64) OsV4 {
+func (levels *Ui) compDrawShape(coord OsV4, shape uint8, cd OsCd, margin float64, border float64) OsV4 {
 	//
 	//st := root.levels.GetStack()
 	//coord := st.stack.canvas
@@ -117,7 +117,7 @@ func (levels *UiLayoutLevels) compDrawShape(coord OsV4, shape uint8, cd OsCd, ma
 	return coord
 }
 
-func (levels *UiLayoutLevels) compDrawImage(coord OsV4, icon string, cd OsCd, style *UiComp) {
+func (levels *Ui) compDrawImage(coord OsV4, icon string, cd OsCd, style *UiComp) {
 
 	lv := levels.GetCall()
 
@@ -136,7 +136,7 @@ func (levels *UiLayoutLevels) compDrawImage(coord OsV4, icon string, cd OsCd, st
 	}
 }
 
-func (levels *UiLayoutLevels) compDrawText(coord OsV4, value string, valueOrigEdit string, cd OsCd, selection bool, editable bool, style *UiComp) {
+func (levels *Ui) compDrawText(coord OsV4, value string, valueOrigEdit string, cd OsCd, selection bool, editable bool, style *UiComp) {
 
 	lv := levels.GetCall()
 
@@ -168,7 +168,7 @@ func (levels *UiLayoutLevels) compDrawText(coord OsV4, value string, valueOrigEd
 	levels.buff.AddCrop(imgRectBackup)
 }
 
-func (levels *UiLayoutLevels) Comp_button(style *UiComp, value string, icon string, url string, drawBack float64, drawBorder bool) (int, int) {
+func (levels *Ui) Comp_button(style *UiComp, value string, icon string, url string, drawBack float64, drawBorder bool) (int, int) {
 
 	lv := levels.GetCall()
 
@@ -256,7 +256,7 @@ func (levels *UiLayoutLevels) Comp_button(style *UiComp, value string, icon stri
 	return click, rclick
 }
 
-func (levels *UiLayoutLevels) Comp_text(style *UiComp, value string, icon string) int64 {
+func (levels *Ui) Comp_text(style *UiComp, value string, icon string) int64 {
 
 	pl := levels.buff.win.io.GetPalette()
 	_, onCd := pl.GetCd(style.cd, style.fade, style.enable, false, false)
@@ -279,7 +279,7 @@ func (levels *UiLayoutLevels) Comp_text(style *UiComp, value string, icon string
 	return 1
 }
 
-func (levels *UiLayoutLevels) Comp_edit(style *UiComp, valueIn string, valueInOrig string, icon string, ghost string, highlight bool, tempToValue bool) (string, bool, bool, bool) {
+func (levels *Ui) Comp_edit(style *UiComp, valueIn string, valueInOrig string, icon string, ghost string, highlight bool, tempToValue bool) (string, bool, bool, bool) {
 
 	lv := levels.GetCall()
 
@@ -295,7 +295,7 @@ func (levels *UiLayoutLevels) Comp_edit(style *UiComp, valueIn string, valueInOr
 
 	edit := &levels.edit
 
-	inDiv := lv.call.FindOrCreate("", InitOsQuad(0, 0, 1, 1), levels.app)
+	inDiv := lv.call.FindOrCreate("", InitOsQuad(0, 0, 1, 1), levels.GetLastApp())
 	this_uid := inDiv //.Hash()
 	edit_uid := edit.uid
 	active := (edit_uid != nil && edit_uid == this_uid)
@@ -345,7 +345,7 @@ func (levels *UiLayoutLevels) Comp_edit(style *UiComp, valueIn string, valueInOr
 	return edit.last_edit, active, (active && value != edit.last_edit), (active && this_uid != edit.uid)
 }
 
-func (levels *UiLayoutLevels) Comp_progress(style *UiComp, value float64, prec int) int64 {
+func (levels *Ui) Comp_progress(style *UiComp, value float64, prec int) int64 {
 
 	lv := levels.GetCall()
 
@@ -374,7 +374,7 @@ func (levels *UiLayoutLevels) Comp_progress(style *UiComp, value float64, prec i
 	return 1
 }
 
-func (levels *UiLayoutLevels) Comp_sliderSimple(value *float64, minValue float64, maxValue float64, jumpValue float64, description string, desc_align int, desc_size int) bool {
+func (levels *Ui) Comp_sliderSimple(value *float64, minValue float64, maxValue float64, jumpValue float64, description string, desc_align int, desc_size int) bool {
 	styleSlider := UiComp{enable: true, label_formating: true, cd: CdPalette_P}
 	//styleDesc := Comp{enable: true, label_formating: true, cd: CdPalette_B}
 
@@ -387,7 +387,7 @@ func (levels *UiLayoutLevels) Comp_sliderSimple(value *float64, minValue float64
 	return changed
 }
 
-func (levels *UiLayoutLevels) Comp_slider(style *UiComp, value *float64, minValue float64, maxValue float64, jumpValue float64, imgPath string, imgMargin float64) (bool, bool, bool) {
+func (levels *Ui) Comp_slider(style *UiComp, value *float64, minValue float64, maxValue float64, jumpValue float64, imgPath string, imgMargin float64) (bool, bool, bool) {
 
 	lv := levels.GetCall()
 
@@ -465,7 +465,7 @@ func (levels *UiLayoutLevels) Comp_slider(style *UiComp, value *float64, minValu
 	return active, (active && old_value != *value), end
 }
 
-func (levels *UiLayoutLevels) Comp_combo(style *UiComp, value int64, optionsIn string) int64 {
+func (levels *Ui) Comp_combo(style *UiComp, value int64, optionsIn string) int64 {
 
 	lv := levels.GetCall()
 
@@ -553,7 +553,7 @@ func (levels *UiLayoutLevels) Comp_combo(style *UiComp, value int64, optionsIn s
 	return value
 }
 
-func (levels *UiLayoutLevels) Comp_checkbox(style *UiComp, value float64, label string) float64 {
+func (levels *Ui) Comp_checkbox(style *UiComp, value float64, label string) float64 {
 
 	lv := levels.GetCall()
 
@@ -617,7 +617,7 @@ func (levels *UiLayoutLevels) Comp_checkbox(style *UiComp, value float64, label 
 	return value
 }
 
-func (levels *UiLayoutLevels) Comp_switch(style *UiComp, value bool, label string) bool {
+func (levels *Ui) Comp_switch(style *UiComp, value bool, label string) bool {
 
 	lv := levels.GetCall()
 

@@ -22,7 +22,7 @@ import (
 	"strings"
 )
 
-func (levels *UiLayoutLevels) Div_startEx(x, y, w, h int, rx, ry, rw, rh float64, name string) {
+func (levels *Ui) Div_startEx(x, y, w, h int, rx, ry, rw, rh float64, name string) {
 
 	lv := levels.GetCall()
 
@@ -35,18 +35,18 @@ func (levels *UiLayoutLevels) Div_startEx(x, y, w, h int, rx, ry, rw, rh float64
 	}
 
 	grid := InitOsQuad(x, y, w, h)
-	lv.call = lv.call.FindOrCreate(name, grid, levels.app)
+	lv.call = lv.call.FindOrCreate(name, grid, levels.GetLastApp())
 
 	levels.renderStart(rx, ry, rw, rh, false)
 
 	//return !st.stack.crop.IsZero()
 }
 
-func (levels *UiLayoutLevels) Div_start(x, y, w, h int, name string) {
+func (levels *Ui) Div_start(x, y, w, h int, name string) {
 	levels.Div_startEx(x, y, w, h, 0, 0, 1, 1, name)
 }
 
-func (levels *UiLayoutLevels) Div_end() {
+func (levels *Ui) Div_end() {
 
 	lv := levels.GetCall()
 
@@ -62,7 +62,7 @@ func (levels *UiLayoutLevels) Div_end() {
 	levels.renderEnd(false)
 }
 
-func (levels *UiLayoutLevels) checkGridLock() bool {
+func (levels *Ui) checkGridLock() bool {
 
 	//if root.levels == nil {
 	//	return false
@@ -80,7 +80,7 @@ func (levels *UiLayoutLevels) checkGridLock() bool {
 	return true
 }
 
-func (levels *UiLayoutLevels) Div_col(pos uint64, val float64) float64 {
+func (levels *Ui) Div_col(pos uint64, val float64) float64 {
 	if !levels.checkGridLock() {
 		return -1
 	}
@@ -90,7 +90,7 @@ func (levels *UiLayoutLevels) Div_col(pos uint64, val float64) float64 {
 	return float64(lv.call.data.cols.GetOutput(int(pos))) / float64(levels.win.Cell())
 }
 
-func (levels *UiLayoutLevels) Div_row(pos uint64, val float64) float64 {
+func (levels *Ui) Div_row(pos uint64, val float64) float64 {
 	if !levels.checkGridLock() {
 		return -1
 	}
@@ -100,7 +100,7 @@ func (levels *UiLayoutLevels) Div_row(pos uint64, val float64) float64 {
 	return float64(lv.call.data.rows.GetOutput(int(pos))) / float64(levels.win.Cell())
 }
 
-func (levels *UiLayoutLevels) Div_colMax(pos int, val float64) float64 {
+func (levels *Ui) Div_colMax(pos int, val float64) float64 {
 	if !levels.checkGridLock() {
 		return -1
 	}
@@ -110,7 +110,7 @@ func (levels *UiLayoutLevels) Div_colMax(pos int, val float64) float64 {
 	return float64(lv.call.data.cols.GetOutput(int(pos))) / float64(levels.win.Cell())
 }
 
-func (levels *UiLayoutLevels) Div_rowMax(pos uint64, val float64) float64 {
+func (levels *Ui) Div_rowMax(pos uint64, val float64) float64 {
 	if !levels.checkGridLock() {
 		return -1
 	}
@@ -120,7 +120,7 @@ func (levels *UiLayoutLevels) Div_rowMax(pos uint64, val float64) float64 {
 	return float64(lv.call.data.rows.GetOutput(int(pos))) / float64(levels.win.Cell())
 }
 
-func (levels *UiLayoutLevels) Div_colResize(pos uint64, name string, val float64) float64 {
+func (levels *Ui) Div_colResize(pos uint64, name string, val float64) float64 {
 	if !levels.checkGridLock() {
 		return -1
 	}
@@ -139,7 +139,7 @@ func (levels *UiLayoutLevels) Div_colResize(pos uint64, name string, val float64
 	return float64(lv.call.data.cols.GetOutput(int(pos))) / float64(levels.win.Cell())
 }
 
-func (levels *UiLayoutLevels) Div_rowResize(pos uint64, name string, val float64) float64 {
+func (levels *Ui) Div_rowResize(pos uint64, name string, val float64) float64 {
 	if !levels.checkGridLock() {
 		return -1
 	}
@@ -158,7 +158,7 @@ func (levels *UiLayoutLevels) Div_rowResize(pos uint64, name string, val float64
 	return float64(lv.call.data.rows.GetOutput(int(pos))) / float64(levels.win.Cell())
 }
 
-func (levels *UiLayoutLevels) Div_drag(groupName string, id uint64) {
+func (levels *Ui) Div_drag(groupName string, id uint64) {
 
 	lv := levels.GetCall()
 
@@ -173,7 +173,7 @@ func (levels *UiLayoutLevels) Div_drag(groupName string, id uint64) {
 		levels.Paint_rect(0, 0, 1, 1, 0, OsCd{0, 0, 0, 180}, 0) //fade
 	}
 }
-func (levels *UiLayoutLevels) Div_drop(groupName string, vertical bool, horizontal bool, inside bool) (uint64, int, bool) {
+func (levels *Ui) Div_drop(groupName string, vertical bool, horizontal bool, inside bool) (uint64, int, bool) {
 
 	lv := levels.GetCall()
 
