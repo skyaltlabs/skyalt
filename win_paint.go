@@ -21,7 +21,8 @@ import (
 )
 
 type WinPaintBuff struct {
-	win *Win
+	win     *Win
+	winRect OsV2
 
 	crop OsV4
 
