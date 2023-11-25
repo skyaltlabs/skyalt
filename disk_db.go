@@ -22,22 +22,37 @@ import (
 )
 
 type DiskDb struct {
-	dbs  *Disk
-	path string
+	disk     *Disk
+	path     string
+	inMemory bool
 
 	db *sql.DB
 	tx *sql.Tx
 
-	cache          []*DiskDbCache
+	//cache          []*DiskDbCache
 	lastWriteTicks int64
 }
 
-func NewDiskDb(dbs *Disk, sqlDb *sql.DB) *DiskDb {
+func NewDiskDb(path string, inMemory bool, disk *Disk) (*DiskDb, error) {
 	var db DiskDb
-	db.dbs = dbs
-	db.db = sqlDb
+	db.disk = disk
+	db.inMemory = inMemory
 
-	return &db
+	if inMemory {
+		var err error
+		db.db, err = sql.Open("sqlite3", "file:"+path+"?mode=memory&cache=shared") //sqlite3 -> sqlite3_skyalt
+		if err != nil {
+			return nil, fmt.Errorf("sql.Open(%s) in memory failed: %w", path, err)
+		}
+	} else {
+		var err error
+		db.db, err = sql.Open("sqlite3", "file:"+path+"?&_journal_mode=WAL") //sqlite3 -> sqlite3_skyalt
+		if err != nil {
+			return nil, fmt.Errorf("sql.Open(%s) from file failed: %w", path, err)
+		}
+	}
+
+	return &db, nil
 }
 
 func (db *DiskDb) Destroy() {
@@ -50,6 +65,66 @@ func (db *DiskDb) Destroy() {
 	if err != nil {
 		fmt.Printf("db(%s).Destroy() failed: %v\n", db.path, err)
 	}
+}
+
+func (db *DiskDb) Attach(path string, alias string, inMemory bool) error {
+
+	if inMemory {
+		//ATTACH DATABASE 'file:memdb1?mode=memory&cache=shared' AS aux1;
+		_, err := db.Write("ATTACH DATABASE 'file:" + path + "?mode=memory&cache=shared' AS '" + alias + "';")
+		if err != nil {
+			return fmt.Errorf("ATTACH_memory(%s) failed: %w", path, err)
+		}
+
+	} else {
+		_, err := db.Write("ATTACH DATABASE 'file:" + path + "?&_journal_mode=WAL' AS '" + alias + "';")
+		if err != nil {
+			return fmt.Errorf("ATTACH_file(%s) failed: %w", path, err)
+		}
+	}
+	return nil
+}
+
+func (db *DiskDb) Detach(alias string) error {
+	_, err := db.Write("DETACH DATABASE '" + alias + "';")
+	if err != nil {
+		return fmt.Errorf("DETACH(%s) failed: %w", alias, err)
+	}
+	return nil
+}
+
+func (db *DiskDb) GetTableInfo() ([]*DiskIndexTable, error) {
+
+	var tables []*DiskIndexTable
+
+	rows, err := db.Read("SELECT name FROM sqlite_master WHERE type='table'")
+	if err != nil {
+		return nil, fmt.Errorf("Read() failed: %w", err)
+	}
+	for rows.Next() {
+		var tname string
+		err = rows.Scan(&tname)
+		if err != nil {
+			return nil, fmt.Errorf("Scan() failed: %w", err)
+		}
+
+		c := &DiskIndexTable{Name: tname}
+		tables = append(tables, c)
+		err = c.updateDb(db, tname)
+		if err != nil {
+			return nil, fmt.Errorf("updateDb() failed: %w", err)
+		}
+	}
+
+	return tables, nil
+}
+
+func (db *DiskDb) Tick() {
+
+}
+
+func (db *DiskDb) Vacuum() {
+	db.db.Exec("VACUUM;")
 }
 
 func (db *DiskDb) Begin() (*sql.Tx, error) {
@@ -72,9 +147,9 @@ func (db *DiskDb) Commit() error {
 	db.tx = nil
 
 	//reset queries
-	db.cache = nil
+	//db.cache = nil
 
-	db.dbs.ResetTick()
+	db.disk.ResetTick()
 	return err
 }
 func (db *DiskDb) Rollback() error {
@@ -86,40 +161,10 @@ func (db *DiskDb) Rollback() error {
 	db.tx = nil
 
 	//reset queries
-	db.cache = nil
+	//db.cache = nil
 
-	db.dbs.ResetTick()
+	db.disk.ResetTick()
 	return err
-}
-
-func (db *DiskDb) FindCache(query_hash int64) *DiskDbCache {
-
-	//find
-	for _, it := range db.cache {
-		if it.query_hash == query_hash {
-			return it
-		}
-	}
-	return nil
-}
-
-func (db *DiskDb) AddCache(query string) (*DiskDbCache, error) {
-
-	//find
-	for _, it := range db.cache {
-		if it.query == query {
-			return it, nil
-		}
-	}
-
-	//add
-	cache, err := NewDiskDbCache(query, db.db)
-	if err != nil {
-		return nil, fmt.Errorf("NewDbCache(%s) failed: %w", db.path, err)
-	}
-
-	db.cache = append(db.cache, cache)
-	return cache, nil
 }
 
 func (db *DiskDb) Write(query string, params ...any) (sql.Result, error) {
@@ -139,10 +184,63 @@ func (db *DiskDb) Write(query string, params ...any) (sql.Result, error) {
 	return res, nil
 }
 
-func (db *DiskDb) Tick() {
-
+func (db *DiskDb) Read(query string, params ...any) (*sql.Rows, error) {
+	return db.db.Query(query, params...)
 }
 
-func (db *DiskDb) Vacuum() {
-	db.db.Exec("VACUUM;")
+func (db *DiskDb) Print() error {
+
+	tables, err := db.GetTableInfo()
+	if err != nil {
+		return err
+	}
+
+	for _, t := range tables {
+		//table name
+		fmt.Println(t.Name)
+
+		//columns headers
+		for _, c := range t.Columns {
+			fmt.Print(c.Name, "|")
+		}
+		fmt.Println()
+
+		rows, err := db.Read("SELECT * FROM " + t.Name)
+		if err != nil {
+			return err
+		}
+
+		// out fields
+		colTypes, err := rows.ColumnTypes()
+		if err != nil {
+			return err
+		}
+
+		values := make([]interface{}, len(colTypes))
+		scanCallArgs := make([]interface{}, len(colTypes))
+		for i := range colTypes {
+			scanCallArgs[i] = &values[i]
+		}
+
+		for rows.Next() {
+			//reset
+			for i := range values {
+				values[i] = nil
+			}
+
+			err = rows.Scan(scanCallArgs...)
+			if err != nil {
+				return err
+			}
+
+			for _, v := range values {
+				fmt.Print(v)
+			}
+			fmt.Println()
+
+		}
+		fmt.Println("----------")
+	}
+
+	return nil
 }
