@@ -1,0 +1,587 @@
+/*
+Copyright 2023 Milan Suk
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this db except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"runtime"
+	"sync"
+	"sync/atomic"
+	"time"
+)
+
+type NodeIn struct {
+	Node string
+	Pos  int
+}
+
+type NodeDataDb struct {
+	path     string
+	alias    string
+	inMemory bool
+}
+
+type NodeData struct {
+	dbs []NodeDataDb
+
+	json string
+}
+
+type NodeFuncIO struct {
+	key  string
+	json bool
+}
+type NodeFnDef struct {
+	name string
+	fn   func(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, error)
+
+	params       map[string]string
+	ins          []NodeFuncIO
+	outs         []NodeFuncIO
+	infinite_ins bool
+	//infinite_outs bool
+}
+
+func NewNodeFnDef(name string, fnPtr func(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, error)) *NodeFnDef {
+	var fn NodeFnDef
+	fn.params = make(map[string]string)
+	fn.name = name
+	fn.fn = fnPtr
+	return &fn
+}
+func (fn *NodeFnDef) AddParam(key, value string) {
+	fn.params[key] = value
+}
+func (fn *NodeFnDef) AddInput(key string, json bool) {
+	fn.ins = append(fn.ins, NodeFuncIO{key: key, json: json})
+}
+func (fn *NodeFnDef) AddOutput(key string, json bool) {
+	fn.outs = append(fn.outs, NodeFuncIO{key: key, json: json})
+}
+func (fn *NodeFnDef) SetInfiniteInputs(enable bool) {
+	fn.infinite_ins = enable
+}
+
+type Node struct {
+	Name string
+
+	Pos OsV2
+
+	FnName     string
+	Parameters map[string]string
+	Inputs     []NodeIn
+
+	outputs []NodeData
+
+	changed bool
+	running bool
+	done    bool
+
+	err error
+
+	info_action   string
+	info_progress float64 //0-1
+
+	db *DiskDb
+}
+
+func NewNode(name string, fnName string) *Node {
+	var node Node
+	node.Name = name
+	node.Parameters = make(map[string]string)
+	node.FnName = fnName
+	node.changed = true
+	return &node
+}
+
+func (node *Node) Destroy() {
+	if node.db != nil {
+		node.db.Destroy()
+	}
+	//for _, out := range node.outputs {
+	//	out.Destroy()
+	//}
+}
+
+func (node *Node) SetParam(key, value string) {
+	node.Parameters[key] = value
+	node.changed = true
+}
+
+func (node *Node) AddInput(src *Node, pos int) {
+	node.Inputs = append(node.Inputs, NodeIn{Node: src.Name, Pos: pos})
+	node.changed = true
+}
+
+func (node *Node) RenameInputs(src, dst string) {
+	for _, in := range node.Inputs {
+		if in.Node == src {
+			in.Node = dst
+		}
+	}
+}
+func (node *Node) RemoveInputs(name string) {
+	for _, in := range node.Inputs {
+		if in.Node == name {
+			in.Node = ""
+		}
+	}
+}
+
+func (node *Node) Execute(nodes *Nodes) {
+	//function
+	fn := nodes.findFn(node.FnName)
+	if fn == nil {
+		node.err = fmt.Errorf("Function(%s) not found", node.FnName)
+		return
+	}
+
+	//inputs
+	var ins []NodeData
+	for i, in := range node.Inputs {
+		n := nodes.FindNode(in.Node)
+		if n == nil {
+			node.err = fmt.Errorf("Node(%s) for %d input not found", in.Node, i+1)
+			return
+		}
+
+		//resize
+		if in.Pos >= len(n.outputs) {
+			t := n.outputs
+			n.outputs = make([]NodeData, in.Pos+1)
+			copy(n.outputs, t)
+		}
+
+		//set
+		ins = append(ins, n.outputs[in.Pos])
+	}
+
+	//free previous db
+	if node.db != nil {
+		node.db.Destroy()
+		node.db = nil
+	}
+
+	//call
+	node.outputs, node.err = fn.fn(ins, node, nodes)
+
+	if node.err != nil {
+		fmt.Printf("Node(%s) has error(%v)\n", node.Name, node.err)
+	}
+
+	if !nodes.IsRunning() {
+		node.err = fmt.Errorf("Interrupted")
+		return
+	}
+
+	if node.db != nil {
+		node.db.Commit()
+	}
+
+	node.changed = true //child can update
+	node.done = true
+	node.running = false
+}
+
+func (node *Node) areInputsErrorFree(nodes *Nodes) bool {
+
+	for i, in := range node.Inputs {
+		n := nodes.FindNode(in.Node)
+		if n == nil {
+			node.err = fmt.Errorf("Node(%s) for %d input not found", in.Node, i+1)
+			return false
+		}
+
+		if n.err != nil {
+			n.err = fmt.Errorf("incomming error from %d input", i+1)
+			return false
+		}
+	}
+
+	return true
+}
+
+func (node *Node) areInputsReadyToRun(nodes *Nodes) bool {
+
+	for _, in := range node.Inputs {
+		n := nodes.FindNode(in.Node)
+		if n == nil || n.running {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (node *Node) areInputsDone(nodes *Nodes) bool {
+	for _, in := range node.Inputs {
+		n := nodes.FindNode(in.Node)
+		if n == nil || !n.done {
+			return false
+		}
+	}
+	return true
+}
+
+func (node *Node) isInputsChanged(nodes *Nodes) bool {
+	for _, in := range node.Inputs {
+		n := nodes.FindNode(in.Node)
+		if n == nil || n.changed {
+			return true
+		}
+	}
+	return false
+}
+
+type Nodes struct {
+	nodes []*Node
+	fns   []*NodeFnDef
+
+	disk *Disk
+	dbs  []*DiskDb
+
+	interrupt atomic.Bool
+}
+
+func NewNodes(path string) (*Nodes, error) {
+	var nodes Nodes
+
+	var err error
+	nodes.disk, err = NewDisk("databases")
+	if err != nil {
+		return nil, fmt.Errorf("NewDisk() failed: %w", err)
+	}
+
+	js, err := os.ReadFile(path)
+	if err == nil {
+		err = json.Unmarshal([]byte(js), &nodes.nodes)
+		if err != nil {
+			return nil, fmt.Errorf("Unmarshal() failed: %w", err)
+		}
+	}
+
+	//check ins/outs ranges & all inputs are set ...
+
+	return &nodes, nil
+}
+
+func (nodes *Nodes) Destroy(savePath string) {
+	nodes.Save(savePath)
+
+	for _, db := range nodes.dbs {
+		db.Destroy()
+	}
+
+	for _, n := range nodes.nodes {
+		n.Destroy()
+	}
+}
+
+func (nodes *Nodes) Save(path string) error {
+	if path == "" {
+		return nil
+	}
+
+	js, err := json.MarshalIndent(&nodes.nodes, "", "")
+	if err != nil {
+		return fmt.Errorf("MarshalIndent() failed: %w", err)
+	}
+
+	err = os.WriteFile(path, js, 0644)
+	if err != nil {
+		return fmt.Errorf("WriteFile() failed: %w", err)
+	}
+
+	return nil
+}
+
+func (nodes *Nodes) AddNode(name string, fnDef *NodeFnDef) *Node {
+
+	n := nodes.FindNode(name)
+	if n != nil {
+		return nil //already exist
+	}
+
+	n = NewNode(name, fnDef.name)
+	nodes.nodes = append(nodes.nodes, n)
+	return n
+}
+
+func (nodes *Nodes) RemoveNode(name string) bool {
+
+	found := false
+	for i, n := range nodes.nodes {
+		if n.Name == name {
+			nodes.nodes = append(nodes.nodes[:i], nodes.nodes[i+1:]...)
+			found = true
+			break
+		}
+	}
+
+	for _, n := range nodes.nodes {
+		n.RemoveInputs(name)
+	}
+
+	return found
+}
+
+func (nodes *Nodes) RenameNode(src, dst string) bool {
+
+	n := nodes.FindNode(dst)
+	if n != nil {
+		return false //newName already exist
+	}
+
+	found := false
+	for _, n := range nodes.nodes {
+		if n.Name == src {
+			n.Name = dst
+		}
+		n.RenameInputs(src, dst)
+	}
+
+	return found
+}
+
+func (nodes *Nodes) AddFunc(fn *NodeFnDef) *NodeFnDef {
+	nodes.fns = append(nodes.fns, fn)
+	return fn
+}
+
+func (nodes *Nodes) findFn(name string) *NodeFnDef {
+	for _, fn := range nodes.fns {
+		if fn.name == name {
+			return fn
+		}
+	}
+	return nil
+}
+func (nodes *Nodes) FindNode(name string) *Node {
+	for _, n := range nodes.nodes {
+		if n.Name == name {
+			return n
+		}
+	}
+	return nil
+}
+
+func (nodes *Nodes) IsRunning() bool {
+	return !nodes.interrupt.Load()
+}
+
+func (nodes *Nodes) Maintenance() {
+
+}
+
+func (nodes *Nodes) Execute() {
+
+	//prepare
+	for _, n := range nodes.nodes {
+		n.done = false
+		n.running = false
+	}
+
+	//multi-thread executing
+	var numActiveThreads atomic.Int64
+	maxActiveThreads := int64(runtime.NumCPU())
+	var wg sync.WaitGroup
+	run := true
+	for run && nodes.IsRunning() {
+		run = false
+		for _, n := range nodes.nodes {
+
+			if !n.done {
+				run = true
+
+				if !n.running {
+					if n.areInputsErrorFree(nodes) {
+						if n.areInputsReadyToRun(nodes) {
+							if n.areInputsDone(nodes) {
+
+								if n.changed || n.isInputsChanged(nodes) || n.err != nil {
+
+									//maximum concurent threads
+									if numActiveThreads.Load() >= maxActiveThreads {
+										time.Sleep(10 * time.Millisecond)
+									}
+
+									//run it
+									n.running = true
+									wg.Add(1)
+									go func(nn *Node) {
+										numActiveThreads.Add(1)
+										nn.Execute(nodes)
+										wg.Done()
+										numActiveThreads.Add(-1)
+									}(n)
+								} else {
+									n.done = true
+								}
+							}
+						}
+					} else {
+						n.done = true
+					}
+				}
+			}
+		}
+	}
+
+	wg.Wait()
+
+	if nodes.IsRunning() {
+		for _, n := range nodes.nodes {
+			n.changed = false
+		}
+
+		nodes.Maintenance()
+	}
+}
+
+//--- Example ---
+
+func NodeFile_init() *NodeFnDef {
+	fn := NewNodeFnDef("file", NodeFile_exe)
+	fn.AddParam("path", "")
+	fn.AddParam("alias", "")
+	fn.AddOutput("db", false)
+	return fn
+}
+
+func NodeFile_exe(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, error) {
+
+	path := nodes.disk.folder + "/" + node.Parameters["path"]
+	alias := node.Parameters["alias"]
+
+	if alias == "" {
+		alias = node.Name
+	}
+
+	if path == "" {
+		return nil, fmt.Errorf("path is empty")
+	}
+
+	var outs []NodeData
+	outs = append(outs, NodeData{})
+	outs[0].dbs = append(outs[0].dbs, NodeDataDb{path: path, alias: alias, inMemory: false})
+
+	return outs, nil
+}
+
+func NodeMerge_init() *NodeFnDef {
+	fn := NewNodeFnDef("merge", NodeFile_exe)
+	fn.SetInfiniteInputs(true)
+	fn.AddOutput("db", false)
+	return fn
+}
+
+func NodeMerge_exe(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, error) {
+
+	var outs []NodeData
+	outs = append(outs, NodeData{})
+
+	for _, in := range inputs {
+		outs[0].dbs = append(outs[0].dbs, in.dbs...)
+	}
+
+	return outs, nil
+}
+
+func NodeSelect_init() *NodeFnDef {
+	fn := NewNodeFnDef("select", NodeSelect_exe)
+	fn.AddParam("query", "")
+	fn.AddInput("db", false)
+	fn.AddOutput("db", false)
+	return fn
+}
+
+func NodeSelect_exe(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, error) {
+
+	var outs []NodeData
+	outs = append(outs, NodeData{})
+	outs[0].dbs = append(outs[0].dbs, NodeDataDb{path: node.Name, alias: node.Name, inMemory: true})
+
+	//create :memory db
+	var err error
+	node.db, err = NewDiskDb(node.Name, true, nodes.disk)
+	if err != nil {
+		return nil, fmt.Errorf("NewDiskDb() failed: %w", err)
+	}
+
+	//attach inputs
+	for _, in := range inputs {
+		for _, d := range in.dbs {
+			err = node.db.Attach(d.path, d.alias, d.inMemory)
+			if err != nil {
+				return nil, fmt.Errorf("Attach() failed: %w", err)
+			}
+		}
+	}
+
+	//run query
+	_, err = node.db.Write("CREATE TABLE main.result AS " + node.Parameters["query"])
+	if err != nil {
+		return nil, fmt.Errorf("Write() failed: %w", err)
+	}
+
+	node.db.Commit()
+
+	//maybe DETOUCH
+	for _, in := range inputs {
+		for _, d := range in.dbs {
+			err = node.db.Detach(d.alias)
+			if err != nil {
+				return nil, fmt.Errorf("Attach() failed: %w", err)
+			}
+		}
+	}
+
+	return outs, nil
+}
+
+func NodesTest() {
+
+	nds, err := NewNodes("")
+	if err != nil {
+		return
+	}
+	defer nds.Destroy("")
+
+	fOpen := nds.AddFunc(NodeFile_init())
+	//fMerge := nds.AddFunc(NodeMerge_init())
+	fSelect := nds.AddFunc(NodeSelect_init())
+
+	nA := nds.AddNode("a", fOpen)
+	nA.SetParam("path", "7gui.sqlite")
+	nB := nds.AddNode("b", fSelect)
+	nB.SetParam("query", "SELECT label FROM a.__skyalt__")
+	nB.AddInput(nA, 0)
+	nC := nds.AddNode("c", fSelect)
+	nC.SetParam("query", "SELECT COUNT(*) FROM result")
+	nC.AddInput(nB, 0)
+
+	nds.Execute()
+	nB.db.Print()
+	nC.db.Print()
+
+	nB.SetParam("query", "SELECT label FROM a.__skyalt__")
+
+	nds.Execute()
+
+}
