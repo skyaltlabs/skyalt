@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -52,11 +51,11 @@ type DiskIndexTable struct {
 	Columns []*DiskIndexColumn
 }
 
-func (indt *DiskIndexTable) updateDb(db *sql.DB, tname string, path string) error {
+func (indt *DiskIndexTable) updateDb(db *DiskDb, tname string) error {
 
-	rows, err := db.Query("pragma table_info(" + tname + ");")
+	rows, err := db.Read("pragma table_info(" + tname + ");")
 	if err != nil {
-		return fmt.Errorf("indt.Query(%s) failed: %w", path, err)
+		return fmt.Errorf("Query(%s) failed: %w", err)
 	}
 	for rows.Next() {
 		var cid int
@@ -65,7 +64,7 @@ func (indt *DiskIndexTable) updateDb(db *sql.DB, tname string, path string) erro
 		var notnull, dflt_value interface{}
 		err = rows.Scan(&cid, &cname, &ctype, &notnull, &dflt_value, &pk)
 		if err != nil {
-			return fmt.Errorf("indt.Scan(%s) failed: %w", path, err)
+			return fmt.Errorf("Scan(%s) failed: %w", db.path, err)
 		}
 
 		c := &DiskIndexColumn{Name: cname, Type: ctype}
@@ -86,31 +85,15 @@ func (indf *DiskIndexFile) updateDb(folder string) error {
 
 	path := folder + "/" + indf.Name
 
-	db, err := sql.Open("sqlite3", "file:"+path)
+	db, err := NewDiskDb(path, false, nil)
 	if err != nil {
-		return fmt.Errorf("sql.Open(%s) failed: %w", path, err)
+		return fmt.Errorf("NewDiskDb() failed: %w", path, err)
 	}
-	defer db.Close()
+	defer db.Destroy()
 
-	indf.Tables = nil
-
-	rows, err := db.Query("SELECT name FROM sqlite_master WHERE type='table'")
+	indf.Tables, err = db.GetTableInfo()
 	if err != nil {
-		return fmt.Errorf("indf.Query(%s) failed: %w", path, err)
-	}
-	for rows.Next() {
-		var tname string
-		err = rows.Scan(&tname)
-		if err != nil {
-			return fmt.Errorf("indf.Scan(%s) failed: %w", path, err)
-		}
-
-		c := &DiskIndexTable{Name: tname}
-		indf.Tables = append(indf.Tables, c)
-		err = c.updateDb(db, tname, path)
-		if err != nil {
-			return fmt.Errorf("updateDb(%s) failed: %w", path, err)
-		}
+		return fmt.Errorf("GetTableInfo() failed: %w", err)
 	}
 
 	return nil
@@ -249,7 +232,7 @@ type Disk struct {
 	last_ticks int64
 }
 
-func NewDbs(folder string) (*Disk, error) {
+func NewDisk(folder string) (*Disk, error) {
 	var disk Disk
 	disk.folder = folder
 
@@ -293,7 +276,7 @@ func (disk *Disk) loadIndex() error {
 	if err == nil {
 		err := json.Unmarshal([]byte(js), &disk.index)
 		if err != nil {
-			return fmt.Errorf("OsFolderCreate() failed: %w", err)
+			return fmt.Errorf("Unmarshal() failed: %w", err)
 		}
 	}
 	return nil
@@ -310,40 +293,6 @@ func (disk *Disk) SaveIndex() error {
 		}
 	}
 	return nil
-}
-
-func (disk *Disk) OpenDb(path string) (*DiskDb, error) {
-
-	db, err := sql.Open("sqlite3", "file:"+disk.folder+"/"+path+"?&_journal_mode=WAL") //sqlite3 -> sqlite3_skyalt
-	if err != nil {
-		return nil, fmt.Errorf("Open(%s) failed: %w", path, err)
-	}
-
-	return NewDiskDb(disk, db), nil
-}
-
-func (disk *Disk) OpenDbs(paths []string) (*DiskDb, error) {
-
-	if len(paths) == 0 {
-		return nil, fmt.Errorf("0 paths")
-	}
-
-	if len(paths) > SKYALT_MAX_DBS {
-		fmt.Printf("cutting databases: maximum is %d\n", SKYALT_MAX_DBS)
-		paths = paths[:SKYALT_MAX_DBS]
-	}
-
-	db, err := sql.Open("sqlite3", "file:"+disk.folder+"/"+paths[0]+"?&_journal_mode=WAL") //sqlite3 -> sqlite3_skyalt
-	if err != nil {
-		return nil, fmt.Errorf("Open(%s) failed: %w", paths[0], err)
-	}
-
-	for i := 1; i < len(paths); i++ {
-		db.Exec("ATTACH '" + disk.folder + "/" + paths[i] + "' AS db" + strconv.Itoa(i))
-
-	}
-
-	return NewDiskDb(disk, db), nil
 }
 
 func (disk *Disk) Vacuum() {
