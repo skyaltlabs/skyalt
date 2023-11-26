@@ -39,8 +39,7 @@ type NodeDataDb struct {
 
 type NodeData struct {
 	dbs []NodeDataDb
-
-	json string
+	//json string
 }
 
 type NodeFuncIO struct {
@@ -95,8 +94,8 @@ type Node struct {
 
 	err error
 
-	info_action   string
-	info_progress float64 //0-1
+	//info_action   string
+	//info_progress float64 //0-1
 
 	db *DiskDb
 }
