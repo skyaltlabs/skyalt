@@ -339,18 +339,18 @@ func (div *UiLayoutDiv) RenderResizeDraw(layoutScreen OsV4, i int, cd OsCd, vert
 	buff.AddRect(layoutScreen.AddSpace(4), cd, 0)
 }
 
-func (div *UiLayoutDiv) RenderResizeSpliter(levels *Ui) {
+func (div *UiLayoutDiv) RenderResizeSpliter(ui *Ui) {
 
 	enableInput := div.enableInput
 
-	cell := levels.buff.win.Cell()
-	tpos := div.GetRelativePos(levels.buff.win.io.touch.pos)
+	cell := ui.buff.win.Cell()
+	tpos := div.GetRelativePos(ui.buff.win.io.touch.pos)
 
 	vHighlight := false
 	hHighlight := false
 	col := -1
 	row := -1
-	if enableInput && div.crop.Inside(levels.buff.win.io.touch.pos) {
+	if enableInput && div.crop.Inside(ui.buff.win.io.touch.pos) {
 		col = div.data.cols.IsResizerTouch((tpos.X), cell)
 		row = div.data.rows.IsResizerTouch((tpos.Y), cell)
 
@@ -358,9 +358,9 @@ func (div *UiLayoutDiv) RenderResizeSpliter(levels *Ui) {
 		hHighlight = (row >= 0)
 
 		// start
-		if levels.buff.win.io.touch.start && (vHighlight || hHighlight) {
+		if ui.buff.win.io.touch.start && (vHighlight || hHighlight) {
 			if vHighlight || hHighlight {
-				levels.touch.Set(nil, nil, nil, div)
+				ui.touch.Set(nil, nil, nil, div)
 			}
 
 			if vHighlight {
@@ -373,14 +373,14 @@ func (div *UiLayoutDiv) RenderResizeSpliter(levels *Ui) {
 			}
 		}
 
-		if levels.touch.IsAnyActive() {
+		if ui.touch.IsAnyActive() {
 			vHighlight = false
 			hHighlight = false
 			//active = true
 		}
 
 		// resize
-		if levels.touch.IsFnMove(nil, nil, nil, div) {
+		if ui.touch.IsFnMove(nil, nil, nil, div) {
 
 			r := 1.0
 			if div.touchResizeCol {
@@ -393,7 +393,7 @@ func (div *UiLayoutDiv) RenderResizeSpliter(levels *Ui) {
 					r = float64(tpos.X - div.data.cols.GetResizerPos(int(col)-1, cell))
 				}
 
-				div.SetResizer(int(col), r, true, levels.buff.win)
+				div.SetResizer(int(col), r, true, ui.buff.win)
 			} else {
 				row = div.touchResizeIndex
 				hHighlight = true
@@ -404,24 +404,24 @@ func (div *UiLayoutDiv) RenderResizeSpliter(levels *Ui) {
 					r = float64(tpos.Y - (div.data.rows.GetResizerPos(int(row)-1, cell)))
 				}
 
-				div.SetResizer(int(row), r, false, levels.buff.win)
+				div.SetResizer(int(row), r, false, ui.buff.win)
 			}
 		}
 	}
 
 	// draw all(+active)
 	{
-		activeCd, _ := levels.buff.win.io.GetPalette().GetCd(CdPalette_P, false, true, false, false)
+		activeCd, _ := ui.buff.win.io.GetPalette().GetCd(CdPalette_P, false, true, false, false)
 		activeCd.A = 150
 
-		defaultCd := levels.buff.win.io.GetPalette().GetGrey(0.5)
+		defaultCd := ui.buff.win.io.GetPalette().GetGrey(0.5)
 
 		for i := 0; i < div.data.cols.NumInputs(); i++ {
 			if div.data.cols.GetResizeIndex(i) >= 0 {
 				if vHighlight && i == int(col) {
-					div.RenderResizeDraw(div.canvas, i, activeCd, true, levels.buff)
+					div.RenderResizeDraw(div.canvas, i, activeCd, true, ui.buff)
 				} else {
-					div.RenderResizeDraw(div.canvas, i, defaultCd, true, levels.buff)
+					div.RenderResizeDraw(div.canvas, i, defaultCd, true, ui.buff)
 				}
 			}
 		}
@@ -429,9 +429,9 @@ func (div *UiLayoutDiv) RenderResizeSpliter(levels *Ui) {
 		for i := 0; i < div.data.rows.NumInputs(); i++ {
 			if div.data.rows.GetResizeIndex(i) >= 0 {
 				if hHighlight && i == int(row) {
-					div.RenderResizeDraw(div.canvas, i, activeCd, false, levels.buff)
+					div.RenderResizeDraw(div.canvas, i, activeCd, false, ui.buff)
 				} else {
-					div.RenderResizeDraw(div.canvas, i, defaultCd, false, levels.buff)
+					div.RenderResizeDraw(div.canvas, i, defaultCd, false, ui.buff)
 				}
 			}
 		}
@@ -440,10 +440,10 @@ func (div *UiLayoutDiv) RenderResizeSpliter(levels *Ui) {
 	// cursor
 	if enableInput {
 		if vHighlight {
-			levels.buff.win.PaintCursor("res_col")
+			ui.buff.win.PaintCursor("res_col")
 		}
 		if hHighlight {
-			levels.buff.win.PaintCursor("res_row")
+			ui.buff.win.PaintCursor("res_row")
 		}
 	}
 }

@@ -22,53 +22,53 @@ import (
 	"strings"
 )
 
-func (levels *Ui) Div_startEx(x, y, w, h int, rx, ry, rw, rh float64, name string) {
+func (ui *Ui) Div_startEx(x, y, w, h int, rx, ry, rw, rh float64, name string) {
 
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 
 	if !lv.call.gridLock {
 		// cols/rows resizer
-		lv.call.RenderResizeSpliter(levels)
-		lv.call.UpdateGrid(levels.win)
+		lv.call.RenderResizeSpliter(ui)
+		lv.call.UpdateGrid(ui.win)
 		lv.call.lastChild = nil
 		lv.call.gridLock = true
 	}
 
 	grid := InitOsQuad(x, y, w, h)
-	lv.call = lv.call.FindOrCreate(name, grid, levels.GetLastApp())
+	lv.call = lv.call.FindOrCreate(name, grid, ui.GetLastApp())
 
-	levels.renderStart(rx, ry, rw, rh, false)
+	ui.renderStart(rx, ry, rw, rh, false)
 
 	//return !st.stack.crop.IsZero()
 }
 
-func (levels *Ui) Div_start(x, y, w, h int, name string) {
-	levels.Div_startEx(x, y, w, h, 0, 0, 1, 1, name)
+func (ui *Ui) Div_start(x, y, w, h int, name string) {
+	ui.Div_startEx(x, y, w, h, 0, 0, 1, 1, name)
 }
 
-func (levels *Ui) Div_end() {
+func (ui *Ui) Div_end() {
 
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 
 	//if grid is empty
 	if !lv.call.gridLock {
 		// cols/rows resizer
-		lv.call.RenderResizeSpliter(levels)
-		lv.call.UpdateGrid(levels.win)
+		lv.call.RenderResizeSpliter(ui)
+		lv.call.UpdateGrid(ui.win)
 		lv.call.lastChild = nil
 		lv.call.gridLock = true
 	}
 
-	levels.renderEnd(false)
+	ui.renderEnd(false)
 }
 
-func (levels *Ui) checkGridLock() bool {
+func (ui *Ui) checkGridLock() bool {
 
 	//if root.levels == nil {
 	//	return false
 	//}
 
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 	if lv == nil {
 		return false
 	}
@@ -80,51 +80,51 @@ func (levels *Ui) checkGridLock() bool {
 	return true
 }
 
-func (levels *Ui) Div_col(pos uint64, val float64) float64 {
-	if !levels.checkGridLock() {
+func (ui *Ui) Div_col(pos int, val float64) float64 {
+	if !ui.checkGridLock() {
 		return -1
 	}
 
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 	lv.call.GetInputCol(int(pos)).min = float32(val)
-	return float64(lv.call.data.cols.GetOutput(int(pos))) / float64(levels.win.Cell())
+	return float64(lv.call.data.cols.GetOutput(int(pos))) / float64(ui.win.Cell())
 }
 
-func (levels *Ui) Div_row(pos uint64, val float64) float64 {
-	if !levels.checkGridLock() {
+func (ui *Ui) Div_row(pos int, val float64) float64 {
+	if !ui.checkGridLock() {
 		return -1
 	}
 
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 	lv.call.GetInputRow(int(pos)).min = float32(val)
-	return float64(lv.call.data.rows.GetOutput(int(pos))) / float64(levels.win.Cell())
+	return float64(lv.call.data.rows.GetOutput(int(pos))) / float64(ui.win.Cell())
 }
 
-func (levels *Ui) Div_colMax(pos int, val float64) float64 {
-	if !levels.checkGridLock() {
+func (ui *Ui) Div_colMax(pos int, val float64) float64 {
+	if !ui.checkGridLock() {
 		return -1
 	}
 
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 	lv.call.GetInputCol(pos).max = float32(val)
-	return float64(lv.call.data.cols.GetOutput(int(pos))) / float64(levels.win.Cell())
+	return float64(lv.call.data.cols.GetOutput(int(pos))) / float64(ui.win.Cell())
 }
 
-func (levels *Ui) Div_rowMax(pos uint64, val float64) float64 {
-	if !levels.checkGridLock() {
+func (ui *Ui) Div_rowMax(pos int, val float64) float64 {
+	if !ui.checkGridLock() {
 		return -1
 	}
 
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 	lv.call.GetInputRow(int(pos)).max = float32(val)
-	return float64(lv.call.data.rows.GetOutput(int(pos))) / float64(levels.win.Cell())
+	return float64(lv.call.data.rows.GetOutput(int(pos))) / float64(ui.win.Cell())
 }
 
-func (levels *Ui) Div_colResize(pos uint64, name string, val float64) float64 {
-	if !levels.checkGridLock() {
+func (ui *Ui) Div_colResize(pos int, name string, val float64) float64 {
+	if !ui.checkGridLock() {
 		return -1
 	}
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 
 	//if 'resize' exist in layout than read it from there
 	if len(name) == 0 {
@@ -136,14 +136,14 @@ func (levels *Ui) Div_colResize(pos uint64, name string, val float64) float64 {
 	}
 	lv.call.GetInputCol(int(pos)).resize = res
 
-	return float64(lv.call.data.cols.GetOutput(int(pos))) / float64(levels.win.Cell())
+	return float64(lv.call.data.cols.GetOutput(int(pos))) / float64(ui.win.Cell())
 }
 
-func (levels *Ui) Div_rowResize(pos uint64, name string, val float64) float64 {
-	if !levels.checkGridLock() {
+func (ui *Ui) Div_rowResize(pos int, name string, val float64) float64 {
+	if !ui.checkGridLock() {
 		return -1
 	}
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 
 	//if 'resize' exist in layout than read it from there
 	if len(name) == 0 {
@@ -155,36 +155,69 @@ func (levels *Ui) Div_rowResize(pos uint64, name string, val float64) float64 {
 	}
 	lv.call.GetInputRow(int(pos)).resize = res
 
-	return float64(lv.call.data.rows.GetOutput(int(pos))) / float64(levels.win.Cell())
+	return float64(lv.call.data.rows.GetOutput(int(pos))) / float64(ui.win.Cell())
 }
 
-func (levels *Ui) Div_drag(groupName string, id uint64) {
+func (ui *Ui) Div_SpacerRow(x, y, w, h int) {
 
-	lv := levels.GetCall()
+	pl := ui.buff.win.io.GetPalette()
+
+	ui.Div_start(x, y, w, h, "")
+	ui.Paint_line(0, 0, 1, 1, 0,
+		0, 0.5, 1, 0.5,
+		pl.GetGrey(0.3), 0.03)
+	ui.Div_end()
+}
+
+func (ui *Ui) Div_SpacerCol(x, y, w, h int) {
+
+	pl := ui.buff.win.io.GetPalette()
+
+	ui.Div_start(x, y, w, h, "")
+	ui.Paint_line(0, 0, 1, 1, 0,
+		0.5, 0, 0.5, 1,
+		pl.GetGrey(0.3), 0.03)
+	ui.Div_end()
+}
+
+func (ui *Ui) Div_drag(groupName string, id int) {
+
+	lv := ui.GetCall()
 
 	if lv.call.data.touch_active {
-		drag := &levels.drag
+		drag := &ui.drag
 		//set
 		drag.div = lv.call
 		drag.group = groupName
 		drag.id = id
 
 		//paint
-		levels.Paint_rect(0, 0, 1, 1, 0, OsCd{0, 0, 0, 180}, 0) //fade
+		ui.Paint_rect(0, 0, 1, 1, 0, OsCd{0, 0, 0, 180}, 0) //fade
 	}
 }
-func (levels *Ui) Div_drop(groupName string, vertical bool, horizontal bool, inside bool) (uint64, int, bool) {
 
-	lv := levels.GetCall()
+type SA_Drop_POS int
 
-	id := uint64(0)
-	pos := 0
+const (
+	SA_Drop_INSIDE  SA_Drop_POS = 0
+	SA_Drop_V_LEFT  SA_Drop_POS = 1
+	SA_Drop_V_RIGHT SA_Drop_POS = 2
+	SA_Drop_H_LEFT  SA_Drop_POS = 3
+	SA_Drop_H_RIGHT SA_Drop_POS = 4
+)
+
+func (ui *Ui) Div_drop(groupName string, vertical bool, horizontal bool, inside bool) (int, SA_Drop_POS, bool) {
+
+	lv := ui.GetCall()
+
+	id := 0
+	pos := SA_Drop_INSIDE
 	done := false
 
-	touchPos := levels.win.io.touch.pos
+	touchPos := ui.win.io.touch.pos
 	q := lv.call.crop
 
-	drag := &levels.drag
+	drag := &ui.drag
 	if q.Inside(touchPos) && strings.EqualFold(drag.group, groupName) && lv.call != drag.div {
 
 		r := touchPos.Sub(lv.call.crop.Middle())
@@ -194,28 +227,28 @@ func (levels *Ui) Div_drop(groupName string, vertical bool, horizontal bool, ins
 			ary := float32(OsAbs(r.Y)) / float32(lv.call.crop.Size.Y)
 			if arx > ary {
 				if r.X < 0 {
-					pos = 3 //H_LEFT
+					pos = SA_Drop_H_LEFT
 				} else {
-					pos = 4 //H_RIGHT
+					pos = SA_Drop_H_RIGHT
 				}
 			} else {
 				if r.Y < 0 {
-					pos = 1 //V_LEFT
+					pos = SA_Drop_V_LEFT
 				} else {
-					pos = 2 //V_RIGHT
+					pos = SA_Drop_V_RIGHT
 				}
 			}
 		} else if vertical {
 			if r.Y < 0 {
-				pos = 1 //V_LEFT
+				pos = SA_Drop_V_LEFT
 			} else {
-				pos = 2 //V_RIGHT
+				pos = SA_Drop_V_RIGHT
 			}
 		} else if horizontal {
 			if r.X < 0 {
-				pos = 3 //H_LEFT
+				pos = SA_Drop_H_LEFT
 			} else {
-				pos = 4 //H_RIGHT
+				pos = SA_Drop_H_RIGHT
 			}
 		}
 
@@ -235,32 +268,67 @@ func (levels *Ui) Div_drop(groupName string, vertical bool, horizontal bool, ins
 		}
 
 		//paint
-		wx := float64(levels.CellWidth(0.1)) / float64(lv.call.canvas.Size.X)
-		wy := float64(levels.CellWidth(0.1)) / float64(lv.call.canvas.Size.Y)
+		wx := float64(ui.CellWidth(0.1)) / float64(lv.call.canvas.Size.X)
+		wy := float64(ui.CellWidth(0.1)) / float64(lv.call.canvas.Size.Y)
 		switch pos {
-		case 0: //SA_Drop_INSIDE
-			levels.Paint_rect(0, 0, 1, 1, 0, OsCd{0, 0, 0, 180}, 0.03)
+		case SA_Drop_INSIDE:
+			ui.Paint_rect(0, 0, 1, 1, 0, OsCd{0, 0, 0, 180}, 0.03)
 
-		case 1: //SA_Drop_V_LEFT
-			levels.Paint_rect(0, 0, 1, wy, 0, OsCd{0, 0, 0, 180}, 0)
+		case SA_Drop_V_LEFT:
+			ui.Paint_rect(0, 0, 1, wy, 0, OsCd{0, 0, 0, 180}, 0)
 
-		case 2: //SA_Drop_V_RIGHT
-			levels.Paint_rect(0, 1-wy, 1, 1, 0, OsCd{0, 0, 0, 180}, 0)
+		case SA_Drop_V_RIGHT:
+			ui.Paint_rect(0, 1-wy, 1, 1, 0, OsCd{0, 0, 0, 180}, 0)
 
-		case 3: //SA_Drop_H_LEFT
-			levels.Paint_rect(0, 0, wx, 1, 0, OsCd{0, 0, 0, 180}, 0)
+		case SA_Drop_H_LEFT:
+			ui.Paint_rect(0, 0, wx, 1, 0, OsCd{0, 0, 0, 180}, 0)
 
-		case 4: //SA_Drop_H_RIGHT
-			levels.Paint_rect(1-wx, 0, 1, 1, 0, OsCd{0, 0, 0, 180}, 0)
+		case SA_Drop_H_RIGHT:
+			ui.Paint_rect(1-wx, 0, 1, 1, 0, OsCd{0, 0, 0, 180}, 0)
 		}
 
 		id = drag.id
 		//if st.stack.data.touch_end {
-		if levels.win.io.touch.end {
+		if ui.win.io.touch.end {
 			done = true
 		}
 
 	}
 
 	return id, pos, done
+}
+
+func Div_DropMoveElement[T any](array_src *[]T, array_dst *[]T, src int, dst int, pos SA_Drop_POS) {
+
+	//check
+	if src < dst && (pos == SA_Drop_V_LEFT || pos == SA_Drop_H_LEFT) {
+		dst--
+	}
+	if src > dst && (pos == SA_Drop_V_RIGHT || pos == SA_Drop_H_RIGHT) {
+		dst++
+	}
+
+	//move(by swap one-by-one)
+	if array_src == array_dst {
+		for i := src; i < dst; i++ {
+			(*array_dst)[i], (*array_dst)[i+1] = (*array_dst)[i+1], (*array_dst)[i]
+		}
+		for i := src; i > dst; i-- {
+			(*array_dst)[i], (*array_dst)[i-1] = (*array_dst)[i-1], (*array_dst)[i]
+		}
+	} else {
+
+		backup := (*array_src)[src]
+
+		//remove
+		*array_src = append((*array_src)[:src], (*array_src)[src+1:]...)
+
+		//insert
+		if dst < len(*array_dst) {
+			*array_dst = append((*array_dst)[:dst+1], (*array_dst)[dst:]...)
+			(*array_dst)[dst] = backup
+		} else {
+			*array_dst = append(*array_dst, backup)
+		}
+	}
 }

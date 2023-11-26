@@ -33,7 +33,7 @@ type UiLayoutEdit struct {
 type UiLayoutDrag struct {
 	div   *UiLayoutDiv
 	group string
-	id    uint64 //maybe string? ...
+	id    int //maybe string? ...
 }
 
 type Ui struct {
@@ -56,48 +56,48 @@ type Ui struct {
 }
 
 func NewUi(app *UiLayoutApp, win *Win) (*Ui, error) {
-	var levels Ui
-	levels.win = win
-	levels.base_app = app
+	var ui Ui
+	ui.win = win
+	ui.base_app = app
 
-	levels.buff = NewWinPaintBuff(win)
+	ui.buff = NewWinPaintBuff(win)
 
-	levels.AddDialog("", OsV4{}, win)
+	ui.AddDialog("", OsV4{}, win)
 
-	return &levels, nil
+	return &ui, nil
 }
 
-func (levels *Ui) Destroy() {
-	levels.buff.Destroy()
+func (ui *Ui) Destroy() {
+	ui.buff.Destroy()
 
-	for _, l := range levels.dialogs {
+	for _, l := range ui.dialogs {
 		l.Destroy()
 	}
-	levels.dialogs = nil
-	levels.calls = nil
+	ui.dialogs = nil
+	ui.calls = nil
 }
 
-func (levels *Ui) CellWidth(width float64) int {
-	t := int(width * float64(levels.win.Cell())) // cell is ~34
+func (ui *Ui) CellWidth(width float64) int {
+	t := int(width * float64(ui.win.Cell())) // cell is ~34
 	if width > 0 && t <= 0 {
 		t = 1 //at least 1px
 	}
 	return t
 }
 
-func (levels *Ui) Save() {
-	for _, l := range levels.dialogs {
+func (ui *Ui) Save() {
+	for _, l := range ui.dialogs {
 		l.base.Save()
 	}
 }
 
-func (levels *Ui) AddDialog(name string, src_coordMoveCut OsV4, win *Win) {
+func (ui *Ui) AddDialog(name string, src_coordMoveCut OsV4, win *Win) {
 
-	newDialog := NewUiLayoutLevel(name, src_coordMoveCut, levels.base_app, win)
-	levels.dialogs = append(levels.dialogs, newDialog)
+	newDialog := NewUiLayoutLevel(name, src_coordMoveCut, ui.base_app, win)
+	ui.dialogs = append(ui.dialogs, newDialog)
 
 	//disable bottom dialogs
-	for _, l := range levels.calls {
+	for _, l := range ui.calls {
 		enabled := (l == newDialog)
 		div := l.call
 		for div != nil {
@@ -108,26 +108,26 @@ func (levels *Ui) AddDialog(name string, src_coordMoveCut OsV4, win *Win) {
 
 }
 
-func (levels *Ui) StartCall(lev *UiLayoutLevel) {
+func (ui *Ui) StartCall(lev *UiLayoutLevel) {
 	//init level
 	lev.call = lev.base
 
 	//add
-	levels.calls = append(levels.calls, lev)
+	ui.calls = append(ui.calls, lev)
 }
-func (levels *Ui) EndCall() error {
+func (ui *Ui) EndCall() error {
 
-	n := len(levels.calls)
+	n := len(ui.calls)
 	if n > 1 {
-		levels.calls = levels.calls[:n-1]
+		ui.calls = ui.calls[:n-1]
 		return nil
 	}
 
 	return fmt.Errorf("trying to EndCall from root level")
 }
 
-func (levels *Ui) isSomeClose() bool {
-	for _, l := range levels.dialogs {
+func (ui *Ui) isSomeClose() bool {
+	for _, l := range ui.dialogs {
 		if l.use == 0 || l.close {
 			return true
 		}
@@ -135,39 +135,39 @@ func (levels *Ui) isSomeClose() bool {
 	return false
 }
 
-func (levels *Ui) Maintenance() {
+func (ui *Ui) Maintenance() {
 
-	levels.GetBaseDialog().use = 1 //base level is always use
+	ui.GetBaseDialog().use = 1 //base level is always use
 
 	//remove unused or closed
-	if levels.isSomeClose() {
+	if ui.isSomeClose() {
 		var lvls []*UiLayoutLevel
-		for _, l := range levels.dialogs {
+		for _, l := range ui.dialogs {
 			if l.use != 0 && !l.close {
 				lvls = append(lvls, l)
 			}
 		}
-		levels.dialogs = lvls
+		ui.dialogs = lvls
 
 	}
 
 	//layout
-	for _, l := range levels.dialogs {
+	for _, l := range ui.dialogs {
 		l.base.Maintenance()
 		l.use = 0
 	}
 }
 
-func (levels *Ui) ResetGridLocks() {
-	for _, l := range levels.dialogs {
+func (ui *Ui) ResetGridLocks() {
+	for _, l := range ui.dialogs {
 		l.base.ResetGridLock()
 	}
 }
 
-func (levels *Ui) CloseAndAbove(dialog *UiLayoutLevel) {
+func (ui *Ui) CloseAndAbove(dialog *UiLayoutLevel) {
 
 	found := false
-	for _, l := range levels.dialogs {
+	for _, l := range ui.dialogs {
 		if l == dialog {
 			found = true
 		}
@@ -176,40 +176,40 @@ func (levels *Ui) CloseAndAbove(dialog *UiLayoutLevel) {
 		}
 	}
 }
-func (levels *Ui) CloseAll() {
+func (ui *Ui) CloseAll() {
 
-	if len(levels.dialogs) > 1 {
-		levels.CloseAndAbove(levels.dialogs[1])
+	if len(ui.dialogs) > 1 {
+		ui.CloseAndAbove(ui.dialogs[1])
 	}
 }
 
-func (levels *Ui) GetBaseDialog() *UiLayoutLevel {
-	return levels.dialogs[0]
+func (ui *Ui) GetBaseDialog() *UiLayoutLevel {
+	return ui.dialogs[0]
 }
 
-func (levels *Ui) GetCall() *UiLayoutLevel {
-	return levels.calls[len(levels.calls)-1] //last
+func (ui *Ui) GetCall() *UiLayoutLevel {
+	return ui.calls[len(ui.calls)-1] //last
 }
 
-func (levels *Ui) GetLastApp() *UiLayoutApp {
-	return levels.app_calls[len(levels.app_calls)-1] //last
+func (ui *Ui) GetLastApp() *UiLayoutApp {
+	return ui.app_calls[len(ui.app_calls)-1] //last
 }
 
-func (levels *Ui) IsStackTop() bool {
-	return levels.dialogs[len(levels.dialogs)-1] == levels.GetCall() //last dialog
+func (ui *Ui) IsStackTop() bool {
+	return ui.dialogs[len(ui.dialogs)-1] == ui.GetCall() //last dialog
 }
 
-func (levels *Ui) ResetStack() {
-	levels.calls = nil
-	levels.StartCall(levels.GetBaseDialog())
+func (ui *Ui) ResetStack() {
+	ui.calls = nil
+	ui.StartCall(ui.GetBaseDialog())
 
-	levels.app_calls = nil
-	levels.app_calls = append(levels.app_calls, levels.base_app)
+	ui.app_calls = nil
+	ui.app_calls = append(ui.app_calls, ui.base_app)
 }
 
-func (levels *Ui) Find(name string) *UiLayoutLevel {
+func (ui *Ui) Find(name string) *UiLayoutLevel {
 
-	for _, l := range levels.dialogs {
+	for _, l := range ui.dialogs {
 		if l.name == name {
 			return l
 		}
@@ -217,49 +217,49 @@ func (levels *Ui) Find(name string) *UiLayoutLevel {
 	return nil
 }
 
-func (levels *Ui) UpdateTile(win *Win) bool {
+func (ui *Ui) UpdateTile(win *Win) bool {
 
 	redraw := false
 
-	if levels.tile.NeedsRedrawFromSleep(win.io.touch.pos) {
+	if ui.tile.NeedsRedrawFromSleep(win.io.touch.pos) {
 		redraw = true
 	}
-	levels.tile.NextTick()
+	ui.tile.NextTick()
 
 	return redraw
 }
 
-func (levels *Ui) RenderTile(win *Win) {
+func (ui *Ui) RenderTile(win *Win) {
 
-	if levels.tile.IsActive(win.io.touch.pos) {
-		err := win.RenderTile(levels.tile.text, levels.tile.coord, levels.tile.priorUp, levels.tile.cd, win.fonts.Get(SKYALT_FONT_PATH))
+	if ui.tile.IsActive(win.io.touch.pos) {
+		err := win.RenderTile(ui.tile.text, ui.tile.coord, ui.tile.priorUp, ui.tile.cd, win.fonts.Get(SKYALT_FONT_PATH))
 		if err != nil {
 			fmt.Printf("RenderTile() failed: %v\n", err)
 		}
 	}
 }
 
-func (levels *Ui) StartRender() {
+func (ui *Ui) StartRender() {
 
-	levels.UpdateTile(levels.buff.win)
+	ui.UpdateTile(ui.buff.win)
 
-	winRect, _ := levels.win.GetScreenCoord()
-	levels.GetBaseDialog().base.canvas = winRect
-	levels.GetBaseDialog().base.crop = winRect
+	winRect, _ := ui.win.GetScreenCoord()
+	ui.GetBaseDialog().base.canvas = winRect
+	ui.GetBaseDialog().base.crop = winRect
 
 	// close all levels
-	if levels.win.io.keys.shift && levels.win.io.keys.esc {
-		levels.touch.Reset()
-		levels.CloseAll()
-		levels.win.io.keys.esc = false
+	if ui.win.io.keys.shift && ui.win.io.keys.esc {
+		ui.touch.Reset()
+		ui.CloseAll()
+		ui.win.io.keys.esc = false
 	}
 
-	levels.ResetStack()
+	ui.ResetStack()
 
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 	//root.buff.Reset(st.stack.canvas, true) //background
 	//st.buff.Reset(st.stack.canvas) //background
-	levels.buff.Prepare(lv.call.canvas, true)
+	ui.buff.Prepare(lv.call.canvas, true)
 
 	//text/editbox touch_selection bug ..............................
 	//table(range) scroll bug ...
@@ -268,22 +268,22 @@ func (levels *Ui) StartRender() {
 	/*{
 		dbChanged := false
 		for _, db := range root.dbs {
-			if db.lastWriteTicks > levels.buff.lastReset_ticks {
+			if db.lastWriteTicks > ui.buff.lastReset_ticks {
 				dbChanged = true
 			}
 		}
 		if dbChanged {
-			levels.buff.ResetHost()
+			ui.buff.ResetHost()
 		}
 	}*/
 
-	touch := &levels.win.io.touch
-	keys := &levels.win.io.keys
-	edit := &levels.edit
+	touch := &ui.win.io.touch
+	keys := &ui.win.io.keys
+	edit := &ui.edit
 
 	//these need to be ahead of action(for ex: editbox finished in SOFT is too late, need to finished in middle of HARD)
 	if touch.start || touch.end || keys.enter || keys.esc || (keys.hasChanged && edit.uid != nil && edit.tempToValue) /*|| touch.wheel != 0*/ {
-		levels.buff.ResetHost()
+		ui.buff.ResetHost()
 	}
 
 	/*if root.ui.io.keys.hasChanged {
@@ -294,35 +294,35 @@ func (levels *Ui) StartRender() {
 		root.buff.ResetHost()
 	}*/
 
-	if !levels.buff.winRect.Cmp(winRect.Size) {
-		levels.buff.ResetHost()
-		levels.buff.winRect = winRect.Size
+	if !ui.buff.winRect.Cmp(winRect.Size) {
+		ui.buff.ResetHost()
+		ui.buff.winRect = winRect.Size
 	}
 
-	//levels.base_app.Render(true)
+	//ui.base_app.Render(true)
 
-	if levels.buff.win.io.touch.start {
-		levels.touch.Reset()
+	if ui.buff.win.io.touch.start {
+		ui.touch.Reset()
 	}
 
 }
 
-func (levels *Ui) EndRender() {
+func (ui *Ui) EndRender() {
 
-	if levels.buff.win.io.touch.end {
-		levels.touch.Reset()
-		levels.drag.group = ""
+	if ui.buff.win.io.touch.end {
+		ui.touch.Reset()
+		ui.drag.group = ""
 	}
 
 	// tile - redraw If mouse is over tile
-	if levels.tile.IsActive(levels.buff.win.io.touch.pos) {
-		err := levels.buff.win.RenderTile(levels.tile.text, levels.tile.coord, levels.tile.priorUp, levels.tile.cd, levels.buff.win.fonts.Get(SKYALT_FONT_PATH))
+	if ui.tile.IsActive(ui.buff.win.io.touch.pos) {
+		err := ui.buff.win.RenderTile(ui.tile.text, ui.tile.coord, ui.tile.priorUp, ui.tile.cd, ui.buff.win.fonts.Get(SKYALT_FONT_PATH))
 		if err != nil {
 			fmt.Printf("RenderTile() failed: %v\n", err)
 		}
 	}
 
-	levels.Maintenance()
-	//root.levels.Draw()
-	levels.buff.FinalDraw()
+	ui.Maintenance()
+	//root.ui.Draw()
+	ui.buff.FinalDraw()
 }

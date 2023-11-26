@@ -18,47 +18,47 @@ package main
 
 import "errors"
 
-func (levels *Ui) Dialog_close() {
-	levels.CloseAndAbove(levels.GetCall())
+func (ui *Ui) Dialog_close() {
+	ui.CloseAndAbove(ui.GetCall())
 }
 
-func (levels *Ui) Dialog_end() {
+func (ui *Ui) Dialog_end() {
 
 	//fmt.Println(OsTime() - a)
 
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 
 	//close dialog
 	if lv.call.enableInput {
-		winRect, _ := levels.win.GetScreenCoord()
-		outside := winRect.Inside(levels.win.io.touch.pos) && !lv.base.canvas.Inside(levels.win.io.touch.pos)
-		if (levels.win.io.touch.end && outside) || levels.win.io.keys.esc {
-			levels.touch.Reset()
-			levels.CloseAndAbove(lv)
-			levels.win.io.keys.esc = false
+		winRect, _ := ui.win.GetScreenCoord()
+		outside := winRect.Inside(ui.win.io.touch.pos) && !lv.base.canvas.Inside(ui.win.io.touch.pos)
+		if (ui.win.io.touch.end && outside) || ui.win.io.keys.esc {
+			ui.touch.Reset()
+			ui.CloseAndAbove(lv)
+			ui.win.io.keys.esc = false
 		}
 	}
 
-	levels.renderEnd(true)
+	ui.renderEnd(true)
 
-	err := levels.buff.DialogEnd()
+	err := ui.buff.DialogEnd()
 	if err != nil {
 		lv.call.data.app.AddLogErr(err)
 	}
-	/*err := levels.buff.EndLevel()
+	/*err := ui.buff.EndLevel()
 	if err != nil {
 		app.AddLogErr(err)
 	}*/
 
-	err = levels.EndCall()
+	err = ui.EndCall()
 	if err != nil {
 		lv.call.data.app.AddLogErr(err)
 	}
 
 }
 
-func (levels *Ui) Dialog_open(name string, tp uint8) bool {
-	lv := levels.GetCall()
+func (ui *Ui) Dialog_open(name string, tp uint8) bool {
+	lv := ui.GetCall()
 
 	//name
 	if len(name) == 0 {
@@ -66,7 +66,7 @@ func (levels *Ui) Dialog_open(name string, tp uint8) bool {
 	}
 
 	//find
-	act := levels.Find(name)
+	act := ui.Find(name)
 	if act != nil {
 		lv.call.data.app.AddLogErr(errors.New("dialog already opened"))
 		return false //already open
@@ -82,20 +82,20 @@ func (levels *Ui) Dialog_open(name string, tp uint8) bool {
 			src_coordMoveCut = lv.call.crop
 		}
 	case 2:
-		src_coordMoveCut = OsV4{Start: levels.win.io.touch.pos, Size: OsV2{1, 1}}
+		src_coordMoveCut = OsV4{Start: ui.win.io.touch.pos, Size: OsV2{1, 1}}
 	}
 
 	//add
-	levels.AddDialog(name, src_coordMoveCut, levels.win)
-	levels.touch.Reset()
-	levels.win.io.ResetTouchAndKeys()
-	levels.edit.setFirstEditbox = true
+	ui.AddDialog(name, src_coordMoveCut, ui.win)
+	ui.touch.Reset()
+	ui.win.io.ResetTouchAndKeys()
+	ui.edit.setFirstEditbox = true
 
 	return true
 }
 
-func (levels *Ui) Dialog_start(name string) bool {
-	lv := levels.GetCall()
+func (ui *Ui) Dialog_start(name string) bool {
+	lv := ui.GetCall()
 
 	//name
 	if len(name) == 0 {
@@ -103,7 +103,7 @@ func (levels *Ui) Dialog_start(name string) bool {
 	}
 
 	//find
-	lev := levels.Find(name)
+	lev := ui.Find(name)
 	if lev == nil {
 		return false //dialog not open, which is NOT error
 	}
@@ -123,19 +123,19 @@ func (levels *Ui) Dialog_start(name string) bool {
 	}
 
 	//coord
-	winRect, _ := levels.win.GetScreenCoord()
+	winRect, _ := ui.win.GetScreenCoord()
 
-	coord := lev.base.GetLevelSize(winRect, levels.win)
+	coord := lev.base.GetLevelSize(winRect, ui.win)
 	coord = lev.GetCoord(coord, winRect)
 	lev.base.canvas = coord
 	lev.base.crop = coord
 
-	levels.StartCall(lev)
+	ui.StartCall(lev)
 
-	levels.renderStart(0, 0, 1, 1, true)
+	ui.renderStart(0, 0, 1, 1, true)
 	//a = OsTime()
 
-	err := levels.buff.DialogStart(coord) //rewrite buffer with background
+	err := ui.buff.DialogStart(coord) //rewrite buffer with background
 	if err != nil {
 		lv.call.data.app.AddLogErr(err)
 	}

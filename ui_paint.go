@@ -16,29 +16,29 @@ limitations under the License.
 
 package main
 
-func (levels *Ui) getCoord(x, y, w, h float64, margin float64, marginX float64, marginY float64) OsV4 {
+func (ui *Ui) getCoord(x, y, w, h float64, margin float64, marginX float64, marginY float64) OsV4 {
 
-	return levels.GetCall().call.canvas.CutEx(x, y, w, h, levels.CellWidth(margin), levels.CellWidth(marginX), levels.CellWidth(marginY))
+	return ui.GetCall().call.canvas.CutEx(x, y, w, h, ui.CellWidth(margin), ui.CellWidth(marginX), ui.CellWidth(marginY))
 }
 
-func (levels *Ui) Paint_rect(x, y, w, h float64, margin float64, cd OsCd, borderWidth float64) bool {
+func (ui *Ui) Paint_rect(x, y, w, h float64, margin float64, cd OsCd, borderWidth float64) bool {
 
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 	if lv.call == nil || lv.call.crop.IsZero() {
 		return false
 	}
-	levels.buff.AddRect(levels.getCoord(x, y, w, h, margin, 0, 0), cd, levels.CellWidth(borderWidth))
+	ui.buff.AddRect(ui.getCoord(x, y, w, h, margin, 0, 0), cd, ui.CellWidth(borderWidth))
 	return true
 }
 
-func (levels *Ui) Paint_line(x, y, w, h float64, margin float64, sx, sy, ex, ey float64, cd OsCd, width float64) bool {
+func (ui *Ui) Paint_line(x, y, w, h float64, margin float64, sx, sy, ex, ey float64, cd OsCd, width float64) bool {
 
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 	if lv.call == nil || lv.call.crop.IsZero() {
 		return false
 	}
 
-	coord := levels.getCoord(x, y, w, h, margin, 0, 0)
+	coord := ui.getCoord(x, y, w, h, margin, 0, 0)
 	var start OsV2
 	start.X = coord.Start.X + int(float64(coord.Size.X)*sx)
 	start.Y = coord.Start.Y + int(float64(coord.Size.Y)*sy)
@@ -47,36 +47,36 @@ func (levels *Ui) Paint_line(x, y, w, h float64, margin float64, sx, sy, ex, ey 
 	end.X = coord.Start.X + int(float64(coord.Size.X)*ex)
 	end.Y = coord.Start.Y + int(float64(coord.Size.Y)*ey)
 
-	levels.buff.AddLine(start, end, cd, levels.CellWidth(width))
+	ui.buff.AddLine(start, end, cd, ui.CellWidth(width))
 	return true
 }
 
-func (levels *Ui) Paint_circle(x, y, w, h float64, margin float64, sx, sy, rad float64, cd OsCd, borderWidth float64) bool {
+func (ui *Ui) Paint_circle(x, y, w, h float64, margin float64, sx, sy, rad float64, cd OsCd, borderWidth float64) bool {
 
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 	if lv.call == nil || lv.call.crop.IsZero() {
 		return false
 	}
 
-	coord := levels.getCoord(x, y, w, h, margin, 0, 0)
+	coord := ui.getCoord(x, y, w, h, margin, 0, 0)
 	var s OsV2
 	s.X = coord.Start.X + int(float64(coord.Size.X)*sx)
 	s.Y = coord.Start.Y + int(float64(coord.Size.Y)*sy)
-	rr := levels.CellWidth(rad)
+	rr := ui.CellWidth(rad)
 	cq := InitOsQuadMid(s, OsV2{rr * 2, rr * 2})
 
-	levels.buff.AddCircle(cq, cd, levels.CellWidth(borderWidth))
+	ui.buff.AddCircle(cq, cd, ui.CellWidth(borderWidth))
 	return true
 }
 
-func (levels *Ui) Paint_file(x, y, w, h float64, margin float64, url string, cd OsCd, alignV, alignH int, fill bool) bool {
+func (ui *Ui) Paint_file(x, y, w, h float64, margin float64, url string, cd OsCd, alignV, alignH int, fill bool) bool {
 
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 	if lv.call == nil || lv.call.crop.IsZero() {
 		return false
 	}
 
-	coord := levels.getCoord(x, y, w, h, margin, 0, 0)
+	coord := ui.getCoord(x, y, w, h, margin, 0, 0)
 
 	path, err := InitWinMedia(url)
 	if err != nil {
@@ -84,37 +84,37 @@ func (levels *Ui) Paint_file(x, y, w, h float64, margin float64, url string, cd 
 		return false
 	}
 
-	levels.buff.AddImage(path, coord, cd, alignV, alignH, fill)
+	ui.buff.AddImage(path, coord, cd, alignV, alignH, fill)
 
 	return true
 }
 
-func (levels *Ui) Paint_tooltip(x, y, w, h float64, text string) bool {
+func (ui *Ui) Paint_tooltip(x, y, w, h float64, text string) bool {
 
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 	if lv.call == nil || lv.call.crop.IsZero() {
 		return false
 	}
 
 	if lv.call.enableInput {
-		coord := levels.getCoord(x, y, w, h, 0, 0, 0)
+		coord := ui.getCoord(x, y, w, h, 0, 0, 0)
 
 		if coord.HasIntersect(lv.call.crop) {
-			levels.tile.Set(levels.win.io.touch.pos, coord, false, text, levels.win.io.GetPalette().OnB)
+			ui.tile.Set(ui.win.io.touch.pos, coord, false, text, ui.win.io.GetPalette().OnB)
 		}
 	}
 	return true
 }
 
-func (levels *Ui) Paint_cursor(name string) bool {
+func (ui *Ui) Paint_cursor(name string) bool {
 
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 	if lv.call == nil || lv.call.crop.IsZero() {
 		return false
 	}
 
 	if lv.call.enableInput {
-		err := levels.win.PaintCursor(name)
+		err := ui.win.PaintCursor(name)
 		if err != nil {
 			lv.call.data.app.AddLogErr(err)
 			return false

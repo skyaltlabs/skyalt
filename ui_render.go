@@ -21,91 +21,91 @@ import (
 	"fmt"
 )
 
-func (levels *Ui) _render_touchScrollEnabled(packLayout *UiLayoutDiv) (bool, bool) {
+func (ui *Ui) _render_touchScrollEnabled(packLayout *UiLayoutDiv) (bool, bool) {
 
 	//root := app.root
 
 	insideScrollV := false
 	insideScrollH := false
 	if packLayout.data.scrollV.Is() {
-		scrollQuad := packLayout.data.scrollV.GetScrollBackCoordV(packLayout.crop, levels.win)
-		insideScrollV = scrollQuad.Inside(levels.win.io.touch.pos)
+		scrollQuad := packLayout.data.scrollV.GetScrollBackCoordV(packLayout.crop, ui.win)
+		insideScrollV = scrollQuad.Inside(ui.win.io.touch.pos)
 	}
 
 	if packLayout.data.scrollH.Is() {
-		scrollQuad := packLayout.data.scrollH.GetScrollBackCoordH(packLayout.crop, levels.win)
-		insideScrollH = scrollQuad.Inside(levels.win.io.touch.pos)
+		scrollQuad := packLayout.data.scrollH.GetScrollBackCoordH(packLayout.crop, ui.win)
+		insideScrollH = scrollQuad.Inside(ui.win.io.touch.pos)
 	}
 	return insideScrollV, insideScrollH
 }
 
-func (levels *Ui) _render_touchScroll(packLayout *UiLayoutDiv, enableInput bool) {
+func (ui *Ui) _render_touchScroll(packLayout *UiLayoutDiv, enableInput bool) {
 
 	hasScrollV := packLayout.data.scrollV.IsPure()
 	hasScrollH := packLayout.data.scrollH.IsPure()
 
 	if hasScrollV {
 		if enableInput {
-			packLayout.data.scrollV.TouchV(packLayout, levels)
+			packLayout.data.scrollV.TouchV(packLayout, ui)
 		}
 	}
 
 	if hasScrollH {
 		if enableInput {
-			packLayout.data.scrollH.TouchH(hasScrollV, packLayout, levels)
+			packLayout.data.scrollH.TouchH(hasScrollV, packLayout, ui)
 		}
 	}
 }
 
-func (levels *Ui) _renderScroll(packLayout *UiLayoutDiv, showBackground bool) {
+func (ui *Ui) _renderScroll(packLayout *UiLayoutDiv, showBackground bool) {
 
 	if packLayout.data.scrollV.Is() {
-		scrollQuad := packLayout.data.scrollV.GetScrollBackCoordV(packLayout.crop, levels.win)
-		packLayout.data.scrollV.DrawV(scrollQuad, showBackground, levels.buff)
+		scrollQuad := packLayout.data.scrollV.GetScrollBackCoordV(packLayout.crop, ui.win)
+		packLayout.data.scrollV.DrawV(scrollQuad, showBackground, ui.buff)
 	}
 
 	if packLayout.data.scrollH.Is() {
-		scrollQuad := packLayout.data.scrollH.GetScrollBackCoordH(packLayout.crop, levels.win)
-		packLayout.data.scrollH.DrawH(scrollQuad, showBackground, levels.buff)
+		scrollQuad := packLayout.data.scrollH.GetScrollBackCoordH(packLayout.crop, ui.win)
+		packLayout.data.scrollH.DrawH(scrollQuad, showBackground, ui.buff)
 	}
 }
 
-func (levels *Ui) renderStart(rx, ry, rw, rh float64, drawBack bool) {
+func (ui *Ui) renderStart(rx, ry, rw, rh float64, drawBack bool) {
 
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 
 	//st.stack.changed_size = false
 	//st.stack.changed_touch = false
 	//st.stack.changed_key = false
 
 	lv.call.data.Reset() //here because after *dialog* needs to know old size
-	lv.call.UpdateCoord(rx, ry, rw, rh, levels.win)
+	lv.call.UpdateCoord(rx, ry, rw, rh, ui.win)
 
 	enableInput := lv.call.data.touch_enabled
 	if lv.call.parent == nil {
-		enableInput = levels.IsStackTop()
+		enableInput = ui.IsStackTop()
 	} else {
 		enableInput = enableInput && lv.call.parent.enableInput
 	}
-	levels._render_touchScroll(lv.call, enableInput)
+	ui._render_touchScroll(lv.call, enableInput)
 
 	// scroll touch
-	insideScrollV, insideScrollH := levels._render_touchScrollEnabled(lv.call)
+	insideScrollV, insideScrollH := ui._render_touchScrollEnabled(lv.call)
 	overScroll := enableInput && (insideScrollV || insideScrollH)
 	enableInput = enableInput && !insideScrollV && !insideScrollH //can NOT click through
 
-	startTouch := enableInput && levels.win.io.touch.start && !levels.win.io.keys.alt
-	endTouch := enableInput && levels.win.io.touch.end
-	over := enableInput && lv.call.crop.Inside(levels.win.io.touch.pos)
+	startTouch := enableInput && ui.win.io.touch.start && !ui.win.io.keys.alt
+	endTouch := enableInput && ui.win.io.touch.end
+	over := enableInput && lv.call.crop.Inside(ui.win.io.touch.pos)
 	inside := over
 	if inside && startTouch && enableInput {
-		if !levels.touch.IsScrollOrResizeActive() { //if lower resize or scroll is activated than don't rewrite it with higher canvas
-			levels.touch.Set(lv.call, nil, nil, nil)
+		if !ui.touch.IsScrollOrResizeActive() { //if lower resize or scroll is activated than don't rewrite it with higher canvas
+			ui.touch.Set(lv.call, nil, nil, nil)
 		}
 	}
-	touchActiveMove := levels.touch.IsFnMove(lv.call, nil, nil, nil)
+	touchActiveMove := ui.touch.IsFnMove(lv.call, nil, nil, nil)
 
-	if !touchActiveMove && enableInput && levels.touch.IsAnyActive() { // when click and move, other Buttons, etc. are disabled
+	if !touchActiveMove && enableInput && ui.touch.IsAnyActive() { // when click and move, other Buttons, etc. are disabled
 		inside = false
 	}
 
@@ -136,18 +136,18 @@ func (levels *Ui) renderStart(rx, ry, rw, rh float64, drawBack bool) {
 	}*/
 
 	//root.buff.Reset(st.stack.crop, root, drawBack)
-	levels.buff.AddCrop(lv.call.crop)
+	ui.buff.AddCrop(lv.call.crop)
 
-	if levels.win.io.ini.Grid {
-		levels.renderGrid()
+	if ui.win.io.ini.Grid {
+		ui.renderGrid()
 	}
 
 	lv.call.data.touch_enabled = true //reset for next tick
 }
 
-func (levels *Ui) renderGrid() {
+func (ui *Ui) renderGrid() {
 
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 
 	start := lv.call.canvas.Start
 	size := lv.call.canvas.Size
@@ -158,14 +158,14 @@ func (levels *Ui) renderGrid() {
 	px := start.X
 	for _, col := range lv.call.data.cols.outputs {
 		px += int(col)
-		levels.buff.AddLine(OsV2{px, start.Y}, OsV2{px, start.Y + size.Y}, cd, levels.CellWidth(0.03))
+		ui.buff.AddLine(OsV2{px, start.Y}, OsV2{px, start.Y + size.Y}, cd, ui.CellWidth(0.03))
 	}
 
 	//rows
 	py := start.Y
 	for _, row := range lv.call.data.rows.outputs {
 		py += int(row)
-		levels.buff.AddLine(OsV2{start.X, py}, OsV2{start.X + size.X, py}, cd, levels.CellWidth(0.03))
+		ui.buff.AddLine(OsV2{start.X, py}, OsV2{start.X + size.X, py}, cd, ui.CellWidth(0.03))
 	}
 
 	px = start.X
@@ -173,7 +173,7 @@ func (levels *Ui) renderGrid() {
 
 		py = start.Y
 		for y, row := range lv.call.data.rows.outputs {
-			levels.buff.AddText(fmt.Sprintf("[%d, %d]", x, y), OsV4{OsV2{px, py}, OsV2{int(col), int(row)}}, levels.win.fonts.Get(SKYALT_FONT_PATH), cd, levels.win.io.GetDPI()/8, OsV2{1, 1}, nil, true)
+			ui.buff.AddText(fmt.Sprintf("[%d, %d]", x, y), OsV4{OsV2{px, py}, OsV2{int(col), int(row)}}, ui.win.fonts.Get(SKYALT_FONT_PATH), cd, ui.win.io.GetDPI()/8, OsV2{1, 1}, nil, true)
 			py += int(row)
 		}
 
@@ -182,19 +182,19 @@ func (levels *Ui) renderGrid() {
 
 }
 
-func (levels *Ui) renderEnd(baseDiv bool) {
+func (ui *Ui) renderEnd(baseDiv bool) {
 
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 
 	lv.call.gridLock = false
 
 	// show scroll
-	levels.buff.AddCrop(lv.call.CropWithScroll(levels.win))
-	levels._renderScroll(lv.call, lv.call.data.scrollOnScreen)
+	ui.buff.AddCrop(lv.call.CropWithScroll(ui.win))
+	ui._renderScroll(lv.call, lv.call.data.scrollOnScreen)
 
 	if lv.call.parent != nil {
 		lv.call = lv.call.parent
-		levels.buff.AddCrop(lv.call.crop)
+		ui.buff.AddCrop(lv.call.crop)
 	} else {
 		if !baseDiv /*&& (app.debug == nil || app.debug.conn != nil)*/ {
 			lv.call.data.app.AddLogErr(errors.New("div pair corrupted2. Check if every SA_DivStart() has SA_DivEnd(). Check return/continue/break in the middle"))

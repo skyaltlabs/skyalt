@@ -70,9 +70,9 @@ const (
 	SA_DIV_SET_scrollHnarrow = 31
 )
 
-func (levels *Ui) DivInfo_get(cmd uint8, uid float64) float64 {
+func (ui *Ui) DivInfo_get(cmd uint8, uid float64) float64 {
 
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 
 	div := lv.call.FindUid(uid)
 	if div == nil {
@@ -84,33 +84,33 @@ func (levels *Ui) DivInfo_get(cmd uint8, uid float64) float64 {
 		return math.Float64frombits(div.data.hash)
 
 	case SA_DIV_GET_cell:
-		return float64(levels.win.Cell())
+		return float64(ui.win.Cell())
 
 	case SA_DIV_GET_layoutWidth:
-		return float64(div.canvas.Size.X) / float64(levels.win.Cell())
+		return float64(div.canvas.Size.X) / float64(ui.win.Cell())
 	case SA_DIV_GET_layoutHeight:
-		return float64(div.canvas.Size.Y) / float64(levels.win.Cell())
+		return float64(div.canvas.Size.Y) / float64(ui.win.Cell())
 
 	case SA_DIV_GET_screenWidth:
-		return float64(div.crop.Size.X) / float64(levels.win.Cell())
+		return float64(div.crop.Size.X) / float64(ui.win.Cell())
 	case SA_DIV_GET_screenHeight:
-		return float64(div.crop.Size.Y) / float64(levels.win.Cell())
+		return float64(div.crop.Size.Y) / float64(ui.win.Cell())
 
 	case SA_DIV_GET_layoutStartX:
-		return float64(div.data.scrollH.GetWheel()) / float64(levels.win.Cell())
-		//return float64(div.crop.Start.X-div.canvas.Start.X) / float64(levels.win.Cell())
+		return float64(div.data.scrollH.GetWheel()) / float64(ui.win.Cell())
+		//return float64(div.crop.Start.X-div.canvas.Start.X) / float64(ui.win.Cell())
 	case SA_DIV_GET_layoutStartY:
-		return float64(div.data.scrollV.GetWheel()) / float64(levels.win.Cell())
-		//return float64(div.crop.Start.Y-div.canvas.Start.Y) / float64(levels.win.Cell())
+		return float64(div.data.scrollV.GetWheel()) / float64(ui.win.Cell())
+		//return float64(div.crop.Start.Y-div.canvas.Start.Y) / float64(ui.win.Cell())
 
 	case SA_DIV_GET_touch:
 		return OsTrnFloat(div.enableInput, 1, 0)
 
 	case SA_DIV_GET_touchX:
-		rpos := div.GetRelativePos(levels.win.io.touch.pos)
+		rpos := div.GetRelativePos(ui.win.io.touch.pos)
 		return float64(rpos.X) / float64(div.canvas.Size.X)
 	case SA_DIV_GET_touchY:
-		rpos := div.GetRelativePos(levels.win.io.touch.pos)
+		rpos := div.GetRelativePos(ui.win.io.touch.pos)
 		return float64(rpos.Y) / float64(div.canvas.Size.Y)
 
 	case SA_DIV_GET_touchOver:
@@ -124,25 +124,25 @@ func (levels *Ui) DivInfo_get(cmd uint8, uid float64) float64 {
 
 	case SA_DIV_GET_touchStart:
 		if div.enableInput {
-			return OsTrnFloat(levels.win.io.touch.start, 1, 0)
+			return OsTrnFloat(ui.win.io.touch.start, 1, 0)
 		} else {
 			return 0
 		}
 	case SA_DIV_GET_touchWheel:
 		if div.enableInput {
-			return float64(levels.win.io.touch.wheel)
+			return float64(ui.win.io.touch.wheel)
 		} else {
 			return 0
 		}
 	case SA_DIV_GET_touchClicks:
 		if div.enableInput {
-			return float64(levels.win.io.touch.numClicks)
+			return float64(ui.win.io.touch.numClicks)
 		} else {
 			return 0
 		}
 	case SA_DIV_GET_touchForce:
 		if div.enableInput {
-			return OsTrnFloat(levels.win.io.touch.rm, 1, 0)
+			return OsTrnFloat(ui.win.io.touch.rm, 1, 0)
 		} else {
 			return 0
 		}
@@ -153,9 +153,9 @@ func (levels *Ui) DivInfo_get(cmd uint8, uid float64) float64 {
 		return OsTrnFloat(div.data.touch_end, 1, 0)
 
 	case SA_DIV_GET_touchCol:
-		return float64(div.data.cols.GetCloseCell(div.GetRelativePos(levels.win.io.touch.pos).X))
+		return float64(div.data.cols.GetCloseCell(div.GetRelativePos(ui.win.io.touch.pos).X))
 	case SA_DIV_GET_touchRow:
-		return float64(div.data.rows.GetCloseCell(div.GetRelativePos(levels.win.io.touch.pos).Y))
+		return float64(div.data.rows.GetCloseCell(div.GetRelativePos(ui.win.io.touch.pos).Y))
 
 	case SA_DIV_GET_startCol:
 		return float64(div.data.cols.GetCloseCell(div.GetRelativePos(div.crop.Start).X))
@@ -168,9 +168,9 @@ func (levels *Ui) DivInfo_get(cmd uint8, uid float64) float64 {
 		return float64(div.data.rows.GetCloseCell(div.GetRelativePos(div.crop.End()).Y))
 
 	case SA_DIV_GET_scrollVpos:
-		return float64(div.data.scrollV.GetWheel()) / float64(levels.win.Cell())
+		return float64(div.data.scrollV.GetWheel()) / float64(ui.win.Cell())
 	case SA_DIV_GET_scrollHpos:
-		return float64(div.data.scrollH.GetWheel()) / float64(levels.win.Cell())
+		return float64(div.data.scrollH.GetWheel()) / float64(ui.win.Cell())
 
 	case SA_DIV_GET_scrollVshow:
 		return OsTrnFloat(div.data.scrollV.show, 1, 0)
@@ -186,9 +186,9 @@ func (levels *Ui) DivInfo_get(cmd uint8, uid float64) float64 {
 	return -1
 }
 
-func (levels *Ui) DivInfo_set(cmd uint8, val float64, uid float64) float64 {
+func (ui *Ui) DivInfo_set(cmd uint8, val float64, uid float64) float64 {
 
-	lv := levels.GetCall()
+	lv := ui.GetCall()
 
 	div := lv.call.FindUid(uid)
 	if div == nil {
@@ -202,13 +202,13 @@ func (levels *Ui) DivInfo_set(cmd uint8, val float64, uid float64) float64 {
 		return OsTrnFloat(bck, 1, 0)
 
 	case SA_DIV_SET_scrollVpos:
-		bck := float64(div.data.scrollV.GetWheel()) / float64(levels.win.Cell())
-		div.data.scrollV.wheel = int(val * float64(levels.win.Cell()))
+		bck := float64(div.data.scrollV.GetWheel()) / float64(ui.win.Cell())
+		div.data.scrollV.wheel = int(val * float64(ui.win.Cell()))
 		return bck
 
 	case SA_DIV_SET_scrollHpos:
-		bck := float64(div.data.scrollH.GetWheel()) / float64(levels.win.Cell())
-		div.data.scrollH.wheel = int(val * float64(levels.win.Cell()))
+		bck := float64(div.data.scrollH.GetWheel()) / float64(ui.win.Cell())
+		div.data.scrollH.wheel = int(val * float64(ui.win.Cell()))
 		return bck
 
 	case SA_DIV_SET_scrollVshow:
@@ -239,7 +239,7 @@ func (levels *Ui) DivInfo_set(cmd uint8, val float64, uid float64) float64 {
 	case SA_DIV_SET_copyCols:
 		src := div.FindUid(val)
 		if src != nil {
-			div.data.cols.CopySub(&src.data.cols, 0, len(src.data.cols.outputs), levels.win.Cell())
+			div.data.cols.CopySub(&src.data.cols, 0, len(src.data.cols.outputs), ui.win.Cell())
 			return 1
 		}
 		return -1
@@ -247,7 +247,7 @@ func (levels *Ui) DivInfo_set(cmd uint8, val float64, uid float64) float64 {
 	case SA_DIV_SET_copyRows:
 		src := div.FindUid(val)
 		if src != nil {
-			div.data.rows.CopySub(&src.data.rows, 0, len(src.data.rows.outputs), levels.win.Cell())
+			div.data.rows.CopySub(&src.data.rows, 0, len(src.data.rows.outputs), ui.win.Cell())
 			return 1
 		}
 		return -1

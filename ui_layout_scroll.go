@@ -191,17 +191,17 @@ func (scroll *UiLayoutScroll) _GetTempScroll(srcl int, win *Win) int {
 	return win.Cell() * srcl
 }
 
-func (scroll *UiLayoutScroll) IsMove(packLayout *UiLayoutDiv, levels *Ui, wheel_add int, deep int, onlyH bool) bool {
+func (scroll *UiLayoutScroll) IsMove(packLayout *UiLayoutDiv, ui *Ui, wheel_add int, deep int, onlyH bool) bool {
 
-	inside := packLayout.CropWithScroll(levels.buff.win).Inside(levels.buff.win.io.touch.pos)
+	inside := packLayout.CropWithScroll(ui.buff.win).Inside(ui.buff.win.io.touch.pos)
 	if inside {
 
 		//test childs
 		for _, div := range packLayout.childs {
-			if !onlyH && div.data.scrollV.IsMove(div, levels, wheel_add, deep+1, onlyH) {
+			if !onlyH && div.data.scrollV.IsMove(div, ui, wheel_add, deep+1, onlyH) {
 				return deep > 0 //bottom layer must return false(can't scroll, because upper layer can scroll)
 			}
-			if div.data.scrollH.IsMove(div, levels, wheel_add, deep+1, onlyH) {
+			if div.data.scrollH.IsMove(div, ui, wheel_add, deep+1, onlyH) {
 				return deep > 0 //bottom layer must return false(can't scroll, because upper layer can scroll)
 			}
 		}
@@ -215,12 +215,12 @@ func (scroll *UiLayoutScroll) IsMove(packLayout *UiLayoutDiv, levels *Ui, wheel_
 	return false
 }
 
-func (scroll *UiLayoutScroll) TouchV(packLayout *UiLayoutDiv, levels *Ui) {
+func (scroll *UiLayoutScroll) TouchV(packLayout *UiLayoutDiv, ui *Ui) {
 
-	win := levels.buff.win
+	win := ui.buff.win
 
-	canUp := scroll.IsMove(packLayout, levels, -1, 0, false)
-	canDown := scroll.IsMove(packLayout, levels, +1, 0, false)
+	canUp := scroll.IsMove(packLayout, ui, -1, 0, false)
+	canDown := scroll.IsMove(packLayout, ui, +1, 0, false)
 	if win.io.touch.wheel != 0 && !win.io.keys.shift {
 		if (win.io.touch.wheel < 0 && canUp) || (win.io.touch.wheel > 0 && canDown) {
 			if scroll.SetWheel(scroll.GetWheel() + scroll._GetTempScroll(win.io.touch.wheel, win)) {
@@ -229,7 +229,7 @@ func (scroll *UiLayoutScroll) TouchV(packLayout *UiLayoutDiv, levels *Ui) {
 		}
 	}
 
-	if !levels.touch.IsAnyActive() && !win.io.keys.shift {
+	if !ui.touch.IsAnyActive() && !win.io.keys.shift {
 		if win.io.keys.arrowU && canUp {
 			if scroll.SetWheel(scroll.GetWheel() - win.Cell()) {
 				win.io.keys.arrowU = false
@@ -276,7 +276,7 @@ func (scroll *UiLayoutScroll) TouchV(packLayout *UiLayoutDiv, levels *Ui) {
 	sliderFront := scroll._UpdateV(scrollCoord, win)
 	midSlider := sliderFront.Size.Y / 2
 
-	isTouched := levels.touch.IsFnMove(nil, packLayout, nil, nil)
+	isTouched := ui.touch.IsFnMove(nil, packLayout, nil, nil)
 	if win.io.touch.start {
 		isTouched = sliderFront.Inside(win.io.touch.pos)
 		scroll.clickRel = win.io.touch.pos.Y - sliderFront.Start.Y - midSlider // rel to middle of front slide
@@ -296,17 +296,17 @@ func (scroll *UiLayoutScroll) TouchV(packLayout *UiLayoutDiv, levels *Ui) {
 	}
 
 	if isTouched {
-		levels.touch.Set(nil, packLayout, nil, nil)
+		ui.touch.Set(nil, packLayout, nil, nil)
 	}
 
 	scroll.attach = nil //reset
 }
 
-func (scroll *UiLayoutScroll) TouchH(needShiftWheel bool, packLayout *UiLayoutDiv, levels *Ui) {
-	win := levels.buff.win
+func (scroll *UiLayoutScroll) TouchH(needShiftWheel bool, packLayout *UiLayoutDiv, ui *Ui) {
+	win := ui.buff.win
 
-	canLeft := scroll.IsMove(packLayout, levels, -1, 0, win.io.keys.shift)
-	canRight := scroll.IsMove(packLayout, levels, +1, 0, win.io.keys.shift)
+	canLeft := scroll.IsMove(packLayout, ui, -1, 0, win.io.keys.shift)
+	canRight := scroll.IsMove(packLayout, ui, +1, 0, win.io.keys.shift)
 	if win.io.touch.wheel != 0 && (!needShiftWheel || win.io.keys.shift) {
 		if (win.io.touch.wheel < 0 && canLeft) || (win.io.touch.wheel > 0 && canRight) {
 			if scroll.SetWheel(scroll.GetWheel() + scroll._GetTempScroll(win.io.touch.wheel, win)) {
@@ -315,7 +315,7 @@ func (scroll *UiLayoutScroll) TouchH(needShiftWheel bool, packLayout *UiLayoutDi
 		}
 	}
 
-	if !levels.touch.IsAnyActive() && (!needShiftWheel || win.io.keys.shift) {
+	if !ui.touch.IsAnyActive() && (!needShiftWheel || win.io.keys.shift) {
 		if win.io.keys.arrowL && canLeft {
 			if scroll.SetWheel(scroll.GetWheel() - win.Cell()) {
 				win.io.keys.arrowL = false
@@ -362,7 +362,7 @@ func (scroll *UiLayoutScroll) TouchH(needShiftWheel bool, packLayout *UiLayoutDi
 	sliderFront := scroll._UpdateH(scrollCoord.Start, win)
 	midSlider := sliderFront.Size.X / 2
 
-	isTouched := levels.touch.IsFnMove(nil, nil, packLayout, nil)
+	isTouched := ui.touch.IsFnMove(nil, nil, packLayout, nil)
 	if win.io.touch.start {
 		isTouched = sliderFront.Inside(win.io.touch.pos)
 		scroll.clickRel = win.io.touch.pos.X - sliderFront.Start.X - midSlider // rel to middle of front slide
@@ -381,7 +381,7 @@ func (scroll *UiLayoutScroll) TouchH(needShiftWheel bool, packLayout *UiLayoutDi
 	}
 
 	if isTouched {
-		levels.touch.Set(nil, nil, packLayout, nil)
+		ui.touch.Set(nil, nil, packLayout, nil)
 	}
 
 }
