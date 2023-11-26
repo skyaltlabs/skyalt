@@ -55,10 +55,15 @@ type Ui struct {
 	app_calls []*UiLayoutApp
 }
 
-func NewUi(app *UiLayoutApp, win *Win) (*Ui, error) {
+func NewUi(win *Win) (*Ui, error) {
 	var ui Ui
 	ui.win = win
-	ui.base_app = app
+
+	var err error
+	ui.base_app, err = NewUiLayoutApp("base", nil)
+	if err != nil {
+		return nil, fmt.Errorf("NewUiLayoutApp() failed: %w", err)
+	}
 
 	ui.buff = NewWinPaintBuff(win)
 
