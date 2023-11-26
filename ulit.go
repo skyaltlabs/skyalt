@@ -693,3 +693,12 @@ func OsFileListBuild(path string, name string, isDir bool) OsFileList {
 	}
 	return fl
 }
+
+func (fl *OsFileList) FindInSubs(name string, isDir bool) int {
+	for i, f := range fl.Subs {
+		if f.Name == name && f.IsDir == isDir {
+			return i
+		}
+	}
+	return -1
+}
