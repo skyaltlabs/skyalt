@@ -53,9 +53,10 @@ type DiskIndexTable struct {
 
 func (indt *DiskIndexTable) updateDb(db *DiskDb, tname string) error {
 
-	rows, err := db.Read("pragma table_info(" + tname + ");")
+	query := "pragma table_info(" + tname + ");"
+	rows, err := db.Read(query)
 	if err != nil {
-		return fmt.Errorf("Query(%s) failed: %w", err)
+		return fmt.Errorf("Query(%s) failed: %w", query, err)
 	}
 	for rows.Next() {
 		var cid int
@@ -87,7 +88,7 @@ func (indf *DiskIndexFile) updateDb(folder string) error {
 
 	db, err := NewDiskDb(path, false, nil)
 	if err != nil {
-		return fmt.Errorf("NewDiskDb() failed: %w", path, err)
+		return fmt.Errorf("NewDiskDb(%s) failed: %w", path, err)
 	}
 	defer db.Destroy()
 
