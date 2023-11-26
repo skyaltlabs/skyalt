@@ -42,8 +42,12 @@ func (ui *Ui) Div_startEx(x, y, w, h int, rx, ry, rw, rh float64, name string) {
 	//return !st.stack.crop.IsZero()
 }
 
-func (ui *Ui) Div_start(x, y, w, h int, name string) {
+func (ui *Ui) Div_startName(x, y, w, h int, name string) {
 	ui.Div_startEx(x, y, w, h, 0, 0, 1, 1, name)
+}
+
+func (ui *Ui) Div_start(x, y, w, h int) {
+	ui.Div_startName(x, y, w, h, "")
 }
 
 func (ui *Ui) Div_end() {
@@ -162,10 +166,10 @@ func (ui *Ui) Div_SpacerRow(x, y, w, h int) {
 
 	pl := ui.buff.win.io.GetPalette()
 
-	ui.Div_start(x, y, w, h, "")
-	ui.Paint_line(0, 0, 1, 1, 0,
+	ui.Div_start(x, y, w, h)
+	ui.Paint_line(0.01, 0, 0.98, 1, 0,
 		0, 0.5, 1, 0.5,
-		pl.GetGrey(0.3), 0.03)
+		pl.GetGrey(0.5), 0.03)
 	ui.Div_end()
 }
 
@@ -173,10 +177,10 @@ func (ui *Ui) Div_SpacerCol(x, y, w, h int) {
 
 	pl := ui.buff.win.io.GetPalette()
 
-	ui.Div_start(x, y, w, h, "")
-	ui.Paint_line(0, 0, 1, 1, 0,
+	ui.Div_start(x, y, w, h)
+	ui.Paint_line(0, 0.01, 1, 0.98, 0,
 		0.5, 0, 0.5, 1,
-		pl.GetGrey(0.3), 0.03)
+		pl.GetGrey(0.5), 0.03)
 	ui.Div_end()
 }
 
