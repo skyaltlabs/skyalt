@@ -37,7 +37,7 @@ func main() {
 		fmt.Printf("InitSQLiteGlobal() failed: %v\n", err)
 		return
 	}
-	dbs, err := NewDbs("databases")
+	dbs, err := NewDisk("databases")
 	if err != nil {
 		fmt.Printf("NewDbs() failed: %v\n", err)
 		return
@@ -52,6 +52,22 @@ func main() {
 	}
 	defer win.Destroy()
 
+	//UI
+	ui, err := NewUi(win)
+	if err != nil {
+		fmt.Printf("NewUi() failed: %v\n", err)
+		return
+	}
+	defer ui.Destroy()
+
+	//Base app
+	base, err := NewSABase(ui)
+	if err != nil {
+		fmt.Printf("NewSAApp() failed: %v\n", err)
+		return
+	}
+	defer base.Destroy()
+
 	//Main loop
 	run := true
 	for run {
@@ -63,9 +79,14 @@ func main() {
 
 		win.StartRender(OsCd{220, 220, 220, 255})
 
-		dbs.Tick()
-		//time.Sleep(2 * time.Millisecond) //render app ...
+		ui.StartRender()
+		if !base.Render(ui) {
+			run = false
+		}
+		ui.EndRender()
 
 		win.EndRender(true)
+
+		dbs.Tick()
 	}
 }
