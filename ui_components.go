@@ -168,61 +168,100 @@ func (ui *Ui) _compDrawText(coord OsV4, value string, valueOrigEdit string, cd O
 	ui.buff.AddCrop(imgRectBackup)
 }
 
-func (ui *Ui) _buttonBasicStyle(tooltip string) UiComp {
+func (ui *Ui) _buttonBasicStyle(enable bool, tooltip string) UiComp {
 	var style UiComp
 	style.tooltip = tooltip
-	style.enable = true
+	style.enable = enable
 	style.cd = CdPalette_P
 	style.label_alignH = 1
 	style.label_alignV = 1
+	style.image_alignH = 0
+	style.image_alignV = 1
 	return style
 }
 
-func (ui *Ui) Comp_button(x, y, w, h int, label string, tooltip string) bool {
-	ui.Div_start(x, y, w, h, "")
+func (ui *Ui) Comp_button(x, y, w, h int, label string, tooltip string, enable bool) int {
+	ui.Div_start(x, y, w, h)
 
-	style := ui._buttonBasicStyle(tooltip)
+	style := ui._buttonBasicStyle(enable, tooltip)
 	click, rclick := ui.Comp_button_s(&style, label, "", "", 1, false)
 
 	ui.Div_end()
-	return click > 0 || rclick > 0
+	if rclick > 0 {
+		return 2
+	} else if click > 0 {
+		return 1
+	}
+	return 0
 }
 
-func (ui *Ui) Comp_buttonLight(x, y, w, h int, label string, tooltip string) bool {
-	ui.Div_start(x, y, w, h, "")
+func (ui *Ui) Comp_buttonIcon(x, y, w, h int, icon string, tooltip string, enable bool) int {
+	ui.Div_start(x, y, w, h)
 
-	style := ui._buttonBasicStyle(tooltip)
+	style := ui._buttonBasicStyle(enable, tooltip)
+	style.image_alignH = 1
+	click, rclick := ui.Comp_button_s(&style, "", icon, "", 0, false)
+
+	ui.Div_end()
+	if rclick > 0 {
+		return 2
+	} else if click > 0 {
+		return 1
+	}
+	return 0
+}
+
+func (ui *Ui) Comp_buttonLight(x, y, w, h int, label string, tooltip string, enable bool) int {
+	ui.Div_start(x, y, w, h)
+
+	style := ui._buttonBasicStyle(enable, tooltip)
 	click, rclick := ui.Comp_button_s(&style, label, "", "", 0.5, false)
 
 	ui.Div_end()
-	return click > 0 || rclick > 0
+	if rclick > 0 {
+		return 2
+	} else if click > 0 {
+		return 1
+	}
+	return 0
 }
 
-func (ui *Ui) Comp_buttonText(x, y, w, h int, label string, url string, tooltip string, selected bool) bool {
-	ui.Div_start(x, y, w, h, "")
+func (ui *Ui) Comp_buttonText(x, y, w, h int, label string, url string, tooltip string, enable bool, selected bool) int {
+	ui.Div_start(x, y, w, h)
 
-	style := ui._buttonBasicStyle(tooltip)
-	click, rclick := ui.Comp_button_s(&style, label, "", "", OsTrnFloat(selected, 1, 0), false)
+	style := ui._buttonBasicStyle(enable, tooltip)
+	click, rclick := ui.Comp_button_s(&style, label, "", url, OsTrnFloat(selected, 1, 0), false)
 
 	ui.Div_end()
-	return click > 0 || rclick > 0
+	if rclick > 0 {
+		return 2
+	} else if click > 0 {
+		return 1
+	}
+	return 0
 }
 
-func (ui *Ui) Comp_buttonOutlined(x, y, w, h int, label string, url string, tooltip string, selected bool) bool {
-	ui.Div_start(x, y, w, h, "")
+func (ui *Ui) Comp_buttonOutlined(x, y, w, h int, label string, tooltip string, enable bool, selected bool) int {
+	ui.Div_start(x, y, w, h)
 
-	style := ui._buttonBasicStyle(tooltip)
+	style := ui._buttonBasicStyle(enable, tooltip)
 	click, rclick := ui.Comp_button_s(&style, label, "", "", OsTrnFloat(selected, 1, 0), true)
 
 	ui.Div_end()
-	return click > 0 || rclick > 0
+	if rclick > 0 {
+		return 2
+	} else if click > 0 {
+		return 1
+	}
+	return 0
 }
 
-func (ui *Ui) Comp_buttonMenu(x, y, w, h int, label string, url string, icon string, tooltip string, selected bool) bool {
-	ui.Div_start(x, y, w, h, "")
+func (ui *Ui) Comp_buttonMenuIcon(x, y, w, h int, label string, icon string, iconMargin float64, tooltip string, enable bool, selected bool) int {
+	ui.Div_start(x, y, w, h)
 
-	style := ui._buttonBasicStyle(tooltip)
+	style := ui._buttonBasicStyle(enable, tooltip)
 	style.label_alignH = 0
+	style.image_margin = iconMargin
 	if !selected {
 		style.cd = CdPalette_B
 	}
@@ -230,7 +269,16 @@ func (ui *Ui) Comp_buttonMenu(x, y, w, h int, label string, url string, icon str
 	click, rclick := ui.Comp_button_s(&style, label, icon, "", OsTrnFloat(selected, 1, 0), false)
 
 	ui.Div_end()
-	return click > 0 || rclick > 0
+	if rclick > 0 {
+		return 2
+	} else if click > 0 {
+		return 1
+	}
+	return 0
+}
+
+func (ui *Ui) Comp_buttonMenu(x, y, w, h int, label string, tooltip string, enable bool, selected bool) int {
+	return ui.Comp_buttonMenuIcon(x, y, w, h, label, "", 0, tooltip, enable, selected)
 }
 
 func (ui *Ui) Comp_button_s(style *UiComp, value string, icon string, url string, drawBack float64, drawBorder bool) (int, int) {
@@ -321,7 +369,36 @@ func (ui *Ui) Comp_button_s(style *UiComp, value string, icon string, url string
 	return click, rclick
 }
 
-func (ui *Ui) Comp_text(style *UiComp, value string, icon string) int64 {
+func (ui *Ui) Comp_textIcon(x, y, w, h int, label string, icon string, iconMargin float64) {
+	ui.Div_start(x, y, w, h)
+
+	var style UiComp
+	style.enable = true
+	style.cd = CdPalette_B
+	style.label_alignV = 1
+	style.image_alignV = 1
+	style.image_margin = iconMargin
+
+	ui.Comp_text_s(&style, label, icon)
+
+	ui.Div_end()
+}
+
+func (ui *Ui) Comp_text(x, y, w, h int, label string, alignH int) {
+	ui.Div_start(x, y, w, h)
+
+	var style UiComp
+	style.enable = true
+	style.cd = CdPalette_B
+	style.label_alignV = 1
+	style.label_alignH = uint8(alignH)
+
+	ui.Comp_text_s(&style, label, "")
+
+	ui.Div_end()
+}
+
+func (ui *Ui) Comp_text_s(style *UiComp, value string, icon string) {
 
 	pl := ui.buff.win.io.GetPalette()
 	_, onCd := pl.GetCd(style.cd, style.fade, style.enable, false, false)
@@ -340,13 +417,49 @@ func (ui *Ui) Comp_text(style *UiComp, value string, icon string) int64 {
 	}
 
 	ui.Paint_textGrid(InitOsQuad(0, 0, 1, 1), onCd, style, value, "", icon, true, false)
-
-	return 1
 }
 
-func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn *string, valueInOrig string, icon string, ghost string, highlight bool, tempToValue bool) (string, bool, bool, bool) {
+func (ui *Ui) Comp_editbox_desc(description string, description_alignH int, width float64, x, y, w, h int, valueIn interface{}, value_precision int, icon string, ghost string, highlight bool, tempToValue bool) (string, bool, bool, bool) {
 
-	ui.Div_start(x, y, w, h, "")
+	ui.Div_start(x, y, w, h)
+
+	xx := 0
+
+	if width > 0 {
+		//1 row
+		ui.Div_col(0, width)
+		ui.Div_colMax(1, 100)
+		ui.Comp_text(0, 0, 1, 1, description, description_alignH)
+		xx = 1
+	} else {
+		//2 rows
+		ui.Div_colMax(0, 100)
+		ui.Comp_text(0, 0, 1, 1, description, description_alignH)
+	}
+
+	editedValue, active, changed, finished := ui.Comp_editbox(xx, 0, 1, 1, valueIn, value_precision, icon, ghost, highlight, tempToValue)
+
+	ui.Div_end()
+
+	return editedValue, active, changed, finished
+}
+
+func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, value_precision int, icon string, ghost string, highlight bool, tempToValue bool) (string, bool, bool, bool) {
+
+	ui.Div_start(x, y, w, h)
+
+	value := ""
+	switch v := valueIn.(type) {
+	case *float32:
+		value = strconv.FormatFloat(float64(*v), 'f', value_precision, 64)
+	case *float64:
+		value = strconv.FormatFloat(*v, 'f', value_precision, 64)
+	case *int:
+		value = strconv.Itoa(*v)
+	case *string:
+		value = *v
+		//int8/16/32, uint8, byte, etc ...
+	}
 
 	var style UiComp
 	style.enable = true
@@ -354,10 +467,21 @@ func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn *string, valueInOrig string, 
 	style.label_alignH = 0
 	style.label_alignV = 1
 
-	editedValue, active, changed, finished := ui.Comp_edit_s(&style, *valueIn, valueInOrig, icon, ghost, highlight, tempToValue)
+	editedValue, active, changed, finished := ui.Comp_edit_s(&style, value, value, icon, ghost, highlight, tempToValue)
 
-	if changed || finished {
-		*valueIn = editedValue
+	if finished || (tempToValue && changed) {
+		switch v := valueIn.(type) {
+		case *float32:
+			vv, _ := strconv.ParseFloat(editedValue, 64)
+			*v = float32(vv)
+		case *float64:
+			*v, _ = strconv.ParseFloat(editedValue, 64)
+		case *int:
+			*v, _ = strconv.Atoi(editedValue)
+		case *string:
+			*v = editedValue
+			//int8/16/32, uint8, byte, etc ...
+		}
 	}
 
 	ui.Div_end()
@@ -550,7 +674,52 @@ func (ui *Ui) Comp_slider(style *UiComp, value *float64, minValue float64, maxVa
 	return active, (active && old_value != *value), end
 }
 
-func (ui *Ui) Comp_combo(style *UiComp, value int64, optionsIn string) int64 {
+func (ui *Ui) Comp_combo_desc(description string, description_alignH int, width float64, x, y, w, h int, value *int, optionsIn string, tooltip string, enable bool, search bool) bool {
+
+	ui.Div_start(x, y, w, h)
+
+	xx := 0
+
+	if width > 0 {
+		//1 row
+		ui.Div_col(0, width)
+		ui.Div_colMax(1, 100)
+		ui.Comp_text(0, 0, 1, 1, description, description_alignH)
+		xx = 1
+	} else {
+		//2 rows
+		ui.Div_colMax(0, 100)
+		ui.Comp_text(0, 0, 1, 1, description, description_alignH)
+	}
+
+	ret := ui.Comp_combo(xx, 0, 1, 1, value, optionsIn, tooltip, enable, search)
+
+	ui.Div_end()
+
+	return ret
+}
+
+func (ui *Ui) Comp_combo(x, y, w, h int, value *int, optionsIn string, tooltip string, enable bool, search bool) bool {
+
+	//search ...
+
+	ui.Div_start(x, y, w, h)
+
+	var style UiComp
+	style.cd = CdPalette_B
+	style.label_alignV = 1
+	style.enable = enable
+	style.tooltip = tooltip
+
+	ret := ui.Comp_combo_s(&style, *value, optionsIn)
+	changed := ret != *value
+	*value = ret
+
+	ui.Div_end()
+	return changed
+}
+
+func (ui *Ui) Comp_combo_s(style *UiComp, value int, optionsIn string) int {
 
 	lv := ui.GetCall()
 
@@ -559,7 +728,7 @@ func (ui *Ui) Comp_combo(style *UiComp, value int64, optionsIn string) int64 {
 		options = strings.Split(optionsIn, "|")
 	}
 	var valueStr string
-	if value >= 0 && value < int64(len(options)) {
+	if value >= 0 && value < len(options) {
 		valueStr = options[value]
 	}
 
@@ -615,8 +784,8 @@ func (ui *Ui) Comp_combo(style *UiComp, value int64, optionsIn string) int64 {
 			} else {
 				menuSt.cd = CdPalette_B
 			}*/
-			if ui.Comp_buttonMenu(0, i, 1, 1, opt, "", "", "", value == int64(i)) {
-				value = int64(i)
+			if ui.Comp_buttonMenu(0, i, 1, 1, opt, "", true, value == i) > 0 {
+				value = i
 				ui.Dialog_close()
 				break
 			}
@@ -692,7 +861,25 @@ func (ui *Ui) Comp_checkbox(style *UiComp, value float64, label string) float64 
 	return value
 }
 
-func (ui *Ui) Comp_switch(style *UiComp, value bool, label string) bool {
+func (ui *Ui) Comp_switch(x, y, w, h int, value *bool, label string, tooltip string, enable bool) bool {
+
+	ui.Div_start(x, y, w, h)
+
+	var style UiComp
+	style.cd = CdPalette_P
+	style.label_alignV = 1
+	style.enable = enable
+	style.tooltip = tooltip
+
+	ret := ui.Comp_switch_s(&style, *value, label)
+	changed := ret != *value
+	*value = ret
+
+	ui.Div_end()
+	return changed
+}
+
+func (ui *Ui) Comp_switch_s(style *UiComp, value bool, label string) bool {
 
 	lv := ui.GetCall()
 
@@ -742,7 +929,7 @@ func (ui *Ui) Comp_switch(style *UiComp, value bool, label string) bool {
 
 		//text
 		//ui.Paint_textGrid(coordText, pl.GetOnSurface(), style, label, "", "", true, false)
-		ui._compDrawText(coordText, label, "", labelCd, false, false, int(style.image_alignH), int(style.image_alignV), style.label_formating)
+		ui._compDrawText(coordText, label, "", labelCd, false, false, int(style.label_alignH), int(style.label_alignV), style.label_formating)
 
 		coord = coordImg
 
@@ -775,6 +962,23 @@ func (ui *Ui) Comp_switch(style *UiComp, value bool, label string) bool {
 	}
 
 	return value
+}
+
+func (ui *Ui) Comp_image(x, y, w, h int, path string, cd OsCd, margin float64, alignH, alignV int, fill bool) {
+
+	ui.Div_start(x, y, w, h)
+
+	var style UiComp
+	style.enable = true
+	style.image_alignH = uint8(alignH)
+	style.image_alignV = uint8(alignV)
+	style.image_margin = margin
+	style.image_fill = fill
+
+	lv := ui.GetCall()
+	ui._compDrawImage(lv.call.canvas, path, cd, &style)
+
+	ui.Div_end()
 }
 
 /*func (levels *UiLayoutLevels) paint_textWidth(style *UiComp, value string, cursorPos int64, ratioH float64, fontPath string, enableFormating bool) float64 {
