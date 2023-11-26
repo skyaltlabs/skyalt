@@ -25,8 +25,8 @@ import (
 )
 
 type WinMediaPath struct {
-	isAppPath bool
-	path      string
+	isFile bool
+	path   string
 
 	//optional(blob)
 	table  string
@@ -38,12 +38,12 @@ func InitWinMedia(url string) (WinMediaPath, error) {
 	var ip WinMediaPath
 
 	//get type + cut
-	url, ip.isAppPath = strings.CutPrefix(url, "app:")
-	if !ip.isAppPath {
+	url, ip.isFile = strings.CutPrefix(url, "file:")
+	if !ip.isFile {
 		var isDbsPath bool
-		url, isDbsPath = strings.CutPrefix(url, "dbs:")
+		url, isDbsPath = strings.CutPrefix(url, "blob:")
 		if !isDbsPath {
-			return ip, fmt.Errorf("must start with 'dbs:' or 'app:'")
+			return ip, fmt.Errorf("must start with 'file:' or 'blob:'")
 		}
 	}
 
