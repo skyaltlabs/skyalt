@@ -65,7 +65,7 @@ func (ui *Ui) Paint_textGrid(grid OsV4, cd OsCd, style *UiComp, value string, va
 
 	ui.Div_col(grid.Start.X, OsMaxFloat(ui.DivInfo_get(SA_DIV_GET_layoutWidth, 0), ui.Paint_textWidth(style, value, -1, 0, "", style.label_formating))) //+marginX*4+margin*2
 	ui.Div_row(grid.Start.Y, ui.DivInfo_get(SA_DIV_GET_layoutHeight, 0))
-	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, "")
+	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 	//style.Paint(st.stack.canvas, value, valueOrigEdit, selection, edit, icon, icon_margin, enable, app)
 
 	coordImage, coordText := ui._compGetTextImageCoord(lv.call.canvas, 1, style.image_alignH, len(icon) > 0, len(value) > 0)
