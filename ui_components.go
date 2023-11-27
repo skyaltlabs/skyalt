@@ -416,7 +416,7 @@ func (ui *Ui) Comp_text_s(style *UiComp, value string, icon string) {
 		}
 	}
 
-	ui.Paint_textGrid(InitOsQuad(0, 0, 1, 1), onCd, style, value, "", icon, true, false)
+	ui.Paint_textGrid(InitOsV4(0, 0, 1, 1), onCd, style, value, "", icon, true, false)
 }
 
 func (ui *Ui) Comp_editbox_desc(description string, description_alignH int, width float64, x, y, w, h int, valueIn interface{}, value_precision int, icon string, ghost string, highlight bool, tempToValue bool) (string, bool, bool, bool) {
@@ -469,7 +469,7 @@ func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, value_precision 
 
 	editedValue, active, changed, finished := ui.Comp_edit_s(&style, value, value, icon, ghost, highlight, tempToValue)
 
-	if finished || (tempToValue && changed) {
+	if finished || tempToValue {
 		switch v := valueIn.(type) {
 		case *float32:
 			vv, _ := strconv.ParseFloat(editedValue, 64)
@@ -504,7 +504,7 @@ func (ui *Ui) Comp_edit_s(style *UiComp, valueIn string, valueInOrig string, ico
 
 	edit := &ui.edit
 
-	inDiv := lv.call.FindOrCreate("", InitOsQuad(0, 0, 1, 1), ui.GetLastApp())
+	inDiv := lv.call.FindOrCreate("", InitOsV4(0, 0, 1, 1), ui.GetLastApp())
 	this_uid := inDiv //.Hash()
 	edit_uid := edit.uid
 	active := (edit_uid != nil && edit_uid == this_uid)
@@ -536,7 +536,7 @@ func (ui *Ui) Comp_edit_s(style *UiComp, valueIn string, valueInOrig string, ico
 		ui.buff.AddRect(coord, pl.P, w)
 	}
 
-	ui.Paint_textGrid(InitOsQuad(0, 0, 1, 1), onCd, style, value, valueInOrig, icon, true, true)
+	ui.Paint_textGrid(InitOsV4(0, 0, 1, 1), onCd, style, value, valueInOrig, icon, true, true)
 
 	//ghost
 	if len(edit.last_edit) == 0 && len(ghost) > 0 {
@@ -662,7 +662,7 @@ func (ui *Ui) Comp_slider(style *UiComp, value *float64, minValue float64, maxVa
 		ui.buff.AddRect(cqB, cd.SetAlpha(100), 0)
 
 		//thumb(sphere)
-		cqT := InitOsQuadMid(OsV2{cqB.Start.X, coord.Start.Y + coord.Size.Y/2}, OsV2{radPx * 2, radPx * 2})
+		cqT := InitOsV4Mid(OsV2{cqB.Start.X, coord.Start.Y + coord.Size.Y/2}, OsV2{radPx * 2, radPx * 2})
 		ui.buff.AddCircle(cqT, cdThumb, 0)
 
 		//label
