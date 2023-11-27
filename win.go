@@ -200,6 +200,11 @@ func (win *Win) SetProgress(time_sec float32) {
 	win.particles.StartAnim(time_sec)
 }
 
+func IsSpaceActive() bool {
+	state := sdl.GetKeyboardState()
+	return state[sdl.SCANCODE_SPACE] != 0
+}
+
 func IsCtrlActive() bool {
 	state := sdl.GetKeyboardState()
 	return state[sdl.SCANCODE_LCTRL] != 0 || state[sdl.SCANCODE_RCTRL] != 0
@@ -434,6 +439,7 @@ func (win *Win) Event() (bool, bool, error) {
 				keys.forward = val.Keysym.Sym == sdl.K_AC_BACK || (IsCtrlActive() && val.Keysym.Sym == sdl.K_y) || (IsCtrlActive() && IsShiftActive() && val.Keysym.Sym == sdl.K_z)
 
 				keys.tab = val.Keysym.Sym == sdl.K_TAB
+				keys.space = val.Keysym.Sym == sdl.K_SPACE
 
 				keys.delete = val.Keysym.Sym == sdl.K_DELETE
 				keys.backspace = val.Keysym.Sym == sdl.K_BACKSPACE
@@ -580,6 +586,7 @@ func (win *Win) UpdateIO() (bool, bool, error) {
 	io.keys.shift = IsShiftActive()
 	io.keys.alt = IsAltActive()
 	io.keys.ctrl = IsCtrlActive()
+	io.keys.space = IsSpaceActive()
 
 	if io.keys.f2 {
 		io.ini.Stats = !io.ini.Stats // switch
