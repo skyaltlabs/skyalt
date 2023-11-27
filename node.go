@@ -80,7 +80,11 @@ func (fn *NodeFnDef) SetInfiniteInputs(enable bool) {
 type Node struct {
 	Name string
 
-	Pos OsV2
+	Pos            OsV2f
+	pos_start      OsV2f
+	move_active    bool
+	selected       bool
+	selected_cover bool
 
 	FnName     string
 	Parameters map[string]string
@@ -116,6 +120,23 @@ func (node *Node) Destroy() {
 	//for _, out := range node.outputs {
 	//	out.Destroy()
 	//}
+}
+
+func (node *Node) KeyProgessSelection(keys *WinKeys) bool {
+
+	if keys.shift {
+		if node.selected_cover {
+			return true
+		}
+		return node.selected
+	} else if keys.ctrl {
+		if node.selected_cover {
+			return false
+		}
+		return node.selected
+	}
+
+	return node.selected_cover
 }
 
 func (node *Node) SetParam(key, value string) {
@@ -271,17 +292,22 @@ func NewNodes(path string) (*Nodes, error) {
 	if err == nil {
 		err = json.Unmarshal([]byte(js), &nodes.nodes)
 		if err != nil {
-			return nil, fmt.Errorf("Unmarshal() failed: %w", err)
+			fmt.Printf("Unmarshal(%s) failed: %v\n", path, err)
 		}
 	}
 
-	//check ins/outs ranges & all inputs are set ...
+	//check ins/outs ranges & all inputs are set
+	//...
+
+	//add basic nodes
+	nodes.AddFunc(NodeFile_init())
+	nodes.AddFunc(NodeMerge_init())
+	nodes.AddFunc(NodeSelect_init())
 
 	return &nodes, nil
 }
 
-func (nodes *Nodes) Destroy(savePath string) {
-	nodes.Save(savePath)
+func (nodes *Nodes) Destroy() {
 
 	for _, db := range nodes.dbs {
 		db.Destroy()
@@ -310,7 +336,32 @@ func (nodes *Nodes) Save(path string) error {
 	return nil
 }
 
+func (nodes *Nodes) GetNodesRangeCoord() OsV4 {
+	//...
+	return OsV4{}
+}
+
+func (nodes *Nodes) getUniqueName(name string) string {
+
+	if nodes.FindNode(name) == nil {
+		return name
+	}
+
+	i := 1
+	for {
+		nm := fmt.Sprintf("%s_%d", name, i)
+		if nodes.FindNode(nm) == nil {
+			return nm
+		}
+		i++
+	}
+}
+
 func (nodes *Nodes) AddNode(name string, fnDef *NodeFnDef) *Node {
+
+	if name == "" {
+		name = nodes.getUniqueName(fnDef.name)
+	}
 
 	n := nodes.FindNode(name)
 	if n != nil {
@@ -554,17 +605,13 @@ func NodeSelect_exe(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, er
 	return outs, nil
 }
 
-func NodesTest() {
+/*func NodesTest() {
 
 	nds, err := NewNodes("")
 	if err != nil {
 		return
 	}
 	defer nds.Destroy("")
-
-	fOpen := nds.AddFunc(NodeFile_init())
-	//fMerge := nds.AddFunc(NodeMerge_init())
-	fSelect := nds.AddFunc(NodeSelect_init())
 
 	nA := nds.AddNode("a", fOpen)
 	nA.SetParam("path", "7gui.sqlite")
@@ -582,5 +629,4 @@ func NodesTest() {
 	nB.SetParam("query", "SELECT label FROM a.__skyalt__")
 
 	nds.Execute()
-
-}
+}*/
