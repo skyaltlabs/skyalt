@@ -34,7 +34,7 @@ func (ui *Ui) Div_startEx(x, y, w, h int, rx, ry, rw, rh float64, name string) {
 		lv.call.gridLock = true
 	}
 
-	grid := InitOsQuad(x, y, w, h)
+	grid := InitOsV4(x, y, w, h)
 	lv.call = lv.call.FindOrCreate(name, grid, ui.GetLastApp())
 
 	ui.renderStart(rx, ry, rw, rh, false)
