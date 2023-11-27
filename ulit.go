@@ -269,14 +269,18 @@ type OsV4 struct {
 	Size  OsV2
 }
 
-func InitOsQuad(x, y, w, h int) OsV4 {
-
+func InitOsV4(x, y, w, h int) OsV4 {
 	return OsV4{OsV2{x, y}, OsV2{w, h}}
 }
 
-func InitOsQuadMid(mid OsV2, size OsV2) OsV4 {
+func InitOsV4Mid(mid OsV2, size OsV2) OsV4 {
+	return InitOsV4(mid.X-size.X/2, mid.Y-size.Y/2, size.X, size.Y)
+}
 
-	return InitOsQuad(mid.X-size.X/2, mid.Y-size.Y/2, size.X, size.Y)
+func InitOsV4ab(a OsV2, b OsV2) OsV4 {
+	st := OsV2{OsMin(a.X, b.X), OsMin(a.Y, b.Y)}
+	sz := OsV2{OsAbs(a.X - b.X), OsAbs(a.Y - b.Y)}
+	return InitOsV4(st.X, st.Y, sz.X, sz.Y)
 }
 
 func (v OsV4) End() OsV2 {
@@ -300,7 +304,7 @@ func (q OsV4) AddSpaceX(space int) OsV4 {
 	if space > q.Size.X {
 		space = q.Size.X
 	}
-	return InitOsQuad(q.Start.X+space/2, q.Start.Y, q.Size.X-space, q.Size.Y)
+	return InitOsV4(q.Start.X+space/2, q.Start.Y, q.Size.X-space, q.Size.Y)
 }
 
 func (q OsV4) AddSpaceY(space int) OsV4 {
@@ -308,7 +312,7 @@ func (q OsV4) AddSpaceY(space int) OsV4 {
 	if space > q.Size.Y {
 		space = q.Size.Y
 	}
-	return InitOsQuad(q.Start.X, q.Start.Y+space/2, q.Size.X, q.Size.Y-space)
+	return InitOsV4(q.Start.X, q.Start.Y+space/2, q.Size.X, q.Size.Y-space)
 }
 
 func (q OsV4) AddSpace(space int) OsV4 {
@@ -325,7 +329,7 @@ func (q OsV4) Inner(top, bottom, left, right int) OsV4 {
 		top--
 		bottom--
 	}
-	return InitOsQuad(q.Start.X+left, q.Start.Y+top, q.Size.X-(left+right), q.Size.Y-(top+bottom))
+	return InitOsV4(q.Start.X+left, q.Start.Y+top, q.Size.X-(left+right), q.Size.Y-(top+bottom))
 }
 
 func (v OsV4) Middle() OsV2 {
@@ -471,7 +475,7 @@ func (v *OsV4) Relative(q OsV4) (x, y, w, h float32) {
 
 func (v OsV4) Cut(x, y, w, h float64) OsV4 {
 
-	return InitOsQuad(
+	return InitOsV4(
 		v.Start.X+int(float64(v.Size.X)*x),
 		v.Start.Y+int(float64(v.Size.Y)*y),
 		int(float64(v.Size.X)*w),

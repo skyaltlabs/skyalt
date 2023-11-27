@@ -241,7 +241,7 @@ func (b *WinPaintBuff) AddTextBack(rangee OsV2, text string, coord OsV4, font *W
 			Y := coord.Start.Y + coord.Size.Y
 			b.AddRect(OsV4{Start: OsV2{start.X + rng.X, Y - 2}, Size: OsV2{rng.Y, 2}}, cd, 0)
 		} else {
-			c := InitOsQuad(start.X+rng.X, coord.Start.Y, rng.Y-rng.X, coord.Size.Y)
+			c := InitOsV4(start.X+rng.X, coord.Start.Y, rng.Y-rng.X, coord.Size.Y)
 			c = c.AddSpaceY((coord.Size.Y-h)/2 - (h / 2)) //smaller height
 
 			b.AddRect(c, cd, 0)
@@ -264,7 +264,7 @@ func (b *WinPaintBuff) AddTextCursor(text string, coord OsV4, font *WinFont, cd 
 		return OsV4{}, fmt.Errorf("TextCursor().GetPxPos() failed: %w", err)
 	}
 
-	cursorQuad := InitOsQuad(start.X+ex, coord.Start.Y, OsMax(1, cell/15), coord.Size.Y)
+	cursorQuad := InitOsV4(start.X+ex, coord.Start.Y, OsMax(1, cell/15), coord.Size.Y)
 	cursorQuad = cursorQuad.AddSpaceY((coord.Size.Y-h)/2 - (h / 2)) //smaller height
 
 	b.AddRect(cursorQuad, cd, 0)
