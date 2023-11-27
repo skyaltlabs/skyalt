@@ -53,7 +53,7 @@ func main() {
 	defer win.Destroy()
 
 	//UI
-	ui, err := NewUi(win)
+	ui, err := NewUi(win, SABase_GetPathLayout())
 	if err != nil {
 		fmt.Printf("NewUi() failed: %v\n", err)
 		return

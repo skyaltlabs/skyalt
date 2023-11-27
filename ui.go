@@ -16,7 +16,10 @@ limitations under the License.
 
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 type UiLayoutEdit struct {
 	uid, next_uid        *UiLayoutDiv
@@ -55,15 +58,11 @@ type Ui struct {
 	app_calls []*UiLayoutApp
 }
 
-func NewUi(win *Win) (*Ui, error) {
+func NewUi(win *Win, base_app_layout_path string) (*Ui, error) {
 	var ui Ui
 	ui.win = win
 
-	var err error
-	ui.base_app, err = NewUiLayoutApp("base", nil)
-	if err != nil {
-		return nil, fmt.Errorf("NewUiLayoutApp() failed: %w", err)
-	}
+	ui.base_app = NewUiLayoutApp("base", base_app_layout_path)
 
 	ui.buff = NewWinPaintBuff(win)
 
@@ -73,6 +72,9 @@ func NewUi(win *Win) (*Ui, error) {
 }
 
 func (ui *Ui) Destroy() {
+
+	ui.base_app.Destroy()
+
 	ui.buff.Destroy()
 
 	for _, l := range ui.dialogs {
@@ -90,10 +92,21 @@ func (ui *Ui) CellWidth(width float64) int {
 	return t
 }
 
-func (ui *Ui) Save() {
+func (ui *Ui) Save(base_app_layout_path string) {
 	for _, l := range ui.dialogs {
 		l.base.Save()
 	}
+
+	js, err := ui.base_app.Save()
+	if err == nil {
+		err = os.WriteFile(base_app_layout_path, js, 0644)
+		if err != nil {
+			fmt.Printf("WriteFile() failed: %v\n", err)
+		}
+	} else {
+		fmt.Printf("Save() failed: %v\n", err)
+	}
+
 }
 
 func (ui *Ui) AddDialog(name string, src_coordMoveCut OsV4, win *Win) {

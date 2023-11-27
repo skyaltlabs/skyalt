@@ -34,36 +34,29 @@ type UiLayoutAppItem struct {
 	Rows_resize            []UiLayoutAppItemResize
 }
 
-type UiLayoutAppBase struct {
-	Hostname string
-	Items    []*UiLayoutAppItem
-}
-
 type UiLayoutApp struct {
-	settings UiLayoutAppBase //this device
+	items []*UiLayoutAppItem
 
 	name string //only for print logs
 	logs []string
 }
 
-func NewUiLayoutApp(name string, js []byte) (*UiLayoutApp, error) {
+func NewUiLayoutApp(name string, path string) *UiLayoutApp {
 	var app UiLayoutApp
 	app.name = name
 
-	hostname, bases, found_i, err := LayoutApp_parseBases(js)
-	if err != nil {
-		return nil, fmt.Errorf("LayoutApp_parseBases() failed: %w", err)
+	//load from file
+	{
+		js, err := os.ReadFile(path)
+		if err == nil {
+			err = app.Open(js)
+			if err != nil {
+				fmt.Printf("warnning: Open() failed: %v\n", err)
+			}
+		}
 	}
 
-	if found_i < 0 {
-		//new
-		app.settings.Hostname = hostname
-	} else {
-		//copy
-		app.settings = bases[found_i]
-	}
-
-	return &app, nil
+	return &app
 }
 func (app *UiLayoutApp) Destroy() {
 
@@ -80,51 +73,18 @@ func (app *UiLayoutApp) AddLogErr(err error) bool {
 	return false
 }
 
-func LayoutApp_parseBases(js []byte) (string, []UiLayoutAppBase, int, error) {
-
-	var bases []UiLayoutAppBase
-	found_i := -1
-
-	hostname, err := os.Hostname()
+func (app *UiLayoutApp) Open(js []byte) error {
+	//extract
+	err := json.Unmarshal(js, &app.items)
 	if err != nil {
-		return "", nil, -1, fmt.Errorf("Hostname() failed: %w", err)
+		return fmt.Errorf("Unmarshal() failed: %w", err)
 	}
 
-	if len(js) > 0 {
-		//extract
-		err := json.Unmarshal(js, &bases)
-		if err != nil {
-			return "", nil, -1, fmt.Errorf("Unmarshal() failed: %w", err)
-		}
-
-		//find
-		for i, b := range bases {
-			if b.Hostname == hostname {
-				found_i = i
-				break
-			}
-		}
-	}
-
-	return hostname, bases, found_i, nil
+	return nil
 }
 
-func (app *UiLayoutApp) Save(js []byte) ([]byte, error) {
-
-	_, bases, found_i, err := LayoutApp_parseBases(js)
-	if err != nil {
-		return nil, fmt.Errorf("LayoutApp_parseBases() failed: %w", err)
-	}
-
-	if found_i < 0 {
-		//new
-		bases = append(bases, app.settings)
-	} else {
-		//copy
-		bases[found_i] = app.settings
-	}
-
-	file, err := json.MarshalIndent(&bases, "", "")
+func (app *UiLayoutApp) Save() ([]byte, error) {
+	file, err := json.MarshalIndent(&app.items, "", "")
 	if err != nil {
 		return nil, fmt.Errorf("MarshalIndent() failed: %w", err)
 	}
@@ -136,7 +96,7 @@ func (app *UiLayoutApp) FindGlobalScrollHash(hash uint64) *UiLayoutAppItem {
 		return nil
 	}
 
-	for _, it := range app.settings.Items {
+	for _, it := range app.items {
 		if it.Hash == hash {
 			return it
 		}
@@ -156,6 +116,6 @@ func (app *UiLayoutApp) AddGlobalScrollHash(hash uint64) *UiLayoutAppItem {
 	}
 
 	nw := &UiLayoutAppItem{Hash: hash}
-	app.settings.Items = append(app.settings.Items, nw)
+	app.items = append(app.items, nw)
 	return nw
 }
