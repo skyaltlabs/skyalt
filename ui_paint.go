@@ -63,7 +63,7 @@ func (ui *Ui) Paint_circle(x, y, w, h float64, margin float64, sx, sy, rad float
 	s.X = coord.Start.X + int(float64(coord.Size.X)*sx)
 	s.Y = coord.Start.Y + int(float64(coord.Size.Y)*sy)
 	rr := ui.CellWidth(rad)
-	cq := InitOsQuadMid(s, OsV2{rr * 2, rr * 2})
+	cq := InitOsV4Mid(s, OsV2{rr * 2, rr * 2})
 
 	ui.buff.AddCircle(cq, cd, ui.CellWidth(borderWidth))
 	return true
