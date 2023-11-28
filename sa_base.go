@@ -210,7 +210,6 @@ func NewSABase(ui *Ui) (*SABase, error) {
 }
 
 func (base *SABase) reloadTranslations(ui *Ui) error {
-
 	js, err := SATranslations_fromJsonFile("apps/base/translations.json", ui.win.io.ini.Languages)
 	if err != nil {
 		return fmt.Errorf("SATranslations_fromJsonFile() failed: %w", err)
@@ -223,7 +222,6 @@ func (base *SABase) reloadTranslations(ui *Ui) error {
 }
 
 func (base *SABase) Save() {
-
 	//apps
 	for _, a := range base.settings.Apps {
 		if a.nodes != nil {
@@ -252,7 +250,6 @@ func (base *SABase) Save() {
 }
 
 func (base *SABase) Destroy() {
-
 	base.Save()
 
 	//close & save apps
@@ -273,7 +270,6 @@ func SABase_GetPathLayout() string {
 }
 
 func (base *SABase) Render(ui *Ui) bool {
-
 	base.settings.HasApp() //fix range
 
 	ui.renderStart(0, 0, 1, 1, true)
@@ -287,7 +283,6 @@ func (base *SABase) Render(ui *Ui) bool {
 }
 
 func (base *SABase) drawFrame(ui *Ui) {
-
 	icon_rad := 1.7
 
 	ui.Div_rowMax(0, 100)
@@ -299,20 +294,20 @@ func (base *SABase) drawFrame(ui *Ui) {
 	base.drawIcons(ui, icon_rad)
 	ui.Div_end()
 
+	app := &base.settings.Apps[base.settings.Selected]
+	if app.nodes == nil {
+		app.nodes, _ = NewNodes("apps/" + app.Name + "/app.json") //err ...
+	}
+	app.saveIt = true
+
 	if base.settings.HasApp() {
 		ui.Div_startName(1, 0, 1, 1, base.settings.Apps[base.settings.Selected].Name)
-		base.drawApp(ui)
+		base.drawApp(app, ui)
 		ui.Div_end()
 	}
 
 	ui.Div_start(2, 0, 1, 1)
 	{
-		app := &base.settings.Apps[base.settings.Selected]
-		if app.nodes == nil {
-			app.nodes, _ = NewNodes("apps/" + app.Name + "/app.json") //err ...
-		}
-		app.saveIt = true
-
 		ui.Div_colMax(0, 100)
 		ui.Div_rowResize(0, "parameters", 10)
 		ui.Div_rowMax(1, 100)
@@ -329,6 +324,56 @@ func (base *SABase) drawFrame(ui *Ui) {
 	ui.Div_end()
 }
 
-func (base *SABase) drawApp(ui *Ui) {
-	//...
+func (base *SABase) drawParameters(app *SAApp, ui *Ui) {
+	var node *Node
+	for _, n := range app.nodes.nodes {
+		if n.Selected {
+			node = n
+			break
+		}
+	}
+
+	if node == nil {
+		pl := ui.buff.win.io.GetPalette()
+		lv := ui.GetCall()
+		ui._compDrawText(lv.call.canvas, "No node selected", "", pl.GetGrey(0.7), SKYALT_FONT_HEIGHT, false, false, 1, 1, true)
+
+		return
+	}
+
+	ui.Div_colMax(0, 100)
+	ui.Div_row(1, 0.1)
+	ui.Div_rowMax(2, 100)
+
+	ui.Comp_editbox_desc("Name", 0, 2, 0, 0, 1, 1, &node.Name, 0, "", "", false, false) //rename
+
+	ui.Div_SpacerRow(0, 1, 1, 1)
+
+	fn := app.nodes.FindFn(node.FnName)
+	if fn != nil && fn.parameters != nil {
+		ui.Div_start(0, 2, 1, 1)
+		fn.parameters(node, ui)
+		ui.Div_end()
+	}
+}
+
+func (base *SABase) drawApp(app *SAApp, ui *Ui) {
+	for _, n := range app.nodes.nodes {
+		fn := app.nodes.FindFn(n.FnName)
+		if fn != nil && fn.parameters != nil {
+
+			if fn.render != nil {
+				ui.Div_start(n.GridCoord.Start.X, n.GridCoord.Start.Y, n.GridCoord.Size.X, n.GridCoord.Size.Y)
+
+				fn.render(n, ui)
+
+				if n.Selected {
+					ui.Paint_rect(0, 0, 1, 1, 0, base.getYellow(), 0.03)
+				}
+
+				ui.Div_end()
+			}
+
+		}
+	}
 }
