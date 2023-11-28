@@ -101,6 +101,10 @@ type SAApp struct {
 	touch_start        OsV2
 	node_move_selected *Node
 
+	node_connect     *Node
+	node_connect_in  int
+	node_connect_out int
+
 	//selection_start OsV2
 
 	saveIt bool
