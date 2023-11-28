@@ -40,14 +40,13 @@ func (base *SABase) drawCreateNode(app *SAApp, ui *Ui) {
 		keys := &ui.buff.win.io.keys
 		for _, fn := range app.nodes.fns {
 			if search == "" || strings.Contains(fn.name, search) {
-
 				if keys.enter || ui.Comp_buttonMenu(0, y, 1, 1, fn.name, "", true, false) > 0 {
 					n := app.nodes.AddNode("", fn)
 					n.Pos = base.pixelsToNode(app.tab_touchPos, app, ui, lvBaseDiv)
 					ui.Dialog_close()
+					break
 				}
 				y++
-
 			}
 		}
 
@@ -140,12 +139,21 @@ func (base *SABase) drawNode(node *Node, app *SAApp, ui *Ui) bool {
 
 	coord := base.nodeToPixelsCoord(node, app, ui)
 
-	ui.buff.AddRect(coord, pl.P, 0)
+	backCd := pl.P
+	labelCd := pl.OnB
+	if node.Bypass {
+		backCd.A = 100
+		labelCd.A = 100
+	}
 
-	//body
+	ui.buff.AddRect(coord, backCd, 0)
+
+	cd_yellow := OsCd{204, 204, 0, 255} //...
+
+	//select
 	if (app.node_select && node.KeyProgessSelection(&ui.buff.win.io.keys)) || (!app.node_select && node.selected) {
 		cq := coord.AddSpace(ui.CellWidth(-0.1))
-		ui.buff.AddRect(cq, pl.S, ui.CellWidth(0.05)) //selected
+		ui.buff.AddRect(cq, cd_yellow, ui.CellWidth(0.06)) //selected
 	}
 
 	//label
@@ -153,7 +161,7 @@ func (base *SABase) drawNode(node *Node, app *SAApp, ui *Ui) bool {
 		cq := coord
 		cq.Start.X += cq.Size.X + ui.CellWidth(0.1)
 		cq.Size.X = 1000
-		ui._compDrawText(cq, node.Name, "", pl.OnB, SKYALT_FONT_HEIGHT*float64(app.Cam_zoom), false, false, 0, 1, true)
+		ui._compDrawText(cq, node.Name, "", labelCd, SKYALT_FONT_HEIGHT*float64(app.Cam_zoom), false, false, 0, 1, true)
 	}
 
 	inside := coord.GetIntersect(lv.call.crop).Inside(touch.pos)
@@ -335,24 +343,42 @@ func (base *SABase) drawNetwork(app *SAApp, ui *Ui) {
 	}
 
 	//keys actions
-	//H - zoom out to all ...
-	//G - zoom to selected ...
+	keys := &ui.buff.win.io.keys
+	if lv.call.data.over {
+		if keys.delete {
+			for i := len(app.nodes.nodes) - 1; i >= 0; i-- {
+				if app.nodes.nodes[i].selected {
+					app.nodes.nodes = append(app.nodes.nodes[:i], app.nodes.nodes[i+1:]...)
+				}
+			}
+
+		}
+
+		if strings.EqualFold(keys.text, "q") || strings.EqualFold(keys.text, "b") {
+			for _, n := range app.nodes.nodes {
+				if n.selected {
+					n.Bypass = !n.Bypass
+				}
+			}
+		}
+		//H - zoom out to all ...
+		//G - zoom to selected ...
+	}
 
 	//Node context menu: copy / cut / paste / delete ...
 
-	//Node bypass flag ...
-
-	//Node rename ...
+	//Node rename - double click? ...
 
 	//touch actions
 	touch := &ui.buff.win.io.touch
-	keys := &ui.buff.win.io.keys
 	if lv.call.data.over {
 
 		//delete node connection ...
 
 		//connect with 2x click ...
 		//disconnect with 2x click ...
+
+		//connect lines have different colors(db, json) ...
 
 		//nodes: inputs/outputs
 		{
