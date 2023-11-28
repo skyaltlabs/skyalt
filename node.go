@@ -42,36 +42,42 @@ type NodeData struct {
 	//json string
 }
 
-type NodeFuncIO struct {
+const (
+	NodeFn_EDITBOX  = 0
+	NodeFn_SLIDER   = 1
+	NodeFn_SWITCH   = 2
+	NodeFn_CHECKBOX = 3
+)
+
+type NodeFnDefIO struct {
 	name string
 	json bool
 }
 type NodeFnDef struct {
-	name string
-	fn   func(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, error)
+	name       string
+	fn         func(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, error)
+	parameters func(node *Node, ui *Ui)
 
-	params       map[string]string
-	ins          []NodeFuncIO
-	outs         []NodeFuncIO
+	//params       []NodeFnDefParam
+	ins          []NodeFnDefIO
+	outs         []NodeFnDefIO
 	infinite_ins bool
 	//infinite_outs bool
 }
 
-func NewNodeFnDef(name string, fnPtr func(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, error)) *NodeFnDef {
+func NewNodeFnDef(name string, fnPtr func(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, error), parametersPtr func(node *Node, ui *Ui)) *NodeFnDef {
 	var fn NodeFnDef
-	fn.params = make(map[string]string)
 	fn.name = name
 	fn.fn = fnPtr
+	fn.parameters = parametersPtr
 	return &fn
 }
-func (fn *NodeFnDef) AddParam(key, value string) {
-	fn.params[key] = value
-}
+
 func (fn *NodeFnDef) AddInput(name string, isJson bool) {
-	fn.ins = append(fn.ins, NodeFuncIO{name: name, json: isJson})
+	fn.ins = append(fn.ins, NodeFnDefIO{name: name, json: isJson})
 }
 func (fn *NodeFnDef) AddOutput(name string, isJson bool) {
-	fn.outs = append(fn.outs, NodeFuncIO{name: name, json: isJson})
+	fn.outs = append(fn.outs, NodeFnDefIO{name: name, json: isJson})
 }
 func (fn *NodeFnDef) SetInfiniteInputs(enable bool) {
 	fn.infinite_ins = enable
@@ -514,107 +520,6 @@ func (nodes *Nodes) Execute() {
 
 		nodes.Maintenance()
 	}
-}
-
-//--- Example ---
-
-func NodeFile_init() *NodeFnDef {
-	fn := NewNodeFnDef("file", NodeFile_exe)
-	fn.AddParam("path", "")
-	fn.AddParam("alias", "")
-	fn.AddOutput("db", false)
-	return fn
-}
-
-func NodeFile_exe(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, error) {
-
-	path := nodes.disk.folder + "/" + node.Parameters["path"]
-	alias := node.Parameters["alias"]
-
-	if alias == "" {
-		alias = node.Name
-	}
-
-	if path == "" {
-		return nil, fmt.Errorf("path is empty")
-	}
-
-	var outs []NodeData
-	outs = append(outs, NodeData{})
-	outs[0].dbs = append(outs[0].dbs, NodeDataDb{path: path, alias: alias, inMemory: false})
-
-	return outs, nil
-}
-
-func NodeMerge_init() *NodeFnDef {
-	fn := NewNodeFnDef("merge", NodeFile_exe)
-	fn.SetInfiniteInputs(true)
-	fn.AddOutput("db", false)
-	return fn
-}
-
-func NodeMerge_exe(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, error) {
-
-	var outs []NodeData
-	outs = append(outs, NodeData{})
-
-	for _, in := range inputs {
-		outs[0].dbs = append(outs[0].dbs, in.dbs...)
-	}
-
-	return outs, nil
-}
-
-func NodeSelect_init() *NodeFnDef {
-	fn := NewNodeFnDef("select", NodeSelect_exe)
-	fn.AddParam("query", "")
-	fn.AddInput("db", false)
-	fn.AddOutput("db", false)
-	return fn
-}
-
-func NodeSelect_exe(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, error) {
-
-	var outs []NodeData
-	outs = append(outs, NodeData{})
-	outs[0].dbs = append(outs[0].dbs, NodeDataDb{path: node.Name, alias: node.Name, inMemory: true})
-
-	//create :memory db
-	var err error
-	node.db, err = NewDiskDb(node.Name, true, nodes.disk)
-	if err != nil {
-		return nil, fmt.Errorf("NewDiskDb() failed: %w", err)
-	}
-
-	//attach inputs
-	for _, in := range inputs {
-		for _, d := range in.dbs {
-			err = node.db.Attach(d.path, d.alias, d.inMemory)
-			if err != nil {
-				return nil, fmt.Errorf("Attach() failed: %w", err)
-			}
-		}
-	}
-
-	//run query
-	_, err = node.db.Write("CREATE TABLE main.result AS " + node.Parameters["query"])
-	if err != nil {
-		return nil, fmt.Errorf("Write() failed: %w", err)
-	}
-
-	node.db.Commit()
-
-	//maybe DETOUCH
-	for _, in := range inputs {
-		for _, d := range in.dbs {
-			err = node.db.Detach(d.alias)
-			if err != nil {
-				return nil, fmt.Errorf("Attach() failed: %w", err)
-			}
-		}
-	}
-
-	return outs, nil
 }
 
 /*func NodesTest() {
