@@ -55,6 +55,8 @@ func (ui *Ui) Dialog_end() {
 		lv.call.data.app.AddLogErr(err)
 	}
 
+	lv = ui.GetCall()
+	ui.buff.AddCrop(lv.call.CropWithScroll(ui.win))
 }
 
 func (ui *Ui) Dialog_open(name string, tp uint8) bool {
