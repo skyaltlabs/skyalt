@@ -152,6 +152,18 @@ func (b *WinPaintBuff) AddLine(start OsV2, end OsV2, cd OsCd, thick int) {
 	}
 }
 
+func (buf *WinPaintBuff) AddBezier(a OsV2, b OsV2, c OsV2, d OsV2, cd OsCd, thick int, dash bool) {
+	if !buf.skipDraw {
+		buf.win.DrawBezier(a, b, c, d, buf.getDepth(), thick, cd, dash)
+	}
+}
+
+func (buf *WinPaintBuff) AddTringle(a OsV2, b OsV2, c OsV2, cd OsCd) {
+	if !buf.skipDraw {
+		buf.win.DrawTriangle(a, b, c, buf.getDepth(), cd)
+	}
+}
+
 func (b *WinPaintBuff) AddCircle(coord OsV4, cd OsCd, thick int) {
 	if !b.skipDraw {
 		p := coord.Middle()

@@ -856,6 +856,49 @@ func (win *Win) DrawLine(start OsV2, end OsV2, depth int, thick int, cd OsCd) {
 	}
 }
 
+func (win *Win) DrawBezier(a OsV2, b OsV2, c OsV2, d OsV2, depth int, thick int, cd OsCd, dash bool) {
+
+	gl.Color4ub(cd.R, cd.G, cd.B, cd.A)
+
+	aa := a.toV2f()
+	bb := b.toV2f()
+	cc := c.toV2f()
+	dd := d.toV2f()
+
+	gl.LineWidth(float32(thick))
+	if dash {
+		gl.Begin(gl.LINES)
+	} else {
+		gl.Begin(gl.LINE_STRIP)
+	}
+	{
+		N := float64(20)
+		div := 1 / N
+		for t := float64(0); t <= 1.001; t += div {
+			af := aa.MulV(float32(math.Pow(t, 3)))
+			bf := bb.MulV(float32(3 * math.Pow(t, 2) * (1 - t)))
+			cf := cc.MulV(float32(3 * t * math.Pow((1-t), 2)))
+			df := dd.MulV(float32(math.Pow((1 - t), 3)))
+
+			r := af.Add(bf).Add(cf).Add(df)
+
+			gl.Vertex3f(r.X, r.Y, float32(depth))
+		}
+	}
+	gl.End()
+}
+
+func (win *Win) DrawTriangle(a OsV2, b OsV2, c OsV2, depth int, cd OsCd) {
+
+	gl.Color4ub(cd.R, cd.G, cd.B, cd.A)
+
+	gl.Begin(gl.TRIANGLES)
+	gl.Vertex3f(float32(a.X), float32(a.Y), float32(depth))
+	gl.Vertex3f(float32(b.X), float32(b.Y), float32(depth))
+	gl.Vertex3f(float32(c.X), float32(c.Y), float32(depth))
+	gl.End()
+}
+
 func (win *Win) SetTextCursorMove() {
 	win.cursorTimeStart = OsTime()
 	win.cursorTimeEnd = win.cursorTimeStart + 5
