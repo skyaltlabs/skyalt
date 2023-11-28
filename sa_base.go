@@ -359,9 +359,12 @@ func (base *SABase) drawParameters(app *SAApp, ui *Ui) {
 
 func (base *SABase) drawApp(app *SAApp, ui *Ui) {
 	for _, n := range app.nodes.nodes {
+		if n.Bypass {
+			continue
+		}
+
 		fn := app.nodes.FindFn(n.FnName)
 		if fn != nil && fn.parameters != nil {
-
 			if fn.render != nil {
 				ui.Div_start(n.GridCoord.Start.X, n.GridCoord.Start.Y, n.GridCoord.Size.X, n.GridCoord.Size.Y)
 
