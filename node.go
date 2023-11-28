@@ -42,13 +42,6 @@ type NodeData struct {
 	//json string
 }
 
-const (
-	NodeFn_EDITBOX  = 0
-	NodeFn_SLIDER   = 1
-	NodeFn_SWITCH   = 2
-	NodeFn_CHECKBOX = 3
-)
-
 type NodeFnDefIO struct {
 	name string
 	json bool
@@ -58,7 +51,6 @@ type NodeFnDef struct {
 	fn         func(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, error)
 	parameters func(node *Node, ui *Ui)
 
-	//params       []NodeFnDefParam
 	ins          []NodeFnDefIO
 	outs         []NodeFnDefIO
 	infinite_ins bool
@@ -88,7 +80,6 @@ type Node struct {
 
 	Pos            OsV2f
 	pos_start      OsV2f
-	move_active    bool
 	Selected       bool
 	selected_cover bool
 
@@ -125,9 +116,6 @@ func (node *Node) Destroy() {
 	if node.db != nil {
 		node.db.Destroy()
 	}
-	//for _, out := range node.outputs {
-	//	out.Destroy()
-	//}
 }
 
 func (node *Node) KeyProgessSelection(keys *WinKeys) bool {
