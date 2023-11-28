@@ -674,8 +674,7 @@ func (ui *Ui) Comp_slider(style *UiComp, value *float64, minValue float64, maxVa
 	return active, (active && old_value != *value), end
 }
 
-func (ui *Ui) Comp_combo_desc(description string, description_alignH int, width float64, x, y, w, h int, value *int, optionsIn string, tooltip string, enable bool, search bool) bool {
-
+func (ui *Ui) Comp_combo_desc(description string, description_alignH int, width float64, x, y, w, h int, value interface{}, optionsIn string, tooltip string, enable bool, search bool) bool {
 	ui.Div_start(x, y, w, h)
 
 	xx := 0
@@ -699,11 +698,24 @@ func (ui *Ui) Comp_combo_desc(description string, description_alignH int, width 
 	return ret
 }
 
-func (ui *Ui) Comp_combo(x, y, w, h int, value *int, optionsIn string, tooltip string, enable bool, search bool) bool {
+func (ui *Ui) Comp_combo(x, y, w, h int, valueIn interface{}, optionsIn string, tooltip string, enable bool, search bool) bool {
 
 	//search ...
 
 	ui.Div_start(x, y, w, h)
+
+	var value int
+	switch v := valueIn.(type) {
+	case *float32:
+		value = int(*v)
+	case *float64:
+		value = int(*v)
+	case *int:
+		value = *v
+	case *string:
+		value, _ = strconv.Atoi(*v)
+		//int8/16/32, uint8, byte, etc ...
+	}
 
 	var style UiComp
 	style.cd = CdPalette_B
@@ -711,9 +723,21 @@ func (ui *Ui) Comp_combo(x, y, w, h int, value *int, optionsIn string, tooltip s
 	style.enable = enable
 	style.tooltip = tooltip
 
-	ret := ui.Comp_combo_s(&style, *value, optionsIn)
-	changed := ret != *value
-	*value = ret
+	ret := ui.Comp_combo_s(&style, value, optionsIn)
+	changed := ret != value
+	if changed {
+		switch v := valueIn.(type) {
+		case *float32:
+			*v = float32(ret)
+		case *float64:
+			*v = float64(ret)
+		case *int:
+			*v = ret
+		case *string:
+			*v = strconv.Itoa(ret)
+			//int8/16/32, uint8, byte, etc ...
+		}
+	}
 
 	ui.Div_end()
 	return changed
