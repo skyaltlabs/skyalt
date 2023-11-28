@@ -131,6 +131,10 @@ func (base *SABase) getOutputPos(pos int, node *Node, app *SAApp, ui *Ui) (OsV2,
 	return OsV2{}, OsV4{}, OsV4{}
 }
 
+func (base *SABase) getYellow() OsCd {
+	return OsCd{204, 204, 0, 255} //...
+}
+
 func (base *SABase) drawNode(node *Node, app *SAApp, ui *Ui) bool {
 
 	lv := ui.GetCall()
@@ -148,12 +152,10 @@ func (base *SABase) drawNode(node *Node, app *SAApp, ui *Ui) bool {
 
 	ui.buff.AddRect(coord, backCd, 0)
 
-	cd_yellow := OsCd{204, 204, 0, 255} //...
-
 	//select
 	if (app.node_select && node.KeyProgessSelection(&ui.buff.win.io.keys)) || (!app.node_select && node.Selected) {
 		cq := coord.AddSpace(ui.CellWidth(-0.1))
-		ui.buff.AddRect(cq, cd_yellow, ui.CellWidth(0.06)) //selected
+		ui.buff.AddRect(cq, base.getYellow(), ui.CellWidth(0.06)) //selected
 	}
 
 	//label
