@@ -73,7 +73,7 @@ func (ui *Ui) Paint_textGrid(grid OsV4, cd OsCd, style *UiComp, value string, va
 		ui._compDrawImage(coordImage, icon, cd, style)
 	}
 	if editable || len(value) > 0 {
-		ui._compDrawText(coordText, value, valueOrigEdit, cd, selection, editable, int(style.label_alignH), int(style.label_alignV), style.label_formating)
+		ui._compDrawText(coordText, value, valueOrigEdit, cd, SKYALT_FONT_HEIGHT, selection, editable, int(style.label_alignH), int(style.label_alignV), style.label_formating)
 	}
 
 	ui.Div_end()

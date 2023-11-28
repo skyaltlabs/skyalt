@@ -136,7 +136,7 @@ func (ui *Ui) _compDrawImage(coord OsV4, icon string, cd OsCd, style *UiComp) {
 	}
 }
 
-func (ui *Ui) _compDrawText(coord OsV4, value string, valueOrigEdit string, cd OsCd, selection bool, editable bool, alignH int, alignV int, formating bool) {
+func (ui *Ui) _compDrawText(coord OsV4, value string, valueOrigEdit string, cd OsCd, textH float64, selection bool, editable bool, alignH int, alignV int, formating bool) {
 
 	lv := ui.GetCall()
 
@@ -149,7 +149,7 @@ func (ui *Ui) _compDrawText(coord OsV4, value string, valueOrigEdit string, cd O
 	active := ui._UiPaint_Text_line(coord, 0, OsV2{utf8.RuneCountInString(value), 0},
 		value, valueOrigEdit,
 		cd,
-		SKYALT_FONT_HEIGHT, 1, 0, 0,
+		textH, 1, 0, 0,
 		SKYALT_FONT_PATH, alignH, alignV,
 		selection, editable, true, formating)
 
@@ -351,7 +351,7 @@ func (ui *Ui) Comp_button_s(style *UiComp, value string, icon string, url string
 		ui._compDrawImage(coordImage, icon, onCd, style)
 	}
 	if len(value) > 0 {
-		ui._compDrawText(coordText, value, "", onCd, false, false, int(style.label_alignH), int(style.label_alignV), style.label_formating)
+		ui._compDrawText(coordText, value, "", onCd, SKYALT_FONT_HEIGHT, false, false, int(style.label_alignH), int(style.label_alignV), style.label_formating)
 	}
 
 	if style.enable {
@@ -542,7 +542,7 @@ func (ui *Ui) Comp_edit_s(style *UiComp, valueIn string, valueInOrig string, ico
 	if len(edit.last_edit) == 0 && len(ghost) > 0 {
 		//ghostStyle := style
 		//ghostStyle.label_alignH = 1 //center
-		ui._compDrawText(coord, ghost, "", pl.GetGrey(0.7), false, false, 1, int(style.label_alignV), style.label_formating)
+		ui._compDrawText(coord, ghost, "", pl.GetGrey(0.7), SKYALT_FONT_HEIGHT, false, false, 1, int(style.label_alignV), style.label_formating)
 	}
 
 	if style.enable {
@@ -572,7 +572,7 @@ func (ui *Ui) Comp_progress(style *UiComp, value float64, prec int) int64 {
 	ui._compDrawShape(coord, style.shape, cd, 0.09, 0)
 	//label
 	//ui.Paint_textGrid(coord, onCd, style, strconv.FormatFloat(value*100, 'f', prec, 64)+"%", "", "", true, false)
-	ui._compDrawText(coord, strconv.FormatFloat(value*100, 'f', prec, 64)+"%", "", onCd, true, false, int(style.label_alignH), int(style.label_alignV), style.label_formating)
+	ui._compDrawText(coord, strconv.FormatFloat(value*100, 'f', prec, 64)+"%", "", onCd, SKYALT_FONT_HEIGHT, true, false, int(style.label_alignH), int(style.label_alignV), style.label_formating)
 
 	if style.enable {
 		if len(style.tooltip) > 0 {
@@ -763,9 +763,9 @@ func (ui *Ui) Comp_combo_s(style *UiComp, value int, optionsIn string) int {
 	ui.buff.AddRect(coord, onCd, ui.CellWidth(0.03)) //border
 
 	//text
-	ui._compDrawText(coord, valueStr, "", onCd, false, false, int(style.label_alignH), int(style.label_alignV), style.label_formating)
+	ui._compDrawText(coord, valueStr, "", onCd, SKYALT_FONT_HEIGHT, false, false, int(style.label_alignH), int(style.label_alignV), style.label_formating)
 	style.label_alignH = 2
-	ui._compDrawText(coord.AddSpace(ui.CellWidth(0.1)), "▼", "", onCd, false, false, int(style.label_alignH), int(style.label_alignV), style.label_formating)
+	ui._compDrawText(coord.AddSpace(ui.CellWidth(0.1)), "▼", "", onCd, SKYALT_FONT_HEIGHT, false, false, int(style.label_alignH), int(style.label_alignV), style.label_formating)
 
 	//dialog
 	if ui.Dialog_start(nmd) {
@@ -837,7 +837,7 @@ func (ui *Ui) Comp_checkbox(style *UiComp, value float64, label string) float64 
 
 		//text
 		//ui.Paint_textGrid(InitOsQuad(1, 0, 1, 1), pl.GetOnSurface(), style, label, "", "", true, false)
-		ui._compDrawText(coordText, label, "", onCd, false, false, int(style.label_alignH), int(style.label_alignV), style.label_formating)
+		ui._compDrawText(coordText, label, "", onCd, SKYALT_FONT_HEIGHT, false, false, int(style.label_alignH), int(style.label_alignV), style.label_formating)
 
 		coord = coordImg
 
@@ -929,7 +929,7 @@ func (ui *Ui) Comp_switch_s(style *UiComp, value bool, label string) bool {
 
 		//text
 		//ui.Paint_textGrid(coordText, pl.GetOnSurface(), style, label, "", "", true, false)
-		ui._compDrawText(coordText, label, "", labelCd, false, false, int(style.label_alignH), int(style.label_alignV), style.label_formating)
+		ui._compDrawText(coordText, label, "", labelCd, SKYALT_FONT_HEIGHT, false, false, int(style.label_alignH), int(style.label_alignV), style.label_formating)
 
 		coord = coordImg
 
