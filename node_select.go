@@ -19,8 +19,7 @@ package main
 import "fmt"
 
 func NodeSelect_init() *NodeFnDef {
-	fn := NewNodeFnDef("select", NodeSelect_exe, NodeSelect_parameters)
-	//fn.AddParam("query", "", NodeFn_EDITBOX)
+	fn := NewNodeFnDef("select", NodeSelect_exe, NodeSelect_parameters, nil)
 	fn.AddInput("db", false)
 	fn.AddOutput("db", false)
 	return fn
@@ -30,7 +29,7 @@ func NodeSelect_parameters(node *Node, ui *Ui) {
 
 	ui.Div_colMax(0, 100)
 
-	ui.Comp_editbox_desc("Query", 0, 2, 0, 0, 1, 1, node.Parameters["path"], 0, "", "", false, false)
+	ui.Comp_editbox_desc("Query", 0, 2, 0, 0, 1, 1, node.GetParam("query"), 0, "", "", false, false)
 }
 
 func NodeSelect_exe(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, error) {
@@ -57,7 +56,7 @@ func NodeSelect_exe(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, er
 	}
 
 	//run query
-	_, err = node.db.Write("CREATE TABLE main.result AS " + node.Parameters["query"])
+	_, err = node.db.Write("CREATE TABLE main.result AS " + node.GetParamString("query"))
 	if err != nil {
 		return nil, fmt.Errorf("Write() failed: %w", err)
 	}

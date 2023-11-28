@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -50,6 +51,7 @@ type NodeFnDef struct {
 	name       string
 	fn         func(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, error)
 	parameters func(node *Node, ui *Ui)
+	render     func(node *Node, ui *Ui)
 
 	ins          []NodeFnDefIO
 	outs         []NodeFnDefIO
@@ -57,11 +59,12 @@ type NodeFnDef struct {
 	//infinite_outs bool
 }
 
-func NewNodeFnDef(name string, fnPtr func(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, error), parametersPtr func(node *Node, ui *Ui)) *NodeFnDef {
+func NewNodeFnDef(name string, fnPtr func(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, error), parametersPtr func(node *Node, ui *Ui), renderPtr func(node *Node, ui *Ui)) *NodeFnDef {
 	var fn NodeFnDef
 	fn.name = name
 	fn.fn = fnPtr
 	fn.parameters = parametersPtr
+	fn.render = renderPtr
 	return &fn
 }
 
@@ -75,6 +78,10 @@ func (fn *NodeFnDef) SetInfiniteInputs(enable bool) {
 	fn.infinite_ins = enable
 }
 
+type NodeParam struct {
+	Name  string
+	Value string
+}
 type Node struct {
 	Name string
 
@@ -84,7 +91,7 @@ type Node struct {
 	selected_cover bool
 
 	FnName     string
-	Parameters map[string]string
+	Parameters []NodeParam
 	Inputs     []NodeIn
 
 	Bypass bool
@@ -97,6 +104,8 @@ type Node struct {
 
 	err error
 
+	GridCoord OsV4 //for output/render node
+
 	//info_action   string
 	//info_progress float64 //0-1
 
@@ -106,9 +115,10 @@ type Node struct {
 func NewNode(name string, fnName string) *Node {
 	var node Node
 	node.Name = name
-	node.Parameters = make(map[string]string)
+	//node.Parameters = make(map[string]string)
 	node.FnName = fnName
 	node.changed = true
+	node.GridCoord = InitOsV4(0, 0, 1, 1)
 	return &node
 }
 
@@ -135,9 +145,30 @@ func (node *Node) KeyProgessSelection(keys *WinKeys) bool {
 	return node.selected_cover
 }
 
-func (node *Node) SetParam(key, value string) {
-	node.Parameters[key] = value
-	node.changed = true
+func (node *Node) GetParamString(name string) string {
+	//find
+	p := node.GetParam(name)
+	return *p
+}
+func (node *Node) GetParamInt(name string) int {
+	//find
+	p := node.GetParam(name)
+	v, _ := strconv.Atoi(*p)
+	return v
+}
+
+func (node *Node) GetParam(name string) *string {
+	//find
+	for i, p := range node.Parameters {
+		if p.Name == name {
+			return &node.Parameters[i].Value
+		}
+	}
+
+	//add
+	p := NodeParam{Name: name}
+	node.Parameters = append(node.Parameters, p)
+	return node.GetParam(name)
 }
 
 func (node *Node) SetInput(out_pos int, src *Node, src_pos int) {
@@ -309,6 +340,8 @@ func NewNodes(path string) (*Nodes, error) {
 	nodes.AddFunc(NodeFile_init())
 	nodes.AddFunc(NodeMerge_init())
 	nodes.AddFunc(NodeSelect_init())
+
+	nodes.AddFunc(NodeOutText_init())
 
 	return &nodes, nil
 }

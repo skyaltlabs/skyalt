@@ -19,25 +19,23 @@ package main
 import "fmt"
 
 func NodeFile_init() *NodeFnDef {
-	fn := NewNodeFnDef("file", NodeFile_exe, NodeFile_parameterss)
-	//fn.AddParam("path", "", NodeFn_EDITBOX)
-	//fn.AddParam("alias", "", NodeFn_EDITBOX)
+	fn := NewNodeFnDef("file", NodeFile_exe, NodeFile_parameters, nil)
 	fn.AddOutput("db", false)
 	return fn
 }
 
-func NodeFile_parameterss(node *Node, ui *Ui) {
+func NodeFile_parameters(node *Node, ui *Ui) {
 
 	ui.Div_colMax(0, 100)
 
-	ui.Comp_editbox_desc("Path", 0, 2, 0, 0, 1, 1, node.Parameters["path"], 0, "", "", false, false)
-	ui.Comp_editbox_desc("Alias", 0, 2, 0, 1, 1, 1, node.Parameters["alias"], 0, "", "", false, false)
+	ui.Comp_editbox_desc("Path", 0, 2, 0, 0, 1, 1, node.GetParam("path"), 0, "", "", false, false)
+	ui.Comp_editbox_desc("Alias", 0, 2, 0, 1, 1, 1, node.GetParam("alias"), 0, "", "", false, false)
 }
 
 func NodeFile_exe(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, error) {
 
-	path := nodes.disk.folder + "/" + node.Parameters["path"]
-	alias := node.Parameters["alias"]
+	path := nodes.disk.folder + "/" + node.GetParamString("path")
+	alias := node.GetParamString("alias")
 
 	if alias == "" {
 		alias = node.Name

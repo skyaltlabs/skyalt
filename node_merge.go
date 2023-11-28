@@ -17,7 +17,7 @@ limitations under the License.
 package main
 
 func NodeMerge_init() *NodeFnDef {
-	fn := NewNodeFnDef("merge", NodeFile_exe, nil)
+	fn := NewNodeFnDef("merge", NodeFile_exe, nil, nil)
 	fn.SetInfiniteInputs(true)
 	fn.AddOutput("db", false)
 	return fn
