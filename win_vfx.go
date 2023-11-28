@@ -23,7 +23,7 @@ import (
 	"math/rand"
 )
 
-const Win_SKYALT_LOGO = "resources/logo.png"
+const Win_SKYALT_LOGO = "apps/base/resources/logo.png"
 
 type WinParticles struct {
 	win *Win

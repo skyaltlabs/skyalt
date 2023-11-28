@@ -26,7 +26,7 @@ import (
 	"github.com/veandco/go-sdl2/ttf"
 )
 
-const SKYALT_FONT_PATH = "resources/arial.ttf"
+const SKYALT_FONT_PATH = "apps/base/resources/arial.ttf"
 const SKYALT_FONT_HEIGHT = 0.36
 const SKYALT_FONT_TAB_WIDTH = 4
 
