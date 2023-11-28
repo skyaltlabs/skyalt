@@ -187,6 +187,14 @@ func (a OsV2) MulV(t float32) OsV2 {
 	return OsV2{int(float32(a.X) * t), int(float32(a.Y) * t)}
 }
 
+func (a OsV2) Aprox(b OsV2, t float32) OsV2 {
+	return a.Add(b.Sub(a).MulV(t))
+}
+
+func (a OsV2) toV2f() OsV2f {
+	return OsV2f{float32(a.X), float32(a.Y)}
+}
+
 func (a OsV2) Cmp(b OsV2) bool {
 	return a.X == b.X && a.Y == b.Y
 }
