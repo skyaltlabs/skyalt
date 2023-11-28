@@ -43,7 +43,7 @@ type NodeData struct {
 }
 
 type NodeFuncIO struct {
-	key  string
+	name string
 	json bool
 }
 type NodeFnDef struct {
@@ -67,11 +67,11 @@ func NewNodeFnDef(name string, fnPtr func(inputs []NodeData, node *Node, nodes *
 func (fn *NodeFnDef) AddParam(key, value string) {
 	fn.params[key] = value
 }
-func (fn *NodeFnDef) AddInput(key string, json bool) {
-	fn.ins = append(fn.ins, NodeFuncIO{key: key, json: json})
+func (fn *NodeFnDef) AddInput(name string, isJson bool) {
+	fn.ins = append(fn.ins, NodeFuncIO{name: name, json: isJson})
 }
-func (fn *NodeFnDef) AddOutput(key string, json bool) {
-	fn.outs = append(fn.outs, NodeFuncIO{key: key, json: json})
+func (fn *NodeFnDef) AddOutput(name string, isJson bool) {
+	fn.outs = append(fn.outs, NodeFuncIO{name: name, json: isJson})
 }
 func (fn *NodeFnDef) SetInfiniteInputs(enable bool) {
 	fn.infinite_ins = enable
@@ -89,6 +89,8 @@ type Node struct {
 	FnName     string
 	Parameters map[string]string
 	Inputs     []NodeIn
+
+	Bypass bool
 
 	outputs []NodeData
 
@@ -144,8 +146,13 @@ func (node *Node) SetParam(key, value string) {
 	node.changed = true
 }
 
-func (node *Node) AddInput(src *Node, pos int) {
-	node.Inputs = append(node.Inputs, NodeIn{Node: src.Name, Pos: pos})
+func (node *Node) SetInput(out_pos int, src *Node, src_pos int) {
+
+	for i := len(node.Inputs); i <= out_pos; i++ {
+		node.Inputs = append(node.Inputs, NodeIn{})
+	}
+
+	node.Inputs[out_pos] = NodeIn{Node: src.Name, Pos: src_pos}
 	node.changed = true
 }
 
@@ -166,10 +173,16 @@ func (node *Node) RemoveInputs(name string) {
 
 func (node *Node) Execute(nodes *Nodes) {
 	//function
-	fn := nodes.findFn(node.FnName)
+	fn := nodes.FindFn(node.FnName)
 	if fn == nil {
 		node.err = fmt.Errorf("Function(%s) not found", node.FnName)
 		return
+	}
+
+	//free previous db
+	if node.db != nil {
+		node.db.Destroy()
+		node.db = nil
 	}
 
 	//inputs
@@ -192,17 +205,16 @@ func (node *Node) Execute(nodes *Nodes) {
 		ins = append(ins, n.outputs[in.Pos])
 	}
 
-	//free previous db
-	if node.db != nil {
-		node.db.Destroy()
-		node.db = nil
-	}
-
 	//call
-	node.outputs, node.err = fn.fn(ins, node, nodes)
-
-	if node.err != nil {
-		fmt.Printf("Node(%s) has error(%v)\n", node.Name, node.err)
+	if node.Bypass {
+		//copy inputs to outputs
+		node.outputs = make([]NodeData, len(ins))
+		copy(node.outputs, ins)
+	} else {
+		node.outputs, node.err = fn.fn(ins, node, nodes)
+		if node.err != nil {
+			fmt.Printf("Node(%s) has error(%v)\n", node.Name, node.err)
+		}
 	}
 
 	if !nodes.IsRunning() {
@@ -414,7 +426,7 @@ func (nodes *Nodes) AddFunc(fn *NodeFnDef) *NodeFnDef {
 	return fn
 }
 
-func (nodes *Nodes) findFn(name string) *NodeFnDef {
+func (nodes *Nodes) FindFn(name string) *NodeFnDef {
 	for _, fn := range nodes.fns {
 		if fn.name == name {
 			return fn
