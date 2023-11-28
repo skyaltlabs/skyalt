@@ -307,30 +307,28 @@ func (base *SABase) drawFrame(ui *Ui) {
 
 	ui.Div_start(2, 0, 1, 1)
 	{
-		ui.Div_colMax(0, 100)
-		ui.Div_rowResize(0, "parameters", 10)
-		ui.Div_rowMax(1, 100)
-
-		ui.Div_start(0, 0, 1, 1)
-		base.drawParameters(ui)
-		ui.Div_end()
-
-		ui.Div_start(0, 1, 1, 1)
 		app := &base.settings.Apps[base.settings.Selected]
 		if app.nodes == nil {
 			app.nodes, _ = NewNodes("apps/" + app.Name + "/app.json") //err ...
 		}
 		app.saveIt = true
+
+		ui.Div_colMax(0, 100)
+		ui.Div_rowResize(0, "parameters", 10)
+		ui.Div_rowMax(1, 100)
+
+		ui.Div_start(0, 0, 1, 1)
+		base.drawParameters(app, ui)
+		ui.Div_end()
+
+		ui.Div_start(0, 1, 1, 1)
 		base.drawNetwork(app, ui)
 		ui.Div_end()
+
 	}
 	ui.Div_end()
 }
 
 func (base *SABase) drawApp(ui *Ui) {
-	//...
-}
-
-func (base *SABase) drawParameters(ui *Ui) {
 	//...
 }
