@@ -198,7 +198,7 @@ func (base *SABase) drawNode(node *Node, app *SAApp, ui *Ui) bool {
 }
 
 func (base *SABase) drawConnection(start OsV2, end OsV2, ui *Ui) {
-	sp := ui.win.Cell() / 2
+	//sp := ui.win.Cell() / 2
 
 	pl := ui.buff.win.io.GetPalette()
 	cd := pl.GetGrey(0.5)
@@ -207,8 +207,8 @@ func (base *SABase) drawConnection(start OsV2, end OsV2, ui *Ui) {
 	ui.buff.AddBezier(start, OsV2{start.X, mid.Y}, OsV2{end.X, mid.Y}, end, cd, ui.CellWidth(0.03), false)
 	//ui.buff.AddLine(start, end, cd, ui.CellWidth(0.03))
 
-	t := sp / 5
-	ui.buff.AddTringle(end, end.Add(OsV2{-t, t}), end.Add(OsV2{t, t}), pl.GetGrey(0.5)) //arrow
+	//t := sp / 5
+	//ui.buff.AddTringle(end, end.Add(OsV2{-t, t}), end.Add(OsV2{t, t}), pl.GetGrey(0.5)) //arrow
 }
 
 func (base *SABase) drawNodeConnection(outNode *Node, inNode *Node, outPos int, inPos int, app *SAApp, ui *Ui) {
