@@ -151,7 +151,7 @@ func (base *SABase) drawNode(node *Node, app *SAApp, ui *Ui) bool {
 	cd_yellow := OsCd{204, 204, 0, 255} //...
 
 	//select
-	if (app.node_select && node.KeyProgessSelection(&ui.buff.win.io.keys)) || (!app.node_select && node.selected) {
+	if (app.node_select && node.KeyProgessSelection(&ui.buff.win.io.keys)) || (!app.node_select && node.Selected) {
 		cq := coord.AddSpace(ui.CellWidth(-0.1))
 		ui.buff.AddRect(cq, cd_yellow, ui.CellWidth(0.06)) //selected
 	}
@@ -347,7 +347,7 @@ func (base *SABase) drawNetwork(app *SAApp, ui *Ui) {
 	if lv.call.data.over {
 		if keys.delete {
 			for i := len(app.nodes.nodes) - 1; i >= 0; i-- {
-				if app.nodes.nodes[i].selected {
+				if app.nodes.nodes[i].Selected {
 					app.nodes.nodes = append(app.nodes.nodes[:i], app.nodes.nodes[i+1:]...)
 				}
 			}
@@ -356,7 +356,7 @@ func (base *SABase) drawNetwork(app *SAApp, ui *Ui) {
 
 		if strings.EqualFold(keys.text, "q") || strings.EqualFold(keys.text, "b") {
 			for _, n := range app.nodes.nodes {
-				if n.selected {
+				if n.Selected {
 					n.Bypass = !n.Bypass
 				}
 			}
@@ -419,11 +419,11 @@ func (base *SABase) drawNetwork(app *SAApp, ui *Ui) {
 			app.node_move_selected = clickedNode
 
 			//click on un-selected => de-select all & select only current
-			if !clickedNode.selected {
+			if !clickedNode.Selected {
 				for _, n := range app.nodes.nodes {
-					n.selected = false
+					n.Selected = false
 				}
-				clickedNode.selected = true
+				clickedNode.Selected = true
 			}
 		}
 		if app.node_move {
@@ -434,7 +434,7 @@ func (base *SABase) drawNetwork(app *SAApp, ui *Ui) {
 			r.Y = float32(p.Y) / float32(app.Cam_zoom) / float32(cell)
 
 			for _, n := range app.nodes.nodes {
-				if n.selected {
+				if n.Selected {
 					n.Pos = n.pos_start.Add(r)
 				}
 			}
@@ -497,15 +497,15 @@ func (base *SABase) drawNetwork(app *SAApp, ui *Ui) {
 		if app.node_move && app.node_move_selected != nil {
 			if app.touch_start.Distance(touch.pos) < float32(ui.win.Cell())/5 {
 				for _, n := range app.nodes.nodes {
-					n.selected = false
+					n.Selected = false
 				}
-				app.node_move_selected.selected = true
+				app.node_move_selected.Selected = true
 			}
 		}
 
 		if app.node_select {
 			for _, n := range app.nodes.nodes {
-				n.selected = n.KeyProgessSelection(keys)
+				n.Selected = n.KeyProgessSelection(keys)
 			}
 		}
 

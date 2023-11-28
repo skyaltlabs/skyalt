@@ -83,7 +83,7 @@ type Node struct {
 	Pos            OsV2f
 	pos_start      OsV2f
 	move_active    bool
-	selected       bool
+	Selected       bool
 	selected_cover bool
 
 	FnName     string
@@ -130,12 +130,12 @@ func (node *Node) KeyProgessSelection(keys *WinKeys) bool {
 		if node.selected_cover {
 			return true
 		}
-		return node.selected
+		return node.Selected
 	} else if keys.ctrl {
 		if node.selected_cover {
 			return false
 		}
-		return node.selected
+		return node.Selected
 	}
 
 	return node.selected_cover
