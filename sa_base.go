@@ -345,7 +345,13 @@ func (base *SABase) drawParameters(app *SAApp, ui *Ui) {
 	ui.Div_row(1, 0.1)
 	ui.Div_rowMax(2, 100)
 
-	ui.Comp_editbox_desc("Name", 0, 2, 0, 0, 1, 1, &node.Name, 0, "", "", false, false) //rename
+	ui.Div_start(0, 0, 1, 1)
+	{
+		ui.Div_colMax(0, 100)
+		ui.Comp_editbox_desc("Name", 0, 2, 0, 0, 1, 1, &node.Name, 0, "", "", false, false) //rename
+		ui.Comp_switch(1, 0, 1, 1, &node.Bypass, true, "", "Bypass", true)
+	}
+	ui.Div_end()
 
 	ui.Div_SpacerRow(0, 1, 1, 1)
 
@@ -373,6 +379,8 @@ func (base *SABase) drawApp(app *SAApp, ui *Ui) {
 				if n.Selected {
 					ui.Paint_rect(0, 0, 1, 1, 0, base.getYellow(), 0.03)
 				}
+
+				//alt+click => select node and zoom_in network ...
 
 				ui.Div_end()
 			}
