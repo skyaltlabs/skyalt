@@ -885,7 +885,7 @@ func (ui *Ui) Comp_checkbox(style *UiComp, value float64, label string) float64 
 	return value
 }
 
-func (ui *Ui) Comp_switch(x, y, w, h int, value *bool, label string, tooltip string, enable bool) bool {
+func (ui *Ui) Comp_switch(x, y, w, h int, value *bool, reverseValue bool, label string, tooltip string, enable bool) bool {
 
 	ui.Div_start(x, y, w, h)
 
@@ -895,9 +895,12 @@ func (ui *Ui) Comp_switch(x, y, w, h int, value *bool, label string, tooltip str
 	style.enable = enable
 	style.tooltip = tooltip
 
-	ret := ui.Comp_switch_s(&style, *value, label)
-	changed := ret != *value
-	*value = ret
+	orig := OsTrnBool(reverseValue, !*value, *value)
+
+	ret := ui.Comp_switch_s(&style, orig, label)
+	changed := (ret != orig)
+
+	*value = OsTrnBool(reverseValue, !ret, ret)
 
 	ui.Div_end()
 	return changed
