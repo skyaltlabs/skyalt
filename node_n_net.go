@@ -117,7 +117,7 @@ func (node *Node) drawApp(ui *Ui) {
 		}
 
 		fn := node.FindFn(n.FnName)
-		if fn != nil && fn.render != nil {
+		if fn != nil && fn.render != nil && node.err == nil {
 			ui.Div_start(n.Grid_x, n.Grid_y, n.Grid_w, n.Grid_h)
 			{
 				fn.render(n, ui)
@@ -229,7 +229,7 @@ func (node *Node) drawAppDevMode(ui *Ui) {
 			}
 			ui.Div_end()
 
-			if ui.Comp_button(i, 0, 1, 1, fmt.Sprintf("%d", i), "", true) > 0 {
+			if ui.Comp_buttonLight(i, 0, 1, 1, fmt.Sprintf("%d", i), "", true) > 0 {
 				ui.Dialog_open(nm, 1)
 			}
 
@@ -263,7 +263,18 @@ func (node *Node) drawAppDevMode(ui *Ui) {
 
 			nm := fmt.Sprintf("row_details_%d", i)
 
-			if ui.Comp_button(0, i, 1, 1, fmt.Sprintf("%d", i), "", true) > 0 {
+			//drag & drop
+			ui.Div_start(0, i, 1, 1)
+			{
+				ui.Div_drag("rows", i)
+				src, pos, done := ui.Div_drop("rows", true, false, false)
+				if done {
+					Div_DropMoveElement(&node.Rows, &node.Rows, src, i, pos)
+				}
+			}
+			ui.Div_end()
+
+			if ui.Comp_buttonLight(0, i, 1, 1, fmt.Sprintf("%d", i), "", true) > 0 {
 				ui.Dialog_open(nm, 1)
 			}
 			node.drawColsRowsDialog(nm, &node.Rows, i, ui)
