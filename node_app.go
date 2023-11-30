@@ -125,6 +125,7 @@ func NewNodeApp(path string) (*NodeApp, error) {
 	app.AddFunc(NodeSelect_build())
 	app.AddFunc(NodeNet_build())
 	app.AddFunc(NodeOutText_build())
+	app.AddFunc(NodeOutTable_build())
 
 	return &app, nil
 }
