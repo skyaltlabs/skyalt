@@ -419,7 +419,7 @@ func (ui *Ui) Comp_text_s(style *UiComp, value string, icon string) {
 	ui.Paint_textGrid(InitOsV4(0, 0, 1, 1), onCd, style, value, "", icon, true, false)
 }
 
-func (ui *Ui) Comp_editbox_desc(description string, description_alignH int, width float64, x, y, w, h int, valueIn interface{}, value_precision int, icon string, ghost string, highlight bool, tempToValue bool) (string, bool, bool, bool) {
+func (ui *Ui) Comp_editbox_desc(description string, description_alignH int, width float64, x, y, w, h int, valueIn interface{}, value_precision int, icon string, ghost string, highlight bool, tempToValue bool, enable bool) (string, bool, bool, bool) {
 
 	ui.Div_start(x, y, w, h)
 
@@ -437,14 +437,14 @@ func (ui *Ui) Comp_editbox_desc(description string, description_alignH int, widt
 		ui.Comp_text(0, 0, 1, 1, description, description_alignH)
 	}
 
-	editedValue, active, changed, finished := ui.Comp_editbox(xx, 0, 1, 1, valueIn, value_precision, icon, ghost, highlight, tempToValue)
+	editedValue, active, changed, finished := ui.Comp_editbox(xx, 0, 1, 1, valueIn, value_precision, icon, ghost, highlight, tempToValue, enable)
 
 	ui.Div_end()
 
 	return editedValue, active, changed, finished
 }
 
-func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, value_precision int, icon string, ghost string, highlight bool, tempToValue bool) (string, bool, bool, bool) {
+func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, value_precision int, icon string, ghost string, highlight bool, tempToValue bool, enable bool) (string, bool, bool, bool) {
 
 	ui.Div_start(x, y, w, h)
 
@@ -462,7 +462,7 @@ func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, value_precision 
 	}
 
 	var style UiComp
-	style.enable = true
+	style.enable = enable
 	style.cd = CdPalette_B
 	style.label_alignH = 0
 	style.label_alignV = 1
