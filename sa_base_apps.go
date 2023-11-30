@@ -207,7 +207,7 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 		ui.Comp_combo_desc(base.trns.THEME, 0, 4, 1, y, 1, 2, &ini.Theme, base.trns.THEME_OCEAN+"|"+base.trns.THEME_RED+"|"+base.trns.THEME_BLUE+"|"+base.trns.THEME_GREEN+"|"+base.trns.THEME_GREY, "", true, true)
 		y += 2
 
-		ui.Comp_editbox_desc(base.trns.DPI, 0, 4, 1, y, 1, 2, &ini.Dpi, 0, "", "", false, false)
+		ui.Comp_editbox_desc(base.trns.DPI, 0, 4, 1, y, 1, 2, &ini.Dpi, 0, "", "", false, false, true)
 		y += 2
 
 		ui.Comp_switch(1, y, 1, 1, &ini.Stats, false, base.trns.SHOW_STATS, "", true)
@@ -306,11 +306,11 @@ func (base *SABase) drawIcons(ui *Ui, icon_rad float64) {
 
 		ui.Div_colMax(0, 10)
 
-		ui.Comp_editbox(0, 0, 1, 1, &base.settings.NewAppName, 0, "", "", false, false)
+		ui.Comp_editbox(0, 0, 1, 1, &base.settings.NewAppName, 0, "", "", false, false, true)
 
 		if ui.Comp_button(0, 1, 1, 1, base.trns.CREATE_APP, "", true) > 0 {
 			OsFolderCreate("apps/" + base.settings.NewAppName)
-			base.settings.Refresh()
+			base.settings.Refresh(base)
 			ui.Dialog_close()
 		}
 

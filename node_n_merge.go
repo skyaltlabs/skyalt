@@ -16,14 +16,14 @@ limitations under the License.
 
 package main
 
-func NodeMerge_init() *NodeFnDef {
-	fn := NewNodeFnDef("merge", NodeFile_exe, nil, nil)
+func NodeMerge_build() *NodeFnDef {
+	fn := NewNodeFnDef("merge", nil, nil, NodeFile_exe, nil)
 	fn.SetInfiniteInputs(true)
 	fn.AddOutput("db", false)
 	return fn
 }
 
-func NodeMerge_exe(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, error) {
+func NodeMerge_exe(inputs []NodeData, node *Node) ([]NodeData, error) {
 
 	var outs []NodeData
 	outs = append(outs, NodeData{})

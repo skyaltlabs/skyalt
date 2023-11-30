@@ -89,11 +89,11 @@ type SABase_translations struct {
 }
 
 type SAApp struct {
-	Name     string
-	Cam      OsV2f
-	Cam_zoom float32
+	parent *SABase
 
-	nodes              *Nodes
+	Name string
+
+	app                *NodeApp
 	cam_move           bool
 	node_move          bool
 	node_select        bool
@@ -117,7 +117,7 @@ func (app *SAApp) GetPath() string {
 }
 
 type SABaseSettings struct {
-	Apps     []SAApp
+	Apps     []*SAApp
 	Selected int
 
 	NewAppName string
@@ -139,7 +139,7 @@ func (sts *SABaseSettings) findApp(name string) int {
 	return -1
 }
 
-func (sts *SABaseSettings) Refresh() {
+func (sts *SABaseSettings) Refresh(base *SABase) {
 	files := OsFileListBuild("apps", "", true)
 
 	//add(new on disk)
@@ -149,7 +149,7 @@ func (sts *SABaseSettings) Refresh() {
 
 		}
 		if sts.findApp(f.Name) < 0 {
-			sts.Apps = append(sts.Apps, SAApp{Name: f.Name, Cam_zoom: 1})
+			sts.Apps = append(sts.Apps, &SAApp{Name: f.Name, parent: base})
 		}
 	}
 
@@ -196,6 +196,10 @@ func NewSABase(ui *Ui) (*SABase, error) {
 				fmt.Printf("warnning: Unmarshal() failed: %v\n", err)
 			}
 		}
+
+		for _, a := range base.settings.Apps {
+			a.parent = &base
+		}
 	}
 
 	//translations
@@ -204,7 +208,7 @@ func NewSABase(ui *Ui) (*SABase, error) {
 		return nil, fmt.Errorf("reloadTranslations() failed: %w", err)
 	}
 
-	base.settings.Refresh()
+	base.settings.Refresh(&base)
 
 	return &base, nil
 }
@@ -224,9 +228,9 @@ func (base *SABase) reloadTranslations(ui *Ui) error {
 func (base *SABase) Save() {
 	//apps
 	for _, a := range base.settings.Apps {
-		if a.nodes != nil {
+		if a.app != nil {
 			if a.saveIt {
-				a.nodes.Save(a.GetPath())
+				a.app.Save(a.GetPath())
 			}
 		}
 	}
@@ -254,8 +258,8 @@ func (base *SABase) Destroy() {
 
 	//close & save apps
 	for _, a := range base.settings.Apps {
-		if a.nodes != nil {
-			a.nodes.Destroy()
+		if a.app != nil {
+			a.app.Destroy()
 		}
 	}
 }
@@ -288,52 +292,59 @@ func (base *SABase) drawFrame(ui *Ui) {
 	ui.Div_rowMax(0, 100)
 	ui.Div_col(0, icon_rad)
 	ui.Div_colMax(1, 100)
-	ui.Div_colResize(2, "settings", 10)
+	ui.Div_colResize(2, "settings", 10, false)
 
 	ui.Div_start(0, 0, 1, 1)
 	base.drawIcons(ui, icon_rad)
 	ui.Div_end()
 
-	app := &base.settings.Apps[base.settings.Selected]
-	if app.nodes == nil {
-		app.nodes, _ = NewNodes("apps/" + app.Name + "/app.json") //err ...
+	app := base.settings.Apps[base.settings.Selected]
+	if app.app == nil {
+		app.app, _ = NewNodeApp("apps/" + app.Name + "/app.json") //err ...
 	}
 	app.saveIt = true
 
 	if base.settings.HasApp() {
+
 		ui.Div_startName(1, 0, 1, 1, base.settings.Apps[base.settings.Selected].Name)
-		base.drawApp(app, ui)
+		{
+			fn := app.app.FindFn(app.app.root.FnName)
+			if fn != nil && fn.render != nil {
+				fn.render(&app.app.root, ui)
+			}
+		}
 		ui.Div_end()
 	}
 
 	ui.Div_start(2, 0, 1, 1)
 	{
 		ui.Div_colMax(0, 100)
-		ui.Div_rowResize(0, "parameters", 10)
+		ui.Div_rowResize(0, "parameters", 10, false)
 		ui.Div_rowMax(1, 100)
 
 		ui.Div_start(0, 0, 1, 1)
-		base.drawParameters(app, ui)
+		app.app.root.drawParameters(ui)
 		ui.Div_end()
 
 		ui.Div_start(0, 1, 1, 1)
-		base.drawNetwork(app, ui)
+		app.app.root.drawNetwork(app, ui)
 		ui.Div_end()
 
 	}
 	ui.Div_end()
 }
 
-func (base *SABase) drawParameters(app *SAApp, ui *Ui) {
-	var node *Node
-	for _, n := range app.nodes.nodes {
+func (node *Node) drawParameters(ui *Ui) {
+
+	var snode *Node
+	for _, n := range node.Subs {
 		if n.Selected {
-			node = n
+			snode = n
 			break
 		}
 	}
 
-	if node == nil {
+	if snode == nil {
 		pl := ui.buff.win.io.GetPalette()
 		lv := ui.GetCall()
 		ui._compDrawText(lv.call.canvas, "No node selected", "", pl.GetGrey(0.7), SKYALT_FONT_HEIGHT, false, false, 1, 1, true)
@@ -348,43 +359,17 @@ func (base *SABase) drawParameters(app *SAApp, ui *Ui) {
 	ui.Div_start(0, 0, 1, 1)
 	{
 		ui.Div_colMax(0, 100)
-		ui.Comp_editbox_desc("Name", 0, 2, 0, 0, 1, 1, &node.Name, 0, "", "", false, false) //rename
-		ui.Comp_switch(1, 0, 1, 1, &node.Bypass, true, "", "Bypass", true)
+		ui.Comp_editbox_desc("Name", 0, 2, 0, 0, 1, 1, &snode.Name, 0, "", "", false, false, true) //rename
+		ui.Comp_switch(1, 0, 1, 1, &snode.Bypass, true, "", "Bypass", true)
 	}
 	ui.Div_end()
 
 	ui.Div_SpacerRow(0, 1, 1, 1)
 
-	fn := app.nodes.FindFn(node.FnName)
+	fn := snode.FindFn(snode.FnName)
 	if fn != nil && fn.parameters != nil {
 		ui.Div_start(0, 2, 1, 1)
-		fn.parameters(node, ui)
+		fn.parameters(snode, ui)
 		ui.Div_end()
-	}
-}
-
-func (base *SABase) drawApp(app *SAApp, ui *Ui) {
-	for _, n := range app.nodes.nodes {
-		if n.Bypass {
-			continue
-		}
-
-		fn := app.nodes.FindFn(n.FnName)
-		if fn != nil && fn.parameters != nil {
-			if fn.render != nil {
-				ui.Div_start(n.GridCoord.Start.X, n.GridCoord.Start.Y, n.GridCoord.Size.X, n.GridCoord.Size.Y)
-
-				fn.render(n, ui)
-
-				if n.Selected {
-					ui.Paint_rect(0, 0, 1, 1, 0, base.getYellow(), 0.03)
-				}
-
-				//alt+click => select node and zoom_in network ...
-
-				ui.Div_end()
-			}
-
-		}
 	}
 }

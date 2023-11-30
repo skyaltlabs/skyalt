@@ -20,7 +20,7 @@ import (
 	"strings"
 )
 
-func (base *SABase) drawCreateNode(app *SAApp, ui *Ui) {
+func (app *SAApp) drawCreateNode(ui *Ui) {
 
 	lvBaseDiv := ui.GetCall().call
 
@@ -34,15 +34,15 @@ func (base *SABase) drawCreateNode(app *SAApp, ui *Ui) {
 
 		y := 0
 		var search string
-		ui.Comp_editbox(0, 0, 1, 1, &search, 0, "", base.trns.SAVE, search != "", true)
+		ui.Comp_editbox(0, 0, 1, 1, &search, 0, "", app.parent.trns.SAVE, search != "", true, true)
 		y++
 
 		keys := &ui.buff.win.io.keys
-		for _, fn := range app.nodes.fns {
+		for _, fn := range app.app.fns {
 			if search == "" || strings.Contains(fn.name, search) {
 				if keys.enter || ui.Comp_buttonMenu(0, y, 1, 1, fn.name, "", true, false) > 0 {
-					n := app.nodes.AddNode("", fn)
-					n.Pos = base.pixelsToNode(app.tab_touchPos, app, ui, lvBaseDiv)
+					n := app.app.root.AddNode("", fn)
+					n.Pos = app.app.root.pixelsToNode(app.tab_touchPos, ui, lvBaseDiv)
 					ui.Dialog_close()
 					break
 				}
@@ -55,54 +55,54 @@ func (base *SABase) drawCreateNode(app *SAApp, ui *Ui) {
 
 }
 
-func (base *SABase) pixelsToNode(touchPos OsV2, app *SAApp, ui *Ui, lvDiv *UiLayoutDiv) OsV2f {
+func (node *Node) pixelsToNode(touchPos OsV2, ui *Ui, lvDiv *UiLayoutDiv) OsV2f {
 
 	cell := ui.win.Cell()
 
 	p := touchPos.Sub(lvDiv.canvas.Start).Sub(lvDiv.canvas.Size.MulV(0.5))
 
 	var r OsV2f
-	r.X = float32(p.X) / float32(app.Cam_zoom) / float32(cell)
-	r.Y = float32(p.Y) / float32(app.Cam_zoom) / float32(cell)
+	r.X = float32(p.X) / node.Cam_z / float32(cell)
+	r.Y = float32(p.Y) / node.Cam_z / float32(cell)
 
-	r = r.Add(app.Cam)
+	r = r.Add(OsV2f{node.Cam_x, node.Cam_y})
 
 	return r
 }
 
-func (base *SABase) nodeToPixels(p OsV2f, app *SAApp, ui *Ui) OsV2 {
+func (node *Node) nodeToPixels(p OsV2f, ui *Ui) OsV2 {
 
 	lv := ui.GetCall()
 	cell := ui.win.Cell()
 
-	p = p.Sub(app.Cam)
+	p = p.Sub(OsV2f{node.Cam_x, node.Cam_y})
 
 	var r OsV2
-	r.X = int(p.X * float32(cell) * float32(app.Cam_zoom))
-	r.Y = int(p.Y * float32(cell) * float32(app.Cam_zoom))
+	r.X = int(p.X * float32(cell) * node.Cam_z)
+	r.Y = int(p.Y * float32(cell) * node.Cam_z)
 
 	return r.Add(lv.call.canvas.Start).Add(lv.call.canvas.Size.MulV(0.5))
 }
 
-func (base *SABase) nodeToPixelsCoord(node *Node, app *SAApp, ui *Ui) OsV4 {
+func (node *Node) nodeToPixelsCoord(ui *Ui) OsV4 {
 
-	coordS := base.nodeToPixels(node.Pos, app, ui)
-	cellr := int(float32(ui.win.Cell()) * app.Cam_zoom * 0.8)
+	coordS := node.parent.nodeToPixels(node.Pos, ui) //.parent, because it has Cam
+	cellr := int(float32(ui.win.Cell()) * node.parent.Cam_z * 0.8)
 
 	return InitOsV4Mid(coordS, OsV2{cellr * 3, cellr})
 }
 
-func (base *SABase) getIORad(app *SAApp, ui *Ui) int {
-	return int(float32(ui.win.Cell()) / 4 * app.Cam_zoom)
+func (node *Node) getIORad(ui *Ui) int {
+	return int(float32(ui.win.Cell()) / 4 * node.parent.Cam_z)
 }
 
-func (base *SABase) getInputPos(pos int, node *Node, app *SAApp, ui *Ui) (OsV2, OsV4, OsV4) {
+func (node *Node) getInputPos(pos int, ui *Ui) (OsV2, OsV4, OsV4) {
 
-	coord := base.nodeToPixelsCoord(node, app, ui)
+	coord := node.nodeToPixelsCoord(ui)
 
-	fn := app.nodes.FindFn(node.FnName)
+	fn := node.FindFn(node.FnName)
 	if fn != nil {
-		rad := base.getIORad(app, ui)
+		rad := node.getIORad(ui)
 		n := len(fn.ins)
 		sp := coord.Size.X / (n + 1)
 		p := OsV2{coord.Start.X + (sp * (pos + 1)), coord.Start.Y}
@@ -113,13 +113,13 @@ func (base *SABase) getInputPos(pos int, node *Node, app *SAApp, ui *Ui) (OsV2, 
 	}
 	return OsV2{}, OsV4{}, OsV4{}
 }
-func (base *SABase) getOutputPos(pos int, node *Node, app *SAApp, ui *Ui) (OsV2, OsV4, OsV4) {
+func (node *Node) getOutputPos(pos int, ui *Ui) (OsV2, OsV4, OsV4) {
 
-	coord := base.nodeToPixelsCoord(node, app, ui)
+	coord := node.nodeToPixelsCoord(ui)
 
-	fn := app.nodes.FindFn(node.FnName)
+	fn := node.FindFn(node.FnName)
 	if fn != nil {
-		rad := base.getIORad(app, ui)
+		rad := node.getIORad(ui)
 		n := len(fn.outs)
 		sp := coord.Size.X / (n + 1)
 		p := OsV2{coord.Start.X + (sp * (pos + 1)), coord.Start.Y + coord.Size.Y}
@@ -131,17 +131,17 @@ func (base *SABase) getOutputPos(pos int, node *Node, app *SAApp, ui *Ui) (OsV2,
 	return OsV2{}, OsV4{}, OsV4{}
 }
 
-func (base *SABase) getYellow() OsCd {
+func Node_getYellow() OsCd {
 	return OsCd{204, 204, 0, 255} //...
 }
 
-func (base *SABase) drawNode(node *Node, app *SAApp, ui *Ui) bool {
+func (node *Node) drawNode(ui *Ui, someNodeIsDraged bool) bool {
 
 	lv := ui.GetCall()
 	touch := &ui.buff.win.io.touch
 	pl := ui.buff.win.io.GetPalette()
 
-	coord := base.nodeToPixelsCoord(node, app, ui)
+	coord := node.nodeToPixelsCoord(ui)
 
 	backCd := pl.P
 	labelCd := pl.OnB
@@ -153,9 +153,9 @@ func (base *SABase) drawNode(node *Node, app *SAApp, ui *Ui) bool {
 	ui.buff.AddRect(coord, backCd, 0)
 
 	//select
-	if (app.node_select && node.KeyProgessSelection(&ui.buff.win.io.keys)) || (!app.node_select && node.Selected) {
+	if (someNodeIsDraged && node.KeyProgessSelection(&ui.buff.win.io.keys)) || (!someNodeIsDraged && node.Selected) {
 		cq := coord.AddSpace(ui.CellWidth(-0.1))
-		ui.buff.AddRect(cq, base.getYellow(), ui.CellWidth(0.06)) //selected
+		ui.buff.AddRect(cq, Node_getYellow(), ui.CellWidth(0.06)) //selected
 	}
 
 	//label
@@ -163,17 +163,17 @@ func (base *SABase) drawNode(node *Node, app *SAApp, ui *Ui) bool {
 		cq := coord
 		cq.Start.X += cq.Size.X + ui.CellWidth(0.1)
 		cq.Size.X = 1000
-		ui._compDrawText(cq, node.Name, "", labelCd, SKYALT_FONT_HEIGHT*float64(app.Cam_zoom), false, false, 0, 1, true)
+		ui._compDrawText(cq, node.Name, "", labelCd, SKYALT_FONT_HEIGHT*float64(node.parent.Cam_z), false, false, 0, 1, true)
 	}
 
 	inside := coord.GetIntersect(lv.call.crop).Inside(touch.pos)
 
 	//inputs/outputs
-	fn := app.nodes.FindFn(node.FnName)
+	fn := node.FindFn(node.FnName)
 	if fn != nil {
 		//inputs
 		for i := range fn.ins {
-			_, cq, cqH := base.getInputPos(i, node, app, ui)
+			_, cq, cqH := node.getInputPos(i, ui)
 
 			cd := pl.GetGrey(0.5)
 			if lv.call.data.over && cqH.Inside(touch.pos) {
@@ -185,7 +185,7 @@ func (base *SABase) drawNode(node *Node, app *SAApp, ui *Ui) bool {
 
 		//outputs
 		for i := range fn.outs {
-			_, cq, cqH := base.getOutputPos(i, node, app, ui)
+			_, cq, cqH := node.getOutputPos(i, ui)
 
 			cd := pl.GetGrey(0.5)
 			if lv.call.data.over && cqH.Inside(touch.pos) {
@@ -199,7 +199,7 @@ func (base *SABase) drawNode(node *Node, app *SAApp, ui *Ui) bool {
 	return inside
 }
 
-func (base *SABase) drawConnection(start OsV2, end OsV2, ui *Ui) {
+func Node_drawConnection(start OsV2, end OsV2, ui *Ui) {
 	//sp := ui.win.Cell() / 2
 
 	pl := ui.buff.win.io.GetPalette()
@@ -213,15 +213,15 @@ func (base *SABase) drawConnection(start OsV2, end OsV2, ui *Ui) {
 	//ui.buff.AddTringle(end, end.Add(OsV2{-t, t}), end.Add(OsV2{t, t}), pl.GetGrey(0.5)) //arrow
 }
 
-func (base *SABase) drawNodeConnection(outNode *Node, inNode *Node, outPos int, inPos int, app *SAApp, ui *Ui) {
+func Node_drawNodeConnection(outNode *Node, inNode *Node, outPos int, inPos int, ui *Ui) {
 
-	out, _, _ := base.getOutputPos(outPos, outNode, app, ui)
-	in, _, _ := base.getInputPos(inPos, inNode, app, ui)
+	out, _, _ := outNode.getOutputPos(outPos, ui)
+	in, _, _ := inNode.getInputPos(inPos, ui)
 
-	base.drawConnection(out, in, ui)
+	Node_drawConnection(out, in, ui)
 }
 
-func (base *SABase) findInputOver(app *SAApp, ui *Ui, emptySlotOverNode bool) (*Node, int) {
+func (node *Node) findInputOver(ui *Ui, emptySlotOverNode bool) (*Node, int) {
 
 	lv := ui.GetCall()
 	touch := &ui.buff.win.io.touch
@@ -229,12 +229,12 @@ func (base *SABase) findInputOver(app *SAApp, ui *Ui, emptySlotOverNode bool) (*
 	var node_found *Node
 	node_pos := -1
 
-	for _, n := range app.nodes.nodes {
-		fn := app.nodes.FindFn(n.FnName)
+	for _, n := range node.Subs {
+		fn := node.FindFn(n.FnName)
 		if fn != nil {
 			//inputs
 			for i, in := range fn.ins {
-				_, _, cq := base.getInputPos(i, n, app, ui)
+				_, _, cq := n.getInputPos(i, ui)
 
 				if lv.call.data.over && cq.Inside(touch.pos) {
 					node_found = n
@@ -247,8 +247,8 @@ func (base *SABase) findInputOver(app *SAApp, ui *Ui, emptySlotOverNode bool) (*
 	}
 
 	if node_found == nil && emptySlotOverNode {
-		for _, n := range app.nodes.nodes {
-			cq := base.nodeToPixelsCoord(n, app, ui)
+		for _, n := range node.Subs {
+			cq := n.nodeToPixelsCoord(ui)
 			if lv.call.data.over && cq.Inside(touch.pos) {
 				//find empty slot
 				for i, in := range n.Inputs {
@@ -269,7 +269,7 @@ func (base *SABase) findInputOver(app *SAApp, ui *Ui, emptySlotOverNode bool) (*
 
 	return node_found, node_pos
 }
-func (base *SABase) findOutputOver(app *SAApp, ui *Ui, emptySlotOverNode bool) (*Node, int) {
+func (node *Node) findOutputOver(ui *Ui, emptySlotOverNode bool) (*Node, int) {
 
 	lv := ui.GetCall()
 	touch := &ui.buff.win.io.touch
@@ -277,12 +277,12 @@ func (base *SABase) findOutputOver(app *SAApp, ui *Ui, emptySlotOverNode bool) (
 	var node_found *Node
 	node_pos := -1
 
-	for _, n := range app.nodes.nodes {
-		fn := app.nodes.FindFn(n.FnName)
+	for _, n := range node.Subs {
+		fn := node.FindFn(n.FnName)
 		if fn != nil {
 			//outputs
 			for i, out := range fn.outs {
-				_, _, cq := base.getOutputPos(i, n, app, ui)
+				_, _, cq := n.getOutputPos(i, ui)
 
 				if lv.call.data.over && cq.Inside(touch.pos) {
 					node_found = n
@@ -294,25 +294,21 @@ func (base *SABase) findOutputOver(app *SAApp, ui *Ui, emptySlotOverNode bool) (
 		}
 	}
 
-	if node_found == nil && emptySlotOverNode {
-		for _, n := range app.nodes.nodes {
-			cq := base.nodeToPixelsCoord(n, app, ui)
+	/*if node_found == nil && emptySlotOverNode {
+		for _, n := range node.Subs {
+			cq := n.nodeToPixelsCoord(ui)
 			if lv.call.data.over && cq.Inside(touch.pos) {
 				//find empty slot
 
-				//must go through all nodes which can connect to this one ..............
+				//must go through all nodes which can connect to this one ...
 			}
 		}
-	}
+	}*/
 
 	return node_found, node_pos
 }
 
-func (base *SABase) drawNetwork(app *SAApp, ui *Ui) {
-
-	if len(app.nodes.nodes) == 0 {
-		app.Cam_zoom = 1
-	}
+func (node *Node) drawNetwork(app *SAApp, ui *Ui) {
 
 	pl := ui.buff.win.io.GetPalette()
 
@@ -324,22 +320,22 @@ func (base *SABase) drawNetwork(app *SAApp, ui *Ui) {
 	ui._compDrawText(lv.call.canvas, "press tab", "", pl.GetGrey(0.7), SKYALT_FONT_HEIGHT, false, false, 1, 1, true)
 
 	//+
-	base.drawCreateNode(app, ui)
+	app.drawCreateNode(ui)
 
 	//draw connections
-	for _, nodeIn := range app.nodes.nodes {
+	for _, nodeIn := range node.Subs {
 		for i, in := range nodeIn.Inputs {
-			nodeOut := app.nodes.FindNode(in.Node)
+			nodeOut := node.FindNode(in.Node)
 			if nodeOut != nil {
-				base.drawNodeConnection(nodeOut, nodeIn, in.Pos, i, app, ui)
+				Node_drawNodeConnection(nodeOut, nodeIn, in.Pos, i, ui)
 			}
 		}
 	}
 
 	//draw node bodies
 	var clickedNode *Node
-	for _, n := range app.nodes.nodes {
-		if base.drawNode(n, app, ui) {
+	for _, n := range node.Subs {
+		if n.drawNode(ui, app.node_select) {
 			clickedNode = n
 		}
 	}
@@ -347,17 +343,20 @@ func (base *SABase) drawNetwork(app *SAApp, ui *Ui) {
 	//keys actions
 	keys := &ui.buff.win.io.keys
 	if lv.call.data.over {
+
+		//delete
 		if keys.delete {
-			for i := len(app.nodes.nodes) - 1; i >= 0; i-- {
-				if app.nodes.nodes[i].Selected {
-					app.nodes.nodes = append(app.nodes.nodes[:i], app.nodes.nodes[i+1:]...)
+			for i := len(node.Subs) - 1; i >= 0; i-- {
+				if node.Subs[i].Selected {
+					node.Subs = append(node.Subs[:i], node.Subs[i+1:]...)
 				}
 			}
 
 		}
 
-		if strings.EqualFold(keys.text, "q") || strings.EqualFold(keys.text, "b") {
-			for _, n := range app.nodes.nodes {
+		//bypass
+		if strings.EqualFold(keys.text, "b") {
+			for _, n := range node.Subs {
 				if n.Selected {
 					n.Bypass = !n.Bypass
 				}
@@ -384,8 +383,8 @@ func (base *SABase) drawNetwork(app *SAApp, ui *Ui) {
 
 		//nodes: inputs/outputs
 		{
-			node_in, node_in_pos := base.findInputOver(app, ui, false)
-			node_out, node_out_pos := base.findOutputOver(app, ui, false)
+			node_in, node_in_pos := node.findInputOver(ui, false)
+			node_out, node_out_pos := node.findOutputOver(ui, false)
 			if touch.start {
 				if node_in != nil && node_in_pos >= 0 {
 					app.node_connect = node_in
@@ -401,13 +400,13 @@ func (base *SABase) drawNetwork(app *SAApp, ui *Ui) {
 		}
 		if app.node_connect != nil {
 			if app.node_connect_in >= 0 {
-				p, _, _ := base.getInputPos(app.node_connect_in, app.node_connect, app, ui)
-				base.drawConnection(touch.pos, p, ui)
+				p, _, _ := app.node_connect.getInputPos(app.node_connect_in, ui)
+				Node_drawConnection(touch.pos, p, ui)
 			}
 
 			if app.node_connect_out >= 0 {
-				p, _, _ := base.getOutputPos(app.node_connect_out, app.node_connect, app, ui)
-				base.drawConnection(p, touch.pos, ui)
+				p, _, _ := app.node_connect.getOutputPos(app.node_connect_out, ui)
+				Node_drawConnection(p, touch.pos, ui)
 			}
 		}
 
@@ -415,14 +414,14 @@ func (base *SABase) drawNetwork(app *SAApp, ui *Ui) {
 		if clickedNode != nil && touch.start && !keys.shift && !keys.ctrl && app.node_connect == nil {
 			app.node_move = true
 			app.touch_start = touch.pos
-			for _, n := range app.nodes.nodes {
+			for _, n := range node.Subs {
 				n.pos_start = n.Pos
 			}
 			app.node_move_selected = clickedNode
 
 			//click on un-selected => de-select all & select only current
 			if !clickedNode.Selected {
-				for _, n := range app.nodes.nodes {
+				for _, n := range node.Subs {
 					n.Selected = false
 				}
 				clickedNode.Selected = true
@@ -432,10 +431,10 @@ func (base *SABase) drawNetwork(app *SAApp, ui *Ui) {
 			cell := ui.win.Cell()
 			p := touch.pos.Sub(app.touch_start)
 			var r OsV2f
-			r.X = float32(p.X) / float32(app.Cam_zoom) / float32(cell)
-			r.Y = float32(p.Y) / float32(app.Cam_zoom) / float32(cell)
+			r.X = float32(p.X) / node.Cam_z / float32(cell)
+			r.Y = float32(p.Y) / node.Cam_z / float32(cell)
 
-			for _, n := range app.nodes.nodes {
+			for _, n := range node.Subs {
 				if n.Selected {
 					n.Pos = n.pos_start.Add(r)
 				}
@@ -444,12 +443,12 @@ func (base *SABase) drawNetwork(app *SAApp, ui *Ui) {
 
 		//zoom
 		if touch.wheel != 0 {
-			app.Cam_zoom += float32(touch.wheel) * -0.1
-			if app.Cam_zoom <= 0.1 {
-				app.Cam_zoom = 0.1
+			node.Cam_z += float32(touch.wheel) * -0.1
+			if node.Cam_z <= 0.1 {
+				node.Cam_z = 0.1
 			}
-			if app.Cam_zoom >= 2.5 {
-				app.Cam_zoom = 2.5
+			if node.Cam_z >= 2.5 {
+				node.Cam_z = 2.5
 			}
 
 			touch.wheel = 0
@@ -461,7 +460,7 @@ func (base *SABase) drawNetwork(app *SAApp, ui *Ui) {
 				//start camera move
 				app.cam_move = true
 				app.touch_start = touch.pos
-				app.cam_start = app.Cam
+				app.cam_start = OsV2f{node.Cam_x, node.Cam_y}
 			} else {
 				//start selection
 				app.node_select = true
@@ -472,10 +471,11 @@ func (base *SABase) drawNetwork(app *SAApp, ui *Ui) {
 			cell := ui.win.Cell()
 			p := touch.pos.Sub(app.touch_start)
 			var r OsV2f
-			r.X = float32(p.X) / float32(app.Cam_zoom) / float32(cell)
-			r.Y = float32(p.Y) / float32(app.Cam_zoom) / float32(cell)
+			r.X = float32(p.X) / node.Cam_z / float32(cell)
+			r.Y = float32(p.Y) / node.Cam_z / float32(cell)
 
-			app.Cam = app.cam_start.Sub(r)
+			node.Cam_x = app.cam_start.Sub(r).X
+			node.Cam_y = app.cam_start.Sub(r).Y
 		}
 
 		if app.node_select {
@@ -487,8 +487,8 @@ func (base *SABase) drawNetwork(app *SAApp, ui *Ui) {
 			ui.buff.AddRect(coord, pl.P, ui.CellWidth(0.03)) //border
 
 			//update
-			for _, n := range app.nodes.nodes {
-				n.selected_cover = coord.HasCover(base.nodeToPixelsCoord(n, app, ui))
+			for _, n := range node.Subs {
+				n.selected_cover = coord.HasCover(n.nodeToPixelsCoord(ui))
 			}
 		}
 
@@ -498,7 +498,7 @@ func (base *SABase) drawNetwork(app *SAApp, ui *Ui) {
 		//when it's clicked on selected node, but it's not moved => select only this node
 		if app.node_move && app.node_move_selected != nil {
 			if app.touch_start.Distance(touch.pos) < float32(ui.win.Cell())/5 {
-				for _, n := range app.nodes.nodes {
+				for _, n := range node.Subs {
 					n.Selected = false
 				}
 				app.node_move_selected.Selected = true
@@ -506,14 +506,14 @@ func (base *SABase) drawNetwork(app *SAApp, ui *Ui) {
 		}
 
 		if app.node_select {
-			for _, n := range app.nodes.nodes {
+			for _, n := range node.Subs {
 				n.Selected = n.KeyProgessSelection(keys)
 			}
 		}
 
 		if app.node_connect != nil {
 			if app.node_connect_in >= 0 {
-				node_out, node_out_pos := base.findOutputOver(app, ui, true)
+				node_out, node_out_pos := node.findOutputOver(ui, true)
 
 				if node_out != nil {
 					app.node_connect.SetInput(app.node_connect_in, node_out, node_out_pos)
@@ -521,7 +521,7 @@ func (base *SABase) drawNetwork(app *SAApp, ui *Ui) {
 			}
 
 			if app.node_connect_out >= 0 {
-				node_in, node_in_pos := base.findInputOver(app, ui, true)
+				node_in, node_in_pos := node.findInputOver(ui, true)
 
 				if node_in != nil {
 

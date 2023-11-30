@@ -18,8 +18,8 @@ package main
 
 import "fmt"
 
-func NodeSelect_init() *NodeFnDef {
-	fn := NewNodeFnDef("select", NodeSelect_exe, NodeSelect_parameters, nil)
+func NodeSelect_build() *NodeFnDef {
+	fn := NewNodeFnDef("select", nil, NodeSelect_parameters, NodeSelect_exe, nil)
 	fn.AddInput("db", false)
 	fn.AddOutput("db", false)
 	return fn
@@ -29,10 +29,10 @@ func NodeSelect_parameters(node *Node, ui *Ui) {
 
 	ui.Div_colMax(0, 100)
 
-	ui.Comp_editbox_desc("Query", 0, 2, 0, 0, 1, 1, node.GetParam("query"), 0, "", "", false, false)
+	ui.Comp_editbox_desc("Query", 0, 2, 0, 0, 1, 1, node.GetParam("query"), 0, "", "", false, false, true)
 }
 
-func NodeSelect_exe(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, error) {
+func NodeSelect_exe(inputs []NodeData, node *Node) ([]NodeData, error) {
 
 	var outs []NodeData
 	outs = append(outs, NodeData{})
@@ -40,7 +40,7 @@ func NodeSelect_exe(inputs []NodeData, node *Node, nodes *Nodes) ([]NodeData, er
 
 	//create :memory db
 	var err error
-	node.db, err = NewDiskDb(node.Name, true, nodes.disk)
+	node.db, err = NewDiskDb(node.Name, true, node.app.disk)
 	if err != nil {
 		return nil, fmt.Errorf("NewDiskDb() failed: %w", err)
 	}
