@@ -108,9 +108,9 @@ func (db *DiskDb) GetTableInfo() ([]*DiskIndexTable, error) {
 			return nil, fmt.Errorf("Scan() failed: %w", err)
 		}
 
-		c := &DiskIndexTable{Name: tname}
-		tables = append(tables, c)
-		err = c.updateDb(db, tname)
+		t := &DiskIndexTable{Name: tname}
+		tables = append(tables, t)
+		err = t.updateDb(db)
 		if err != nil {
 			return nil, fmt.Errorf("updateDb() failed: %w", err)
 		}
