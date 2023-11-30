@@ -274,3 +274,35 @@ func (ui *Ui) DivInfo_set(cmd uint8, val float64, uid float64) float64 {
 
 	return -1
 }
+
+func (ui *Ui) DivRange_Hor(itemSize float64) (int, int) {
+
+	div := ui.GetCall().call
+
+	wheel := float64(div.data.scrollH.GetWheel()) / float64(ui.win.Cell())
+	screen := float64(div.crop.Size.X) / float64(ui.win.Cell())
+
+	s := wheel / itemSize
+	e := (wheel + screen) / itemSize
+
+	if e > float64(int(e)) {
+		e++
+	}
+	return int(s), int(e)
+}
+
+func (ui *Ui) DivRange_Ver(itemSize float64) (int, int) {
+
+	div := ui.GetCall().call
+
+	wheel := float64(div.data.scrollV.GetWheel()) / float64(ui.win.Cell())
+	screen := float64(div.crop.Size.Y) / float64(ui.win.Cell())
+
+	s := wheel / itemSize
+	e := (wheel + screen) / itemSize
+
+	if e > float64(int(e)) {
+		e++
+	}
+	return int(s), int(e)
+}
