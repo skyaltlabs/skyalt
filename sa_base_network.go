@@ -148,6 +148,9 @@ func (node *Node) drawNode(ui *Ui, someNodeIsDraged bool) bool {
 	if node.Bypass {
 		backCd.A = 100
 		labelCd.A = 100
+	} else if node.err != nil {
+		backCd = pl.E
+		labelCd = pl.OnE
 	}
 
 	ui.buff.AddRect(coord, backCd, 0)
