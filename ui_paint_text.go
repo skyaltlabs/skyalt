@@ -53,7 +53,7 @@ func (ui *Ui) Paint_textWidth(style *UiComp, value string, cursorPos int64, rati
 func (ui *Ui) Paint_textGrid(grid OsV4, cd OsCd, style *UiComp, value string, valueOrigEdit string, icon string, selection bool, editable bool) {
 
 	lv := ui.GetCall()
-	if lv.call == nil || lv.call.crop.IsZero() {
+	if lv.call == nil /*|| lv.call.crop.IsZero()*/ {
 		return
 	}
 
