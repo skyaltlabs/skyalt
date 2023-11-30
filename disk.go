@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -51,9 +52,9 @@ type DiskIndexTable struct {
 	Columns []*DiskIndexColumn
 }
 
-func (indt *DiskIndexTable) updateDb(db *DiskDb, tname string) error {
+func (indt *DiskIndexTable) updateDb(db *DiskDb) error {
 
-	query := "pragma table_info(" + tname + ");"
+	query := "pragma table_info(" + indt.Name + ");"
 	rows, err := db.Read(query)
 	if err != nil {
 		return fmt.Errorf("Query(%s) failed: %w", query, err)
@@ -309,4 +310,23 @@ func (disk *Disk) Tick() {
 		disk.UpdateIndex()
 		disk.last_ticks = OsTicks()
 	}
+}
+
+func (disk *Disk) GetFileTable(path string) []*DiskIndexTable {
+	dir, file := filepath.Split(path)
+	dirList := filepath.SplitList(dir)
+
+	folder := &disk.index
+	for _, fol := range dirList {
+		folder = folder.findFolder(fol)
+		if folder == nil {
+			return nil
+		}
+	}
+
+	fl := folder.findFile(file)
+	if fl == nil {
+		return nil
+	}
+	return fl.Tables
 }
