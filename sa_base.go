@@ -353,9 +353,11 @@ func (node *Node) drawParameters(ui *Ui) {
 	}
 
 	ui.Div_colMax(0, 100)
-	ui.Div_row(1, 0.1)
-	ui.Div_rowMax(2, 100)
+	y := OsTrn(snode.err == nil, 1, 2)
+	ui.Div_row(y, 0.1)
+	ui.Div_rowMax(y+1, 100)
 
+	y = 0
 	ui.Div_start(0, 0, 1, 1)
 	{
 		ui.Div_colMax(0, 100)
@@ -363,13 +365,20 @@ func (node *Node) drawParameters(ui *Ui) {
 		ui.Comp_switch(1, 0, 1, 1, &snode.Bypass, true, "", "Bypass", true)
 	}
 	ui.Div_end()
+	y++
 
-	ui.Div_SpacerRow(0, 1, 1, 1)
+	if snode.err != nil {
+		ui.Comp_text(0, y, 1, 1, "Error: "+snode.err.Error(), 0) //red color ...
+	}
+
+	ui.Div_SpacerRow(0, y, 1, 1)
+	y++
 
 	fn := snode.FindFn(snode.FnName)
 	if fn != nil && fn.parameters != nil {
-		ui.Div_start(0, 2, 1, 1)
+		ui.Div_start(0, y, 1, 1)
 		fn.parameters(snode, ui)
 		ui.Div_end()
+		y++
 	}
 }
