@@ -45,7 +45,7 @@ type UiLayoutDiv struct {
 	use      bool //for maintenance
 
 	touchResizeIndex int
-	touchResizeCol   bool
+	touchResizeIsCol bool
 
 	//buff *PaintBuff
 	//buff_pre *PaintBuff
@@ -365,11 +365,11 @@ func (div *UiLayoutDiv) RenderResizeSpliter(ui *Ui) {
 
 			if vHighlight {
 				div.touchResizeIndex = col
-				div.touchResizeCol = true
+				div.touchResizeIsCol = true
 			}
 			if hHighlight {
 				div.touchResizeIndex = row
-				div.touchResizeCol = false
+				div.touchResizeIsCol = false
 			}
 		}
 
@@ -383,7 +383,7 @@ func (div *UiLayoutDiv) RenderResizeSpliter(ui *Ui) {
 		if ui.touch.IsFnMove(nil, nil, nil, div) {
 
 			r := 1.0
-			if div.touchResizeCol {
+			if div.touchResizeIsCol {
 				col = div.touchResizeIndex
 				vHighlight = true
 
