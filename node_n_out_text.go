@@ -22,10 +22,8 @@ func NodeOutText_build() *NodeFnDef {
 }
 
 func NodeOutText_init(node *Node) {
-	/*node.SetParamInit("grid_x", "0")
-	node.SetParamInit("grid_y", "0")
-	node.SetParamInit("grid_w", "1")
-	node.SetParamInit("grid_h", "1")*/
+	node.Grid_w = 1
+	node.Grid_h = 1
 }
 
 func NodeOutText_parameters(node *Node, ui *Ui) {
