@@ -124,9 +124,9 @@ func (ui *Ui) Div_rowMax(pos int, val float64) float64 {
 	return float64(lv.call.data.rows.GetOutput(int(pos))) / float64(ui.win.Cell())
 }
 
-func (ui *Ui) Div_colResize(pos int, name string, val float64) float64 {
+func (ui *Ui) Div_colResize(pos int, name string, val float64, force bool) (bool, float64) {
 	if !ui.checkGridLock() {
-		return -1
+		return false, -1
 	}
 	lv := ui.GetCall()
 
@@ -135,17 +135,19 @@ func (ui *Ui) Div_colResize(pos int, name string, val float64) float64 {
 		name = strconv.Itoa(int(pos))
 	}
 	res, found := lv.call.data.cols.FindOrAddResize(name)
-	if !found {
+	if !found || force {
 		res.value = float32(val)
 	}
 	lv.call.GetInputCol(int(pos)).resize = res
 
-	return float64(lv.call.data.cols.GetOutput(int(pos))) / float64(ui.win.Cell())
+	active := (ui.touch.resize == lv.call && lv.call.touchResizeIsCol && pos == lv.call.touchResizeIndex)
+
+	return active, float64(lv.call.data.cols.GetOutput(int(pos))) / float64(ui.win.Cell())
 }
 
-func (ui *Ui) Div_rowResize(pos int, name string, val float64) float64 {
+func (ui *Ui) Div_rowResize(pos int, name string, val float64, force bool) (bool, float64) {
 	if !ui.checkGridLock() {
-		return -1
+		return false, -1
 	}
 	lv := ui.GetCall()
 
@@ -154,12 +156,14 @@ func (ui *Ui) Div_rowResize(pos int, name string, val float64) float64 {
 		name = strconv.Itoa(int(pos))
 	}
 	res, found := lv.call.data.rows.FindOrAddResize(name)
-	if !found {
+	if !found || force {
 		res.value = float32(val)
 	}
 	lv.call.GetInputRow(int(pos)).resize = res
 
-	return float64(lv.call.data.rows.GetOutput(int(pos))) / float64(ui.win.Cell())
+	active := (ui.touch.resize == lv.call && !lv.call.touchResizeIsCol && pos == lv.call.touchResizeIndex)
+
+	return active, float64(lv.call.data.rows.GetOutput(int(pos))) / float64(ui.win.Cell())
 }
 
 func (ui *Ui) Div_SpacerRow(x, y, w, h int) {
