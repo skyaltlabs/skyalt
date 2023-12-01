@@ -35,7 +35,7 @@ func (base *SABase) drawMenu(ui *Ui) {
 	y := 0
 	//save
 	if ui.Comp_buttonMenuIcon(0, y, 1, 1, base.trns.SAVE, "file:apps/base/resources/save.png", iconMargin, "", true, false) > 0 {
-		//...
+		base.Save()
 		ui.Dialog_close()
 	}
 	y++
