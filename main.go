@@ -18,6 +18,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 )
 
 func main() {
@@ -71,21 +72,26 @@ func main() {
 	//Main loop
 	run := true
 	for run {
-		run, _, err = win.UpdateIO()
+		var redraw bool
+		run, redraw, err = win.UpdateIO()
 		if err != nil {
 			fmt.Printf("UpdateIO() failed: %v\n", err)
 			return
 		}
 
-		win.StartRender(OsCd{220, 220, 220, 255})
+		if redraw {
+			win.StartRender(OsCd{220, 220, 220, 255})
 
-		ui.StartRender()
-		if !base.Render(ui) {
-			run = false
+			ui.StartRender()
+			if !base.Render(ui) {
+				run = false
+			}
+			ui.EndRender()
+
+			win.EndRender(true)
+		} else {
+			time.Sleep(10 * time.Millisecond)
 		}
-		ui.EndRender()
-
-		win.EndRender(true)
 
 		dbs.Tick()
 	}
