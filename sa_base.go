@@ -92,6 +92,7 @@ type SAApp struct {
 	parent *SABase
 
 	Name string
+	IDE  bool
 
 	app                *NodeApp
 	cam_move           bool
@@ -149,7 +150,7 @@ func (sts *SABaseSettings) Refresh(base *SABase) {
 
 		}
 		if sts.findApp(f.Name) < 0 {
-			sts.Apps = append(sts.Apps, &SAApp{Name: f.Name, parent: base})
+			sts.Apps = append(sts.Apps, &SAApp{Name: f.Name, IDE: true, parent: base})
 		}
 	}
 
@@ -287,22 +288,25 @@ func (base *SABase) Render(ui *Ui) bool {
 }
 
 func (base *SABase) drawFrame(ui *Ui) {
-	icon_rad := 1.7
-
-	ui.Div_rowMax(0, 100)
-	ui.Div_col(0, icon_rad)
-	ui.Div_colMax(1, 100)
-	ui.Div_colResize(2, "settings", 10, false)
-
-	ui.Div_start(0, 0, 1, 1)
-	base.drawIcons(ui, icon_rad)
-	ui.Div_end()
 
 	app := base.settings.Apps[base.settings.Selected]
 	if app.app == nil {
 		app.app, _ = NewNodeApp("apps/" + app.Name + "/app.json") //err ...
 	}
 	app.saveIt = true
+
+	icon_rad := 1.7
+
+	ui.Div_rowMax(0, 100)
+	ui.Div_col(0, icon_rad)
+	ui.Div_colMax(1, 100)
+	if app.IDE {
+		ui.Div_colResize(2, "settings", 10, false)
+	}
+
+	ui.Div_start(0, 0, 1, 1)
+	base.drawIcons(app, ui, icon_rad)
+	ui.Div_end()
 
 	if base.settings.HasApp() {
 
@@ -316,8 +320,9 @@ func (base *SABase) drawFrame(ui *Ui) {
 		ui.Div_end()
 	}
 
-	ui.Div_start(2, 0, 1, 1)
-	{
+	if app.IDE {
+		ui.Div_start(2, 0, 1, 1)
+
 		ui.Div_colMax(0, 100)
 		ui.Div_rowResize(0, "parameters", 10, false)
 		ui.Div_rowMax(1, 100)
@@ -329,9 +334,8 @@ func (base *SABase) drawFrame(ui *Ui) {
 		ui.Div_start(0, 1, 1, 1)
 		app.app.root.drawNetwork(app, ui)
 		ui.Div_end()
-
+		ui.Div_end()
 	}
-	ui.Div_end()
 }
 
 func (node *Node) drawParameters(ui *Ui) {

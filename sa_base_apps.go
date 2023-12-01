@@ -218,7 +218,7 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 
 }
 
-func (base *SABase) drawIcons(ui *Ui, icon_rad float64) {
+func (base *SABase) drawIcons(app *SAApp, ui *Ui, icon_rad float64) {
 
 	ui.Paint_rect(0, 0, 1, 1, 0, ui.win.io.GetPalette().GetGrey(0.7), 0)
 
@@ -227,93 +227,115 @@ func (base *SABase) drawIcons(ui *Ui, icon_rad float64) {
 
 	ui.Div_colMax(0, 100)
 
-	for i := 0; i < 2+len(base.settings.Apps)+1; i++ {
-		ui.Div_row(i, icon_rad)
-	}
-	ui.Div_row(0, 1)   //spacer
+	//ui.Div_row(0, 1)
 	ui.Div_row(1, 0.1) //spacer
+	ui.Div_rowMax(2, 100)
+	ui.Div_row(4, 0.1) //spacer
 
-	y := 0
-	if ui.Comp_buttonIcon(0, y, 1, 1, "file:apps/base/resources/logo_small.png", "", true) > 0 {
-		ui.Dialog_open("menu", 1)
+	//Menu
+	{
+		if ui.Comp_buttonIcon(0, 0, 1, 1, "file:apps/base/resources/logo_small.png", "", true) > 0 {
+			ui.Dialog_open("menu", 1)
+		}
+		if ui.Dialog_start("menu") {
+			base.drawMenu(ui)
+			ui.Dialog_end()
+		}
+
+		base.drawMenuDialogs(ui)
 	}
-	if ui.Dialog_start("menu") {
-		base.drawMenu(ui)
+
+	ui.Div_SpacerRow(0, 1, 1, 1)
+
+	//Apps
+	{
+		ui.Div_start(0, 2, 1, 1)
+
+		ui.Div_colMax(0, 100)
+		for i := 0; i < len(base.settings.Apps); i++ {
+			ui.Div_row(i, icon_rad)
+		}
+
+		y := 0
+		for i, app := range base.settings.Apps {
+
+			nm := app.Name
+			if len(nm) > 3 {
+				nm = nm[:3]
+			}
+
+			//drag & drop(under button)
+			ui.Div_start(0, y, 1, 1)
+			{
+				dst := i
+				ui.Div_drag("app", dst)
+				src, pos, done := ui.Div_drop("app", true, false, false)
+				if done {
+					Div_DropMoveElement(&base.settings.Apps, &base.settings.Apps, src, dst, pos)
+				}
+			}
+			ui.Div_end()
+
+			click := ui.Comp_buttonText(0, y, 1, 1, nm, "", "", true, base.settings.Selected == i)
+			if click == 1 {
+				base.settings.Selected = i
+			}
+			appUid := fmt.Sprintf("app_context_%d", i)
+			if click == 2 {
+				ui.Dialog_open(appUid, 1)
+			}
+			if ui.Dialog_start(appUid) {
+				ui.Div_colMax(0, 5)
+				ui.Div_row(1, 0.1)
+
+				if ui.Comp_buttonMenu(0, 0, 1, 1, base.trns.RENAME, "", true, false) > 0 {
+					ui.Dialog_open(appUid+"_rename", 1)
+					//dialog(new_name + button) ...
+				}
+
+				ui.Div_SpacerRow(0, 1, 1, 1)
+
+				if ui.Comp_buttonMenu(0, 2, 1, 1, base.trns.REMOVE, "", true, false) > 0 {
+					ui.Dialog_open(appUid+"_delete", 1)
+					//dialog confirm ...
+				}
+
+				ui.Dialog_end()
+			}
+
+			y++
+		}
 		ui.Dialog_end()
 	}
-	y++
 
-	base.drawMenuDialogs(ui)
-
-	ui.Div_SpacerRow(0, y, 1, 1)
-	y++
-
-	//show apps
-	for i, app := range base.settings.Apps {
-
-		nm := app.Name
-		if len(nm) > 3 {
-			nm = nm[:3]
+	//+
+	{
+		if ui.Comp_buttonText(0, 3, 1, 1, "+", "", base.trns.CREATE_APP, true, false) > 0 {
+			ui.Dialog_open("new_app", 1)
 		}
+		if ui.Dialog_start("new_app") {
+			ui.Div_colMax(0, 10)
 
-		//drag & drop(under button)
-		ui.Div_start(0, y, 1, 1)
-		{
-			dst := i
-			ui.Div_drag("app", dst)
-			src, pos, done := ui.Div_drop("app", true, false, false)
-			if done {
-				Div_DropMoveElement(&base.settings.Apps, &base.settings.Apps, src, dst, pos)
-			}
-		}
-		ui.Div_end()
+			ui.Comp_editbox(0, 0, 1, 1, &base.settings.NewAppName, 0, "", "", false, false, true)
 
-		click := ui.Comp_buttonText(0, y, 1, 1, nm, "", "", true, base.settings.Selected == i)
-		if click == 1 {
-			base.settings.Selected = i
-		}
-		appUid := fmt.Sprintf("app_context_%d", i)
-		if click == 2 {
-			ui.Dialog_open(appUid, 1)
-		}
-		if ui.Dialog_start(appUid) {
-			ui.Div_colMax(0, 5)
-			ui.Div_row(1, 0.1)
-
-			if ui.Comp_buttonMenu(0, 0, 1, 1, base.trns.RENAME, "", true, false) > 0 {
-				ui.Dialog_open(appUid+"_rename", 1)
-				//dialog(new_name + button) ...
-			}
-
-			ui.Div_SpacerRow(0, 1, 1, 1)
-
-			if ui.Comp_buttonMenu(0, 2, 1, 1, base.trns.REMOVE, "", true, false) > 0 {
-				ui.Dialog_open(appUid+"_delete", 1)
-				//dialog confirm ...
+			if ui.Comp_button(0, 1, 1, 1, base.trns.CREATE_APP, "", true) > 0 {
+				OsFolderCreate("apps/" + base.settings.NewAppName)
+				base.settings.Refresh(base)
+				ui.Dialog_close()
 			}
 
 			ui.Dialog_end()
 		}
-
-		y++
 	}
 
-	//+
-	if ui.Comp_buttonText(0, y, 1, 1, "+", "", base.trns.CREATE_APP, true, false) > 0 {
-		ui.Dialog_open("new_app", 1)
-	}
-	if ui.Dialog_start("new_app") {
+	ui.Div_SpacerRow(0, 4, 1, 1)
 
-		ui.Div_colMax(0, 10)
-
-		ui.Comp_editbox(0, 0, 1, 1, &base.settings.NewAppName, 0, "", "", false, false, true)
-
-		if ui.Comp_button(0, 1, 1, 1, base.trns.CREATE_APP, "", true) > 0 {
-			OsFolderCreate("apps/" + base.settings.NewAppName)
-			base.settings.Refresh(base)
-			ui.Dialog_close()
+	//IDE
+	{
+		if ui.Comp_buttonText(0, 5, 1, 1, "IDE", "", "", true, app.IDE) > 0 {
+			app.IDE = !app.IDE
 		}
-
-		ui.Dialog_end()
+		//shortcut? ...
 	}
+
 }
