@@ -69,7 +69,8 @@ type Win struct {
 	window *sdl.Window
 	render sdl.GLContext
 
-	winVisible bool
+	winVisible  bool
+	num_redraws int
 
 	lastClickUp OsV2
 	numClicks   uint8
@@ -558,8 +559,15 @@ func (win *Win) UpdateIO() (bool, bool, error) {
 	}
 
 	if win.needRedraw(redraw) {
+		win.num_redraws = 0
 		redraw = true
 	}
+
+	//one more time
+	if win.num_redraws > 0 && win.num_redraws <= 3 {
+		redraw = true
+	}
+	win.num_redraws++
 
 	// update Win
 	io := win.io
