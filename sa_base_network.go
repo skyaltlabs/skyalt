@@ -343,12 +343,14 @@ func (node *Node) drawNetwork(app *SAApp, ui *Ui) {
 		}
 	}
 
-	//keys actions
+	touch := &ui.buff.win.io.touch
 	keys := &ui.buff.win.io.keys
-	if lv.call.data.over {
+	over := lv.call.data.over
 
+	//keys actions
+	{
 		//delete
-		if keys.delete {
+		if over && keys.delete {
 			for i := len(node.Subs) - 1; i >= 0; i-- {
 				if node.Subs[i].Selected {
 					node.Subs = append(node.Subs[:i], node.Subs[i+1:]...)
@@ -358,7 +360,7 @@ func (node *Node) drawNetwork(app *SAApp, ui *Ui) {
 		}
 
 		//bypass
-		if strings.EqualFold(keys.text, "b") {
+		if over && strings.EqualFold(keys.text, "b") {
 			for _, n := range node.Subs {
 				if n.Selected {
 					n.Bypass = !n.Bypass
@@ -374,9 +376,8 @@ func (node *Node) drawNetwork(app *SAApp, ui *Ui) {
 	//Node rename - double click? ...
 
 	//touch actions
-	touch := &ui.buff.win.io.touch
-	if lv.call.data.over {
-
+	//if lv.call.data.over
+	{
 		//delete node connection ...
 
 		//connect with 2x click ...
@@ -388,7 +389,7 @@ func (node *Node) drawNetwork(app *SAApp, ui *Ui) {
 		{
 			node_in, node_in_pos := node.findInputOver(ui, false)
 			node_out, node_out_pos := node.findOutputOver(ui, false)
-			if touch.start {
+			if over && touch.start {
 				if node_in != nil && node_in_pos >= 0 {
 					app.node_connect = node_in
 					app.node_connect_in = node_in_pos
@@ -414,7 +415,7 @@ func (node *Node) drawNetwork(app *SAApp, ui *Ui) {
 		}
 
 		//nodes
-		if clickedNode != nil && touch.start && !keys.shift && !keys.ctrl && app.node_connect == nil {
+		if clickedNode != nil && over && touch.start && !keys.shift && !keys.ctrl && app.node_connect == nil {
 			app.node_move = true
 			app.touch_start = touch.pos
 			for _, n := range node.Subs {
@@ -445,7 +446,7 @@ func (node *Node) drawNetwork(app *SAApp, ui *Ui) {
 		}
 
 		//zoom
-		if touch.wheel != 0 {
+		if over && touch.wheel != 0 {
 			node.Cam_z += float32(touch.wheel) * -0.1
 			if node.Cam_z <= 0.1 {
 				node.Cam_z = 0.1
@@ -458,7 +459,7 @@ func (node *Node) drawNetwork(app *SAApp, ui *Ui) {
 		}
 
 		//cam
-		if (clickedNode == nil || keys.shift || keys.ctrl) && touch.start && app.node_connect == nil {
+		if (clickedNode == nil || keys.shift || keys.ctrl) && over && touch.start && app.node_connect == nil {
 			if keys.space || touch.rm {
 				//start camera move
 				app.cam_move = true
