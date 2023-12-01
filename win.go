@@ -549,16 +549,16 @@ func (win *Win) UpdateIO() (bool, bool, error) {
 
 	win.fullscreen = win.io.ini.Fullscreen
 
-	ok, winChanged, err := win.Event()
+	run, redraw, err := win.Event()
 	if err != nil {
-		return ok, true, fmt.Errorf("Event() failed: %w", err)
+		return run, true, fmt.Errorf("Event() failed: %w", err)
 	}
-	if !ok {
-		return false, winChanged, nil
+	if !run {
+		return false, redraw, nil
 	}
 
-	if win.needRedraw(winChanged) {
-		winChanged = true
+	if win.needRedraw(redraw) {
+		redraw = true
 	}
 
 	// update Win
@@ -618,7 +618,7 @@ func (win *Win) UpdateIO() (bool, bool, error) {
 
 	win.cursorId = 0
 
-	return true, winChanged, nil
+	return true, redraw, nil
 }
 
 func (win *Win) StartRender(clearCd OsCd) error {
