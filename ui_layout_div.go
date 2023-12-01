@@ -378,34 +378,34 @@ func (div *UiLayoutDiv) RenderResizeSpliter(ui *Ui) {
 			hHighlight = false
 			//active = true
 		}
+	}
 
-		// resize
-		if ui.touch.IsFnMove(nil, nil, nil, div) {
+	// resize
+	if ui.touch.IsFnMove(nil, nil, nil, div) {
 
-			r := 1.0
-			if div.touchResizeIsCol {
-				col = div.touchResizeIndex
-				vHighlight = true
+		r := 1.0
+		if div.touchResizeIsCol {
+			col = div.touchResizeIndex
+			vHighlight = true
 
-				if div.data.cols.IsLastResizeValid() && int(col) == div.data.cols.NumInputs()-2 {
-					r = float64(div.canvas.Size.X - tpos.X) // last
-				} else {
-					r = float64(tpos.X - div.data.cols.GetResizerPos(int(col)-1, cell))
-				}
-
-				div.SetResizer(int(col), r, true, ui.buff.win)
+			if div.data.cols.IsLastResizeValid() && int(col) == div.data.cols.NumInputs()-2 {
+				r = float64(div.canvas.Size.X - tpos.X) // last
 			} else {
-				row = div.touchResizeIndex
-				hHighlight = true
-
-				if div.data.rows.IsLastResizeValid() && int(row) == div.data.rows.NumInputs()-2 {
-					r = float64(div.canvas.Size.Y - tpos.Y) // last
-				} else {
-					r = float64(tpos.Y - (div.data.rows.GetResizerPos(int(row)-1, cell)))
-				}
-
-				div.SetResizer(int(row), r, false, ui.buff.win)
+				r = float64(tpos.X - div.data.cols.GetResizerPos(int(col)-1, cell))
 			}
+
+			div.SetResizer(int(col), r, true, ui.buff.win)
+		} else {
+			row = div.touchResizeIndex
+			hHighlight = true
+
+			if div.data.rows.IsLastResizeValid() && int(row) == div.data.rows.NumInputs()-2 {
+				r = float64(div.canvas.Size.Y - tpos.Y) // last
+			} else {
+				r = float64(tpos.Y - (div.data.rows.GetResizerPos(int(row)-1, cell)))
+			}
+
+			div.SetResizer(int(row), r, false, ui.buff.win)
 		}
 	}
 
