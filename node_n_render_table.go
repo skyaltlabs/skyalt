@@ -56,7 +56,7 @@ func NodeOutTable_render(node *Node, ui *Ui) {
 	if node.db == nil {
 		return
 	}
-	//musíme volat nejdříve Execute a potom až render() ... .............................
+	//musíme volat nejdříve Execute a potom až render() ... ............................. visual that is updating ...
 
 	ui.Div_colMax(0, 100)
 	ui.Div_rowMax(0, 100)
