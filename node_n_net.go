@@ -173,7 +173,7 @@ func (node *Node) drawColsRowsDialog(name string, items *[]NodeColRow, i int, ui
 			ui.Div_colMax(0, 100)
 			ui.Div_colMax(1, 100)
 
-			ui.Comp_editbox_desc("Resize", 0, 2, 0, 0, 1, 1, &(*items)[i].ResizeName, 2, "", "Name", false, true, true)
+			ui.Comp_editbox_desc("Resize", 0, 2, 0, 0, 1, 1, &(*items)[i].ResizeName, 2, "", "Name", false, false, true)
 			ui.Comp_text(1, 0, 1, 1, strconv.FormatFloat((*items)[i].Resize, 'f', 2, 64), 0)
 		}
 		ui.Div_end()
