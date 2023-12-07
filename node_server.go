@@ -24,6 +24,7 @@ import (
 	"net"
 	"os/exec"
 	"strconv"
+	"sync/atomic"
 )
 
 const (
@@ -172,11 +173,17 @@ func (conn *NodeConn) read() ([]byte, uint64, bool) {
 type NodeServer struct {
 	port int
 	srv  net.Listener
+
+	nodes_dir string
+	nodes     []string
+
+	interrupt atomic.Bool
 }
 
-func NewNodeServer(port int) (*NodeServer, error) {
+func NewNodeServer(nodes_dir string, port int) (*NodeServer, error) {
 	var server NodeServer
 	server.port = port
+	server.nodes_dir = nodes_dir
 
 	var err error
 	server.srv, err = net.Listen("tcp", fmt.Sprintf(":%d", port))
@@ -184,19 +191,27 @@ func NewNodeServer(port int) (*NodeServer, error) {
 		return nil, fmt.Errorf("Listen() failed: %w", err)
 	}
 
+	nodes := OsFileListBuild(nodes_dir, "", true)
+	for _, n := range nodes.Subs {
+		server.nodes = append(server.nodes, n.Name)
+	}
+
 	return &server, nil
 }
 
 func (server *NodeServer) Destroy() {
-
 	server.srv.Close()
+}
+
+func (server *NodeServer) IsRunning() bool {
+	return !server.interrupt.Load()
 }
 
 func (server *NodeServer) Start(path string) *NodeConn {
 
 	uid := strconv.Itoa(rand.Int())
 
-	cmd := exec.Command("./"+path, uid, strconv.Itoa(server.port))
+	cmd := exec.Command("./"+server.nodes_dir+"/"+path, uid, strconv.Itoa(server.port))
 	cmd.Start()
 
 	c, err := server.srv.Accept()

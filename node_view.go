@@ -22,7 +22,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync/atomic"
 )
 
 type NodeView struct {
@@ -32,10 +31,6 @@ type NodeView struct {
 	history_act []*Node //JSONs
 	history     []*Node //JSONs
 	history_pos int
-
-	server *NodeServer //toto je single app, Server by měl být pro všechny .................
-
-	interrupt atomic.Bool
 }
 
 func NewNodeView(path string) (*NodeView, error) {
@@ -62,11 +57,6 @@ func NewNodeView(path string) (*NodeView, error) {
 	//init history
 	view.addHistory()
 	view.history_pos = 0
-
-	//view.server, err = NewNodeServer(4567)
-	//if err != nil {
-	//	return nil, fmt.Errorf("NewNodeServer() failed: %w", err)
-	//}
 
 	return view, nil
 }
@@ -208,10 +198,6 @@ func (view *NodeView) BypassSelectedNodes() {
 			n.Bypass = !n.Bypass
 		}
 	}
-}
-
-func (view *NodeView) IsRunning() bool {
-	return !view.interrupt.Load()
 }
 
 type NodeRenderColRow struct {
