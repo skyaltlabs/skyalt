@@ -22,7 +22,6 @@ import (
 )
 
 func (base *SABase) drawMenu(ui *Ui) {
-
 	ui.Div_colMax(0, 8)
 	ui.Div_row(1, 0.2)
 	ui.Div_row(3, 0.2)
@@ -234,7 +233,7 @@ func (base *SABase) drawIcons(app *SAApp, ui *Ui, icon_rad float64) {
 
 	//Menu
 	{
-		if ui.Comp_buttonIcon(0, 0, 1, 1, "file:apps/base/resources/logo_small.png", "", true) > 0 {
+		if ui.Comp_buttonIcon(0, 0, 1, 1, "file:apps/base/resources/logo_small.png", 0, "", true) > 0 {
 			ui.Dialog_open("menu", 1)
 		}
 		if ui.Dialog_start("menu") {
@@ -252,12 +251,12 @@ func (base *SABase) drawIcons(app *SAApp, ui *Ui, icon_rad float64) {
 		ui.Div_start(0, 2, 1, 1)
 
 		ui.Div_colMax(0, 100)
-		for i := 0; i < len(base.settings.Apps); i++ {
+		for i := 0; i < len(base.Apps); i++ {
 			ui.Div_row(i, icon_rad)
 		}
 
 		y := 0
-		for i, app := range base.settings.Apps {
+		for i, app := range base.Apps {
 
 			nm := app.Name
 			if len(nm) > 3 {
@@ -271,14 +270,14 @@ func (base *SABase) drawIcons(app *SAApp, ui *Ui, icon_rad float64) {
 				ui.Div_drag("app", dst)
 				src, pos, done := ui.Div_drop("app", true, false, false)
 				if done {
-					Div_DropMoveElement(&base.settings.Apps, &base.settings.Apps, src, dst, pos)
+					Div_DropMoveElement(&base.Apps, &base.Apps, src, dst, pos)
 				}
 			}
 			ui.Div_end()
 
-			click := ui.Comp_buttonText(0, y, 1, 1, nm, "", "", true, base.settings.Selected == i)
+			click := ui.Comp_buttonText(0, y, 1, 1, nm, "", "", true, base.Selected == i)
 			if click == 1 {
-				base.settings.Selected = i
+				base.Selected = i
 			}
 			appUid := fmt.Sprintf("app_context_%d", i)
 			if click == 2 {
@@ -305,7 +304,7 @@ func (base *SABase) drawIcons(app *SAApp, ui *Ui, icon_rad float64) {
 
 			y++
 		}
-		ui.Dialog_end()
+		ui.Div_end()
 	}
 
 	//+
@@ -316,11 +315,11 @@ func (base *SABase) drawIcons(app *SAApp, ui *Ui, icon_rad float64) {
 		if ui.Dialog_start("new_app") {
 			ui.Div_colMax(0, 10)
 
-			ui.Comp_editbox(0, 0, 1, 1, &base.settings.NewAppName, 0, "", "", false, false, true)
+			ui.Comp_editbox(0, 0, 1, 1, &base.NewAppName, 0, "", "", false, false, true)
 
 			if ui.Comp_button(0, 1, 1, 1, base.trns.CREATE_APP, "", true) > 0 {
-				OsFolderCreate("apps/" + base.settings.NewAppName)
-				base.settings.Refresh(base)
+				OsFolderCreate("apps/" + base.NewAppName)
+				base.Refresh()
 				ui.Dialog_close()
 			}
 

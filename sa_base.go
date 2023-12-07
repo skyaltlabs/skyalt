@@ -22,117 +22,15 @@ import (
 	"os"
 )
 
-type SABase_translations struct {
-	SAVE            string
-	SETTINGS        string
-	ZOOM            string
-	WINDOW_MODE     string
-	FULLSCREEN_MODE string
-	ABOUT           string
-	QUIT            string
-	SEARCH          string
-
-	COPYRIGHT string
-	WARRANTY  string
-
-	TIME_ZONE string
-
-	DATE_FORMAT      string
-	DATE_FORMAT_EU   string
-	DATE_FORMAT_US   string
-	DATE_FORMAT_ISO  string
-	DATE_FORMAT_TEXT string
-
-	THEME       string
-	THEME_OCEAN string
-	THEME_RED   string
-	THEME_BLUE  string
-	THEME_GREEN string
-	THEME_GREY  string
-
-	DPI        string
-	SHOW_STATS string
-	SHOW_GRID  string
-	LANGUAGE   string
-	LANGUAGES  string
-
-	NAME        string
-	REMOVE      string
-	RENAME      string
-	DUPLICATE   string
-	VACUUM      string
-	CREATE_FILE string
-	CHANGE_APP  string
-
-	SETUP_DB string
-
-	ALREADY_EXISTS string
-	EMPTY_FIELD    string
-	INVALID_NAME   string
-
-	IN_USE string
-
-	ADD_APP   string
-	CREATE_DB string
-
-	DEVELOPERS    string
-	CREATE_APP    string
-	PACKAGE_APP   string
-	REINSTALL_APP string
-	VACUUM_DBS    string
-
-	REPO    string
-	PACKAGE string
-
-	SIZE string
-	LOGS string
-}
-
-type SAApp struct {
-	parent *SABase
-
-	Name string
-	IDE  bool
-
-	app                *NodeApp
-	cam_move           bool
-	node_move          bool
-	node_select        bool
-	cam_start          OsV2f
-	touch_start        OsV2
-	node_move_selected *Node
-
-	node_connect     *Node
-	node_connect_in  int
-	node_connect_out int
-
-	//selection_start OsV2
-
-	saveIt bool
-
-	tab_touchPos OsV2
-}
-
-func (app *SAApp) GetPath() string {
-	return "apps/" + app.Name + "/app.json"
-}
-
-type SABaseSettings struct {
-	Apps     []*SAApp
-	Selected int
-
-	NewAppName string
-}
-
-func (sts *SABaseSettings) HasApp() bool {
-	if sts.Selected >= len(sts.Apps) {
-		sts.Selected = len(sts.Apps) - 1
+func (base *SABase) HasApp() bool {
+	if base.Selected >= len(base.Apps) {
+		base.Selected = len(base.Apps) - 1
 	}
-	return sts.Selected >= 0
+	return base.Selected >= 0
 }
 
-func (sts *SABaseSettings) findApp(name string) int {
-	for i, a := range sts.Apps {
+func (base *SABase) findApp(name string) int {
+	for i, a := range base.Apps {
 		if a.Name == name {
 			return i
 		}
@@ -140,7 +38,7 @@ func (sts *SABaseSettings) findApp(name string) int {
 	return -1
 }
 
-func (sts *SABaseSettings) Refresh(base *SABase) {
+func (base *SABase) Refresh() {
 	files := OsFileListBuild("apps", "", true)
 
 	//add(new on disk)
@@ -149,23 +47,23 @@ func (sts *SABaseSettings) Refresh(base *SABase) {
 			continue
 
 		}
-		if sts.findApp(f.Name) < 0 {
-			sts.Apps = append(sts.Apps, &SAApp{Name: f.Name, IDE: true, parent: base})
+		if base.findApp(f.Name) < 0 {
+			base.Apps = append(base.Apps, NewSAApp(f.Name, base))
 		}
 	}
 
 	//remove(deleted from disk)
-	for i := len(sts.Apps) - 1; i >= 0; i-- {
-		if files.FindInSubs(sts.Apps[i].Name, true) < 0 {
-			sts.Apps = append(sts.Apps[:i], sts.Apps[i+1:]...)
+	for i := len(base.Apps) - 1; i >= 0; i-- {
+		if files.FindInSubs(base.Apps[i].Name, true) < 0 {
+			base.Apps = append(base.Apps[:i], base.Apps[i+1:]...)
 		}
 	}
 
 	//remove duplicity
-	for i := len(sts.Apps) - 1; i >= 0; i-- {
+	for i := len(base.Apps) - 1; i >= 0; i-- {
 
-		if sts.findApp(sts.Apps[i].Name) != i {
-			sts.Apps = append(sts.Apps[:i], sts.Apps[i+1:]...)
+		if base.findApp(base.Apps[i].Name) != i {
+			base.Apps = append(base.Apps[:i], base.Apps[i+1:]...)
 		}
 	}
 }
@@ -173,15 +71,17 @@ func (sts *SABaseSettings) Refresh(base *SABase) {
 type SABase struct {
 	ui *Ui
 
-	settings SABaseSettings
+	Apps       []*SAApp
+	Selected   int
+	NewAppName string
 
 	exit bool
 
-	trns SABase_translations
+	trns SATranslations
 }
 
 func NewSABase(ui *Ui) (*SABase, error) {
-	var base SABase
+	base := &SABase{}
 
 	base.ui = ui
 
@@ -192,14 +92,13 @@ func NewSABase(ui *Ui) (*SABase, error) {
 
 		js, err := os.ReadFile(base.getPath())
 		if err == nil {
-			err := json.Unmarshal([]byte(js), &base.settings)
+			err := json.Unmarshal([]byte(js), base)
 			if err != nil {
 				fmt.Printf("warnning: Unmarshal() failed: %v\n", err)
 			}
 		}
-
-		for _, a := range base.settings.Apps {
-			a.parent = &base
+		for _, a := range base.Apps {
+			a.parent = base
 		}
 	}
 
@@ -209,9 +108,9 @@ func NewSABase(ui *Ui) (*SABase, error) {
 		return nil, fmt.Errorf("reloadTranslations() failed: %w", err)
 	}
 
-	base.settings.Refresh(&base)
+	base.Refresh()
 
-	return &base, nil
+	return base, nil
 }
 
 func (base *SABase) reloadTranslations(ui *Ui) error {
@@ -228,10 +127,10 @@ func (base *SABase) reloadTranslations(ui *Ui) error {
 
 func (base *SABase) Save() {
 	//apps
-	for _, a := range base.settings.Apps {
-		if a.app != nil {
+	for _, a := range base.Apps {
+		if a.view != nil {
 			if a.saveIt {
-				a.app.Save(a.GetPath())
+				a.view.Save(a.GetPath())
 			}
 		}
 	}
@@ -241,7 +140,7 @@ func (base *SABase) Save() {
 
 	//Base
 	{
-		js, err := json.MarshalIndent(&base.settings, "", "")
+		js, err := json.MarshalIndent(base, "", "")
 		if err != nil {
 			fmt.Printf("MarshalIndent() failed: %v\n", err)
 		} else {
@@ -258,9 +157,9 @@ func (base *SABase) Destroy() {
 	base.Save()
 
 	//close & save apps
-	for _, a := range base.settings.Apps {
-		if a.app != nil {
-			a.app.Destroy()
+	for _, a := range base.Apps {
+		if a.view != nil {
+			a.view.Destroy()
 		}
 	}
 }
@@ -275,7 +174,7 @@ func SABase_GetPathLayout() string {
 }
 
 func (base *SABase) Render(ui *Ui) bool {
-	base.settings.HasApp() //fix range
+	base.HasApp() //fix range
 
 	ui.renderStart(0, 0, 1, 1, true)
 
@@ -289,9 +188,9 @@ func (base *SABase) Render(ui *Ui) bool {
 
 func (base *SABase) drawFrame(ui *Ui) {
 
-	app := base.settings.Apps[base.settings.Selected]
-	if app.app == nil {
-		app.app, _ = NewNodeApp("apps/" + app.Name + "/app.json") //err ...
+	app := base.Apps[base.Selected]
+	if app.view == nil {
+		app.view, _ = NewNodeView("apps/" + app.Name + "/app.json") //err ...
 	}
 	app.saveIt = true
 
@@ -308,13 +207,14 @@ func (base *SABase) drawFrame(ui *Ui) {
 	base.drawIcons(app, ui, icon_rad)
 	ui.Div_end()
 
-	if base.settings.HasApp() {
+	if base.HasApp() {
 
-		ui.Div_startName(1, 0, 1, 1, base.settings.Apps[base.settings.Selected].Name)
+		ui.Div_startName(1, 0, 1, 1, base.Apps[base.Selected].Name)
 		{
-			fn := app.app.FindFn(app.app.root.FnName)
-			if fn != nil && fn.render != nil {
-				fn.render(&app.app.root, ui)
+			if app.IDE {
+				app.view.renderAppIDE(ui)
+			} else {
+				app.view.renderApp(ui, true)
 			}
 		}
 		ui.Div_end()
@@ -324,65 +224,16 @@ func (base *SABase) drawFrame(ui *Ui) {
 		ui.Div_start(2, 0, 1, 1)
 
 		ui.Div_colMax(0, 100)
-		ui.Div_rowResize(0, "parameters", 10, false)
 		ui.Div_rowMax(1, 100)
 
 		ui.Div_start(0, 0, 1, 1)
-		app.app.root.drawParameters(ui)
+		app.drawGraphHeader(ui)
 		ui.Div_end()
 
 		ui.Div_start(0, 1, 1, 1)
-		app.app.root.drawNetwork(app, ui)
+		app.drawGraph(ui)
 		ui.Div_end()
+
 		ui.Div_end()
-	}
-}
-
-func (node *Node) drawParameters(ui *Ui) {
-
-	var snode *Node
-	for _, n := range node.Subs {
-		if n.Selected {
-			snode = n
-			break
-		}
-	}
-
-	if snode == nil {
-		pl := ui.buff.win.io.GetPalette()
-		lv := ui.GetCall()
-		ui._compDrawText(lv.call.canvas, "No node selected", "", pl.GetGrey(0.7), SKYALT_FONT_HEIGHT, false, false, 1, 1, true)
-
-		return
-	}
-
-	ui.Div_colMax(0, 100)
-	y := OsTrn(snode.err == nil, 1, 2)
-	ui.Div_row(y, 0.1)
-	ui.Div_rowMax(y+1, 100)
-
-	y = 0
-	ui.Div_start(0, 0, 1, 1)
-	{
-		ui.Div_colMax(0, 100)
-		ui.Comp_editbox_desc("Name", 0, 2, 0, 0, 1, 1, &snode.Name, 0, "", "", false, false, true) //rename
-		ui.Comp_switch(1, 0, 1, 1, &snode.Bypass, true, "", "Bypass", true)
-	}
-	ui.Div_end()
-	y++
-
-	if snode.err != nil {
-		ui.Comp_text(0, y, 1, 1, "Error: "+snode.err.Error(), 0) //red color ...
-	}
-
-	ui.Div_SpacerRow(0, y, 1, 1)
-	y++
-
-	fn := snode.FindFn(snode.FnName)
-	if fn != nil && fn.parameters != nil {
-		ui.Div_start(0, y, 1, 1)
-		fn.parameters(snode, ui)
-		ui.Div_end()
-		y++
 	}
 }

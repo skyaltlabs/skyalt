@@ -23,6 +23,72 @@ import (
 	"strings"
 )
 
+type SATranslations struct {
+	SAVE            string
+	SETTINGS        string
+	ZOOM            string
+	WINDOW_MODE     string
+	FULLSCREEN_MODE string
+	ABOUT           string
+	QUIT            string
+	SEARCH          string
+
+	COPYRIGHT string
+	WARRANTY  string
+
+	TIME_ZONE string
+
+	DATE_FORMAT      string
+	DATE_FORMAT_EU   string
+	DATE_FORMAT_US   string
+	DATE_FORMAT_ISO  string
+	DATE_FORMAT_TEXT string
+
+	THEME       string
+	THEME_OCEAN string
+	THEME_RED   string
+	THEME_BLUE  string
+	THEME_GREEN string
+	THEME_GREY  string
+
+	DPI        string
+	SHOW_STATS string
+	SHOW_GRID  string
+	LANGUAGE   string
+	LANGUAGES  string
+
+	NAME        string
+	REMOVE      string
+	RENAME      string
+	DUPLICATE   string
+	VACUUM      string
+	CREATE_FILE string
+	CHANGE_APP  string
+
+	SETUP_DB string
+
+	ALREADY_EXISTS string
+	EMPTY_FIELD    string
+	INVALID_NAME   string
+
+	IN_USE string
+
+	ADD_APP   string
+	CREATE_DB string
+
+	DEVELOPERS    string
+	CREATE_APP    string
+	PACKAGE_APP   string
+	REINSTALL_APP string
+	VACUUM_DBS    string
+
+	REPO    string
+	PACKAGE string
+
+	SIZE string
+	LOGS string
+}
+
 func SATranslations_fromJson(js []byte, langs []string) ([]byte, error) {
 
 	keys := make(map[string]string)
