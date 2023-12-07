@@ -195,11 +195,12 @@ func (ui *Ui) Comp_button(x, y, w, h int, label string, tooltip string, enable b
 	return 0
 }
 
-func (ui *Ui) Comp_buttonIcon(x, y, w, h int, icon string, tooltip string, enable bool) int {
+func (ui *Ui) Comp_buttonIcon(x, y, w, h int, icon string, icon_margin float64, tooltip string, enable bool) int {
 	ui.Div_start(x, y, w, h)
 
 	style := ui._buttonBasicStyle(enable, tooltip)
 	style.image_alignH = 1
+	style.image_margin = icon_margin
 	click, rclick := ui.Comp_button_s(&style, "", icon, "", 0, false)
 
 	ui.Div_end()
@@ -379,13 +380,14 @@ func (ui *Ui) Comp_textIcon(x, y, w, h int, label string, icon string, iconMargi
 	style.image_alignV = 1
 	style.image_margin = iconMargin
 
-	ui.Comp_text_s(&style, label, icon)
+	ui.Comp_text_s(&style, label, icon, false)
 
 	ui.Div_end()
 }
 
-func (ui *Ui) Comp_text(x, y, w, h int, label string, alignH int) {
+func (ui *Ui) Comp_text(x, y, w, h int, label string, alignH int) *UiLayoutDiv {
 	ui.Div_start(x, y, w, h)
+	div := ui.GetCall().call
 
 	var style UiComp
 	style.enable = true
@@ -393,12 +395,29 @@ func (ui *Ui) Comp_text(x, y, w, h int, label string, alignH int) {
 	style.label_alignV = 1
 	style.label_alignH = uint8(alignH)
 
-	ui.Comp_text_s(&style, label, "")
+	ui.Comp_text_s(&style, label, "", true)
 
 	ui.Div_end()
+	return div
 }
 
-func (ui *Ui) Comp_text_s(style *UiComp, value string, icon string) {
+func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, alignH int, selection bool) *UiLayoutDiv {
+	ui.Div_start(x, y, w, h)
+	div := ui.GetCall().call
+
+	var style UiComp
+	style.enable = true
+	style.cd = CdPalette_B
+	style.label_alignV = 1
+	style.label_alignH = uint8(alignH)
+
+	ui.Comp_text_s(&style, label, "", selection)
+
+	ui.Div_end()
+	return div
+}
+
+func (ui *Ui) Comp_text_s(style *UiComp, value string, icon string, selection bool) {
 
 	pl := ui.buff.win.io.GetPalette()
 	_, onCd := pl.GetCd(style.cd, style.fade, style.enable, false, false)
@@ -416,7 +435,7 @@ func (ui *Ui) Comp_text_s(style *UiComp, value string, icon string) {
 		}
 	}
 
-	ui.Paint_textGrid(InitOsV4(0, 0, 1, 1), onCd, style, value, "", icon, true, false)
+	ui.Paint_textGrid(InitOsV4(0, 0, 1, 1), onCd, style, value, "", icon, selection, false)
 }
 
 func (ui *Ui) Comp_editbox_desc(description string, description_alignH int, width float64, x, y, w, h int, valueIn interface{}, value_precision int, icon string, ghost string, highlight bool, tempToValue bool, enable bool) (string, bool, bool, bool) {
