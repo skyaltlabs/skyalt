@@ -22,9 +22,7 @@ import (
 	"unicode/utf8"
 )
 
-func (ui *Ui) Paint_textWidth(style *UiComp, value string, cursorPos int64, ratioH float64, fontPath string, enableFormating bool) float64 {
-
-	//sdiv := style.GetDiv(true, app)
+func (ui *Ui) Paint_textWidth(value string, cursorPos int64, ratioH float64, fontPath string, enableFormating bool) float64 {
 
 	if ratioH <= 0 {
 		ratioH = SKYALT_FONT_HEIGHT
@@ -63,7 +61,7 @@ func (ui *Ui) Paint_textGrid(grid OsV4, cd OsCd, style *UiComp, value string, va
 	lv.call.data.scrollH.narrow = true
 	lv.call.data.scrollV.show = false
 
-	ui.Div_col(grid.Start.X, OsMaxFloat(ui.DivInfo_get(SA_DIV_GET_layoutWidth, 0), ui.Paint_textWidth(style, value, -1, 0, "", style.label_formating))) //+marginX*4+margin*2
+	ui.Div_col(grid.Start.X, OsMaxFloat(ui.DivInfo_get(SA_DIV_GET_layoutWidth, 0), ui.Paint_textWidth(value, -1, 0, "", style.label_formating))) //+marginX*4+margin*2
 	ui.Div_row(grid.Start.Y, ui.DivInfo_get(SA_DIV_GET_layoutHeight, 0))
 	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 	//style.Paint(st.stack.canvas, value, valueOrigEdit, selection, edit, icon, icon_margin, enable, app)
