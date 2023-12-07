@@ -116,13 +116,13 @@ func (ui *Ui) Dialog_start(name string) bool {
 	}
 	lev.use = 1
 
-	if lev.src_coordMoveCut.Size.X > 1 || lev.src_coordMoveCut.Size.Y > 1 { //for tp==1
+	/*if lev.src_coordMoveCut.Size.X > 1 || lev.src_coordMoveCut.Size.Y > 1 { //for tp==1
 		if lv.call.lastChild != nil {
 			lev.src_coordMoveCut = lv.call.lastChild.crop
 		} else {
 			lev.src_coordMoveCut = lv.call.crop
 		}
-	}
+	}*/
 
 	//coord
 	winRect, _ := ui.win.GetScreenCoord()
