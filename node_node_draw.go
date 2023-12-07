@@ -21,9 +21,9 @@ import (
 	"strconv"
 )
 
-func (node *Node) nodeToPixelsCoord(ui *Ui, app *NodeView) OsV4 {
+func (node *Node) nodeToPixelsCoord(ui *Ui, view *NodeView) OsV4 {
 
-	coordS := app.nodeToPixels(node.Pos, ui) //.parent, because it has Cam
+	coordS := view.nodeToPixels(node.Pos, ui) //.parent, because it has Cam
 
 	w := float64(0)
 	for _, attr := range node.Attrs {
@@ -41,7 +41,7 @@ func (node *Node) nodeToPixelsCoord(ui *Ui, app *NodeView) OsV4 {
 
 	h := 1 + OsTrn(node.err != nil, 1, 0) + len(node.Attrs) + len(node.Inputs) + len(node.outputs)
 
-	cellr := app.cellZoom(ui)
+	cellr := view.cellZoom(ui)
 	cq := InitOsV4Mid(coordS, OsV2{int(w * float64(cellr)), h * cellr})
 	cq.Size.Y += cellr / 5 //extra bottom space, because round connors
 	return cq
