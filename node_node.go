@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"runtime"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -307,19 +308,9 @@ func (node *Node) RemoveInputs(id int) {
 	}
 }
 
-func (node *Node) Execute(app *NodeView) {
-	//function
-	/*fn := node.GetFn()
-	if fn == nil {
-		node.err = fmt.Errorf("Function(%s) not found", node.FnName)
-		return
-	}*/
+func (node *Node) Execute(server *NodeServer) {
 
-	//free previous db
-	/*if node.db != nil {
-		node.db.Destroy()
-		node.db = nil
-	}*/
+	node.err = nil
 
 	//update inputs
 	/*for _, in := range node.Inputs {
@@ -331,18 +322,18 @@ func (node *Node) Execute(app *NodeView) {
 
 	//call
 	if node.Bypass {
-		//copy inputs to outputs
+		//copy inputs to outputs ...
 		//node.outputs = make([]NodeData, len(ins))
 		//copy(node.outputs, ins)
 	} else {
 
-		if node.FnName != "main" {
-			nc := app.server.Start(node.FnName)
+		if !strings.HasPrefix(node.FnName, "gui_") {
+			nc := server.Start(node.FnName)
 			if nc != nil {
 
-				//copy inputs ...
+				//nc.strct.Inputs	//copy ...
 				nc.Start()
-				//copy outputs ...
+				//nc.strct.Outputs	//copy ...
 
 				if nc.progress.Error != "" {
 					node.err = errors.New(nc.progress.Error)
@@ -352,27 +343,22 @@ func (node *Node) Execute(app *NodeView) {
 			}
 		}
 
-		/*node.err = fn.exe(node)
 		if node.err != nil {
 			fmt.Printf("Node(%d) has error(%v)\n", node.Id, node.err)
-		}*/
+		}
 	}
 
-	if !app.IsRunning() {
+	if !server.IsRunning() {
 		node.err = fmt.Errorf("Interrupted")
 		return
 	}
-
-	/*if node.db != nil {
-		node.db.Commit()
-	}*/
 
 	node.changed = true //child can update
 	node.done = true
 	node.running = false
 }
 
-func (node *Node) ExecuteSubs(app *NodeView) {
+func (node *Node) ExecuteSubs(server *NodeServer) {
 
 	//prepare
 	for _, n := range node.Subs {
@@ -385,7 +371,7 @@ func (node *Node) ExecuteSubs(app *NodeView) {
 	maxActiveThreads := int64(runtime.NumCPU())
 	var wg sync.WaitGroup
 	run := true
-	for run && app.IsRunning() {
+	for run && server.IsRunning() {
 		run = false
 		for _, n := range node.Subs {
 
@@ -409,7 +395,7 @@ func (node *Node) ExecuteSubs(app *NodeView) {
 									wg.Add(1)
 									go func(nn *Node) {
 										numActiveThreads.Add(1)
-										nn.Execute(app)
+										nn.Execute(server)
 										wg.Done()
 										numActiveThreads.Add(-1)
 									}(n)
@@ -428,7 +414,7 @@ func (node *Node) ExecuteSubs(app *NodeView) {
 
 	wg.Wait()
 
-	if app.IsRunning() {
+	if server.IsRunning() {
 		for _, n := range node.Subs {
 			n.changed = false
 		}
