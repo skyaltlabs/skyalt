@@ -22,52 +22,6 @@ import (
 	"os"
 )
 
-func (base *SABase) HasApp() bool {
-	if base.Selected >= len(base.Apps) {
-		base.Selected = len(base.Apps) - 1
-	}
-	return base.Selected >= 0
-}
-
-func (base *SABase) findApp(name string) int {
-	for i, a := range base.Apps {
-		if a.Name == name {
-			return i
-		}
-	}
-	return -1
-}
-
-func (base *SABase) Refresh() {
-	files := OsFileListBuild("apps", "", true)
-
-	//add(new on disk)
-	for _, f := range files.Subs {
-		if !f.IsDir || f.Name == "base" {
-			continue
-
-		}
-		if base.findApp(f.Name) < 0 {
-			base.Apps = append(base.Apps, NewSAApp(f.Name, base))
-		}
-	}
-
-	//remove(deleted from disk)
-	for i := len(base.Apps) - 1; i >= 0; i-- {
-		if files.FindInSubs(base.Apps[i].Name, true) < 0 {
-			base.Apps = append(base.Apps[:i], base.Apps[i+1:]...)
-		}
-	}
-
-	//remove duplicity
-	for i := len(base.Apps) - 1; i >= 0; i-- {
-
-		if base.findApp(base.Apps[i].Name) != i {
-			base.Apps = append(base.Apps[:i], base.Apps[i+1:]...)
-		}
-	}
-}
-
 type SABase struct {
 	ui *Ui
 
@@ -78,6 +32,8 @@ type SABase struct {
 	exit bool
 
 	trns SATranslations
+
+	server *NodeServer
 }
 
 func NewSABase(ui *Ui) (*SABase, error) {
@@ -98,7 +54,7 @@ func NewSABase(ui *Ui) (*SABase, error) {
 			}
 		}
 		for _, a := range base.Apps {
-			a.parent = base
+			a.base = base
 		}
 	}
 
@@ -106,6 +62,11 @@ func NewSABase(ui *Ui) (*SABase, error) {
 	err := base.reloadTranslations(ui)
 	if err != nil {
 		return nil, fmt.Errorf("reloadTranslations() failed: %w", err)
+	}
+
+	base.server, err = NewNodeServer("nodes", 4567)
+	if err != nil {
+		return nil, fmt.Errorf("NewNodeServer() failed: %w", err)
 	}
 
 	base.Refresh()
@@ -171,6 +132,52 @@ func (base *SABase) getPath() string {
 func SABase_GetPathLayout() string {
 	dev, _ := os.Hostname()
 	return "apps/layout_" + dev + ".json"
+}
+
+func (base *SABase) HasApp() bool {
+	if base.Selected >= len(base.Apps) {
+		base.Selected = len(base.Apps) - 1
+	}
+	return base.Selected >= 0
+}
+
+func (base *SABase) findApp(name string) int {
+	for i, a := range base.Apps {
+		if a.Name == name {
+			return i
+		}
+	}
+	return -1
+}
+
+func (base *SABase) Refresh() {
+	files := OsFileListBuild("apps", "", true)
+
+	//add(new on disk)
+	for _, f := range files.Subs {
+		if !f.IsDir || f.Name == "base" {
+			continue
+
+		}
+		if base.findApp(f.Name) < 0 {
+			base.Apps = append(base.Apps, NewSAApp(f.Name, base))
+		}
+	}
+
+	//remove(deleted from disk)
+	for i := len(base.Apps) - 1; i >= 0; i-- {
+		if files.FindInSubs(base.Apps[i].Name, true) < 0 {
+			base.Apps = append(base.Apps[:i], base.Apps[i+1:]...)
+		}
+	}
+
+	//remove duplicity
+	for i := len(base.Apps) - 1; i >= 0; i-- {
+
+		if base.findApp(base.Apps[i].Name) != i {
+			base.Apps = append(base.Apps[:i], base.Apps[i+1:]...)
+		}
+	}
 }
 
 func (base *SABase) Render(ui *Ui) bool {
