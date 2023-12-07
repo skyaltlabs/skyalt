@@ -19,7 +19,7 @@ package main
 import "strings"
 
 type SAApp struct {
-	parent *SABase
+	base *SABase
 
 	Name string
 	IDE  bool
@@ -41,9 +41,9 @@ type SAApp struct {
 	tab_touchPos OsV2
 }
 
-func NewSAApp(name string, parent *SABase) *SAApp {
+func NewSAApp(name string, base *SABase) *SAApp {
 	var app SAApp
-	app.parent = parent
+	app.base = base
 	app.Name = name
 	app.IDE = true
 
@@ -68,7 +68,7 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 
 		y := 0
 		var search string
-		ui.Comp_editbox(0, 0, 1, 1, &search, 0, "", app.parent.trns.SAVE, search != "", true, true)
+		ui.Comp_editbox(0, 0, 1, 1, &search, 0, "", app.base.trns.SAVE, search != "", true, true)
 		y++
 
 		var fns []string
@@ -76,6 +76,8 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 		fns = append(fns, "gui_text")
 		fns = append(fns, "gui_edit")
 		//...
+
+		fns = append(fns, app.base.server.nodes...) //from /nodes dir
 
 		keys := &ui.buff.win.io.keys
 
