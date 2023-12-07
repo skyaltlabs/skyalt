@@ -142,6 +142,11 @@ func (b *WinPaintBuff) AddRect(coord OsV4, cd OsCd, thick int) {
 		}
 	}
 }
+func (b *WinPaintBuff) AddRectRound(coord OsV4, rad int, cd OsCd, thick int) {
+	if !b.skipDraw {
+		b.win.DrawRectRound(coord, rad, b.getDepth(), cd, thick)
+	}
+}
 
 func (b *WinPaintBuff) AddLine(start OsV2, end OsV2, cd OsCd, thick int) {
 	if !b.skipDraw {

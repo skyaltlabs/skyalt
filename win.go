@@ -823,6 +823,64 @@ func (win *Win) DrawRect_border(start OsV2, end OsV2, depth int, cd OsCd, thick 
 	win.DrawRect(OsV2{end.X - thick, start.Y}, end, depth, cd)   // right
 }
 
+func (win *Win) DrawRectRound(coord OsV4, rad int, depth int, cd OsCd, thick int) {
+	gl.Color4ub(cd.R, cd.G, cd.B, cd.A)
+
+	piQ := math.Pi / 2
+	step := 2 * math.Pi / 50
+
+	gl.Translatef(float32(coord.Start.X), float32(coord.Start.Y), 0)
+
+	if thick > 0 {
+		gl.LineWidth(float32(thick))
+		gl.Begin(gl.LINE_LOOP)
+	} else {
+		//gl.Enable(gl.POLYGON_SMOOTH)
+		//gl.Hint(gl.POLYGON_SMOOTH_HINT, gl.NICEST)
+		//gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
+		gl.Begin(gl.TRIANGLE_FAN)
+	}
+
+	{
+		//center
+		if thick == 0 {
+			gl.Vertex3f(float32(coord.Size.X/2), float32(coord.Size.Y/2), float32(depth))
+		}
+
+		stX := float32(coord.Size.X - rad)
+		stY := float32(coord.Size.Y - rad)
+		for i := 0 * piQ; i < 1*piQ; i += step {
+			gl.Vertex3f(stX+float32(math.Cos(i))*float32(rad), stY+float32(math.Sin(i))*float32(rad), float32(depth))
+		}
+
+		stX = float32(rad)
+		stY = float32(coord.Size.Y - rad)
+		for i := 1 * piQ; i < 2*piQ; i += step {
+			gl.Vertex3f(stX+float32(math.Cos(i))*float32(rad), stY+float32(math.Sin(i))*float32(rad), float32(depth))
+		}
+
+		stX = float32(rad)
+		stY = float32(rad)
+		for i := 2 * piQ; i < 3*piQ; i += step {
+			gl.Vertex3f(stX+float32(math.Cos(i))*float32(rad), stY+float32(math.Sin(i))*float32(rad), float32(depth))
+		}
+
+		stX = float32(coord.Size.X - rad)
+		stY = float32(rad)
+		for i := 3 * piQ; i < 4*piQ; i += step {
+			gl.Vertex3f(stX+float32(math.Cos(i))*float32(rad), stY+float32(math.Sin(i))*float32(rad), float32(depth))
+		}
+
+		//first = last
+		gl.Vertex3f(float32(coord.Size.X), float32(coord.Size.Y-rad), float32(depth))
+
+	}
+	gl.End()
+
+	gl.Translatef(-float32(coord.Start.X), -float32(coord.Start.Y), 0)
+}
+
 func (win *Win) DrawCicle(mid OsV2, rad OsV2, depth int, cd OsCd, thick int) {
 	gl.Color4ub(cd.R, cd.G, cd.B, cd.A)
 	//gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)

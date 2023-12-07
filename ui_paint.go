@@ -31,6 +31,16 @@ func (ui *Ui) Paint_rect(x, y, w, h float64, margin float64, cd OsCd, borderWidt
 	return true
 }
 
+func (ui *Ui) Paint_rect_round(x, y, w, h float64, margin float64, cd OsCd, rad float64, borderWidth float64) bool {
+
+	lv := ui.GetCall()
+	if lv.call == nil || lv.call.crop.IsZero() {
+		return false
+	}
+	ui.buff.AddRectRound(ui.getCoord(x, y, w, h, margin, 0, 0), ui.CellWidth(rad), cd, ui.CellWidth(borderWidth))
+	return true
+}
+
 func (ui *Ui) Paint_line(x, y, w, h float64, margin float64, sx, sy, ex, ey float64, cd OsCd, width float64) bool {
 
 	lv := ui.GetCall()
