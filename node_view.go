@@ -264,7 +264,11 @@ func (view *NodeView) renderApp(ui *Ui, renderRoot bool) {
 
 				ui.Div_end()
 
-			case "gui_text":
+			case "gui_button":
+				clicked := ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, n.GetInputString("label"), "", true) > 0
+				n.GetOutput("clicked").Value = OsTrnString(clicked, "1", "0")
+
+			case "gui_label":
 				n.GetInput("align").Gui_type = "combo"
 				n.GetInput("align").Gui_options = "Left|Center|Right"
 

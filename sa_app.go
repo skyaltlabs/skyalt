@@ -73,7 +73,8 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 		var fns []string
 		fns = append(fns, "constant")
 		fns = append(fns, "gui_sub")
-		fns = append(fns, "gui_text")
+		fns = append(fns, "gui_button")
+		fns = append(fns, "gui_label")
 		fns = append(fns, "gui_edit")
 		//...
 
