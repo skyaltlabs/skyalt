@@ -323,6 +323,14 @@ func (node *Node) RemoveInputs(id int) {
 	}
 }
 
+func (node *Node) IsExecuteIgnore() bool {
+	return strings.HasPrefix(node.FnName, "gui_") || node.FnName == "constant"
+}
+
+func (node *Node) ExecuteConstant() {
+	node.GetAttr("value")
+}
+
 func (node *Node) Execute(server *NodeServer) {
 
 	node.err = nil
@@ -334,7 +342,7 @@ func (node *Node) Execute(server *NodeServer) {
 		//copy(node.outputs, ins)
 	} else {
 
-		if !strings.HasPrefix(node.FnName, "gui_") {
+		if !node.IsExecuteIgnore() {
 			nc := server.Start(node.FnName)
 			if nc != nil {
 
@@ -416,6 +424,10 @@ func (node *Node) ExecuteSubs(server *NodeServer, max_threads int) {
 	for _, n := range node.Subs {
 		n.done = false
 		n.running = false
+
+		if n.FnName == "constant" {
+			n.ExecuteConstant()
+		}
 	}
 
 	//multi-thread executing
