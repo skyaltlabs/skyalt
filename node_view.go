@@ -270,13 +270,14 @@ func (view *NodeView) renderApp(ui *Ui, renderRoot bool) {
 				ui.Comp_text(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, n.GetInputString("label"), n.GetInputInt("align"))
 
 			case "gui_edit":
-				ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &n.GetAttr("value").Value, 3, "", "", false, false, true)
+				_, _, _, fnshd, _ := ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &n.GetAttr("value").Value, 3, "", "", false, false, true)
+				if fnshd {
+					n.SetChanged()
+				}
 
 				//...................
 				//1) separtors(+ labels: Attr/Inputs/Outputs) ...
 				//2) měnit pořadí(d&d) attr/ins/outs ...
-
-				//5) try node_sqlite? ...
 
 				//case "gui_checkbox" ...
 			}
@@ -545,16 +546,15 @@ func (view *NodeView) cellZoom(ui *Ui) int {
 	return int(float32(ui.win.Cell()) * view.GetAttrCamZ() * 1)
 }
 
-func (view *NodeView) findInputOver(end bool, ui *Ui) (*Node, *NodeParamIn) {
+func (view *NodeView) findInputOver(end bool, ui *Ui) *NodeParamIn {
 
 	lv := ui.GetCall()
 	if !lv.call.data.over {
-		return nil, nil
+		return nil
 	}
 
 	touch := &ui.buff.win.io.touch
 
-	var node_found *Node
 	var param_found *NodeParamIn
 
 	for _, n := range view.act.Subs {
@@ -562,31 +562,28 @@ func (view *NodeView) findInputOver(end bool, ui *Ui) (*Node, *NodeParamIn) {
 		//inputs
 		for _, in := range n.Inputs {
 			if in.coordDot.Inside(touch.pos) || (end && in.coordLabel.Inside(touch.pos)) {
-				node_found = n
 				param_found = in
 			}
 		}
 	}
 
-	return node_found, param_found
+	return param_found
 }
-func (view *NodeView) findOutputOver(end bool, ui *Ui) (*Node, *NodeParamOut) {
+func (view *NodeView) findOutputOver(end bool, ui *Ui) *NodeParamOut {
 
 	lv := ui.GetCall()
 	if !lv.call.data.over {
-		return nil, nil
+		return nil
 	}
 
 	touch := &ui.buff.win.io.touch
 
-	var node_found *Node
 	var param_found *NodeParamOut
 
 	for _, n := range view.act.Subs {
 		//attributes
 		for _, attr := range n.Attrs {
 			if attr.coordDot.Inside(touch.pos) || (end && attr.coordLabel.Inside(touch.pos)) {
-				node_found = n
 				param_found = attr
 			}
 		}
@@ -594,11 +591,10 @@ func (view *NodeView) findOutputOver(end bool, ui *Ui) (*Node, *NodeParamOut) {
 		//outputs
 		for _, out := range n.outputs {
 			if out.coordDot.Inside(touch.pos) || (end && out.coordLabel.Inside(touch.pos)) {
-				node_found = n
 				param_found = out
 			}
 		}
 	}
 
-	return node_found, param_found
+	return param_found
 }

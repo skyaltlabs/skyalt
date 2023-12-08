@@ -22,6 +22,8 @@ import (
 )
 
 type NodeParamOut struct {
+	node *Node
+
 	Name        string
 	Value       string //interface{}
 	Gui_type    string `json:",omitempty"`
@@ -41,6 +43,8 @@ func (out *NodeParamOut) Marshal(st any) error {
 }
 
 type NodeParamIn struct {
+	parent *Node
+
 	Name        string
 	Value       string
 	Gui_type    string `json:",omitempty"`
@@ -61,15 +65,18 @@ func (in *NodeParamIn) Unmarshal(st any) error {
 	return nil
 }
 
-func (in *NodeParamIn) SetWire(node *Node, paramOut *NodeParamOut) {
+func (in *NodeParamIn) SetWire(paramOut *NodeParamOut) {
 
-	if node == nil || paramOut == nil {
+	if paramOut == nil {
 		in.Wire_id = 0
 		in.Wire_param = ""
 	} else {
-		in.Wire_id = node.Id
+		in.Wire_id = paramOut.node.Id
 		in.Wire_param = paramOut.Name
 	}
+
+	in.parent.SetChanged()
+
 }
 
 func (in *NodeParamIn) String() (string, error) {
@@ -89,33 +96,37 @@ func (in *NodeParamIn) Int() (int, error) {
 	return v.Value, err
 }
 
-func (in *NodeParamIn) FindWireNode(node *Node) *Node {
+/*func (in *NodeParamIn) FindWireNode(node *Node) *Node {
+
+	if node == nil {
+		return nil
+	}
 
 	if in.Wire_id <= 0 {
 		return nil
 	}
 	n := node.parent.FindNode(in.Wire_id)
 	if n == nil {
-		in.SetWire(nil, nil) //reset
+		in.SetWire(nil, nil, nil) //reset
 	}
 	return n
-}
+}*/
 
-func (in *NodeParamIn) FindWireOut(node *Node) (*Node, *NodeParamOut) {
-	n := in.FindWireNode(node)
-	if n == nil {
-		return nil, nil
+func (in *NodeParamIn) FindWireOut() *NodeParamOut {
+
+	outNode := in.parent.parent.FindNode(in.Wire_id)
+	if outNode == nil {
+		return nil
 	}
 
-	out := n.FindAttr(in.Wire_param) //attr
+	out := outNode.FindAttr(in.Wire_param) //attr
 	if out == nil {
-		out = n.FindOutput(in.Wire_param) //out
+		out = outNode.FindOutput(in.Wire_param) //out
 	}
 
 	if out == nil {
-		in.SetWire(nil, nil) //reset
-		n = nil
+		in.SetWire(nil) //reset
 	}
 
-	return n, out
+	return out
 }

@@ -32,7 +32,6 @@ type SAApp struct {
 	touch_start        OsV2
 	node_move_selected *Node
 
-	node_connect     *Node
 	node_connect_in  *NodeParamIn
 	node_connect_out *NodeParamOut
 
@@ -178,8 +177,7 @@ func (app *SAApp) drawGraph(ui *Ui) {
 	for _, nodeIn := range app.view.act.Subs {
 		for _, paramIn := range nodeIn.Inputs {
 
-			_, paramOut := paramIn.FindWireOut(nodeIn)
-
+			paramOut := paramIn.FindWireOut()
 			if paramOut != nil {
 				_SAApp_drawConnection(paramOut.coordDot.Middle(), paramIn.coordDot.Middle(), false, ui)
 			}
@@ -222,22 +220,20 @@ func (app *SAApp) drawGraph(ui *Ui) {
 	{
 		//nodes: inputs/outputs
 		{
-			node_in, node_in_param := app.view.findInputOver(false, ui)
-			node_out, node_out_param := app.view.findOutputOver(false, ui)
+			node_in_param := app.view.findInputOver(false, ui)
+			node_out_param := app.view.findOutputOver(false, ui)
 			if over && touch.start {
-				if node_in != nil && node_in_param != nil {
-					app.node_connect = node_in
+				if node_in_param != nil {
 					app.node_connect_in = node_in_param
 					app.node_connect_out = nil
 				}
-				if node_out != nil && node_out_param != nil {
-					app.node_connect = node_out
+				if node_out_param != nil {
 					app.node_connect_in = nil
 					app.node_connect_out = node_out_param
 				}
 			}
 		}
-		if app.node_connect != nil {
+		{
 			if app.node_connect_in != nil {
 				_SAApp_drawConnection(touch.pos, app.node_connect_in.coordDot.Middle(), true, ui)
 			}
@@ -247,7 +243,7 @@ func (app *SAApp) drawGraph(ui *Ui) {
 		}
 
 		//nodes
-		if touchMoveNode != nil && over && touch.start && !keys.shift && !keys.ctrl && app.node_connect == nil {
+		if touchMoveNode != nil && over && touch.start && !keys.shift && !keys.ctrl && (app.node_connect_in == nil && app.node_connect_out == nil) {
 			app.node_move = true
 			app.touch_start = touch.pos
 			for _, n := range app.view.act.Subs {
@@ -288,7 +284,7 @@ func (app *SAApp) drawGraph(ui *Ui) {
 		}
 
 		//cam
-		if (touchMoveNode == nil || keys.shift || keys.ctrl) && over && touch.start && app.node_connect == nil {
+		if (touchMoveNode == nil || keys.shift || keys.ctrl) && over && touch.start && (app.node_connect_in == nil && app.node_connect_out == nil) {
 			if keys.space || touch.rm {
 				//start camera move
 				app.cam_move = true
@@ -344,17 +340,16 @@ func (app *SAApp) drawGraph(ui *Ui) {
 			}
 		}
 
-		if app.node_connect != nil {
-
+		{
 			if app.node_connect_in != nil {
-				node_out, node_out_param := app.view.findOutputOver(true, ui)
-				app.node_connect_in.SetWire(node_out, node_out_param) //connet & disconnect
+				node_out_param := app.view.findOutputOver(true, ui)
+				app.node_connect_in.SetWire(node_out_param) //connet & disconnect
 			}
 
 			if app.node_connect_out != nil {
-				node_in, node_in_param := app.view.findInputOver(true, ui)
-				if node_in != nil {
-					node_in_param.SetWire(app.node_connect, app.node_connect_out)
+				node_in_param := app.view.findInputOver(true, ui)
+				if node_in_param != nil {
+					node_in_param.SetWire(app.node_connect_out)
 				}
 			}
 		}
@@ -362,7 +357,8 @@ func (app *SAApp) drawGraph(ui *Ui) {
 		app.cam_move = false
 		app.node_move = false
 		app.node_select = false
-		app.node_connect = nil
+		app.node_connect_in = nil
+		app.node_connect_out = nil
 	}
 
 	//short cuts

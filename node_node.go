@@ -159,9 +159,24 @@ func (a *Node) Cmp(b *Node) bool {
 	return true
 }
 
+func (node *Node) SetChanged() {
+	node.changed = true
+}
+
 func (node *Node) UpdateParents(parent *Node) {
 	node.parent = parent
-	node.changed = true
+	node.SetChanged()
+
+	for _, it := range node.Attrs {
+		it.node = node
+	}
+	for _, it := range node.Inputs {
+		it.parent = node
+	}
+	for _, it := range node.outputs {
+		it.node = node
+	}
+
 	for _, n := range node.Subs {
 		n.UpdateParents(node)
 	}
@@ -222,7 +237,7 @@ func (node *Node) GetAttr(name string) *NodeParamOut {
 	attr := node.FindAttr(name)
 	if attr == nil {
 		//add
-		attr = &NodeParamOut{Name: name}
+		attr = &NodeParamOut{Name: name, node: node}
 		node.Attrs = append(node.Attrs, attr)
 	}
 	return attr
@@ -242,7 +257,7 @@ func (node *Node) GetOutput(name string) *NodeParamOut {
 	out := node.FindOutput(name)
 	if out == nil {
 		//add
-		out = &NodeParamOut{Name: name}
+		out = &NodeParamOut{Name: name, node: node}
 		node.outputs = append(node.outputs, out)
 	}
 	return out
@@ -251,7 +266,7 @@ func (node *Node) GetOutput(name string) *NodeParamOut {
 func (node *Node) GetInputString(name string) string {
 	in := node.GetInput(name)
 
-	_, out := in.FindWireOut(node)
+	out := in.FindWireOut()
 	if out != nil {
 		return out.Value
 	}
@@ -349,7 +364,7 @@ func (node *Node) Execute(server *NodeServer) {
 					src := node.Inputs[i]
 					dst := nc.FindInput(src.Name)
 					if dst != nil {
-						_, out := src.FindWireOut(node)
+						out := src.FindWireOut()
 						if out != nil {
 							dst.Value = out.Value
 						} else {
@@ -390,7 +405,7 @@ func (node *Node) Execute(server *NodeServer) {
 		return
 	}
 
-	node.changed = true //child can update
+	node.SetChanged() //child can update
 	node.done = true
 	node.running = false
 }
@@ -462,10 +477,10 @@ func (node *Node) ExecuteSubs(server *NodeServer, max_threads int) {
 func (node *Node) areInputsErrorFree() bool {
 
 	for _, in := range node.Inputs {
-		n := in.FindWireNode(node)
-		if n != nil {
-			if n.err != nil {
-				n.err = fmt.Errorf("incomming error from input(%s)", in.Name)
+		out := in.FindWireOut()
+		if out != nil {
+			if out.node.err != nil {
+				in.parent.err = fmt.Errorf("incomming error from input(%s)", in.Name)
 				return false
 			}
 		}
@@ -477,8 +492,8 @@ func (node *Node) areInputsErrorFree() bool {
 func (node *Node) areInputsReadyToRun() bool {
 
 	for _, in := range node.Inputs {
-		n := in.FindWireNode(node)
-		if n != nil && n.running {
+		out := in.FindWireOut()
+		if out != nil && out.node.running {
 			return false //still running
 		}
 	}
@@ -489,8 +504,8 @@ func (node *Node) areInputsReadyToRun() bool {
 func (node *Node) areInputsDone() bool {
 
 	for _, in := range node.Inputs {
-		n := in.FindWireNode(node)
-		if n != nil && !n.done {
+		out := in.FindWireOut()
+		if out != nil && !out.node.done {
 			return false //not finished
 		}
 	}
@@ -501,8 +516,8 @@ func (node *Node) areInputsDone() bool {
 func (node *Node) isInputsChanged() bool {
 
 	for _, in := range node.Inputs {
-		n := in.FindWireNode(node)
-		if n != nil && n.changed {
+		out := in.FindWireOut()
+		if out != nil && out.node.changed {
 			return true //changed
 		}
 	}

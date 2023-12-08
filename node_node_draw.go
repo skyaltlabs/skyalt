@@ -207,7 +207,7 @@ func (node *Node) drawNode(someNodeIsDraged bool, ui *Ui, view *NodeView) (bool,
 					insideMove = div.crop.Inside(touch.pos)
 				}
 
-				_, out := in.FindWireOut(node)
+				out := in.FindWireOut()
 
 				value := &in.Value
 				if out != nil {
