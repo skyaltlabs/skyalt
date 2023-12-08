@@ -99,21 +99,25 @@ func (ui *Ui) Paint_file(x, y, w, h float64, margin float64, url string, cd OsCd
 	return true
 }
 
-func (ui *Ui) Paint_tooltip(x, y, w, h float64, text string) bool {
+func (ui *Ui) Paint_tooltipDiv(div *UiLayoutDiv, x, y, w, h float64, text string) bool {
 
-	lv := ui.GetCall()
-	if lv.call == nil || lv.call.crop.IsZero() {
+	if div == nil || div.crop.IsZero() {
 		return false
 	}
 
-	if lv.call.enableInput {
+	if div.enableInput {
 		coord := ui.getCoord(x, y, w, h, 0, 0, 0)
 
-		if coord.HasIntersect(lv.call.crop) {
+		if coord.HasIntersect(div.crop) {
 			ui.tile.Set(ui.win.io.touch.pos, coord, false, text, ui.win.io.GetPalette().OnB)
 		}
 	}
 	return true
+}
+
+func (ui *Ui) Paint_tooltip(x, y, w, h float64, text string) bool {
+	return ui.Paint_tooltipDiv(ui.GetCall().call, x, y, w, h, text)
+
 }
 
 func (ui *Ui) Paint_cursor(name string) bool {
