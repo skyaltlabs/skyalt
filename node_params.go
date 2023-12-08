@@ -107,9 +107,9 @@ func (in *NodeParamIn) FindWireOut(node *Node) (*Node, *NodeParamOut) {
 		return nil, nil
 	}
 
-	out := n.FindAttr(in.Wire_param)
+	out := n.FindAttr(in.Wire_param) //attr
 	if out == nil {
-		out = n.FindOutput(in.Wire_param)
+		out = n.FindOutput(in.Wire_param) //out
 	}
 
 	if out == nil {
