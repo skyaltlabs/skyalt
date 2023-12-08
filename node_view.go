@@ -122,6 +122,7 @@ func (view *NodeView) addHistory() {
 	//cut newer history
 	if view.history_pos < len(view.history) {
 		view.history = view.history[:view.history_pos+1]
+		view.history_act = view.history_act[:view.history_pos+1]
 	}
 
 	//add history
