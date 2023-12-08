@@ -333,15 +333,15 @@ func drawColsRowsDialog(name string, items *[]NodeRenderColRow, i int, ui *Ui) b
 		}
 		ui.Div_end()
 
-		_, _, _, fnshd1 := ui.Comp_editbox_desc("Min", 0, 2, 0, 1, 1, 1, &(*items)[i].Min, 1, "", "", false, false, true)
-		_, _, _, fnshd2 := ui.Comp_editbox_desc("Max", 0, 2, 0, 2, 1, 1, &(*items)[i].Max, 1, "", "", false, false, true)
+		_, _, _, fnshd1, _ := ui.Comp_editbox_desc("Min", 0, 2, 0, 1, 1, 1, &(*items)[i].Min, 1, "", "", false, false, true)
+		_, _, _, fnshd2, _ := ui.Comp_editbox_desc("Max", 0, 2, 0, 2, 1, 1, &(*items)[i].Max, 1, "", "", false, false, true)
 
 		ui.Div_start(0, 3, 1, 1)
 		{
 			ui.Div_colMax(0, 100)
 			ui.Div_colMax(1, 100)
 
-			_, _, _, fnshd3 := ui.Comp_editbox_desc("Resize", 0, 2, 0, 0, 1, 1, &(*items)[i].ResizeName, 1, "", "Name", false, false, true)
+			_, _, _, fnshd3, _ := ui.Comp_editbox_desc("Resize", 0, 2, 0, 0, 1, 1, &(*items)[i].ResizeName, 1, "", "Name", false, false, true)
 			ui.Comp_text(1, 0, 1, 1, strconv.FormatFloat((*items)[i].Resize, 'f', 2, 64), 0)
 
 			if fnshd1 || fnshd2 || fnshd3 {
