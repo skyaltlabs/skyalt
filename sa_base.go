@@ -156,7 +156,7 @@ func (base *SABase) Refresh() {
 	//add(new on disk)
 	for _, f := range files.Subs {
 		if !f.IsDir || f.Name == "base" {
-			continue
+			continue //ignore
 
 		}
 		if base.findApp(f.Name) < 0 {
@@ -178,6 +178,8 @@ func (base *SABase) Refresh() {
 			base.Apps = append(base.Apps[:i], base.Apps[i+1:]...)
 		}
 	}
+
+	//refresh server nodes list ...
 }
 
 func (base *SABase) Render(ui *Ui) bool {
@@ -200,6 +202,8 @@ func (base *SABase) drawFrame(ui *Ui) {
 		app.view, _ = NewNodeView("apps/" + app.Name + "/app.json") //err ...
 	}
 	app.saveIt = true
+
+	app.view.root.ExecuteSubs(base.server)
 
 	icon_rad := 1.7
 
