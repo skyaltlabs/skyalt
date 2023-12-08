@@ -63,7 +63,12 @@ func Node_drawComp(tp string, value *string, options string, enable bool, ui *Ui
 	case "slider":
 		//...
 	default:
-		ui.Comp_editbox(1, 0, 1, 1, value, 3, "", "", false, false, enable)
+		_, _, _, _, div := ui.Comp_editbox(1, 0, 1, 1, value, 3, "", "", false, false, enable)
+
+		if *value != "" {
+			ui.Paint_tooltipDiv(div, 0, 0, 1, 1, *value)
+		}
+
 	}
 }
 
@@ -161,7 +166,11 @@ func (node *Node) drawNode(someNodeIsDraged bool, ui *Ui, view *NodeView) (bool,
 				}
 
 				//value
+				old_value := attr.Value
 				Node_drawComp(attr.Gui_type, &attr.Value, attr.Gui_options, true, ui)
+				if old_value != attr.Value {
+					node.changed = true
+				}
 
 				attr.coordLabel = ui.GetCall().call.canvas
 			}
@@ -205,7 +214,11 @@ func (node *Node) drawNode(someNodeIsDraged bool, ui *Ui, view *NodeView) (bool,
 					value = &out.Value
 				}
 
+				old_value := *value
 				Node_drawComp(in.Gui_type, value, in.Gui_options, out == nil, ui)
+				if out == nil && old_value != *value {
+					node.changed = true
+				}
 
 				in.coordLabel = ui.GetCall().call.canvas
 			}
