@@ -203,7 +203,7 @@ func (base *SABase) drawFrame(ui *Ui) {
 	}
 	app.saveIt = true
 
-	app.view.root.ExecuteSubs(base.server)
+	app.view.root.ExecuteSubs(base.server, ui.win.io.ini.Threads)
 
 	icon_rad := 1.7
 

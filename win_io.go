@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -98,6 +99,8 @@ type WinCursor struct {
 type WinIni struct {
 	Dpi         int
 	Dpi_default int
+
+	Threads int
 
 	DateFormat int
 	//TimeZone   int
@@ -234,6 +237,10 @@ func (io *WinIO) _IO_setDefault() error {
 		io.ini.WinY = 50
 		io.ini.WinW = 1280
 		io.ini.WinH = 720
+	}
+
+	if io.ini.Threads <= 0 {
+		io.ini.Threads = runtime.NumCPU()
 	}
 
 	return nil

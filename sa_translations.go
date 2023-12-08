@@ -52,6 +52,7 @@ type SATranslations struct {
 	THEME_GREY  string
 
 	DPI        string
+	THREADS    string
 	SHOW_STATS string
 	SHOW_GRID  string
 	LANGUAGE   string

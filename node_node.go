@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -396,7 +395,7 @@ func (node *Node) Execute(server *NodeServer) {
 	node.running = false
 }
 
-func (node *Node) ExecuteSubs(server *NodeServer) {
+func (node *Node) ExecuteSubs(server *NodeServer, max_threads int) {
 
 	//prepare
 	for _, n := range node.Subs {
@@ -406,7 +405,6 @@ func (node *Node) ExecuteSubs(server *NodeServer) {
 
 	//multi-thread executing
 	var numActiveThreads atomic.Int64
-	maxActiveThreads := int64(runtime.NumCPU())
 	var wg sync.WaitGroup
 	run := true
 	for run && server.IsRunning() {
@@ -424,7 +422,7 @@ func (node *Node) ExecuteSubs(server *NodeServer) {
 								if n.changed || n.isInputsChanged() { //|| n.err != nil {
 
 									//maximum concurent threads
-									if numActiveThreads.Load() >= maxActiveThreads {
+									if numActiveThreads.Load() >= int64(max_threads) {
 										time.Sleep(10 * time.Millisecond)
 									}
 
