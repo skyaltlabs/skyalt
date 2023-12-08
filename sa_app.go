@@ -180,7 +180,7 @@ func (app *SAApp) drawGraph(ui *Ui) {
 
 			paramOut := paramIn.FindWireOut()
 			if paramOut != nil {
-				_SAApp_drawConnection(paramOut.coordDot.Middle(), paramIn.coordDot.Middle(), false, ui)
+				_SAApp_drawConnection(paramOut.coordDot.Middle(), paramIn.coordDot.Middle(), nodeIn.Selected || paramOut.node.Selected, ui)
 			}
 		}
 	}
