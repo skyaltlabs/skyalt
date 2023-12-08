@@ -43,7 +43,7 @@ func (out *NodeParamOut) Marshal(st any) error {
 }
 
 type NodeParamIn struct {
-	parent *Node
+	node *Node
 
 	Name        string
 	Value       string
@@ -75,7 +75,7 @@ func (in *NodeParamIn) SetWire(paramOut *NodeParamOut) {
 		in.Wire_param = paramOut.Name
 	}
 
-	in.parent.SetChanged()
+	in.node.SetChanged()
 
 }
 
@@ -114,7 +114,7 @@ func (in *NodeParamIn) Int() (int, error) {
 
 func (in *NodeParamIn) FindWireOut() *NodeParamOut {
 
-	outNode := in.parent.parent.FindNode(in.Wire_id)
+	outNode := in.node.parent.FindNode(in.Wire_id)
 	if outNode == nil {
 		return nil
 	}

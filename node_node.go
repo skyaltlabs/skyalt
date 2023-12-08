@@ -171,7 +171,7 @@ func (node *Node) UpdateParents(parent *Node) {
 		it.node = node
 	}
 	for _, it := range node.Inputs {
-		it.parent = node
+		it.node = node
 	}
 	for _, it := range node.outputs {
 		it.node = node
@@ -247,7 +247,7 @@ func (node *Node) GetInput(name string) *NodeParamIn {
 	in := node.FindInput(name)
 	if in == nil {
 		//add
-		in = &NodeParamIn{Name: name}
+		in = &NodeParamIn{Name: name, node: node}
 		node.Inputs = append(node.Inputs, in)
 	}
 	return in
@@ -492,7 +492,7 @@ func (node *Node) areInputsErrorFree() bool {
 		out := in.FindWireOut()
 		if out != nil {
 			if out.node.err != nil {
-				in.parent.err = fmt.Errorf("incomming error from input(%s)", in.Name)
+				in.node.err = fmt.Errorf("incomming error from input(%s)", in.Name)
 				return false
 			}
 		}
