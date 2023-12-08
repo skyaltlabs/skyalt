@@ -204,7 +204,7 @@ func (app *SAApp) drawGraph(ui *Ui) {
 	over := lv.call.data.over
 
 	//keys actions
-	{
+	if ui.edit.uid == nil {
 		//delete
 		if over && keys.delete {
 			app.view.RemoveSelectedNodes()
