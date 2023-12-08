@@ -162,6 +162,7 @@ func (a *Node) Cmp(b *Node) bool {
 
 func (node *Node) UpdateParents(parent *Node) {
 	node.parent = parent
+	node.changed = true
 	for _, n := range node.Subs {
 		n.UpdateParents(node)
 	}
@@ -312,17 +313,9 @@ func (node *Node) Execute(server *NodeServer) {
 
 	node.err = nil
 
-	//update inputs
-	/*for _, in := range node.Inputs {
-		_, node.err = in.UpdateInput(node)
-		if node.err != nil {
-			return
-		}
-	}*/
-
 	//call
 	if node.Bypass {
-		//copy inputs to outputs ...
+		//copy inputs to outputs??? ...
 		//node.outputs = make([]NodeData, len(ins))
 		//copy(node.outputs, ins)
 	} else {
@@ -331,9 +324,54 @@ func (node *Node) Execute(server *NodeServer) {
 			nc := server.Start(node.FnName)
 			if nc != nil {
 
-				//nc.strct.Inputs	//copy ...
+				//add/update new
+				for _, in := range nc.strct.Attrs {
+					a := node.GetAttr(in.Name)
+					a.Gui_type = in.Gui_type
+					a.Gui_options = in.Gui_options
+				}
+				for _, in := range nc.strct.Inputs {
+					i := node.GetInput(in.Name)
+					i.Gui_type = in.Gui_type
+					i.Gui_options = in.Gui_options
+				}
+
+				//set/remove
+				for i := len(node.Attrs) - 1; i >= 0; i-- {
+					src := node.Attrs[i]
+					dst := nc.FindAttr(src.Name)
+					if dst != nil {
+						dst.Value = src.Value
+					} else {
+						node.Attrs = append(node.Attrs[:i], node.Attrs[i+1:]...) //remove
+					}
+				}
+				for i := len(node.Inputs) - 1; i >= 0; i-- {
+					src := node.Inputs[i]
+					dst := nc.FindInput(src.Name)
+					if dst != nil {
+						_, out := src.FindWireOut(node)
+						if out != nil {
+							dst.Value = out.Value
+						} else {
+							dst.Value = src.Value
+						}
+					} else {
+						node.Inputs = append(node.Inputs[:i], node.Inputs[i+1:]...) //remove
+					}
+				}
+
+				//execute
 				nc.Start()
-				//nc.strct.Outputs	//copy ...
+
+				//copy back
+				node.outputs = nil //reset
+				for _, in := range nc.strct.Outputs {
+					o := node.GetOutput(in.Name) //add
+					o.Value = in.Value
+					o.Gui_type = in.Gui_type
+					o.Gui_options = in.Gui_options
+				}
 
 				if nc.progress.Error != "" {
 					node.err = errors.New(nc.progress.Error)
@@ -383,7 +421,7 @@ func (node *Node) ExecuteSubs(server *NodeServer) {
 						if n.areInputsReadyToRun() {
 							if n.areInputsDone() {
 
-								if n.changed || n.isInputsChanged() || n.err != nil {
+								if n.changed || n.isInputsChanged() { //|| n.err != nil {
 
 									//maximum concurent threads
 									if numActiveThreads.Load() >= maxActiveThreads {
@@ -399,9 +437,9 @@ func (node *Node) ExecuteSubs(server *NodeServer) {
 										wg.Done()
 										numActiveThreads.Add(-1)
 									}(n)
-								} else {
-									n.done = true
-								}
+								} //else {
+								n.done = true
+								//}
 							}
 						}
 					} else {
@@ -426,7 +464,7 @@ func (node *Node) ExecuteSubs(server *NodeServer) {
 func (node *Node) areInputsErrorFree() bool {
 
 	for _, in := range node.Inputs {
-		n := in.FindWireNode(node.parent)
+		n := in.FindWireNode(node)
 		if n != nil {
 			if n.err != nil {
 				n.err = fmt.Errorf("incomming error from input(%s)", in.Name)
@@ -441,7 +479,7 @@ func (node *Node) areInputsErrorFree() bool {
 func (node *Node) areInputsReadyToRun() bool {
 
 	for _, in := range node.Inputs {
-		n := in.FindWireNode(node.parent)
+		n := in.FindWireNode(node)
 		if n != nil && n.running {
 			return false //still running
 		}
@@ -453,7 +491,7 @@ func (node *Node) areInputsReadyToRun() bool {
 func (node *Node) areInputsDone() bool {
 
 	for _, in := range node.Inputs {
-		n := in.FindWireNode(node.parent)
+		n := in.FindWireNode(node)
 		if n != nil && !n.done {
 			return false //not finished
 		}
@@ -465,7 +503,7 @@ func (node *Node) areInputsDone() bool {
 func (node *Node) isInputsChanged() bool {
 
 	for _, in := range node.Inputs {
-		n := in.FindWireNode(node.parent)
+		n := in.FindWireNode(node)
 		if n != nil && n.changed {
 			return true //changed
 		}
