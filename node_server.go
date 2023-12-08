@@ -28,7 +28,8 @@ import (
 )
 
 const (
-	SkyAltServer_READ_INPUTS = 0
+	SkyAltServer_READ_ATTRS  = 0
+	SkyAltServer_READ_INPUTS = 1
 
 	SkyAltServer_WRITE_STRUCT   = 10
 	SkyAltServer_WRITE_PROGRESS = 11
@@ -38,6 +39,9 @@ const (
 type SkyAltServerValue struct {
 	Name  string
 	Value string
+
+	Gui_type    string `json:",omitempty"`
+	Gui_options string `json:",omitempty"`
 }
 
 type SkyAltServer struct {
@@ -64,14 +68,42 @@ type NodeConn struct {
 func (conn *NodeConn) Destroy() {
 	conn.conn.Close()
 }
+
+func (conn *NodeConn) FindAttr(name string) *SkyAltServerValue {
+	for _, it := range conn.strct.Attrs {
+		if it.Name == name {
+			return it
+		}
+	}
+	return nil
+}
+func (conn *NodeConn) FindInput(name string) *SkyAltServerValue {
+	for _, it := range conn.strct.Inputs {
+		if it.Name == name {
+			return it
+		}
+	}
+	return nil
+}
+
 func (conn *NodeConn) Start() bool {
 
-	js, err := json.Marshal(&conn.strct.Inputs)
+	//attrs
+	js, err := json.Marshal(&conn.strct.Attrs)
 	if err != nil {
-		fmt.Printf("Unmarshal() failed: %v\n", err)
+		fmt.Printf("Unmarshal() Attrs failed: %v\n", err)
+		return false
+	}
+	if !conn.write(js, SkyAltServer_READ_ATTRS) {
 		return false
 	}
 
+	//inputs
+	js, err = json.Marshal(&conn.strct.Inputs)
+	if err != nil {
+		fmt.Printf("Unmarshal() Inputs failed: %v\n", err)
+		return false
+	}
 	if !conn.write(js, SkyAltServer_READ_INPUTS) {
 		return false
 	}
@@ -90,6 +122,10 @@ func (conn *NodeConn) Start() bool {
 			err := json.Unmarshal(js, &conn.progress)
 			if err != nil {
 				fmt.Printf("Unmarshal() failed: %v\n", err)
+				return false
+			}
+
+			if conn.progress.Error != "" {
 				return false
 			}
 
@@ -211,7 +247,7 @@ func (server *NodeServer) Start(path string) *NodeConn {
 
 	uid := strconv.Itoa(rand.Int())
 
-	cmd := exec.Command("./"+server.nodes_dir+"/"+path, uid, strconv.Itoa(server.port))
+	cmd := exec.Command("./"+server.nodes_dir+"/"+path+"/main", uid, strconv.Itoa(server.port))
 	cmd.Start()
 
 	c, err := server.srv.Accept()
