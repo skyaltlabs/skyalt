@@ -63,11 +63,7 @@ func Node_drawComp(tp string, value *string, options string, enable bool, ui *Ui
 	case "slider":
 		//...
 	default:
-		_, _, _, _, div := ui.Comp_editbox(1, 0, 1, 1, value, 3, "", "", false, false, enable)
-
-		if *value != "" {
-			ui.Paint_tooltipDiv(div, 0, 0, 1, 1, *value)
-		}
+		ui.Comp_editbox(1, 0, 1, 1, value, 3, "", "", false, false, enable)
 
 	}
 }
@@ -86,6 +82,8 @@ func (node *Node) drawNode(someNodeIsDraged bool, ui *Ui, view *NodeView) (bool,
 	ui.win.io.ini.Dpi = int(float32(ui.win.io.ini.Dpi) * view.GetAttrCamZ())
 
 	ui.Div_startCoord(0, 0, 1, 1, coord, strconv.Itoa(node.Id))
+	ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
+	ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
 	innCoord := lv.call.canvas.AddSpaceX(ui.CellWidth(0.5))
 	inside := coord.GetIntersect(lv.call.crop).Inside(touch.pos)
 	ui.Div_end()
@@ -137,7 +135,25 @@ func (node *Node) drawNode(someNodeIsDraged bool, ui *Ui, view *NodeView) (bool,
 					ui.Dialog_open(nm, 1)
 				}
 				if ui.Dialog_start(nm) {
-					//add comment / duplicate / delete ...
+					ui.Div_colMax(0, 5)
+
+					if ui.Comp_buttonMenu(0, 0, 1, 1, "Duplicate", "", true, false) > 0 {
+						n, _ := node.Copy()
+						if n != nil {
+							n.Pos.X += 2
+							n.Pos.Y += 2
+							node.parent.AddNodePtr(n)
+							view.DeselectAll()
+							n.Selected = true
+						}
+						ui.Dialog_close()
+					}
+					if ui.Comp_buttonMenu(0, 1, 1, 1, "Delete", "", true, false) > 0 {
+						node.parent.RemoveNode(node.Id)
+						ui.Dialog_close()
+					}
+
+					//add comment / duplicate ...
 					ui.Dialog_end()
 				}
 			}
