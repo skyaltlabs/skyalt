@@ -96,7 +96,8 @@ func (ui *Ui) renderStart(rx, ry, rw, rh float64, drawBack bool) {
 
 	startTouch := enableInput && ui.win.io.touch.start && !ui.win.io.keys.alt
 	endTouch := enableInput && ui.win.io.touch.end
-	over := enableInput && lv.call.crop.Inside(ui.win.io.touch.pos)
+	over := enableInput && lv.call.crop.Inside(ui.win.io.touch.pos) && !ui.touch.IsResizeActive()
+
 	inside := over
 	if inside && startTouch && enableInput {
 		if !ui.touch.IsScrollOrResizeActive() { //if lower resize or scroll is activated than don't rewrite it with higher canvas

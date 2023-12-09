@@ -42,6 +42,9 @@ func (layTouch *UiLayoutTouch) IsAnyActive() bool {
 	return layTouch.canvas != nil || layTouch.scrollV != nil || layTouch.scrollH != nil || layTouch.resize != nil
 }
 
+func (layTouch *UiLayoutTouch) IsResizeActive() bool {
+	return layTouch.resize != nil
+}
 func (layTouch *UiLayoutTouch) IsScrollOrResizeActive() bool {
 	return layTouch.scrollV != nil || layTouch.scrollH != nil || layTouch.resize != nil
 }
