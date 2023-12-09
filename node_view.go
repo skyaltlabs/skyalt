@@ -184,6 +184,12 @@ func (view *NodeView) Save(path string) error {
 	return nil
 }
 
+func (view *NodeView) DeselectAll() {
+	for _, n := range view.act.Subs {
+		n.Selected = false
+	}
+}
+
 func (view *NodeView) RemoveSelectedNodes() {
 
 	for i := len(view.act.Subs) - 1; i >= 0; i-- {
