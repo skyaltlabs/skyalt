@@ -287,9 +287,14 @@ func (node *Node) FindNode(id int) *Node {
 	return nil
 }
 
+func (node *Node) AddNodePtr(n *Node) {
+	n.UpdateParents(node)
+	node.Subs = append(node.Subs, n)
+}
+
 func (node *Node) AddNode(fnName string) *Node {
 	n := NewNode(node, fnName)
-	node.Subs = append(node.Subs, n)
+	node.AddNodePtr(n)
 	return n
 }
 
