@@ -51,16 +51,11 @@ type Node struct {
 	err error
 }
 
-func NewNode(parent *Node, fnName string) *Node {
+func NewNode(fnName string) *Node {
 	var node Node
-	node.parent = parent
+	node.parent = nil
 	node.FnName = fnName
-
-	if parent != nil {
-		node.Id = parent.getUniqueId()
-	} else {
-		node.Id = 1
-	}
+	node.Id = 1
 	node.changed = true
 
 	return &node
@@ -288,12 +283,13 @@ func (node *Node) FindNode(id int) *Node {
 }
 
 func (node *Node) AddNodePtr(n *Node) {
+	n.Id = node.getUniqueId()
 	n.UpdateParents(node)
 	node.Subs = append(node.Subs, n)
 }
 
 func (node *Node) AddNode(fnName string) *Node {
-	n := NewNode(node, fnName)
+	n := NewNode(fnName)
 	node.AddNodePtr(n)
 	return n
 }

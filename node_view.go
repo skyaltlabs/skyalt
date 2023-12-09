@@ -36,7 +36,7 @@ type NodeView struct {
 func NewNodeView(path string) (*NodeView, error) {
 	view := &NodeView{}
 
-	view.root = NewNode(nil, "net")
+	view.root = NewNode("net")
 	view.act = view.root
 	view.SetAttrCamZ(1) //default
 
@@ -120,7 +120,7 @@ func (view *NodeView) cmpAndAddHistory() bool {
 
 func (view *NodeView) addHistory() {
 	//cut newer history
-	if view.history_pos < len(view.history) {
+	if view.history_pos+1 < len(view.history) {
 		view.history = view.history[:view.history_pos+1]
 		view.history_act = view.history_act[:view.history_pos+1]
 	}
