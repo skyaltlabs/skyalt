@@ -67,12 +67,16 @@ func (view *NodeView) Destroy() {
 
 func (view *NodeView) GetAttrCols() []NodeRenderColRow {
 	var cols []NodeRenderColRow
-	json.Unmarshal([]byte(view.act.GetAttr("cols").Value), &cols) //err...
+	cc := view.act.GetAttr("cols")
+	cc.Hide = true
+	json.Unmarshal([]byte(cc.Value), &cols) //err...
 	return cols
 }
 func (view *NodeView) GetAttrRows() []NodeRenderColRow {
 	var rows []NodeRenderColRow
-	json.Unmarshal([]byte(view.act.GetAttr("rows").Value), &rows) //err...
+	rr := view.act.GetAttr("rows")
+	rr.Hide = true
+	json.Unmarshal([]byte(rr.Value), &rows) //err...
 	return rows
 }
 
@@ -86,8 +90,14 @@ func (view *NodeView) SetAttrRows(rows []NodeRenderColRow) {
 }
 
 func (view *NodeView) GetAttrCam() OsV2f {
-	x, _ := strconv.ParseFloat(view.act.GetAttr("cam_x").Value, 64)
-	y, _ := strconv.ParseFloat(view.act.GetAttr("cam_y").Value, 64)
+
+	camX := view.act.GetAttr("cam_x")
+	camY := view.act.GetAttr("cam_y")
+	camX.Hide = true
+	camY.Hide = true
+
+	x, _ := strconv.ParseFloat(camX.Value, 64)
+	y, _ := strconv.ParseFloat(camY.Value, 64)
 	return OsV2f{float32(x), float32(y)}
 }
 func (view *NodeView) SetAttrCam(v OsV2f) {
@@ -96,7 +106,10 @@ func (view *NodeView) SetAttrCam(v OsV2f) {
 }
 
 func (view *NodeView) GetAttrCamZ() float32 {
-	z, _ := strconv.ParseFloat(view.act.GetAttr("cam_z").Value, 64)
+	camZ := view.act.GetAttr("cam_z")
+	camZ.Hide = true
+
+	z, _ := strconv.ParseFloat(camZ.Value, 64)
 	return float32(z)
 }
 func (view *NodeView) SetAttrCamZ(v float32) {

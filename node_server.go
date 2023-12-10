@@ -42,6 +42,7 @@ type SkyAltServerValue struct {
 
 	Gui_type    string `json:",omitempty"`
 	Gui_options string `json:",omitempty"`
+	Hide        bool
 }
 
 type SkyAltServer struct {

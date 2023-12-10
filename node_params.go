@@ -28,6 +28,7 @@ type NodeParamOut struct {
 	Value       string //interface{}
 	Gui_type    string `json:",omitempty"`
 	Gui_options string `json:",omitempty"`
+	Hide        bool   `json:",omitempty"`
 
 	coordDot   OsV4 //px on screen
 	coordLabel OsV4 //px on screen

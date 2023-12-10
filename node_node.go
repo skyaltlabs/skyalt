@@ -30,15 +30,16 @@ import (
 type Node struct {
 	parent *Node
 
-	FnName   string
-	Id       int
-	Bypass   bool
-	Pos      OsV2f
-	Selected bool
+	FnName     string
+	Id         int
+	Pos        OsV2f
+	Bypass     bool `json:",omitempty"`
+	Selected   bool `json:",omitempty"`
+	ShowHidden bool `json:",omitempty"`
 
-	Subs    []*Node
-	Attrs   []*NodeParamOut
-	Inputs  []*NodeParamIn
+	Subs    []*Node         `json:",omitempty"`
+	Attrs   []*NodeParamOut `json:",omitempty"`
+	Inputs  []*NodeParamIn  `json:",omitempty"`
 	outputs []*NodeParamOut
 
 	pos_start      OsV2f
@@ -352,6 +353,7 @@ func (node *Node) Execute(server *NodeServer) {
 					a := node.GetAttr(in.Name)
 					a.Gui_type = in.Gui_type
 					a.Gui_options = in.Gui_options
+					a.Hide = in.Hide
 				}
 				for _, in := range nc.strct.Inputs {
 					i := node.GetInput(in.Name)

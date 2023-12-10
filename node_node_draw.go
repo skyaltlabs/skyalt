@@ -25,21 +25,30 @@ func (node *Node) nodeToPixelsCoord(ui *Ui, view *NodeView) OsV4 {
 
 	coordS := view.nodeToPixels(node.Pos, ui) //.parent, because it has Cam
 
+	h := 1 //label
+	if node.err != nil {
+		h++ //error
+	}
+
 	w := float64(0)
 	for _, attr := range node.Attrs {
+		if !node.ShowHidden && attr.Hide {
+			continue
+		}
 		w = OsMaxFloat(w, ui.Paint_textWidth(attr.Name, -1, 0, "", true))
+		h++
 	}
 	for _, in := range node.Inputs {
 		w = OsMaxFloat(w, ui.Paint_textWidth(in.Name, -1, 0, "", true))
+		h++
 	}
 	w += 3 //+value
 	for _, out := range node.outputs {
 		w = OsMaxFloat(w, ui.Paint_textWidth(out.Name, -1, 0, "", true))
+		h++
 	}
 
 	w = OsMaxFloat(w, 5) //5 is minimum
-
-	h := 1 + OsTrn(node.err != nil, 1, 0) + len(node.Attrs) + len(node.Inputs) + len(node.outputs)
 
 	cellr := view.cellZoom(ui)
 	cq := InitOsV4Mid(coordS, OsV2{int(w * float64(cellr)), h * cellr})
@@ -122,12 +131,12 @@ func (node *Node) drawNode(someNodeIsDraged bool, ui *Ui, view *NodeView) (bool,
 			ui.Div_start(1, y, 1, 1)
 			{
 				ui.Div_colMax(0, 100)
-				div := ui.Comp_textSelect(0, 0, 1, 1, node.FnName, 1, false) //cd ...
+				div := ui.Comp_textSelect(0, 0, 1, 1, node.FnName, 1, false) //cd ... double-click to rename ...
 				if !insideMove {
 					insideMove = div.crop.Inside(touch.pos)
 				}
 
-				//minimalize/maximalize ...
+				//Collapse/uncollapse(+shortcut) ...
 
 				//menu
 				nm := fmt.Sprintf("node_menu_%d", node.Id)
@@ -135,9 +144,17 @@ func (node *Node) drawNode(someNodeIsDraged bool, ui *Ui, view *NodeView) (bool,
 					ui.Dialog_open(nm, 1)
 				}
 				if ui.Dialog_start(nm) {
-					ui.Div_colMax(0, 5)
+					ui.Div_colMax(0, 7)
+					ui.Div_row(1, 0.1) //spacer
 
-					if ui.Comp_buttonMenu(0, 0, 1, 1, "Duplicate", "", true, false) > 0 {
+					y := 0
+					ui.Comp_switch(0, y, 1, 1, &node.ShowHidden, false, "Show hidden attributes", "", true)
+					y++
+
+					ui.Div_SpacerRow(0, y, 1, 1)
+					y++
+
+					if ui.Comp_buttonMenu(0, y, 1, 1, "Duplicate", "", true, false) > 0 {
 						n, _ := node.Copy()
 						if n != nil {
 							n.Pos.X += 2
@@ -148,10 +165,12 @@ func (node *Node) drawNode(someNodeIsDraged bool, ui *Ui, view *NodeView) (bool,
 						}
 						ui.Dialog_close()
 					}
-					if ui.Comp_buttonMenu(0, 1, 1, 1, "Delete", "", true, false) > 0 {
+					y++
+					if ui.Comp_buttonMenu(0, y, 1, 1, "Delete", "", true, false) > 0 {
 						node.parent.RemoveNode(node.Id)
 						ui.Dialog_close()
 					}
+					y++
 
 					//add comment / duplicate ...
 					ui.Dialog_end()
@@ -168,6 +187,9 @@ func (node *Node) drawNode(someNodeIsDraged bool, ui *Ui, view *NodeView) (bool,
 
 		//attrs
 		for _, attr := range node.Attrs {
+			if !node.ShowHidden && attr.Hide {
+				continue
+			}
 
 			//name + value
 			ui.Div_start(1, y, 1, 1)
