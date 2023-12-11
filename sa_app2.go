@@ -44,6 +44,7 @@ func NewSAApp2(name string, base *SABase) *SAApp2 {
 	app.base = base
 	app.Name = name
 	app.IDE = true
+
 	return &app
 }
 func (app *SAApp2) Destroy() {
@@ -212,6 +213,32 @@ func (app *SAApp2) renderIDE(ui *Ui) {
 	app.drawCreateWidget(ui)
 }
 
+func (app *SAApp2) History(ui *Ui) {
+	//init history
+	if len(app.history) == 0 {
+		app.addHistory()
+		app.history_pos = 0
+	}
+
+	lv := ui.GetCall()
+	touch := &ui.buff.win.io.touch
+	keys := &ui.buff.win.io.keys
+	//over := lv.call.data.over
+
+	if lv.call.data.over && ui.win.io.keys.backward {
+		app.stepHistoryBack()
+
+	}
+	if lv.call.data.over && ui.win.io.keys.forward {
+		app.stepHistoryForward()
+	}
+
+	if touch.end || keys.hasChanged {
+		app.cmpAndAddHistory()
+	}
+
+}
+
 func (app *SAApp2) drawCreateWidget(ui *Ui) {
 
 	if ui.Dialog_start("nodes_list") {
@@ -354,6 +381,20 @@ func (app *SAApp2) RenderHeader(ui *Ui) {
 	if ui.Comp_buttonLight(3, 0, 1, 1, "→", "Forward", app.canHistoryForward()) > 0 {
 		app.stepHistoryForward()
 	}
+}
+
+func (app *SAApp2) cmpAndAddHistory() bool {
+	if len(app.history) > 0 {
+
+		if app.act == app.root.FindMirror(app.history[app.history_pos], app.history_act[app.history_pos]) {
+			if app.root.Cmp(app.history[app.history_pos]) {
+				return false //same
+			}
+		}
+	}
+
+	app.addHistory()
+	return true
 }
 
 func (app *SAApp2) addHistory() {

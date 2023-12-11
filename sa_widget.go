@@ -39,6 +39,10 @@ type SAWidgetColRow struct {
 	ResizeName       string  `json:",omitempty"`
 }
 
+func (a *SAWidgetColRow) Cmp(b *SAWidgetColRow) bool {
+	return a.Min == b.Min && a.Max == b.Max && a.Resize == b.Resize && a.ResizeName == b.ResizeName
+}
+
 func InitSAWidgetColRow() SAWidgetColRow {
 	return SAWidgetColRow{Min: 1, Max: 1, Resize: 1}
 }
@@ -103,6 +107,51 @@ func (w *SAWidget) Save(path string) error {
 	}
 
 	return nil
+}
+
+func (a *SAWidget) Cmp(b *SAWidget) bool {
+	if a.Name != b.Name || a.Node != b.Node || !a.Coord.Cmp(b.Coord) || a.Selected != b.Selected {
+		return false
+	}
+
+	if len(a.Values) != len(b.Values) {
+		return false
+	}
+	if len(a.Cols) != len(b.Cols) {
+		return false
+	}
+	if len(a.Rows) != len(b.Rows) {
+		return false
+	}
+	if len(a.Subs) != len(b.Subs) {
+		return false
+	}
+
+	for i, itA := range a.Values {
+		itB := b.Values[i]
+		if itA.Name != itB.Name || itA.Value != itB.Value || itA.Gui_type != itB.Gui_type || itA.Gui_options != itB.Gui_options || itA.Gui_ReadOnly != itB.Gui_ReadOnly {
+			return false
+		}
+	}
+
+	for i, itA := range a.Cols {
+		if !itA.Cmp(&b.Cols[i]) {
+			return false
+		}
+	}
+	for i, itA := range a.Rows {
+		if !itA.Cmp(&b.Rows[i]) {
+			return false
+		}
+	}
+
+	for i, itA := range a.Subs {
+		if !itA.Cmp(b.Subs[i]) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (w *SAWidget) UpdateParents(parent *SAWidget) {
@@ -383,7 +432,6 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 	}
 }
 
-//history ...
 //delete / select(2xclick - goto sub) / resize / move ...
 
 //= expressions + switch between value/formula ...
