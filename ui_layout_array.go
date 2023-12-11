@@ -170,7 +170,7 @@ func (arr *UiLayoutArray) GetCloseCell(pos int) int {
 		allPixels += int(arr.outputs[i])
 
 		if pos >= allPixelsLast && pos < allPixels {
-			return i
+			return i //found
 		}
 
 		allPixelsLast = allPixels
