@@ -22,7 +22,7 @@ import (
 	"strings"
 )
 
-func (ui *Ui) Div_startEx(x, y, w, h int, rx, ry, rw, rh float64, name string) {
+func (ui *Ui) Div_startEx(x, y, w, h int, rx, ry, rw, rh float64, name string) *UiLayoutDiv {
 
 	lv := ui.GetCall()
 
@@ -39,24 +39,24 @@ func (ui *Ui) Div_startEx(x, y, w, h int, rx, ry, rw, rh float64, name string) {
 
 	ui.renderStart(rx, ry, rw, rh, false)
 
-	//return !st.stack.crop.IsZero()
+	return lv.call
 }
 
-func (ui *Ui) Div_startCoord(x, y, w, h int, coord OsV4, name string) {
+func (ui *Ui) Div_startCoord(x, y, w, h int, coord OsV4, name string) *UiLayoutDiv {
 	lv := ui.GetCall()
 
 	cz := lv.call.canvas.Size
 	s := coord.Start.Sub(lv.call.canvas.Start)
 
-	ui.Div_startEx(0, 0, 1, 1, float64(s.X)/float64(cz.X), float64(s.Y)/float64(cz.Y), float64(coord.Size.X)/float64(cz.X), float64(coord.Size.Y)/float64(cz.Y), name)
+	return ui.Div_startEx(0, 0, 1, 1, float64(s.X)/float64(cz.X), float64(s.Y)/float64(cz.Y), float64(coord.Size.X)/float64(cz.X), float64(coord.Size.Y)/float64(cz.Y), name)
 }
 
-func (ui *Ui) Div_startName(x, y, w, h int, name string) {
-	ui.Div_startEx(x, y, w, h, 0, 0, 1, 1, name)
+func (ui *Ui) Div_startName(x, y, w, h int, name string) *UiLayoutDiv {
+	return ui.Div_startEx(x, y, w, h, 0, 0, 1, 1, name)
 }
 
-func (ui *Ui) Div_start(x, y, w, h int) {
-	ui.Div_startName(x, y, w, h, "")
+func (ui *Ui) Div_start(x, y, w, h int) *UiLayoutDiv {
+	return ui.Div_startName(x, y, w, h, "")
 }
 
 func (ui *Ui) Div_end() {
