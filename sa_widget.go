@@ -322,15 +322,21 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp2) {
 
 	switch w.Node {
 	case "gui_button":
-		ui.Comp_button(w.Coord.Start.X, w.Coord.Start.Y, w.Coord.Size.X, w.Coord.Size.Y, w.GetValueStringEdit("value", ""), "", w.GetValueBoolSwitch("enable", "1"))
+		ui.Comp_button(w.Coord.Start.X, w.Coord.Start.Y, w.Coord.Size.X, w.Coord.Size.Y, w.GetValueStringEdit("label", ""), "", w.GetValueBoolSwitch("enable", "1"))
 
 		//outputs(readOnly): is clicked ...
 
 	case "gui_text":
-		ui.Comp_text(w.Coord.Start.X, w.Coord.Start.Y, w.Coord.Size.X, w.Coord.Size.Y, w.GetValueStringEdit("value", ""), w.GetValueIntCombo("align", "0", "Left|Center|Right"))
+		ui.Comp_text(w.Coord.Start.X, w.Coord.Start.Y, w.Coord.Size.X, w.Coord.Size.Y, w.GetValueStringEdit("label", ""), w.GetValueIntCombo("align", "0", "Left|Center|Right"))
 
 	case "gui_edit":
 		ui.Comp_editbox(w.Coord.Start.X, w.Coord.Start.Y, w.Coord.Size.X, w.Coord.Size.Y, w.GetValueStringPtrEdit("value", ""), w.GetValueIntEdit("precision", "2"), "", w.GetValueStringEdit("ghost", ""), false, w.GetValueBoolSwitch("tempToValue", "0"), w.GetValueBoolSwitch("enable", "1"))
+
+	case "gui_switch":
+		ui.Comp_switch(w.Coord.Start.X, w.Coord.Start.Y, w.Coord.Size.X, w.Coord.Size.Y, w.GetValueStringPtrEdit("value", ""), false, w.GetValueStringEdit("label", ""), "", w.GetValueBoolSwitch("enable", "1"))
+
+	case "gui_checkbox":
+		ui.Comp_checkbox(w.Coord.Start.X, w.Coord.Start.Y, w.Coord.Size.X, w.Coord.Size.Y, w.GetValueStringPtrEdit("value", ""), false, w.GetValueStringEdit("label", ""), "", w.GetValueBoolSwitch("enable", "1"))
 
 	case "gui_combo":
 		ui.Comp_combo(w.Coord.Start.X, w.Coord.Start.Y, w.Coord.Size.X, w.Coord.Size.Y, w.GetValueStringPtrEdit("value", ""), w.GetValueStringEdit("options", "a|b"), "", w.GetValueBoolSwitch("enable", "1"), w.GetValueBoolSwitch("search", "0"))
