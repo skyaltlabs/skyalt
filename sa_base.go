@@ -25,7 +25,7 @@ import (
 type SABase struct {
 	ui *Ui
 
-	Apps       []*SAApp
+	Apps       []*SAApp2
 	Selected   int
 	NewAppName string
 
@@ -89,10 +89,8 @@ func (base *SABase) reloadTranslations(ui *Ui) error {
 func (base *SABase) Save() {
 	//apps
 	for _, a := range base.Apps {
-		if a.view != nil {
-			if a.saveIt {
-				a.view.Save(a.GetPath())
-			}
+		if a.root != nil {
+			a.root.Save(a.GetPath())
 		}
 	}
 
@@ -119,9 +117,7 @@ func (base *SABase) Destroy() {
 
 	//close & save apps
 	for _, a := range base.Apps {
-		if a.view != nil {
-			a.view.Destroy()
-		}
+		a.Destroy()
 	}
 }
 
@@ -160,7 +156,7 @@ func (base *SABase) Refresh() {
 
 		}
 		if base.findApp(f.Name) < 0 {
-			base.Apps = append(base.Apps, NewSAApp(f.Name, base))
+			base.Apps = append(base.Apps, NewSAApp2(f.Name, base))
 		}
 	}
 
@@ -198,12 +194,15 @@ func (base *SABase) Render(ui *Ui) bool {
 func (base *SABase) drawFrame(ui *Ui) {
 
 	app := base.Apps[base.Selected]
-	if app.view == nil {
-		app.view, _ = NewNodeView("apps/" + app.Name + "/app.json") //err ...
+	if app.root == nil {
+		app.root, _ = NewSAWidgetRoot("apps/" + app.Name + "/app.json") //err ...
 	}
-	app.saveIt = true
+	if app.act == nil {
+		app.act = app.root
+	}
+	//app.saveIt = true
 
-	app.view.root.ExecuteSubs(base.server, ui.win.io.ini.Threads)
+	//app.view.root.ExecuteSubs(base.server, ui.win.io.ini.Threads)
 
 	icon_rad := 1.7
 
@@ -211,7 +210,7 @@ func (base *SABase) drawFrame(ui *Ui) {
 	ui.Div_col(0, icon_rad)
 	ui.Div_colMax(1, 100)
 	if app.IDE {
-		ui.Div_colResize(2, "settings", 10, false)
+		ui.Div_colResize(2, "parameters", 8, false)
 	}
 
 	ui.Div_start(0, 0, 1, 1)
@@ -219,14 +218,23 @@ func (base *SABase) drawFrame(ui *Ui) {
 	ui.Div_end()
 
 	if base.HasApp() {
-
 		ui.Div_startName(1, 0, 1, 1, base.Apps[base.Selected].Name)
 		{
 			if app.IDE {
-				app.view.renderAppIDE(ui)
+				ui.Div_colMax(0, 100)
+				ui.Div_rowMax(1, 100)
+
+				ui.Div_start(0, 0, 1, 1)
+				app.RenderHeader(ui)
+				ui.Div_end()
+
+				ui.Div_start(0, 1, 1, 1)
+				app.renderIDE(ui)
+				ui.Div_end()
 			} else {
-				app.view.renderApp(ui, true)
+				app.root.RenderLayout(ui)
 			}
+
 		}
 		ui.Div_end()
 	}
@@ -234,16 +242,10 @@ func (base *SABase) drawFrame(ui *Ui) {
 	if app.IDE {
 		ui.Div_start(2, 0, 1, 1)
 
-		ui.Div_colMax(0, 100)
-		ui.Div_rowMax(1, 100)
-
-		ui.Div_start(0, 0, 1, 1)
-		app.drawGraphHeader(ui)
-		ui.Div_end()
-
-		ui.Div_start(0, 1, 1, 1)
-		app.drawGraph(ui)
-		ui.Div_end()
+		sel := app.act.FindSelected()
+		if sel != nil {
+			sel.RenderParams(ui)
+		}
 
 		ui.Div_end()
 	}
