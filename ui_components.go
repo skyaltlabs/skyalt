@@ -841,7 +841,55 @@ func (ui *Ui) Comp_combo_s(style *UiComp, value int, optionsIn string) int {
 	return value
 }
 
-func (ui *Ui) Comp_checkbox(style *UiComp, value float64, label string) float64 {
+func (ui *Ui) Comp_checkbox(x, y, w, h int, valueIn interface{}, reverseValue bool, label string, tooltip string, enable bool) bool {
+
+	ui.Div_start(x, y, w, h)
+
+	var value float64
+	switch v := valueIn.(type) {
+	case *bool:
+		value = OsTrnFloat(*v, 1, 0)
+	case *float32:
+		value = float64(*v)
+	case *float64:
+		value = float64(*v)
+	case *int:
+		value = float64(*v)
+	case *string:
+		vv, _ := strconv.Atoi(*v)
+		value = float64(vv)
+		//int8/16/32, uint8, byte, etc ...
+	}
+
+	var style UiComp
+	style.cd = CdPalette_B
+	style.label_alignV = 1
+	style.enable = enable
+	style.tooltip = tooltip
+
+	ret := ui.Comp_checkbox_s(&style, value, label)
+	changed := (ret != value)
+	if changed {
+		switch v := valueIn.(type) {
+		case *bool:
+			*v = ret != 0
+		case *float32:
+			*v = float32(ret)
+		case *float64:
+			*v = float64(ret)
+		case *int:
+			*v = int(ret)
+		case *string:
+			*v = strconv.FormatFloat(ret, 'f', -1, 64)
+			//int8/16/32, uint8, byte, etc ...
+		}
+	}
+
+	ui.Div_end()
+	return changed
+}
+
+func (ui *Ui) Comp_checkbox_s(style *UiComp, value float64, label string) float64 {
 
 	lv := ui.GetCall()
 
@@ -866,7 +914,7 @@ func (ui *Ui) Comp_checkbox(style *UiComp, value float64, label string) float64 
 	}
 
 	pl := ui.buff.win.io.GetPalette()
-	backCd := pl.GetCd2(pl.GetGrey(0.1), false, style.enable, inside, active)
+	//backCd := pl.GetCd2(pl.GetGrey(0.1), false, style.enable, inside, active)
 	_, onCd := pl.GetCd(style.cd, style.fade, style.enable, inside, active)
 
 	mn := ui.CellWidth(0.5)
@@ -876,7 +924,7 @@ func (ui *Ui) Comp_checkbox(style *UiComp, value float64, label string) float64 
 
 		//border
 		coordImg = OsV4_centerFull(coordImg, OsV2{mn, mn})
-		ui.buff.AddRect(coordImg, backCd, 0)                //background
+		//ui.buff.AddRect(coordImg, backCd, 0)                //background
 		ui.buff.AddRect(coordImg, onCd, ui.CellWidth(0.03)) //border
 
 		//text
@@ -905,9 +953,25 @@ func (ui *Ui) Comp_checkbox(style *UiComp, value float64, label string) float64 
 	return value
 }
 
-func (ui *Ui) Comp_switch(x, y, w, h int, value *bool, reverseValue bool, label string, tooltip string, enable bool) bool {
+func (ui *Ui) Comp_switch(x, y, w, h int, valueIn interface{}, reverseValue bool, label string, tooltip string, enable bool) bool {
 
 	ui.Div_start(x, y, w, h)
+
+	var value bool
+	switch v := valueIn.(type) {
+	case *bool:
+		value = *v
+	case *float32:
+		value = *v != 0
+	case *float64:
+		value = *v != 0
+	case *int:
+		value = *v != 0
+	case *string:
+		vv, _ := strconv.Atoi(*v)
+		value = vv != 0
+		//int8/16/32, uint8, byte, etc ...
+	}
 
 	var style UiComp
 	style.cd = CdPalette_P
@@ -915,12 +979,26 @@ func (ui *Ui) Comp_switch(x, y, w, h int, value *bool, reverseValue bool, label 
 	style.enable = enable
 	style.tooltip = tooltip
 
-	orig := OsTrnBool(reverseValue, !*value, *value)
+	orig := OsTrnBool(reverseValue, !value, value)
 
 	ret := ui.Comp_switch_s(&style, orig, label)
 	changed := (ret != orig)
-
-	*value = OsTrnBool(reverseValue, !ret, ret)
+	value = OsTrnBool(reverseValue, !ret, ret)
+	if changed {
+		switch v := valueIn.(type) {
+		case *bool:
+			*v = ret
+		case *float32:
+			*v = float32(OsTrn(ret, 1, 0))
+		case *float64:
+			*v = float64(OsTrn(ret, 1, 0))
+		case *int:
+			*v = OsTrn(ret, 1, 0)
+		case *string:
+			*v = strconv.Itoa(OsTrn(ret, 1, 0))
+			//int8/16/32, uint8, byte, etc ...
+		}
+	}
 
 	ui.Div_end()
 	return changed
