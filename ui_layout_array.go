@@ -162,7 +162,7 @@ func (arr *UiLayoutArray) ConvertMax(cell int, start int, end int) OsV2 {
 
 func (arr *UiLayoutArray) GetCloseCell(pos int) int {
 	if pos < 0 {
-		return -1
+		return 0
 	}
 	allPixels := 0
 	allPixelsLast := 0
