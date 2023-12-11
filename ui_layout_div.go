@@ -521,3 +521,15 @@ func (div *UiLayoutDiv) FindUid(uid float64) *UiLayoutDiv {
 	base := div.FindBaseApp()
 	return base.FindHash(math.Float64bits(uid))
 }
+
+func (div *UiLayoutDiv) GetCloseCell(touchPos OsV2) OsV4 {
+
+	rpos := div.GetRelativePos(touchPos)
+
+	var grid OsV4
+	grid.Start.X = div.data.cols.GetCloseCell(rpos.X)
+	grid.Start.Y = div.data.rows.GetCloseCell(rpos.Y)
+	grid.Size.X = 1
+	grid.Size.Y = 1
+	return grid
+}
