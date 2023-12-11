@@ -215,43 +215,41 @@ func (app *SAApp2) renderIDE(ui *Ui) {
 	if appDiv.data.over {
 		grid := appDiv.GetCloseCell(touch.pos)
 
-		itemDiv := appDiv.FindFromGridPos(grid.Start)
-		if itemDiv != nil {
-			var found *SAWidget
-			for _, w := range app.act.Subs {
-				if w.Coord.HasCover(itemDiv.grid) {
-					found = w
-					break
-				}
-			}
-
-			if itemDiv != nil && found != nil && keys.alt {
-				if touch.start {
-					app.startClickWidget = found
-					app.startClickRel = touch.pos.Sub(itemDiv.crop.Start)
-					app.act.DeselectAll()
-					found.Selected = true
-				}
-
-				if touch.end && touch.numClicks > 1 && found.IsGuiLayout() {
-					app.act = found //goto layout
-				}
-			}
-
-			if found != nil && app.startClickWidget == found {
-				//move
-				gridMove := appDiv.GetCloseCell(touch.pos.Sub(app.startClickRel).Add(OsV2{ui.CellWidth(0.5), ui.CellWidth(0.5)}))
-				//gridMove := appDiv.GetCloseCell(touch.pos)
-				found.Coord.Start = gridMove.Start
+		var found *SAWidget
+		for _, w := range app.act.Subs {
+			if w.Coord.Inside(grid.Start) {
+				found = w
+				break
 			}
 		}
 
-		if touch.end {
-			if app.startClickWidget == nil { //click outside widgets
+		if found != nil && keys.alt {
+			if touch.start {
+				foundStart := appDiv.crop.Start.Add(appDiv.data.Convert(ui.win.Cell(), found.Coord).Start)
+				app.startClickWidget = found
+				app.startClickRel = touch.pos.Sub(foundStart)
 				app.act.DeselectAll()
+				found.Selected = true
 			}
-			app.startClickWidget = nil
+
+			if touch.end && touch.numClicks > 1 && found.IsGuiLayout() {
+				app.act = found //goto layout
+			}
 		}
+
+		if app.startClickWidget != nil {
+			//move
+			gridMove := appDiv.GetCloseCell(touch.pos.Sub(app.startClickRel).Add(OsV2{ui.CellWidth(0.5), ui.CellWidth(0.5)}))
+			//gridMove := appDiv.GetCloseCell(touch.pos)
+			app.startClickWidget.Coord.Start = gridMove.Start
+		}
+		//}
+	}
+	if touch.end {
+		if keys.alt && app.startClickWidget == nil { //click outside widgets
+			app.act.DeselectAll()
+		}
+		app.startClickWidget = nil
 	}
 
 	//shortcuts
@@ -307,6 +305,8 @@ func (app *SAApp2) drawCreateWidget(ui *Ui) {
 		var fns []string
 		fns = append(fns, "gui_button")
 		fns = append(fns, "gui_text")
+		fns = append(fns, "gui_checkbox")
+		fns = append(fns, "gui_switch")
 		fns = append(fns, "gui_edit")
 		fns = append(fns, "gui_combo")
 		fns = append(fns, "gui_layout")
