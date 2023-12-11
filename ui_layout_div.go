@@ -176,7 +176,7 @@ func (div *UiLayoutDiv) FindOrCreate(name string, grid OsV4, app *UiLayoutApp) *
 	return l
 }
 
-func (div *UiLayoutDiv) FindInside(gridPos OsV2) *UiLayoutDiv {
+func (div *UiLayoutDiv) FindFromGridPos(gridPos OsV2) *UiLayoutDiv {
 
 	var last *UiLayoutDiv
 	for _, it := range div.childs {
@@ -187,10 +187,10 @@ func (div *UiLayoutDiv) FindInside(gridPos OsV2) *UiLayoutDiv {
 	return last
 }
 
-func (div *UiLayoutDiv) FindPos(pos OsV2) *UiLayoutDiv {
+func (div *UiLayoutDiv) FindFromCanvasPos(canvasPos OsV2) *UiLayoutDiv {
 
 	for _, it := range div.childs {
-		if it.canvas.Inside(pos) {
+		if it.crop.Inside(canvasPos) {
 			return it
 		}
 	}
