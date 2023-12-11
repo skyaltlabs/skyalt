@@ -253,6 +253,19 @@ func (w *SAWidget) AddWidget(coord OsV4, name string, node string) *SAWidget {
 	return nw
 }
 
+func (w *SAWidget) Remove() bool {
+
+	if w.parent != nil {
+		for i, it := range w.parent.Subs {
+			if it == w {
+				w.parent.Subs = append(w.parent.Subs[:i], w.parent.Subs[i+1:]...)
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func (w *SAWidget) findValue(name string) *SAWidgetValue {
 	for _, it := range w.Values {
 		if it.Name == name {
@@ -376,22 +389,28 @@ func (w *SAWidget) NumNames(name string) int {
 func (w *SAWidget) RenderParams(ui *Ui) {
 
 	ui.Div_colMax(0, 100)
-
-	ui.Div_colMax(1, 0.1) //spacer
+	ui.Div_row(2, 0.5) //spacer
 
 	y := 0
 
 	//Name
-	_, _, _, fnshd, _ := ui.Comp_editbox_desc("Name", 0, 2, 0, y, 1, 1, &w.Name, 0, "", "Name", false, false, true)
-	if fnshd && w.parent != nil {
-		//create unique name
-		for w.parent.NumNames(w.Name) >= 2 {
-			w.Name += "1"
+	ui.Div_start(0, y, 1, 1)
+	{
+		ui.Div_colMax(0, 100)
+		ui.Div_colMax(1, 2)
+		_, _, _, fnshd, _ := ui.Comp_editbox_desc("Name", 0, 2, 0, 0, 1, 1, &w.Name, 0, "", "Name", false, false, true)
+		if fnshd && w.parent != nil {
+			//create unique name
+			for w.parent.NumNames(w.Name) >= 2 {
+				w.Name += "1"
+			}
+		}
+
+		if ui.Comp_button(1, 0, 1, 1, "Delete", "", true) > 0 {
+			w.Remove()
 		}
 	}
-	y++
-
-	ui.Div_SpacerRow(0, y, 1, 1)
+	ui.Div_end()
 	y++
 
 	//Grid
@@ -410,6 +429,9 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 		ui.Comp_editbox(4, 0, 1, 1, &w.Coord.Size.Y, 0, "", "h", false, false, true)
 	}
 	ui.Div_end()
+	y++
+
+	ui.Div_SpacerRow(0, y, 1, 1)
 	y++
 
 	for _, it := range w.Values {
