@@ -89,7 +89,7 @@ func (base *SABase) reloadTranslations(ui *Ui) error {
 func (base *SABase) Save() {
 	//apps
 	for _, a := range base.Apps {
-		if a.root != nil {
+		if a.root != nil && a.saveIt {
 			a.root.Save(a.GetPath())
 		}
 	}
@@ -232,7 +232,7 @@ func (base *SABase) drawFrame(ui *Ui) {
 				app.renderIDE(ui)
 				ui.Div_end()
 			} else {
-				app.root.RenderLayout(ui)
+				app.root.RenderLayout(ui, app)
 			}
 
 		}

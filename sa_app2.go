@@ -34,9 +34,12 @@ type SAApp2 struct {
 	history_act []*SAWidget //JSONs
 	history     []*SAWidget //JSONs
 	history_pos int
-	//saveIt bool
+	saveIt      bool
 
 	addWidgetCoord OsV4
+
+	startClickWidget *SAWidget
+	startClickRel    OsV2
 }
 
 func NewSAApp2(name string, base *SABase) *SAApp2 {
@@ -179,24 +182,20 @@ func (app *SAApp2) renderIDE(ui *Ui) {
 		ui.GetCall().call.data.scrollH.attach = &colDiv.data.scrollH
 		ui.GetCall().call.data.scrollV.attach = &rowDiv.data.scrollV
 
-		app.act.RenderLayout(ui)
+		app.act.RenderLayout(ui, app)
 	}
 	ui.Div_end()
 
+	touch := &ui.buff.win.io.touch
+	keys := &ui.buff.win.io.keys
+
 	//add widget
-	if appDiv.data.over {
-		pos := ui.win.io.touch.pos
-		if appDiv.crop.Inside(pos) {
+	if appDiv.data.over && app.startClickWidget == nil && !keys.alt {
+		touchPos := ui.win.io.touch.pos
+		if appDiv.crop.Inside(touchPos) {
+			grid := appDiv.GetCloseCell(touchPos)
 
-			rpos := appDiv.GetRelativePos(pos)
-
-			var grid OsV4
-			grid.Start.X = appDiv.data.cols.GetCloseCell(rpos.X)
-			grid.Start.Y = appDiv.data.rows.GetCloseCell(rpos.Y)
-			grid.Size.X = 1
-			grid.Size.Y = 1
-
-			if appDiv.FindFromGridPos(grid.Start) == nil {
+			if appDiv.FindFromGridPos(grid.Start) == nil { //no widget under touch
 				rect := appDiv.data.Convert(ui.win.Cell(), grid)
 
 				rect.Start = rect.Start.Add(appDiv.canvas.Start)
@@ -211,6 +210,61 @@ func (app *SAApp2) renderIDE(ui *Ui) {
 		}
 	}
 	app.drawCreateWidget(ui)
+
+	//select/move widget
+	if appDiv.data.over {
+		grid := appDiv.GetCloseCell(touch.pos)
+
+		itemDiv := appDiv.FindFromGridPos(grid.Start)
+		if itemDiv != nil {
+			var found *SAWidget
+			for _, w := range app.act.Subs {
+				if w.Coord.HasCover(itemDiv.grid) {
+					found = w
+					break
+				}
+			}
+
+			if itemDiv != nil && found != nil && keys.alt {
+				if touch.start {
+					app.startClickWidget = found
+					app.startClickRel = touch.pos.Sub(itemDiv.crop.Start)
+					app.act.DeselectAll()
+					found.Selected = true
+				}
+
+				if touch.end && touch.numClicks > 1 && found.IsGuiLayout() {
+					app.act = found //goto layout
+				}
+			}
+
+			if found != nil && app.startClickWidget == found {
+				//move
+				gridMove := appDiv.GetCloseCell(touch.pos.Sub(app.startClickRel).Add(OsV2{ui.CellWidth(0.5), ui.CellWidth(0.5)}))
+				//gridMove := appDiv.GetCloseCell(touch.pos)
+				found.Coord.Start = gridMove.Start
+			}
+		}
+
+		if touch.end {
+			if app.startClickWidget == nil { //click outside widgets
+				app.act.DeselectAll()
+			}
+			app.startClickWidget = nil
+		}
+	}
+
+	//shortcuts
+	if ui.edit.uid == nil {
+		keys := &ui.buff.win.io.keys
+
+		//delete
+		if appDiv.data.over && keys.delete {
+			app.act.RemoveSelectedNodes()
+		}
+
+	}
+
 }
 
 func (app *SAApp2) History(ui *Ui) {
@@ -218,6 +272,7 @@ func (app *SAApp2) History(ui *Ui) {
 	if len(app.history) == 0 {
 		app.addHistory()
 		app.history_pos = 0
+		app.saveIt = false
 	}
 
 	lv := ui.GetCall()
@@ -348,6 +403,7 @@ func _SAApp2_drawColsRowsDialog(name string, items *[]SAWidgetColRow, i int, ui 
 
 func (app *SAApp2) RenderHeader(ui *Ui) {
 	ui.Div_colMax(1, 100)
+	ui.Div_colMax(2, 6)
 
 	//level up
 	if ui.Comp_buttonIcon(0, 0, 1, 1, "file:apps/base/resources/levelup.png", 0.3, "One level up", app.act.parent != nil) > 0 {
@@ -373,12 +429,14 @@ func (app *SAApp2) RenderHeader(ui *Ui) {
 		}
 	}
 
+	ui.Comp_text(2, 0, 1, 1, "Press Alt-key to select widgets", 1)
+
 	//short cuts
-	if ui.Comp_buttonLight(2, 0, 1, 1, "←", "Back", app.canHistoryBack()) > 0 {
+	if ui.Comp_buttonLight(3, 0, 1, 1, "←", "Back", app.canHistoryBack()) > 0 {
 		app.stepHistoryBack()
 
 	}
-	if ui.Comp_buttonLight(3, 0, 1, 1, "→", "Forward", app.canHistoryForward()) > 0 {
+	if ui.Comp_buttonLight(4, 0, 1, 1, "→", "Forward", app.canHistoryForward()) > 0 {
 		app.stepHistoryForward()
 	}
 }
@@ -411,6 +469,8 @@ func (app *SAApp2) addHistory() {
 	app.history = append(app.history, root)
 	app.history_act = append(app.history_act, act)
 	app.history_pos++
+
+	app.saveIt = true
 }
 
 func (app *SAApp2) recoverHistory() {

@@ -204,6 +204,14 @@ func (w *SAWidget) DeselectAll() {
 	}
 }
 
+func (w *SAWidget) RemoveSelectedNodes() {
+	for i := len(w.Subs) - 1; i >= 0; i-- {
+		if w.Subs[i].Selected {
+			w.Subs = append(w.Subs[:i], w.Subs[i+1:]...)
+		}
+	}
+}
+
 func (w *SAWidget) FindSelected() *SAWidget {
 
 	for _, it := range w.Subs {
@@ -310,7 +318,7 @@ func (w *SAWidget) GetValueBoolSwitch(name string, defValue string) bool {
 	return vv != 0
 }
 
-func (w *SAWidget) Render(ui *Ui) {
+func (w *SAWidget) Render(ui *Ui, app *SAApp2) {
 
 	switch w.Node {
 	case "gui_button":
@@ -329,20 +337,23 @@ func (w *SAWidget) Render(ui *Ui) {
 
 	case "gui_layout":
 		ui.Div_start(w.Coord.Start.X, w.Coord.Start.Y, w.Coord.Size.X, w.Coord.Size.Y)
-		w.RenderLayout(ui)
+		w.RenderLayout(ui, app)
 		ui.Div_end()
 	}
 
-	if w.Selected {
-		div := ui.Div_start(w.Coord.Start.X, w.Coord.Start.Y, w.Coord.Size.X, w.Coord.Size.Y)
-		div.enableInput = false
-		ui.Paint_rect(0, 0, 1, 1, 0, Node_getYellow(), 0.03)
-		ui.Div_end()
-	}
+	if app.IDE {
+		//draw Select rectangle
+		if w.Selected && app.act == w.parent {
+			div := ui.Div_start(w.Coord.Start.X, w.Coord.Start.Y, w.Coord.Size.X, w.Coord.Size.Y)
+			div.enableInput = false
+			ui.Paint_rect(0, 0, 1, 1, 0, Node_getYellow(), 0.03)
+			ui.Div_end()
+		}
 
+	}
 }
 
-func (w *SAWidget) RenderLayout(ui *Ui) {
+func (w *SAWidget) RenderLayout(ui *Ui, app *SAApp2) {
 
 	//columns
 	for i, c := range w.Cols {
@@ -370,7 +381,7 @@ func (w *SAWidget) RenderLayout(ui *Ui) {
 
 	//items
 	for _, it := range w.Subs {
-		it.Render(ui)
+		it.Render(ui, app)
 	}
 }
 
@@ -454,7 +465,7 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 	}
 }
 
-//delete / select(2xclick - goto sub) / resize / move ...
+// resize ...
 
 //= expressions + switch between value/formula ...
 //server + execute graph ...
