@@ -16,51 +16,283 @@ limitations under the License.
 
 package main
 
-import "strings"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
 
-type SAApp struct {
+type SAApp2 struct {
 	base *SABase
 
 	Name string
 	IDE  bool
 
-	view               *NodeView
-	cam_move           bool
-	node_move          bool
-	node_select        bool
-	cam_start          OsV2f
-	touch_start        OsV2
-	node_move_selected *Node
+	root *SAWidget
+	act  *SAWidget
 
-	node_connect_in  *NodeParamIn
-	node_connect_out *NodeParamOut
+	history_act []*SAWidget //JSONs
+	history     []*SAWidget //JSONs
+	history_pos int
+	saveIt      bool
 
-	saveIt bool
+	addWidgetCoord OsV4
 
-	tab_touchPos OsV2
+	startClickWidget *SAWidget
+	startClickRel    OsV2
 }
 
-func NewSAApp(name string, base *SABase) *SAApp {
-	var app SAApp
+func NewSAApp2(name string, base *SABase) *SAApp2 {
+	var app SAApp2
 	app.base = base
 	app.Name = name
 	app.IDE = true
 
 	return &app
 }
+func (app *SAApp2) Destroy() {
 
-func (app *SAApp) GetPath() string {
+}
+
+func (app *SAApp2) GetPath() string {
 	return "apps/" + app.Name + "/app.json"
 }
 
-func (app *SAApp) drawCreateNode(ui *Ui) {
+func (app *SAApp2) renderIDE(ui *Ui) {
 
-	lvBaseDiv := ui.GetCall().call
+	ui.Div_colMax(1, 100)
+	ui.Div_rowMax(1, 100)
 
-	if ui.win.io.keys.tab && lvBaseDiv.data.over {
-		app.tab_touchPos = ui.buff.win.io.touch.pos
-		ui.Dialog_open("nodes_list", 2)
+	var colDiv *UiLayoutDiv
+	var rowDiv *UiLayoutDiv
+
+	lay := app.act
+
+	//at least one
+	if len(lay.Cols) == 0 {
+		lay.Cols = append(lay.Cols, InitSAWidgetColRow())
 	}
+	if len(lay.Rows) == 0 {
+		lay.Rows = append(lay.Rows, InitSAWidgetColRow())
+	}
+
+	if ui.Comp_button(0, 0, 1, 1, "+", "Add Column/Row", true) > 0 {
+		ui.Dialog_open("add_col_row", 1)
+	}
+	if ui.Dialog_start("add_col_row") {
+		ui.Div_col(0, 4)
+		if ui.Comp_buttonMenu(0, 0, 1, 1, "Add new Column", "", true, false) > 0 {
+			lay.Cols = append(lay.Cols, InitSAWidgetColRow())
+		}
+		if ui.Comp_buttonMenu(0, 1, 1, 1, "Add new Row", "", true, false) > 0 {
+			lay.Rows = append(lay.Rows, InitSAWidgetColRow())
+
+		}
+		ui.Dialog_end()
+	}
+
+	//cols header
+	ui.Div_start(1, 0, 1, 1)
+	{
+		colDiv = ui.GetCall().call
+		ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
+		ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
+
+		for i, c := range lay.Cols {
+			ui.Div_col(i, c.Min)
+			ui.Div_colMax(i, c.Max)
+			if c.ResizeName != "" {
+				active, v := ui.Div_colResize(i, c.ResizeName, c.Resize, true)
+				if active {
+					lay.Cols[i].Resize = v
+				}
+			}
+		}
+
+		for i := range lay.Cols {
+			nm := fmt.Sprintf("col_details_%d", i)
+
+			//drag & drop
+			ui.Div_start(i, 0, 1, 1)
+			{
+				ui.Div_drag("cols", i)
+				src, pos, done := ui.Div_drop("cols", false, true, false)
+				if done {
+					Div_DropMoveElement(&lay.Cols, &lay.Cols, src, i, pos)
+				}
+			}
+			ui.Div_end()
+
+			if ui.Comp_buttonLight(i, 0, 1, 1, fmt.Sprintf("%d", i), "", true) > 0 {
+				ui.Dialog_open(nm, 1)
+			}
+
+			_SAApp2_drawColsRowsDialog(nm, &lay.Cols, i, ui)
+
+		}
+	}
+	ui.Div_end()
+
+	//rows header
+	ui.Div_start(0, 1, 1, 1)
+	{
+		rowDiv = ui.GetCall().call
+		ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
+		ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
+
+		for i, r := range lay.Rows {
+			ui.Div_row(i, r.Min)
+			ui.Div_rowMax(i, r.Max)
+
+			if r.ResizeName != "" {
+				active, v := ui.Div_rowResize(i, r.ResizeName, r.Resize, true)
+				if active {
+					lay.Rows[i].Resize = v
+				}
+			}
+		}
+
+		for i := range lay.Rows {
+
+			nm := fmt.Sprintf("row_details_%d", i)
+
+			//drag & drop
+			ui.Div_start(0, i, 1, 1)
+			{
+				ui.Div_drag("rows", i)
+				src, pos, done := ui.Div_drop("rows", true, false, false)
+				if done {
+					Div_DropMoveElement(&lay.Rows, &lay.Rows, src, i, pos)
+				}
+			}
+			ui.Div_end()
+
+			if ui.Comp_buttonLight(0, i, 1, 1, fmt.Sprintf("%d", i), "", true) > 0 {
+				ui.Dialog_open(nm, 1)
+			}
+			_SAApp2_drawColsRowsDialog(nm, &lay.Rows, i, ui)
+		}
+
+	}
+	ui.Div_end()
+
+	//app
+	appDiv := ui.Div_start(1, 1, 1, 1)
+	{
+		ui.GetCall().call.data.scrollH.attach = &colDiv.data.scrollH
+		ui.GetCall().call.data.scrollV.attach = &rowDiv.data.scrollV
+
+		app.act.RenderLayout(ui, app)
+	}
+	ui.Div_end()
+
+	touch := &ui.buff.win.io.touch
+	keys := &ui.buff.win.io.keys
+
+	//add widget
+	if appDiv.data.over && app.startClickWidget == nil && !keys.alt {
+		touchPos := ui.win.io.touch.pos
+		if appDiv.crop.Inside(touchPos) {
+			grid := appDiv.GetCloseCell(touchPos)
+
+			if appDiv.FindFromGridPos(grid.Start) == nil { //no widget under touch
+				rect := appDiv.data.Convert(ui.win.Cell(), grid)
+
+				rect.Start = rect.Start.Add(appDiv.canvas.Start)
+				ui.buff.AddRect(rect, Node_getYellow(), ui.CellWidth(0.03))
+				ui.buff.AddText("+", rect, ui.win.fonts.Get(SKYALT_FONT_PATH), Node_getYellow(), ui.win.io.GetDPI()/8, OsV2{1, 1}, nil, true)
+
+				if ui.win.io.touch.end {
+					app.addWidgetCoord = grid
+					ui.Dialog_open("nodes_list", 2)
+				}
+			}
+		}
+	}
+	app.drawCreateWidget(ui)
+
+	//select/move widget
+	if appDiv.data.over {
+		grid := appDiv.GetCloseCell(touch.pos)
+
+		var found *SAWidget
+		for _, w := range app.act.Subs {
+			if w.GetGrid().Inside(grid.Start) {
+				found = w
+				break
+			}
+		}
+
+		if found != nil && keys.alt {
+			if touch.start {
+				foundStart := appDiv.crop.Start.Add(appDiv.data.Convert(ui.win.Cell(), found.GetGrid()).Start)
+				app.startClickWidget = found
+				app.startClickRel = touch.pos.Sub(foundStart)
+				app.act.DeselectAll()
+				found.Selected = true
+			}
+
+			if touch.end && touch.numClicks > 1 && found.IsGuiLayout() {
+				app.act = found //goto layout
+			}
+		}
+
+		if app.startClickWidget != nil {
+			//move
+			gridMove := appDiv.GetCloseCell(touch.pos.Sub(app.startClickRel).Add(OsV2{ui.CellWidth(0.5), ui.CellWidth(0.5)}))
+			//gridMove := appDiv.GetCloseCell(touch.pos)
+			app.startClickWidget.SetGridStart(gridMove.Start)
+		}
+		//}
+	}
+	if touch.end {
+		if keys.alt && app.startClickWidget == nil { //click outside widgets
+			app.act.DeselectAll()
+		}
+		app.startClickWidget = nil
+	}
+
+	//shortcuts
+	if ui.edit.uid == nil {
+		keys := &ui.buff.win.io.keys
+
+		//delete
+		if appDiv.data.over && keys.delete {
+			app.act.RemoveSelectedNodes()
+		}
+
+	}
+
+}
+
+func (app *SAApp2) History(ui *Ui) {
+	//init history
+	if len(app.history) == 0 {
+		app.addHistory()
+		app.history_pos = 0
+		app.saveIt = false
+	}
+
+	lv := ui.GetCall()
+	touch := &ui.buff.win.io.touch
+	keys := &ui.buff.win.io.keys
+	//over := lv.call.data.over
+
+	if lv.call.data.over && ui.win.io.keys.backward {
+		app.stepHistoryBack()
+
+	}
+	if lv.call.data.over && ui.win.io.keys.forward {
+		app.stepHistoryForward()
+	}
+
+	if touch.end || keys.hasChanged {
+		app.cmpAndAddHistory()
+	}
+
+}
+
+func (app *SAApp2) drawCreateWidget(ui *Ui) {
 
 	if ui.Dialog_start("nodes_list") {
 		ui.Div_colMax(0, 5)
@@ -71,11 +303,13 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 		y++
 
 		var fns []string
-		fns = append(fns, "constant")
-		fns = append(fns, "gui_sub")
 		fns = append(fns, "gui_button")
-		fns = append(fns, "gui_label")
+		fns = append(fns, "gui_text")
+		fns = append(fns, "gui_checkbox")
+		fns = append(fns, "gui_switch")
 		fns = append(fns, "gui_edit")
+		fns = append(fns, "gui_combo")
+		fns = append(fns, "gui_layout")
 		//...
 
 		fns = append(fns, app.base.server.nodes...) //from /nodes dir
@@ -85,18 +319,11 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 		for _, fn := range fns {
 			if search == "" || strings.Contains(fn, search) {
 				if keys.enter || ui.Comp_buttonMenu(0, y, 1, 1, fn, "", true, false) > 0 {
-					n := app.view.act.AddNode(fn)
-					n.Pos = app.view.pixelsToNode(app.tab_touchPos, ui, lvBaseDiv)
 
-					if strings.HasPrefix(fn, "gui_") {
-						n.GetInput("grid_x")
-						n.GetInput("grid_y")
-						n.GetInput("grid_w").Value = "1"
-						n.GetInput("grid_h").Value = "1"
-					}
-					if n.IsGuiSub() {
-						n.GetAttr("cam_z").Value = "1"
-					}
+					//add new Widget
+					nw := app.act.AddWidget(app.addWidgetCoord, fn, fn)
+					app.act.DeselectAll()
+					nw.Selected = true
 
 					ui.Dialog_close()
 					break
@@ -109,270 +336,182 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 	}
 }
 
-func (app *SAApp) drawGraphHeader(ui *Ui) {
+func _SAApp2_drawColsRowsDialog(name string, items *[]SAWidgetColRow, i int, ui *Ui) bool {
+
+	changed := false
+	if ui.Dialog_start(name) {
+
+		ui.Div_col(0, 10)
+
+		//add left/right
+		ui.Div_start(0, 0, 1, 1)
+		{
+			ui.Div_colMax(0, 100)
+			ui.Div_colMax(1, 100)
+			ui.Div_colMax(2, 100)
+
+			if ui.Comp_buttonLight(0, 0, 1, 1, "Add before", "", i > 0) > 0 {
+				*items = append(*items, SAWidgetColRow{})
+				copy((*items)[i+1:], (*items)[i:])
+				(*items)[i] = InitSAWidgetColRow()
+				ui.Dialog_close()
+				changed = true
+			}
+
+			ui.Comp_text(1, 0, 1, 1, strconv.Itoa(i), 1) //description
+
+			if ui.Comp_buttonLight(2, 0, 1, 1, "Add after", "", true) > 0 {
+				*items = append(*items, SAWidgetColRow{})
+				copy((*items)[i+2:], (*items)[i+1:])
+				(*items)[i+1] = InitSAWidgetColRow()
+				ui.Dialog_close()
+				changed = true
+			}
+		}
+		ui.Div_end()
+
+		_, _, _, fnshd1, _ := ui.Comp_editbox_desc("Min", 0, 2, 0, 1, 1, 1, &(*items)[i].Min, 1, "", "", false, false, true)
+		_, _, _, fnshd2, _ := ui.Comp_editbox_desc("Max", 0, 2, 0, 2, 1, 1, &(*items)[i].Max, 1, "", "", false, false, true)
+
+		ui.Div_start(0, 3, 1, 1)
+		{
+			ui.Div_colMax(0, 100)
+			ui.Div_colMax(1, 100)
+
+			_, _, _, fnshd3, _ := ui.Comp_editbox_desc("Resize", 0, 2, 0, 0, 1, 1, &(*items)[i].ResizeName, 1, "", "Name", false, false, true)
+			ui.Comp_text(1, 0, 1, 1, strconv.FormatFloat((*items)[i].Resize, 'f', 2, 64), 0)
+
+			if fnshd1 || fnshd2 || fnshd3 {
+				changed = true
+			}
+
+		}
+		ui.Div_end()
+
+		//remove
+		if ui.Comp_button(0, 5, 1, 1, "Remove", "", len(*items) > 1) > 0 {
+			*items = append((*items)[:i], (*items)[i+1:]...)
+			ui.Dialog_close()
+			changed = true
+		}
+
+		ui.Dialog_end()
+	}
+
+	return changed
+}
+
+func (app *SAApp2) RenderHeader(ui *Ui) {
 	ui.Div_colMax(1, 100)
+	ui.Div_colMax(2, 6)
 
 	//level up
-	if ui.Comp_buttonIcon(0, 0, 1, 1, "file:apps/base/resources/levelup.png", 0.3, "One level up", app.view.act.parent != nil) > 0 {
-		app.view.act = app.view.act.parent
+	if ui.Comp_buttonIcon(0, 0, 1, 1, "file:apps/base/resources/levelup.png", 0.3, "One level up", app.act.parent != nil) > 0 {
+		app.act = app.act.parent
 	}
 
 	//list
 	{
 		var listPathes string
-		var listNodes []*Node
-		app.view.root.buildSubsList(&listPathes, &listNodes)
+		var listNodes []*SAWidget
+		app.root.buildSubsList(&listPathes, &listNodes)
 		if len(listPathes) >= 1 {
 			listPathes = listPathes[:len(listPathes)-1] //cut last '|'
 		}
 		combo := 0
 		for i, n := range listNodes {
-			if app.view.act == n {
+			if app.act == n {
 				combo = i
 			}
 		}
 		if ui.Comp_combo(1, 0, 1, 1, &combo, listPathes, "", true, true) {
-			app.view.act = listNodes[combo]
+			app.act = listNodes[combo]
 		}
 	}
 
+	ui.Comp_text(2, 0, 1, 1, "Press Alt-key to select widgets", 1)
+
 	//short cuts
-	if ui.Comp_buttonLight(2, 0, 1, 1, "←", "Back", app.view.canHistoryBack()) > 0 {
-		app.view.stepHistoryBack()
+	if ui.Comp_buttonLight(3, 0, 1, 1, "←", "Back", app.canHistoryBack()) > 0 {
+		app.stepHistoryBack()
 
 	}
-	if ui.Comp_buttonLight(3, 0, 1, 1, "→", "Forward", app.view.canHistoryForward()) > 0 {
-		app.view.stepHistoryForward()
+	if ui.Comp_buttonLight(4, 0, 1, 1, "→", "Forward", app.canHistoryForward()) > 0 {
+		app.stepHistoryForward()
 	}
 }
 
-func _SAApp_drawConnection(start OsV2, end OsV2, active bool, ui *Ui) {
-	cd := Node_connectionCd(ui)
-	if active {
-		cd = Node_getYellow()
+func (app *SAApp2) cmpAndAddHistory() bool {
+	if len(app.history) > 0 {
+
+		if app.act == app.root.FindMirror(app.history[app.history_pos], app.history_act[app.history_pos]) {
+			if app.root.Cmp(app.history[app.history_pos]) {
+				return false //same
+			}
+		}
 	}
 
-	mid := start.Aprox(end, 0.5)
-	ui.buff.AddBezier(start, OsV2{mid.X, start.Y}, OsV2{mid.X, end.Y}, end, cd, ui.CellWidth(0.03), false)
-	//ui.buff.AddLine(start, end, cd, ui.CellWidth(0.03))
-
-	//t := sp / 5
-	//ui.buff.AddTringle(end, end.Add(OsV2{-t, t}), end.Add(OsV2{t, t}), pl.GetGrey(0.5)) //arrow
+	app.addHistory()
+	return true
 }
 
-func (app *SAApp) drawGraph(ui *Ui) {
-	pl := ui.buff.win.io.GetPalette()
-
-	ui.Div_colMax(0, 100)
-	ui.Div_rowMax(0, 100)
-
-	ui.Paint_rect(0, 0, 1, 1, 0, pl.GetGrey(0.8), 0)
-
-	//fade "press tab" centered in background
-	lv := ui.GetCall()
-	ui._compDrawText(lv.call.canvas, "press tab", "", pl.GetGrey(1), SKYALT_FONT_HEIGHT, false, false, 1, 1, true)
-
-	//+
-	app.drawCreateNode(ui)
-
-	//draw connections
-	for _, nodeIn := range app.view.act.Subs {
-		for _, paramIn := range nodeIn.Inputs {
-
-			paramOut := paramIn.FindWireOut()
-			if paramOut != nil {
-				_SAApp_drawConnection(paramOut.coordDot.Middle(), paramIn.coordDot.Middle(), nodeIn.Selected || paramOut.node.Selected, ui)
-			}
-		}
+func (app *SAApp2) addHistory() {
+	//cut newer history
+	if app.history_pos+1 < len(app.history) {
+		app.history = app.history[:app.history_pos+1]
+		app.history_act = app.history_act[:app.history_pos+1]
 	}
 
-	//draw node bodies
-	var touchInsideNode *Node
-	var touchMoveNode *Node
-	for _, n := range app.view.act.Subs {
-		inside, move := n.drawNode(app.node_select, ui, app.view)
-		if inside {
-			touchInsideNode = n
-		}
-		if move {
-			touchMoveNode = n
-		}
+	//add history
+	root, _ := app.root.Copy() //err ...
+	act := root.FindMirror(app.root, app.act)
+
+	app.history = append(app.history, root)
+	app.history_act = append(app.history_act, act)
+	app.history_pos++
+
+	app.saveIt = true
+}
+
+func (app *SAApp2) recoverHistory() {
+	app.root, _ = app.history[app.history_pos].Copy()
+	app.act = app.root.FindMirror(app.history[app.history_pos], app.history_act[app.history_pos])
+}
+
+func (app *SAApp2) canHistoryBack() bool {
+	return app.history_pos > 0
+}
+func (app *SAApp2) canHistoryForward() bool {
+	return app.history_pos+1 < len(app.history)
+}
+
+func (app *SAApp2) stepHistoryBack() bool {
+	if !app.canHistoryBack() {
+		return false
 	}
 
-	touch := &ui.buff.win.io.touch
-	keys := &ui.buff.win.io.keys
-	over := lv.call.data.over
+	app.history_pos--
+	app.recoverHistory()
+	return true
+}
+func (app *SAApp2) stepHistoryForward() bool {
 
-	//keys actions
-	if ui.edit.uid == nil {
-		//delete
-		if over && keys.delete {
-			app.view.RemoveSelectedNodes()
-		}
-
-		//bypass
-		if over && strings.EqualFold(keys.text, "b") {
-			app.view.BypassSelectedNodes()
-		}
-		//H - zoom out to all ...
-		//G - zoom to selected ...
+	if !app.canHistoryForward() {
+		return false
 	}
 
-	//touch actions
-	{
-		//nodes: inputs/outputs
-		{
-			node_in_param := app.view.findInputOver(false, ui)
-			node_out_param := app.view.findOutputOver(false, ui)
-			if over && touch.start {
-				if node_in_param != nil {
-					app.node_connect_in = node_in_param
-					app.node_connect_out = nil
-				}
-				if node_out_param != nil {
-					app.node_connect_in = nil
-					app.node_connect_out = node_out_param
-				}
-			}
-		}
-		{
-			if app.node_connect_in != nil {
-				_SAApp_drawConnection(touch.pos, app.node_connect_in.coordDot.Middle(), true, ui)
-			}
-			if app.node_connect_out != nil {
-				_SAApp_drawConnection(app.node_connect_out.coordDot.Middle(), touch.pos, true, ui)
-			}
-		}
+	app.history_pos++
+	app.recoverHistory()
+	return true
+}
 
-		//nodes
-		if touchMoveNode != nil && over && touch.start && !keys.shift && !keys.ctrl && (app.node_connect_in == nil && app.node_connect_out == nil) {
-			app.node_move = true
-			app.touch_start = touch.pos
-			for _, n := range app.view.act.Subs {
-				n.pos_start = n.Pos
-			}
-			app.node_move_selected = touchMoveNode
+func (app *SAApp2) Execute(numThreads int) {
 
-			//click on un-selected => de-select all & select only current
-			if !touchMoveNode.Selected {
-				for _, n := range app.view.act.Subs {
-					n.Selected = false
-				}
-				touchMoveNode.Selected = true
-			}
-		}
-		if app.node_move {
-			cell := ui.win.Cell()
-			p := touch.pos.Sub(app.touch_start)
-			var r OsV2f
-			zoom := app.view.GetAttrCamZ()
-			r.X = float32(p.X) / zoom / float32(cell)
-			r.Y = float32(p.Y) / zoom / float32(cell)
+	app.root.UpdateExpresions()
 
-			for _, n := range app.view.act.Subs {
-				if n.Selected {
-					n.Pos = n.pos_start.Add(r)
-				}
-			}
-		}
+	app.root.ResetLoopId()
+	app.root.CheckForLoops(1)
 
-		//zoom
-		if over && touch.wheel != 0 {
-			zoom := OsClampFloat(float64(app.view.GetAttrCamZ())+float64(touch.wheel)*-0.1, 0.4, 2.5) //zoom += wheel
-
-			app.view.SetAttrCamZ(float32(zoom))
-
-			touch.wheel = 0
-		}
-
-		//cam
-		if (touchMoveNode == nil || keys.shift || keys.ctrl) && over && touch.start && (app.node_connect_in == nil && app.node_connect_out == nil) {
-			if keys.space || touch.rm {
-				//start camera move
-				app.cam_move = true
-				app.touch_start = touch.pos
-				app.cam_start = app.view.GetAttrCam()
-			} else if touchInsideNode == nil {
-				//start selection
-				app.node_select = true
-				app.touch_start = touch.pos
-			}
-		}
-		if app.cam_move {
-			cell := ui.win.Cell()
-			p := touch.pos.Sub(app.touch_start)
-			var r OsV2f
-			zoom := app.view.GetAttrCamZ()
-			r.X = float32(p.X) / zoom / float32(cell)
-			r.Y = float32(p.Y) / zoom / float32(cell)
-
-			app.view.SetAttrCam(app.cam_start.Sub(r))
-		}
-
-		if app.node_select {
-			coord := InitOsV4ab(app.touch_start, touch.pos)
-			coord.Size.X++
-			coord.Size.Y++
-
-			ui.buff.AddRect(coord, pl.P.SetAlpha(50), 0)     //back
-			ui.buff.AddRect(coord, pl.P, ui.CellWidth(0.03)) //border
-
-			//update
-			for _, n := range app.view.act.Subs {
-				n.selected_cover = coord.HasCover(n.nodeToPixelsCoord(ui, app.view))
-			}
-		}
-
-	}
-
-	if touch.end {
-		//when it's clicked on selected node, but it's not moved => select only this node
-		if app.node_move && app.node_move_selected != nil {
-			if app.touch_start.Distance(touch.pos) < float32(ui.win.Cell())/5 {
-				for _, n := range app.view.act.Subs {
-					n.Selected = false
-				}
-				app.node_move_selected.Selected = true
-			}
-		}
-
-		if app.node_select {
-			for _, n := range app.view.act.Subs {
-				n.Selected = n.KeyProgessSelection(keys)
-			}
-		}
-
-		{
-			if app.node_connect_in != nil {
-				node_out_param := app.view.findOutputOver(true, ui)
-				app.node_connect_in.SetWire(node_out_param) //connet & disconnect
-			}
-
-			if app.node_connect_out != nil {
-				node_in_param := app.view.findInputOver(true, ui)
-				if node_in_param != nil {
-					node_in_param.SetWire(app.node_connect_out)
-				}
-			}
-		}
-
-		app.cam_move = false
-		app.node_move = false
-		app.node_select = false
-		app.node_connect_in = nil
-		app.node_connect_out = nil
-	}
-
-	//short cuts
-	if lv.call.data.over && ui.win.io.keys.backward {
-		app.view.stepHistoryBack()
-
-	}
-	if lv.call.data.over && ui.win.io.keys.forward {
-		app.view.stepHistoryForward()
-	}
-
-	if touch.end || keys.hasChanged {
-		app.view.cmpAndAddHistory()
-	}
+	app.root.ResetExecute()
+	app.root.ExecuteSubs(app.base.server, OsMax(numThreads, 1))
 }
