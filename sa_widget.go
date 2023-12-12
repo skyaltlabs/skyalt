@@ -18,6 +18,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -279,34 +280,37 @@ func (w *SAWidget) areInputsReadyToRun() bool {
 	return true
 }
 
-func (w *SAWidget) areInputsChanged() bool {
+func (w *SAWidget) areInputsChangedAndUpdate() bool {
 
+	changed := false
 	for _, it := range w.Values {
 		value := it.Value
 		if it.expValue != nil {
 			value = it.expValue.oldValue
 		}
 
-		changed := (value != it.oldValue)
+		if value != it.oldValue {
+			changed = true
+		}
 
 		it.oldValue = value
-		if changed {
-			return true
-		}
 	}
-	return false
+	return changed
 }
 
 func (w *SAWidget) IsReadyToBeExe() bool {
 
-	if w.done && !w.running {
+	if w.done || w.running {
 		return false
 	}
 
 	if w.areInputsErrorFree() {
 		if w.areInputsReadyToRun() {
-			w.done = true
-			return w.areInputsChanged()
+			changed := w.areInputsChangedAndUpdate()
+			if !changed {
+				w.done = true
+			}
+			return changed
 		}
 	} else {
 		w.done = true
@@ -331,7 +335,12 @@ func (w *SAWidget) buildList(list *[]*SAWidget) {
 		it.buildList(list)
 	}
 }
-func (w *SAWidget) ExecuteSubs(server *NodeServer, max_threads int) {
+
+func (w *SAWidget) CanSkipExecute() bool {
+	return strings.HasPrefix(w.Node, "gui_")
+}
+
+func (w *SAWidget) ExecuteSubs(server *SANodeServer, max_threads int) {
 	var list []*SAWidget
 	w.buildList(&list)
 
@@ -347,95 +356,84 @@ func (w *SAWidget) ExecuteSubs(server *NodeServer, max_threads int) {
 				run = true
 				if it.IsReadyToBeExe() {
 
-					//maximum concurent threads
-					if numActiveThreads.Load() >= int64(max_threads) {
-						time.Sleep(10 * time.Millisecond)
+					if !it.CanSkipExecute() {
+
+						//maximum concurent threads
+						if numActiveThreads.Load() >= int64(max_threads) {
+							time.Sleep(10 * time.Millisecond)
+						}
+
+						//run it
+						it.running = true
+						wg.Add(1)
+						go func(ww *SAWidget) {
+							numActiveThreads.Add(1)
+							ww.execute(server)
+							wg.Done()
+							numActiveThreads.Add(-1)
+						}(it)
+					} else {
+						it.done = true
+						it.running = false
 					}
-
-					//run it
-					it.running = true
-					wg.Add(1)
-					go func(ww *SAWidget) {
-						numActiveThreads.Add(1)
-						ww.execute(server)
-						wg.Done()
-						numActiveThreads.Add(-1)
-					}(it)
-
 				}
 			}
 		}
 	}
 }
 
-func (w *SAWidget) CanSkipExecute() bool {
-	return strings.HasPrefix(w.Node, "gui_")
-}
+func (w *SAWidget) execute(server *SANodeServer) {
 
-func (w *SAWidget) execute(server *NodeServer) {
+	fmt.Println("execute:", w.Name)
 
-	if !w.CanSkipExecute() {
+	nc := server.Start(w.Node)
+	if nc != nil {
 
-		fmt.Println(w.Name)
-
-		nc := server.Start(w.Node)
-		if nc != nil {
-
-			//add/update new
-			/*for _, in := range nc.strct.Attrs {
-				a := node.GetAttr(in.Name)
-				a.Gui_type = in.Gui_type
-				a.Gui_options = in.Gui_options
-				a.Hide = in.Hide
-			}
-
-			//set/remove
-			for i := len(node.Attrs) - 1; i >= 0; i-- {
-				src := node.Attrs[i]
-				dst := nc.FindAttr(src.Name)
-				if dst != nil {
-					dst.Value = src.Value
-				} else {
-					node.Attrs = append(node.Attrs[:i], node.Attrs[i+1:]...) //remove
-				}
-			}
-			for i := len(node.Inputs) - 1; i >= 0; i-- {
-				src := node.Inputs[i]
-				dst := nc.FindInput(src.Name)
-				if dst != nil {
-					out := src.FindWireOut()
-					if out != nil {
-						dst.Value = out.Value
-					} else {
-						dst.Value = src.Value
-					}
-				} else {
-					node.Inputs = append(node.Inputs[:i], node.Inputs[i+1:]...) //remove
-				}
-			}
-
-			//execute
-			nc.Start()
-
-			//copy back
-			node.outputs = nil //reset
-			for _, in := range nc.strct.Outputs {
-				o := node.GetOutput(in.Name) //add
-				o.Value = in.Value
-				o.Gui_type = in.Gui_type
-				o.Gui_options = in.Gui_options
-			}
-
-			if nc.progress.Error != "" {
-				node.err = errors.New(nc.progress.Error)
-			}*/
-		} else {
-			w.err = fmt.Errorf("can't find node exe(%s)", w.Node)
+		//add/update
+		for _, v := range nc.strct.Values {
+			a := w.GetValue(v.Name, v.Value, v.Gui_type, v.Gui_options, v.Gui_ReadOnly)
+			a.Gui_type = v.Gui_type
+			a.Gui_options = v.Gui_options
+			a.Gui_ReadOnly = v.Gui_ReadOnly
 		}
 
-		if w.err != nil {
-			fmt.Printf("Node(%s) has error(%v)\n", w.Name, w.err)
+		//set/remove
+		for i := len(w.Values) - 1; i >= 0; i-- {
+			src := w.Values[i]
+			if strings.HasPrefix(src.Name, "grid_") {
+				continue
+			}
+			dst := nc.FindValue(src.Name)
+			if dst != nil {
+				dst.Value = src.oldValue
+			} else {
+				w.Values = append(w.Values[:i], w.Values[i+1:]...) //remove
+			}
 		}
+
+		//execute
+		nc.Start()
+
+		//copy back
+		for _, v := range nc.strct.Values {
+			if v.Gui_ReadOnly {
+				a := w.GetValue(v.Name, v.Value, v.Gui_type, v.Gui_options, v.Gui_ReadOnly)
+				a.Value = v.Value
+				a.Gui_type = v.Gui_type
+				a.Gui_options = v.Gui_options
+				a.Gui_ReadOnly = v.Gui_ReadOnly
+			}
+		}
+
+		if nc.progress.Error != "" {
+			w.err = errors.New(nc.progress.Error)
+		}
+	} else {
+		w.err = fmt.Errorf("can't find node exe(%s)", w.Node)
+	}
+
+	if w.err != nil {
+		fmt.Printf("Node(%s) has error(%v)\n", w.Name, w.err)
 	}
 
 	w.done = true
@@ -588,6 +586,10 @@ func (w *SAWidget) _getValue(defValue SAWidgetValue) *SAWidgetValue {
 	return v
 }
 
+func (w *SAWidget) GetValue(name string, value string, gui_type string, gui_options string, gui_readOnly bool) *SAWidgetValue {
+	return w._getValue(SAWidgetValue{Name: name, Value: value, Gui_type: gui_type, Gui_options: gui_options, Gui_ReadOnly: gui_readOnly})
+}
+
 func (w *SAWidget) GetValueStringEdit(name string, defValue string) string {
 	return w._getValue(SAWidgetValue{Name: name, Value: defValue, Gui_type: "gui_edit"}).oldValue
 }
@@ -669,7 +671,7 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp2) {
 		if w.Selected && app.act == w.parent {
 			div := ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 			div.enableInput = false
-			ui.Paint_rect(0, 0, 1, 1, 0, Node_getYellow(), 0.03)
+			ui.Paint_rect(0, 0, 1, 1, 0, SAApp2_getYellow(), 0.03)
 			ui.Div_end()
 		}
 
