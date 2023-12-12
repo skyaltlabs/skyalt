@@ -199,8 +199,8 @@ func (app *SAApp2) renderIDE(ui *Ui) {
 				rect := appDiv.data.Convert(ui.win.Cell(), grid)
 
 				rect.Start = rect.Start.Add(appDiv.canvas.Start)
-				ui.buff.AddRect(rect, Node_getYellow(), ui.CellWidth(0.03))
-				ui.buff.AddText("+", rect, ui.win.fonts.Get(SKYALT_FONT_PATH), Node_getYellow(), ui.win.io.GetDPI()/8, OsV2{1, 1}, nil, true)
+				ui.buff.AddRect(rect, SAApp2_getYellow(), ui.CellWidth(0.03))
+				ui.buff.AddText("+", rect, ui.win.fonts.Get(SKYALT_FONT_PATH), SAApp2_getYellow(), ui.win.io.GetDPI()/8, OsV2{1, 1}, nil, true)
 
 				if ui.win.io.touch.end {
 					app.addWidgetCoord = grid
@@ -514,4 +514,8 @@ func (app *SAApp2) Execute(numThreads int) {
 
 	app.root.ResetExecute()
 	app.root.ExecuteSubs(app.base.server, OsMax(numThreads, 1))
+}
+
+func SAApp2_getYellow() OsCd {
+	return OsCd{204, 204, 0, 255} //...
 }

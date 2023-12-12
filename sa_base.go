@@ -33,7 +33,7 @@ type SABase struct {
 
 	trns SATranslations
 
-	server *NodeServer
+	server *SANodeServer
 }
 
 func NewSABase(ui *Ui) (*SABase, error) {
@@ -64,7 +64,7 @@ func NewSABase(ui *Ui) (*SABase, error) {
 		return nil, fmt.Errorf("reloadTranslations() failed: %w", err)
 	}
 
-	base.server, err = NewNodeServer("nodes", 4567)
+	base.server, err = NewSANodeServer("nodes", 4567)
 	if err != nil {
 		return nil, fmt.Errorf("NewNodeServer() failed: %w", err)
 	}
