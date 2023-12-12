@@ -221,7 +221,7 @@ func (base *SABase) drawFrame(ui *Ui) {
 		ui.Div_startName(1, 0, 1, 1, base.Apps[base.Selected].Name)
 		{
 
-			app.Execute()
+			app.Execute(ui.win.io.ini.Threads)
 
 			if app.IDE {
 				ui.Div_colMax(0, 100)

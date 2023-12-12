@@ -22,6 +22,9 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
+	"time"
 )
 
 type SAWidgetValue struct {
@@ -37,6 +40,8 @@ type SAWidgetValue struct {
 	Gui_type     string `json:",omitempty"`
 	Gui_options  string `json:",omitempty"`
 	Gui_ReadOnly bool   `json:",omitempty"` //output
+
+	editExp bool
 }
 
 type SAWidgetColRow struct {
@@ -68,6 +73,7 @@ type SAWidget struct {
 
 	//depends []*SAWidget
 	//changed bool
+	//outputs[]*SAWidget
 	running bool
 	done    bool
 	err     error
@@ -165,6 +171,10 @@ func (a *SAWidget) Cmp(b *SAWidget) bool {
 }
 
 func (w *SAWidget) HasError() bool {
+	if w.err != nil {
+		return true
+	}
+
 	for _, it := range w.Values {
 		if it.err != nil {
 			return true
@@ -173,7 +183,7 @@ func (w *SAWidget) HasError() bool {
 	return false
 }
 
-func (w *SAWidget) UpdateDepends() {
+func (w *SAWidget) UpdateExpresions() {
 
 	for _, it := range w.Values {
 		it.expWidget = nil
@@ -207,7 +217,7 @@ func (w *SAWidget) UpdateDepends() {
 	}
 
 	for _, it := range w.Subs {
-		it.UpdateDepends()
+		it.UpdateExpresions()
 	}
 }
 
@@ -243,6 +253,193 @@ func (w *SAWidget) CheckForLoops(loop_id int) {
 		loop_id++
 		it.CheckForLoops(loop_id)
 	}
+}
+
+// inputs -> values ...
+func (w *SAWidget) areInputsErrorFree() bool {
+
+	for _, v := range w.Values {
+		if v.expWidget != nil {
+			if v.expWidget.err != nil {
+				w.err = fmt.Errorf("incomming error for Value(%s)", v.Name)
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+func (w *SAWidget) areInputsReadyToRun() bool {
+	for _, v := range w.Values {
+		if v.expWidget != nil && (v.expWidget.running || !v.expWidget.done) {
+			return false //still running
+		}
+	}
+	return true
+}
+
+func (w *SAWidget) areInputsChanged() bool {
+
+	for _, it := range w.Values {
+		value := it.Value
+		if it.expValue != nil {
+			value = it.expValue.oldValue
+		}
+
+		changed := (value != it.oldValue)
+
+		it.oldValue = value
+		if changed {
+			return true
+		}
+	}
+	return false
+}
+
+func (w *SAWidget) IsReadyToBeExe() bool {
+
+	if w.done && !w.running {
+		return false
+	}
+
+	if w.areInputsErrorFree() {
+		if w.areInputsReadyToRun() {
+			w.done = true
+			return w.areInputsChanged()
+		}
+	} else {
+		w.done = true
+	}
+
+	return false
+}
+
+func (w *SAWidget) ResetExecute() {
+	w.done = false
+	w.running = false
+	w.err = nil
+
+	for _, it := range w.Subs {
+		it.ResetExecute()
+	}
+}
+
+func (w *SAWidget) buildList(list *[]*SAWidget) {
+	*list = append(*list, w)
+	for _, it := range w.Subs {
+		it.buildList(list)
+	}
+}
+func (w *SAWidget) ExecuteSubs(server *NodeServer, max_threads int) {
+	var list []*SAWidget
+	w.buildList(&list)
+
+	//multi-thread executing
+	var numActiveThreads atomic.Int64
+	var wg sync.WaitGroup
+	run := true
+	for run && server.IsRunning() {
+		run = false
+		for _, it := range list {
+
+			if !it.done {
+				run = true
+				if it.IsReadyToBeExe() {
+
+					//maximum concurent threads
+					if numActiveThreads.Load() >= int64(max_threads) {
+						time.Sleep(10 * time.Millisecond)
+					}
+
+					//run it
+					it.running = true
+					wg.Add(1)
+					go func(ww *SAWidget) {
+						numActiveThreads.Add(1)
+						ww.execute(server)
+						wg.Done()
+						numActiveThreads.Add(-1)
+					}(it)
+
+				}
+			}
+		}
+	}
+}
+
+func (w *SAWidget) CanSkipExecute() bool {
+	return strings.HasPrefix(w.Node, "gui_")
+}
+
+func (w *SAWidget) execute(server *NodeServer) {
+
+	if !w.CanSkipExecute() {
+
+		fmt.Println(w.Name)
+
+		nc := server.Start(w.Node)
+		if nc != nil {
+
+			//add/update new
+			/*for _, in := range nc.strct.Attrs {
+				a := node.GetAttr(in.Name)
+				a.Gui_type = in.Gui_type
+				a.Gui_options = in.Gui_options
+				a.Hide = in.Hide
+			}
+
+			//set/remove
+			for i := len(node.Attrs) - 1; i >= 0; i-- {
+				src := node.Attrs[i]
+				dst := nc.FindAttr(src.Name)
+				if dst != nil {
+					dst.Value = src.Value
+				} else {
+					node.Attrs = append(node.Attrs[:i], node.Attrs[i+1:]...) //remove
+				}
+			}
+			for i := len(node.Inputs) - 1; i >= 0; i-- {
+				src := node.Inputs[i]
+				dst := nc.FindInput(src.Name)
+				if dst != nil {
+					out := src.FindWireOut()
+					if out != nil {
+						dst.Value = out.Value
+					} else {
+						dst.Value = src.Value
+					}
+				} else {
+					node.Inputs = append(node.Inputs[:i], node.Inputs[i+1:]...) //remove
+				}
+			}
+
+			//execute
+			nc.Start()
+
+			//copy back
+			node.outputs = nil //reset
+			for _, in := range nc.strct.Outputs {
+				o := node.GetOutput(in.Name) //add
+				o.Value = in.Value
+				o.Gui_type = in.Gui_type
+				o.Gui_options = in.Gui_options
+			}
+
+			if nc.progress.Error != "" {
+				node.err = errors.New(nc.progress.Error)
+			}*/
+		} else {
+			w.err = fmt.Errorf("can't find node exe(%s)", w.Node)
+		}
+
+		if w.err != nil {
+			fmt.Printf("Node(%s) has error(%v)\n", w.Name, w.err)
+		}
+	}
+
+	w.done = true
+	w.running = false
 }
 
 func (w *SAWidget) FindNode(name string) *SAWidget {
@@ -392,11 +589,11 @@ func (w *SAWidget) _getValue(defValue SAWidgetValue) *SAWidgetValue {
 }
 
 func (w *SAWidget) GetValueStringEdit(name string, defValue string) string {
-	return w._getValue(SAWidgetValue{Name: name, Value: defValue, Gui_type: "gui_edit"}).Value
+	return w._getValue(SAWidgetValue{Name: name, Value: defValue, Gui_type: "gui_edit"}).oldValue
 }
 
 func (w *SAWidget) GetValueStringPtrEdit(name string, defValue string) *string {
-	return &w._getValue(SAWidgetValue{Name: name, Value: defValue, Gui_type: "gui_edit"}).Value
+	return &w._getValue(SAWidgetValue{Name: name, Value: defValue, Gui_type: "gui_edit"}).oldValue
 }
 
 func (w *SAWidget) GetValueIntEdit(name string, defValue string) int {
@@ -405,12 +602,12 @@ func (w *SAWidget) GetValueIntEdit(name string, defValue string) int {
 }
 
 func (w *SAWidget) GetValueIntCombo(name string, defValue string, defOptions string) int {
-	vv, _ := strconv.Atoi(w._getValue(SAWidgetValue{Name: name, Value: defValue, Gui_type: "gui_combo", Gui_options: defOptions}).Value)
+	vv, _ := strconv.Atoi(w._getValue(SAWidgetValue{Name: name, Value: defValue, Gui_type: "gui_combo", Gui_options: defOptions}).oldValue)
 	return vv
 }
 
 func (w *SAWidget) GetValueBoolSwitch(name string, defValue string) bool {
-	vv, _ := strconv.Atoi(w._getValue(SAWidgetValue{Name: name, Value: defValue, Gui_type: "gui_switch"}).Value)
+	vv, _ := strconv.Atoi(w._getValue(SAWidgetValue{Name: name, Value: defValue, Gui_type: "gui_switch"}).oldValue)
 	return vv != 0
 }
 
@@ -523,6 +720,32 @@ func (w *SAWidget) NumNames(name string) int {
 
 }
 
+func _SAWidget_renderParamsValue(x, y, w, h int, it *SAWidgetValue, ui *Ui) {
+	if it.editExp {
+		ui.Comp_editbox(x, y, w, h, &it.Value, 2, "", "", false, false, true)
+	} else {
+		value := &it.Value
+		if it.expValue != nil {
+			value = &it.oldValue
+		}
+		enable := it.expValue == nil
+
+		switch it.Gui_type {
+		case "gui_checkbox":
+			ui.Comp_checkbox(x, y, w, h, value, false, "", "", enable)
+
+		case "gui_switch":
+			ui.Comp_switch(x, y, w, h, value, false, "", "", enable)
+
+		case "gui_edit":
+			ui.Comp_editbox(x, y, w, h, value, 2, "", "", false, false, enable)
+
+		case "gui_combo":
+			ui.Comp_combo(x, y, w, h, value, it.Gui_options, "", enable, false)
+		}
+	}
+}
+
 func (w *SAWidget) RenderParams(ui *Ui) {
 
 	ui.Div_colMax(0, 100)
@@ -558,12 +781,29 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 		ui.Div_colMax(2, 100)
 		ui.Div_colMax(3, 100)
 		ui.Div_colMax(4, 100)
-		ui.Comp_text(0, 0, 1, 1, "Grid", 0)
 
-		ui.Comp_editbox(1, 0, 1, 1, w.GetValueStringPtrEdit("grid_x", "0"), 0, "", "x", false, false, true)
-		ui.Comp_editbox(2, 0, 1, 1, w.GetValueStringPtrEdit("grid_y", "0"), 0, "", "y", false, false, true)
-		ui.Comp_editbox(3, 0, 1, 1, w.GetValueStringPtrEdit("grid_w", "1"), 0, "", "w", false, false, true)
-		ui.Comp_editbox(4, 0, 1, 1, w.GetValueStringPtrEdit("grid_h", "1"), 0, "", "h", false, false, true)
+		//label
+		w.GetValueIntEdit("grid_x", "0") //create if not exist
+		w.GetValueIntEdit("grid_y", "0")
+		w.GetValueIntEdit("grid_w", "1")
+		w.GetValueIntEdit("grid_h", "1")
+		//find
+		xx := w.findValue("grid_x")
+		yy := w.findValue("grid_y")
+		ww := w.findValue("grid_w")
+		hh := w.findValue("grid_h")
+		if ui.Comp_buttonMenu(0, 0, 1, 1, "Grid", "", true, xx.editExp) > 0 {
+			xx.editExp = !xx.editExp
+			yy.editExp = !yy.editExp
+			ww.editExp = !ww.editExp
+			hh.editExp = !hh.editExp
+		}
+
+		//values
+		_SAWidget_renderParamsValue(1, 0, 1, 1, xx, ui)
+		_SAWidget_renderParamsValue(2, 0, 1, 1, yy, ui)
+		_SAWidget_renderParamsValue(3, 0, 1, 1, ww, ui)
+		_SAWidget_renderParamsValue(4, 0, 1, 1, hh, ui)
 	}
 	ui.Div_end()
 	y++
@@ -579,28 +819,31 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 
 		//name_width := ui.Paint_textWidth(name, -1, 0, "", true)
 
-		switch it.Gui_type {
+		ui.Div_start(0, y, 1, 1)
+		{
+			ui.Div_colMax(0, 3)
+			ui.Div_colMax(1, 100)
 
-		case "gui_checkbox":
-			ui.Comp_checkbox(0, y, 1, 1, &it.Value, false, it.Name, "", true)
+			//error
+			if it.err != nil {
+				ui.Paint_tooltip(0, 0, 1, 1, it.err.Error())
+				pl := ui.buff.win.io.GetPalette()
+				ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0.03)
+			}
 
-		case "gui_switch":
-			ui.Comp_switch(0, y, 1, 1, &it.Value, false, it.Name, "", true)
+			//name
+			if ui.Comp_buttonMenu(0, 0, 1, 1, it.Name, "", true, it.editExp) > 0 {
+				it.editExp = !it.editExp
+			}
 
-		case "gui_edit":
-			ui.Comp_editbox_desc(it.Name, 0, 2, 0, y, 1, 1, &it.Value, 2, "", "", false, false, true)
-
-		case "gui_combo":
-			ui.Comp_combo_desc(it.Name, 0, 2, 0, y, 1, 1, &it.Value, it.Gui_options, "", true, false)
+			//value
+			_SAWidget_renderParamsValue(1, 0, 1, 1, it, ui)
 		}
-
+		ui.Div_end()
 		y++
 	}
 }
 
-// resize ...
-
-//= expressions + switch between value/formula ...
-//server + execute graph ...
-//find circles? ...
-//reoder(d & d) Values ...
+// reoder(d & d) Values ...
+// server + execute graph ...
+// resize widget ...
