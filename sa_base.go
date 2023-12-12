@@ -220,6 +220,9 @@ func (base *SABase) drawFrame(ui *Ui) {
 	if base.HasApp() {
 		ui.Div_startName(1, 0, 1, 1, base.Apps[base.Selected].Name)
 		{
+
+			app.Execute()
+
 			if app.IDE {
 				ui.Div_colMax(0, 100)
 				ui.Div_rowMax(1, 100)

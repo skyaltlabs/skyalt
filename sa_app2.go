@@ -217,7 +217,7 @@ func (app *SAApp2) renderIDE(ui *Ui) {
 
 		var found *SAWidget
 		for _, w := range app.act.Subs {
-			if w.Coord.Inside(grid.Start) {
+			if w.GetGrid().Inside(grid.Start) {
 				found = w
 				break
 			}
@@ -225,7 +225,7 @@ func (app *SAApp2) renderIDE(ui *Ui) {
 
 		if found != nil && keys.alt {
 			if touch.start {
-				foundStart := appDiv.crop.Start.Add(appDiv.data.Convert(ui.win.Cell(), found.Coord).Start)
+				foundStart := appDiv.crop.Start.Add(appDiv.data.Convert(ui.win.Cell(), found.GetGrid()).Start)
 				app.startClickWidget = found
 				app.startClickRel = touch.pos.Sub(foundStart)
 				app.act.DeselectAll()
@@ -241,7 +241,7 @@ func (app *SAApp2) renderIDE(ui *Ui) {
 			//move
 			gridMove := appDiv.GetCloseCell(touch.pos.Sub(app.startClickRel).Add(OsV2{ui.CellWidth(0.5), ui.CellWidth(0.5)}))
 			//gridMove := appDiv.GetCloseCell(touch.pos)
-			app.startClickWidget.Coord.Start = gridMove.Start
+			app.startClickWidget.SetGridStart(gridMove.Start)
 		}
 		//}
 	}
@@ -503,4 +503,14 @@ func (app *SAApp2) stepHistoryForward() bool {
 	app.history_pos++
 	app.recoverHistory()
 	return true
+}
+
+func (app *SAApp2) Execute() {
+
+	app.root.UpdateDepends()
+
+	app.root.ResetLoopId()
+	app.root.CheckForLoops(1)
+
+	//.............
 }

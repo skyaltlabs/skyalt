@@ -21,13 +21,18 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type SAWidgetValue struct {
 	widget *SAWidget
 
-	Name  string
-	Value string
+	Name      string
+	Value     string
+	oldValue  string
+	expValue  *SAWidgetValue
+	expWidget *SAWidget
+	err       error
 
 	Gui_type     string `json:",omitempty"`
 	Gui_options  string `json:",omitempty"`
@@ -52,7 +57,6 @@ type SAWidget struct {
 
 	Name     string
 	Node     string
-	Coord    OsV4
 	Selected bool
 
 	Values []*SAWidgetValue `json:",omitempty"`
@@ -61,6 +65,13 @@ type SAWidget struct {
 	Cols []SAWidgetColRow `json:",omitempty"`
 	Rows []SAWidgetColRow `json:",omitempty"`
 	Subs []*SAWidget      `json:",omitempty"`
+
+	//depends []*SAWidget
+	//changed bool
+	running bool
+	done    bool
+	err     error
+	loop_id int
 }
 
 func NewSAWidget(parent *SAWidget, name string, node string, coord OsV4) *SAWidget {
@@ -68,8 +79,7 @@ func NewSAWidget(parent *SAWidget, name string, node string, coord OsV4) *SAWidg
 	w.parent = parent
 	w.Name = name
 	w.Node = node
-	w.Coord = coord
-	//w.Values = make(map[string]*SAWidgetValue)
+	w.SetGrid(coord)
 	return w
 }
 
@@ -110,7 +120,7 @@ func (w *SAWidget) Save(path string) error {
 }
 
 func (a *SAWidget) Cmp(b *SAWidget) bool {
-	if a.Name != b.Name || a.Node != b.Node || !a.Coord.Cmp(b.Coord) || a.Selected != b.Selected {
+	if a.Name != b.Name || a.Node != b.Node || !a.GetGrid().Cmp(b.GetGrid()) || a.Selected != b.Selected {
 		return false
 	}
 
@@ -154,12 +164,98 @@ func (a *SAWidget) Cmp(b *SAWidget) bool {
 	return true
 }
 
+func (w *SAWidget) HasError() bool {
+	for _, it := range w.Values {
+		if it.err != nil {
+			return true
+		}
+	}
+	return false
+}
+
+func (w *SAWidget) UpdateDepends() {
+
+	for _, it := range w.Values {
+		it.expWidget = nil
+		it.expValue = nil
+		it.err = nil
+
+		var found bool
+		for found {
+			it.Value, found = strings.CutPrefix(it.Value, " ")
+		}
+
+		val, found := strings.CutPrefix(it.Value, "=")
+		if found {
+			val = strings.ReplaceAll(val, " ", "")
+			vals := strings.Split(val, ".")
+
+			if len(vals) == 2 {
+				it.expWidget = w.parent.FindNode(vals[0])
+				if it.expWidget != nil {
+					it.expValue = it.expWidget.findValue(vals[1])
+					if it.expValue == nil {
+						it.err = fmt.Errorf("Value(%s) not found", vals[1])
+					}
+				} else {
+					it.err = fmt.Errorf("Widget(%s) not found", vals[0])
+				}
+			} else {
+				it.err = fmt.Errorf("too short, use: node.value")
+			}
+		}
+	}
+
+	for _, it := range w.Subs {
+		it.UpdateDepends()
+	}
+}
+
+func (w *SAWidget) ResetLoopId() {
+	w.loop_id = 0
+	for _, it := range w.Subs {
+		it.ResetLoopId()
+	}
+}
+
+func (w *SAWidget) checkForLoopInner(loop_id int) {
+
+	w.loop_id = loop_id
+
+	for _, it := range w.Values {
+		if it.expValue != nil {
+
+			if it.expWidget != w && it.expWidget.loop_id == loop_id {
+				it.err = fmt.Errorf("Loop")
+				continue //avoid infinite recursion
+			}
+
+			it.expWidget.checkForLoopInner(loop_id)
+		}
+	}
+}
+
+func (w *SAWidget) CheckForLoops(loop_id int) {
+
+	w.checkForLoopInner(loop_id)
+
+	for _, it := range w.Subs {
+		loop_id++
+		it.CheckForLoops(loop_id)
+	}
+}
+
+func (w *SAWidget) FindNode(name string) *SAWidget {
+	for _, it := range w.Subs {
+		if it.Name == name {
+			return it
+		}
+	}
+	return nil
+}
+
 func (w *SAWidget) UpdateParents(parent *SAWidget) {
 	w.parent = parent
-
-	//if w.Values == nil {
-	//	w.Values = make(map[string]*SAWidgetValue)
-	//}
 
 	for _, it := range w.Subs {
 		it.UpdateParents(w)
@@ -318,31 +414,55 @@ func (w *SAWidget) GetValueBoolSwitch(name string, defValue string) bool {
 	return vv != 0
 }
 
+func (w *SAWidget) SetGridStart(v OsV2) {
+	*w.GetValueStringPtrEdit("grid_x", "0") = strconv.Itoa(v.X)
+	*w.GetValueStringPtrEdit("grid_y", "0") = strconv.Itoa(v.Y)
+}
+func (w *SAWidget) SetGridSize(v OsV2) {
+	*w.GetValueStringPtrEdit("grid_w", "1") = strconv.Itoa(v.X)
+	*w.GetValueStringPtrEdit("grid_h", "1") = strconv.Itoa(v.Y)
+}
+
+func (w *SAWidget) SetGrid(coord OsV4) {
+	w.SetGridStart(coord.Start)
+	w.SetGridStart(coord.Size)
+}
+func (w *SAWidget) GetGrid() OsV4 {
+	var v OsV4
+	v.Start.X = w.GetValueIntEdit("grid_x", "0")
+	v.Start.Y = w.GetValueIntEdit("grid_y", "0")
+	v.Size.X = w.GetValueIntEdit("grid_w", "1")
+	v.Size.Y = w.GetValueIntEdit("grid_h", "1")
+	return v
+}
+
 func (w *SAWidget) Render(ui *Ui, app *SAApp2) {
+
+	grid := w.GetGrid()
 
 	switch w.Node {
 	case "gui_button":
-		ui.Comp_button(w.Coord.Start.X, w.Coord.Start.Y, w.Coord.Size.X, w.Coord.Size.Y, w.GetValueStringEdit("label", ""), "", w.GetValueBoolSwitch("enable", "1"))
+		ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetValueStringEdit("label", ""), "", w.GetValueBoolSwitch("enable", "1"))
 
 		//outputs(readOnly): is clicked ...
 
 	case "gui_text":
-		ui.Comp_text(w.Coord.Start.X, w.Coord.Start.Y, w.Coord.Size.X, w.Coord.Size.Y, w.GetValueStringEdit("label", ""), w.GetValueIntCombo("align", "0", "Left|Center|Right"))
+		ui.Comp_text(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetValueStringEdit("label", ""), w.GetValueIntCombo("align", "0", "Left|Center|Right"))
 
 	case "gui_edit":
-		ui.Comp_editbox(w.Coord.Start.X, w.Coord.Start.Y, w.Coord.Size.X, w.Coord.Size.Y, w.GetValueStringPtrEdit("value", ""), w.GetValueIntEdit("precision", "2"), "", w.GetValueStringEdit("ghost", ""), false, w.GetValueBoolSwitch("tempToValue", "0"), w.GetValueBoolSwitch("enable", "1"))
+		ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetValueStringPtrEdit("value", ""), w.GetValueIntEdit("precision", "2"), "", w.GetValueStringEdit("ghost", ""), false, w.GetValueBoolSwitch("tempToValue", "0"), w.GetValueBoolSwitch("enable", "1"))
 
 	case "gui_switch":
-		ui.Comp_switch(w.Coord.Start.X, w.Coord.Start.Y, w.Coord.Size.X, w.Coord.Size.Y, w.GetValueStringPtrEdit("value", ""), false, w.GetValueStringEdit("label", ""), "", w.GetValueBoolSwitch("enable", "1"))
+		ui.Comp_switch(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetValueStringPtrEdit("value", ""), false, w.GetValueStringEdit("label", ""), "", w.GetValueBoolSwitch("enable", "1"))
 
 	case "gui_checkbox":
-		ui.Comp_checkbox(w.Coord.Start.X, w.Coord.Start.Y, w.Coord.Size.X, w.Coord.Size.Y, w.GetValueStringPtrEdit("value", ""), false, w.GetValueStringEdit("label", ""), "", w.GetValueBoolSwitch("enable", "1"))
+		ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetValueStringPtrEdit("value", ""), false, w.GetValueStringEdit("label", ""), "", w.GetValueBoolSwitch("enable", "1"))
 
 	case "gui_combo":
-		ui.Comp_combo(w.Coord.Start.X, w.Coord.Start.Y, w.Coord.Size.X, w.Coord.Size.Y, w.GetValueStringPtrEdit("value", ""), w.GetValueStringEdit("options", "a|b"), "", w.GetValueBoolSwitch("enable", "1"), w.GetValueBoolSwitch("search", "0"))
+		ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetValueStringPtrEdit("value", ""), w.GetValueStringEdit("options", "a|b"), "", w.GetValueBoolSwitch("enable", "1"), w.GetValueBoolSwitch("search", "0"))
 
 	case "gui_layout":
-		ui.Div_start(w.Coord.Start.X, w.Coord.Start.Y, w.Coord.Size.X, w.Coord.Size.Y)
+		ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 		w.RenderLayout(ui, app)
 		ui.Div_end()
 	}
@@ -350,7 +470,7 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp2) {
 	if app.IDE {
 		//draw Select rectangle
 		if w.Selected && app.act == w.parent {
-			div := ui.Div_start(w.Coord.Start.X, w.Coord.Start.Y, w.Coord.Size.X, w.Coord.Size.Y)
+			div := ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 			div.enableInput = false
 			ui.Paint_rect(0, 0, 1, 1, 0, Node_getYellow(), 0.03)
 			ui.Div_end()
@@ -440,10 +560,10 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 		ui.Div_colMax(4, 100)
 		ui.Comp_text(0, 0, 1, 1, "Grid", 0)
 
-		ui.Comp_editbox(1, 0, 1, 1, &w.Coord.Start.X, 0, "", "x", false, false, true)
-		ui.Comp_editbox(2, 0, 1, 1, &w.Coord.Start.Y, 0, "", "y", false, false, true)
-		ui.Comp_editbox(3, 0, 1, 1, &w.Coord.Size.X, 0, "", "w", false, false, true)
-		ui.Comp_editbox(4, 0, 1, 1, &w.Coord.Size.Y, 0, "", "h", false, false, true)
+		ui.Comp_editbox(1, 0, 1, 1, w.GetValueStringPtrEdit("grid_x", "0"), 0, "", "x", false, false, true)
+		ui.Comp_editbox(2, 0, 1, 1, w.GetValueStringPtrEdit("grid_y", "0"), 0, "", "y", false, false, true)
+		ui.Comp_editbox(3, 0, 1, 1, w.GetValueStringPtrEdit("grid_w", "1"), 0, "", "w", false, false, true)
+		ui.Comp_editbox(4, 0, 1, 1, w.GetValueStringPtrEdit("grid_h", "1"), 0, "", "h", false, false, true)
 	}
 	ui.Div_end()
 	y++
@@ -453,12 +573,19 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 
 	for _, it := range w.Values {
 
+		if it.Name == "grid_x" || it.Name == "grid_y" || it.Name == "grid_w" || it.Name == "grid_h" {
+			continue
+		}
+
 		//name_width := ui.Paint_textWidth(name, -1, 0, "", true)
 
 		switch it.Gui_type {
 
+		case "gui_checkbox":
+			ui.Comp_checkbox(0, y, 1, 1, &it.Value, false, it.Name, "", true)
+
 		case "gui_switch":
-			//ui.Comp_switch(0, y, 1, 1, &it.Value, 2, "", "", false, false, true)
+			ui.Comp_switch(0, y, 1, 1, &it.Value, false, it.Name, "", true)
 
 		case "gui_edit":
 			ui.Comp_editbox_desc(it.Name, 0, 2, 0, y, 1, 1, &it.Value, 2, "", "", false, false, true)
@@ -476,3 +603,4 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 //= expressions + switch between value/formula ...
 //server + execute graph ...
 //find circles? ...
+//reoder(d & d) Values ...
