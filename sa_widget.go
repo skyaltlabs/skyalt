@@ -851,6 +851,13 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 		yy := w.findValue("grid_y")
 		ww := w.findValue("grid_w")
 		hh := w.findValue("grid_h")
+
+		if len(xx.depends) > 0 || len(yy.depends) > 0 || len(ww.depends) > 0 || len(hh.depends) > 0 {
+			ui.Div_start(0, 0, 1, 1)
+			ui.Paint_rect(0, 0, 1, 1, 0.03, SAApp2_getYellow().SetAlpha(50), 0)
+			ui.Div_end()
+		}
+
 		if ui.Comp_buttonMenu(0, 0, 1, 1, "Grid", "", true, xx.ShowExp) > 0 {
 			xx.ShowExp = !xx.ShowExp
 			yy.ShowExp = !yy.ShowExp
