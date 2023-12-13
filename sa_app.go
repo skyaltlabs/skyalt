@@ -292,6 +292,8 @@ func (app *SAApp2) History(ui *Ui) {
 
 }
 
+var SAStandardWidgets = []string{"layout", "button", "text", "checkbox", "switch", "edit", "combo"}
+
 func (app *SAApp2) drawCreateWidget(ui *Ui) {
 
 	if ui.Dialog_start("nodes_list") {
@@ -302,26 +304,17 @@ func (app *SAApp2) drawCreateWidget(ui *Ui) {
 		ui.Comp_editbox(0, 0, 1, 1, &search, 0, "", app.base.trns.SAVE, search != "", true, true)
 		y++
 
-		var fns []string
-		fns = append(fns, "gui_button")
-		fns = append(fns, "gui_text")
-		fns = append(fns, "gui_checkbox")
-		fns = append(fns, "gui_switch")
-		fns = append(fns, "gui_edit")
-		fns = append(fns, "gui_combo")
-		fns = append(fns, "gui_layout")
-		//...
-
+		fns := SAStandardWidgets                    //stds
 		fns = append(fns, app.base.server.nodes...) //from /nodes dir
 
 		keys := &ui.buff.win.io.keys
 
 		for _, fn := range fns {
 			if search == "" || strings.Contains(fn, search) {
-				if keys.enter || ui.Comp_buttonMenu(0, y, 1, 1, fn, "", true, false) > 0 {
 
+				if keys.enter || ui.Comp_buttonMenu(0, y, 1, 1, fn, "", true, false) > 0 {
 					//add new Widget
-					nw := app.act.AddWidget(app.addWidgetCoord, fn, fn)
+					nw := app.act.AddWidget(app.addWidgetCoord, fn)
 					app.act.DeselectAll()
 					nw.Selected = true
 
