@@ -31,18 +31,31 @@ import (
 type SAWidgetValue struct {
 	widget *SAWidget
 
-	Name      string
-	Value     string
-	oldValue  string
-	expValue  *SAWidgetValue
-	expWidget *SAWidget
-	err       error
+	Name         string
+	Value        string
+	oldValue     string
+	depends      []*SAWidgetValue
+	isDirectLink bool
+	err          error
 
 	Gui_type     string `json:",omitempty"`
 	Gui_options  string `json:",omitempty"`
 	Gui_ReadOnly bool   `json:",omitempty"` //output
 
 	editExp bool
+}
+
+func (v *SAWidgetValue) GetDirectLink() (*SAWidgetValue, *string, bool) {
+
+	for v.isDirectLink {
+		return v.depends[0].GetDirectLink() //go to source
+	}
+
+	if len(v.depends) > 0 {
+		return v, &v.oldValue, false //expression. oldValue = result
+	}
+
+	return v, &v.Value, true //this
 }
 
 type SAWidgetColRow struct {
@@ -72,9 +85,6 @@ type SAWidget struct {
 	Rows []SAWidgetColRow `json:",omitempty"`
 	Subs []*SAWidget      `json:",omitempty"`
 
-	//depends []*SAWidget
-	//changed bool
-	//outputs[]*SAWidget
 	running bool
 	done    bool
 	err     error
@@ -187,8 +197,8 @@ func (w *SAWidget) HasError() bool {
 func (w *SAWidget) UpdateExpresions() {
 
 	for _, it := range w.Values {
-		it.expWidget = nil
-		it.expValue = nil
+		it.depends = nil
+		it.isDirectLink = false
 		it.err = nil
 
 		var found bool
@@ -202,10 +212,13 @@ func (w *SAWidget) UpdateExpresions() {
 			vals := strings.Split(val, ".")
 
 			if len(vals) == 2 {
-				it.expWidget = w.parent.FindNode(vals[0])
-				if it.expWidget != nil {
-					it.expValue = it.expWidget.findValue(vals[1])
-					if it.expValue == nil {
+				ww := w.parent.FindNode(vals[0])
+				if ww != nil {
+					vv := ww.findValue(vals[1])
+					if vv != nil {
+						it.depends = append(it.depends, vv) //add
+						it.isDirectLink = true              //...
+					} else {
 						it.err = fmt.Errorf("Value(%s) not found", vals[1])
 					}
 				} else {
@@ -233,15 +246,14 @@ func (w *SAWidget) checkForLoopInner(loop_id int) {
 
 	w.loop_id = loop_id
 
-	for _, it := range w.Values {
-		if it.expValue != nil {
-
-			if it.expWidget != w && it.expWidget.loop_id == loop_id {
-				it.err = fmt.Errorf("Loop")
+	for _, v := range w.Values {
+		for _, dep := range v.depends {
+			if dep.widget != w && dep.widget.loop_id == loop_id {
+				v.err = fmt.Errorf("Loop")
 				continue //avoid infinite recursion
 			}
 
-			it.expWidget.checkForLoopInner(loop_id)
+			dep.widget.checkForLoopInner(loop_id)
 		}
 	}
 }
@@ -260,8 +272,8 @@ func (w *SAWidget) CheckForLoops(loop_id int) {
 func (w *SAWidget) areInputsErrorFree() bool {
 
 	for _, v := range w.Values {
-		if v.expWidget != nil {
-			if v.expWidget.err != nil {
+		for _, dep := range v.depends {
+			if dep.widget.HasError() {
 				w.err = fmt.Errorf("incomming error for Value(%s)", v.Name)
 				return false
 			}
@@ -273,8 +285,10 @@ func (w *SAWidget) areInputsErrorFree() bool {
 
 func (w *SAWidget) areInputsReadyToRun() bool {
 	for _, v := range w.Values {
-		if v.expWidget != nil && (v.expWidget.running || !v.expWidget.done) {
-			return false //still running
+		for _, dep := range v.depends {
+			if dep.widget.running || !dep.widget.done {
+				return false //still running
+			}
 		}
 	}
 	return true
@@ -284,16 +298,14 @@ func (w *SAWidget) areInputsChangedAndUpdate() bool {
 
 	changed := false
 	for _, it := range w.Values {
-		value := it.Value
-		if it.expValue != nil {
-			value = it.expValue.oldValue
-		}
 
-		if value != it.oldValue {
+		_, value, _ := it.GetDirectLink()
+
+		if *value != it.oldValue {
 			changed = true
 		}
 
-		it.oldValue = value
+		it.oldValue = *value
 	}
 	return changed
 }
@@ -452,6 +464,10 @@ func (w *SAWidget) FindNode(name string) *SAWidget {
 func (w *SAWidget) UpdateParents(parent *SAWidget) {
 	w.parent = parent
 
+	for _, v := range w.Values {
+		v.widget = w
+	}
+
 	for _, it := range w.Subs {
 		it.UpdateParents(w)
 	}
@@ -586,16 +602,20 @@ func (w *SAWidget) _getValue(defValue SAWidgetValue) *SAWidgetValue {
 	return v
 }
 
+// this should be use for Gui_ReadOnly=true
 func (w *SAWidget) GetValue(name string, value string, gui_type string, gui_options string, gui_readOnly bool) *SAWidgetValue {
 	return w._getValue(SAWidgetValue{Name: name, Value: value, Gui_type: gui_type, Gui_options: gui_options, Gui_ReadOnly: gui_readOnly})
 }
 
-func (w *SAWidget) GetValueStringEdit(name string, defValue string) string {
-	return w._getValue(SAWidgetValue{Name: name, Value: defValue, Gui_type: "gui_edit"}).oldValue
+func (w *SAWidget) GetValueStringPtrEdit(name string, defValue string) (*string, bool) {
+	v := w._getValue(SAWidgetValue{Name: name, Value: defValue, Gui_type: "gui_edit"})
+	_, val, editable := v.GetDirectLink()
+	return val, editable
 }
 
-func (w *SAWidget) GetValueStringPtrEdit(name string, defValue string) *string {
-	return &w._getValue(SAWidgetValue{Name: name, Value: defValue, Gui_type: "gui_edit"}).oldValue
+func (w *SAWidget) GetValueStringEdit(name string, defValue string) string {
+	s, _ := w.GetValueStringPtrEdit(name, defValue)
+	return *s
 }
 
 func (w *SAWidget) GetValueIntEdit(name string, defValue string) int {
@@ -604,22 +624,38 @@ func (w *SAWidget) GetValueIntEdit(name string, defValue string) int {
 }
 
 func (w *SAWidget) GetValueIntCombo(name string, defValue string, defOptions string) int {
-	vv, _ := strconv.Atoi(w._getValue(SAWidgetValue{Name: name, Value: defValue, Gui_type: "gui_combo", Gui_options: defOptions}).oldValue)
+	v := w._getValue(SAWidgetValue{Name: name, Value: defValue, Gui_type: "gui_combo", Gui_options: defOptions})
+	_, val, _ := v.GetDirectLink()
+	vv, _ := strconv.Atoi(*val)
 	return vv
 }
 
 func (w *SAWidget) GetValueBoolSwitch(name string, defValue string) bool {
-	vv, _ := strconv.Atoi(w._getValue(SAWidgetValue{Name: name, Value: defValue, Gui_type: "gui_switch"}).oldValue)
+	v := w._getValue(SAWidgetValue{Name: name, Value: defValue, Gui_type: "gui_switch"})
+	_, val, _ := v.GetDirectLink()
+	vv, _ := strconv.Atoi(*val)
 	return vv != 0
 }
 
 func (w *SAWidget) SetGridStart(v OsV2) {
-	*w.GetValueStringPtrEdit("grid_x", "0") = strconv.Itoa(v.X)
-	*w.GetValueStringPtrEdit("grid_y", "0") = strconv.Itoa(v.Y)
+	str, edit := w.GetValueStringPtrEdit("grid_x", "0")
+	if edit {
+		*str = strconv.Itoa(v.X)
+	}
+	str, edit = w.GetValueStringPtrEdit("grid_y", "0")
+	if edit {
+		*str = strconv.Itoa(v.Y)
+	}
 }
 func (w *SAWidget) SetGridSize(v OsV2) {
-	*w.GetValueStringPtrEdit("grid_w", "1") = strconv.Itoa(v.X)
-	*w.GetValueStringPtrEdit("grid_h", "1") = strconv.Itoa(v.Y)
+	str, edit := w.GetValueStringPtrEdit("grid_w", "0")
+	if edit {
+		*str = strconv.Itoa(v.X)
+	}
+	str, edit = w.GetValueStringPtrEdit("grid_h", "0")
+	if edit {
+		*str = strconv.Itoa(v.Y)
+	}
 }
 
 func (w *SAWidget) SetGrid(coord OsV4) {
@@ -640,25 +676,40 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp2) {
 	grid := w.GetGrid()
 
 	switch w.Node {
-	case "gui_button":
-		ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetValueStringEdit("label", ""), "", w.GetValueBoolSwitch("enable", "1"))
 
+	//pokud je value expression, tak by mělo být disable, nebo nastavit link hodnotu(co když a*b?) ...
+
+	//co když je: a.x + b.x? Dovoli obojí(disable nebo enable+changeOrigInTheLink) ...
+
+	//=>expValue(expNode) nedávají moc smysl když tam bude a * b? ... 2x depends? ....................................
+
+	case "gui_button":
+		enable := w.GetValueBoolSwitch("enable", "1")
+		ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetValueStringEdit("label", ""), "", enable)
 		//outputs(readOnly): is clicked ...
 
 	case "gui_text":
 		ui.Comp_text(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetValueStringEdit("label", ""), w.GetValueIntCombo("align", "0", "Left|Center|Right"))
 
 	case "gui_edit":
-		ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetValueStringPtrEdit("value", ""), w.GetValueIntEdit("precision", "2"), "", w.GetValueStringEdit("ghost", ""), false, w.GetValueBoolSwitch("tempToValue", "0"), w.GetValueBoolSwitch("enable", "1"))
+		value, editable := w.GetValueStringPtrEdit("value", "")
+		enable := w.GetValueBoolSwitch("enable", "1") && editable
+		ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, w.GetValueIntEdit("precision", "2"), "", w.GetValueStringEdit("ghost", ""), false, w.GetValueBoolSwitch("tempToValue", "0"), enable)
 
 	case "gui_switch":
-		ui.Comp_switch(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetValueStringPtrEdit("value", ""), false, w.GetValueStringEdit("label", ""), "", w.GetValueBoolSwitch("enable", "1"))
+		value, editable := w.GetValueStringPtrEdit("value", "")
+		enable := w.GetValueBoolSwitch("enable", "1") && editable
+		ui.Comp_switch(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, false, w.GetValueStringEdit("label", ""), "", enable)
 
 	case "gui_checkbox":
-		ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetValueStringPtrEdit("value", ""), false, w.GetValueStringEdit("label", ""), "", w.GetValueBoolSwitch("enable", "1"))
+		value, editable := w.GetValueStringPtrEdit("value", "")
+		enable := w.GetValueBoolSwitch("enable", "1") && editable
+		ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, false, w.GetValueStringEdit("label", ""), "", enable)
 
 	case "gui_combo":
-		ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetValueStringPtrEdit("value", ""), w.GetValueStringEdit("options", "a|b"), "", w.GetValueBoolSwitch("enable", "1"), w.GetValueBoolSwitch("search", "0"))
+		value, editable := w.GetValueStringPtrEdit("value", "")
+		enable := w.GetValueBoolSwitch("enable", "1") && editable
+		ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, w.GetValueStringEdit("options", "a|b"), "", enable, w.GetValueBoolSwitch("search", "0"))
 
 	case "gui_layout":
 		ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
@@ -726,24 +777,20 @@ func _SAWidget_renderParamsValue(x, y, w, h int, it *SAWidgetValue, ui *Ui) {
 	if it.editExp {
 		ui.Comp_editbox(x, y, w, h, &it.Value, 2, "", "", false, false, true)
 	} else {
-		value := &it.Value
-		if it.expValue != nil {
-			value = &it.oldValue
-		}
-		enable := it.expValue == nil
+		_, value, editable := it.GetDirectLink()
 
 		switch it.Gui_type {
 		case "gui_checkbox":
-			ui.Comp_checkbox(x, y, w, h, value, false, "", "", enable)
+			ui.Comp_checkbox(x, y, w, h, value, false, "", "", editable)
 
 		case "gui_switch":
-			ui.Comp_switch(x, y, w, h, value, false, "", "", enable)
+			ui.Comp_switch(x, y, w, h, value, false, "", "", editable)
 
 		case "gui_edit":
-			ui.Comp_editbox(x, y, w, h, value, 2, "", "", false, false, enable)
+			ui.Comp_editbox(x, y, w, h, value, 2, "", "", false, false, editable)
 
 		case "gui_combo":
-			ui.Comp_combo(x, y, w, h, value, it.Gui_options, "", enable, false)
+			ui.Comp_combo(x, y, w, h, value, it.Gui_options, "", editable, false)
 		}
 	}
 }
