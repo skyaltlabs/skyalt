@@ -28,14 +28,14 @@ import (
 )
 
 const (
-	SkyAltServer_READ_VALUES = 0
+	SkyAltServer_READ_ATTRS = 0
 
 	SkyAltServer_WRITE_STRUCT   = 10
 	SkyAltServer_WRITE_PROGRESS = 11
-	SkyAltServer_WRITE_VALUES   = 12
+	SkyAltServer_WRITE_ATTRS    = 12
 )
 
-type SkyAltServerValue struct {
+type SkyAltServerAttr struct {
 	Name  string
 	Value string
 
@@ -45,8 +45,8 @@ type SkyAltServerValue struct {
 }
 
 type SkyAltServer struct {
-	UID    string
-	Values []*SkyAltServerValue
+	UID   string
+	Attrs []*SkyAltServerAttr
 }
 
 type ServerNodeProgress struct {
@@ -67,8 +67,8 @@ func (conn *SANodeConn) Destroy() {
 	conn.conn.Close()
 }
 
-func (conn *SANodeConn) FindValue(name string) *SkyAltServerValue {
-	for _, it := range conn.strct.Values {
+func (conn *SANodeConn) FindAttr(name string) *SkyAltServerAttr {
+	for _, it := range conn.strct.Attrs {
 		if it.Name == name {
 			return it
 		}
@@ -78,13 +78,13 @@ func (conn *SANodeConn) FindValue(name string) *SkyAltServerValue {
 
 func (conn *SANodeConn) Start() bool {
 
-	//Values
-	js, err := json.Marshal(&conn.strct.Values)
+	//attributes
+	js, err := json.Marshal(&conn.strct.Attrs)
 	if err != nil {
-		fmt.Printf("Unmarshal() Values failed: %v\n", err)
+		fmt.Printf("Unmarshal() Attributes failed: %v\n", err)
 		return false
 	}
-	if !conn.write(js, SkyAltServer_READ_VALUES) {
+	if !conn.write(js, SkyAltServer_READ_ATTRS) {
 		return false
 	}
 
@@ -113,8 +113,8 @@ func (conn *SANodeConn) Start() bool {
 				return true //ok!
 			}
 
-		case SkyAltServer_WRITE_VALUES:
-			err := json.Unmarshal(js, &conn.strct.Values)
+		case SkyAltServer_WRITE_ATTRS:
+			err := json.Unmarshal(js, &conn.strct.Attrs)
 			if err != nil {
 				fmt.Printf("Unmarshal() failed: %v\n", err)
 				return false

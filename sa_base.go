@@ -200,9 +200,6 @@ func (base *SABase) drawFrame(ui *Ui) {
 	if app.act == nil {
 		app.act = app.root
 	}
-	//app.saveIt = true
-
-	//app.view.root.ExecuteSubs(base.server, ui.win.io.ini.Threads)
 
 	icon_rad := 1.7
 
