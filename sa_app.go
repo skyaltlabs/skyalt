@@ -246,7 +246,7 @@ func (app *SAApp2) renderIDE(ui *Ui) {
 		//}
 	}
 	if touch.end {
-		if keys.alt && app.startClickWidget == nil { //click outside widgets
+		if appDiv.data.over && keys.alt && app.startClickWidget == nil { //click outside widgets
 			app.act.DeselectAll()
 		}
 		app.startClickWidget = nil
