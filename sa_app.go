@@ -409,7 +409,7 @@ func (app *SAApp2) RenderHeader(ui *Ui) {
 		var listNodes []*SAWidget
 		app.root.buildSubsList(&listPathes, &listNodes)
 		if len(listPathes) >= 1 {
-			listPathes = listPathes[:len(listPathes)-1] //cut last '|'
+			listPathes = listPathes[:len(listPathes)-1] //cut last ';'
 		}
 		combo := 0
 		for i, n := range listNodes {

@@ -537,7 +537,7 @@ func (w *SAWidget) buildSubsList(listPathes *string, listNodes *[]*SAWidget) {
 		nm = nm[:len(nm)-1] //cut last '/'
 	}
 
-	*listPathes += nm + "|"
+	*listPathes += nm + ";"
 	*listNodes = append(*listNodes, w)
 
 	for _, n := range w.Subs {
@@ -916,6 +916,8 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 }
 
 // expression language ... => show num rows after SELECT COUNT(*) FROM ...
+//- sin/cos/sqrt/pow ...
+//- práce s json? ...
 
 // resize widget ...
 // execute in 2nd thread and copy back when done ...

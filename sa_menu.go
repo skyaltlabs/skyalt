@@ -200,10 +200,10 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 			y++ //space
 		}
 
-		ui.Comp_combo_desc(base.trns.DATE_FORMAT, 0, 4, 1, y, 1, 2, &ini.DateFormat, base.trns.DATE_FORMAT_EU+"|"+base.trns.DATE_FORMAT_US+"|"+base.trns.DATE_FORMAT_ISO+"|"+base.trns.DATE_FORMAT_TEXT, "", true, true)
+		ui.Comp_combo_desc(base.trns.DATE_FORMAT, 0, 4, 1, y, 1, 2, &ini.DateFormat, base.trns.DATE_FORMAT_EU+";"+base.trns.DATE_FORMAT_US+";"+base.trns.DATE_FORMAT_ISO+";"+base.trns.DATE_FORMAT_TEXT, "", true, true)
 		y += 2
 
-		ui.Comp_combo_desc(base.trns.THEME, 0, 4, 1, y, 1, 2, &ini.Theme, base.trns.THEME_OCEAN+"|"+base.trns.THEME_RED+"|"+base.trns.THEME_BLUE+"|"+base.trns.THEME_GREEN+"|"+base.trns.THEME_GREY, "", true, true)
+		ui.Comp_combo_desc(base.trns.THEME, 0, 4, 1, y, 1, 2, &ini.Theme, base.trns.THEME_OCEAN+";"+base.trns.THEME_RED+";"+base.trns.THEME_BLUE+";"+base.trns.THEME_GREEN+";"+base.trns.THEME_GREY, "", true, true)
 		y += 2
 
 		ui.Comp_editbox_desc(base.trns.DPI, 0, 4, 1, y, 1, 2, &ini.Dpi, 0, "", "", false, false, true)

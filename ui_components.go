@@ -769,7 +769,7 @@ func (ui *Ui) Comp_combo_s(style *UiComp, value int, optionsIn string) int {
 
 	var options []string
 	if len(optionsIn) > 0 {
-		options = strings.Split(optionsIn, "|")
+		options = strings.Split(optionsIn, ";")
 	}
 	var valueStr string
 	if value >= 0 && value < len(options) {

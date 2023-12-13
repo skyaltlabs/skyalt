@@ -201,7 +201,7 @@ func (db *DiskDb) Print() error {
 
 		//columns headers
 		for _, c := range t.Columns {
-			fmt.Print(c.Name, "|")
+			fmt.Print(c.Name, ";")
 		}
 		fmt.Println()
 
