@@ -867,8 +867,7 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 	ui.Div_SpacerRow(0, y, 1, 1)
 	y++
 
-	for _, it := range w.Attrs {
-
+	for i, it := range w.Attrs {
 		if it.Name == "grid_x" || it.Name == "grid_y" || it.Name == "grid_w" || it.Name == "grid_h" {
 			continue
 		}
@@ -892,6 +891,17 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 				ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0.03)
 			}
 
+			//name: drag & drop
+			ui.Div_start(0, 0, 1, 1)
+			{
+				ui.Div_drag("attr", i)
+				src, pos, done := ui.Div_drop("attr", true, false, false)
+				if done {
+					Div_DropMoveElement(&w.Attrs, &w.Attrs, src, i, pos)
+				}
+			}
+			ui.Div_end()
+
 			//name
 			if ui.Comp_buttonMenu(0, 0, 1, 1, it.Name, "", true, it.ShowExp) > 0 {
 				it.ShowExp = !it.ShowExp
@@ -905,14 +915,8 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 	}
 }
 
-//když sqlite udělám jako editbox, tak přidá attrs ...................................
+// expression language ... => show num rows after SELECT COUNT(*) FROM ...
 
-//pokud je Gui_type empty, tak se nastaví editbox ...
-//user může přenastavit jaký GUi_type chce ...
-//.Node="sqlite", ale jak renderovat jako Table? ...
-
-// reoder(d & d) Values ...
-// expression language ...
-
-//execute in 2nd thread and copy back when done ...
 // resize widget ...
+// execute in 2nd thread and copy back when done ...
+// change Node.Exe + Attr.Gui_type,.Gui_options ...
