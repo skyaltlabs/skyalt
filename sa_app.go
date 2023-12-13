@@ -509,8 +509,7 @@ func (app *SAApp2) Execute(numThreads int) {
 
 	app.root.UpdateExpresions()
 
-	app.root.ResetLoopId()
-	app.root.CheckForLoops(1)
+	app.root.CheckForLoops()
 
 	app.root.ResetExecute()
 	app.root.ExecuteSubs(app.base.server, OsMax(numThreads, 1))

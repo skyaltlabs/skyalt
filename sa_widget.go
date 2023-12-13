@@ -31,8 +31,10 @@ import (
 type SAWidgetValue struct {
 	widget *SAWidget
 
-	Name         string
-	Value        string
+	Name    string
+	Value   string
+	ShowExp bool
+
 	oldValue     string
 	depends      []*SAWidgetValue
 	isDirectLink bool
@@ -42,7 +44,6 @@ type SAWidgetValue struct {
 	Gui_options  string `json:",omitempty"`
 	Gui_ReadOnly bool   `json:",omitempty"` //output
 
-	editExp bool
 }
 
 func (v *SAWidgetValue) GetDirectLink() (*SAWidgetValue, *string, bool) {
@@ -88,7 +89,7 @@ type SAWidget struct {
 	running bool
 	done    bool
 	err     error
-	loop_id int
+	//loop_id int
 }
 
 func NewSAWidget(parent *SAWidget, name string, node string, coord OsV4) *SAWidget {
@@ -235,36 +236,26 @@ func (w *SAWidget) UpdateExpresions() {
 	}
 }
 
-func (w *SAWidget) ResetLoopId() {
-	w.loop_id = 0
-	for _, it := range w.Subs {
-		it.ResetLoopId()
-	}
-}
-
-func (w *SAWidget) checkForLoopInner(loop_id int) {
-
-	w.loop_id = loop_id
+func (w *SAWidget) checkForLoopInner(find *SAWidget) {
 
 	for _, v := range w.Values {
 		for _, dep := range v.depends {
-			if dep.widget != w && dep.widget.loop_id == loop_id {
+			if dep.widget == find {
 				v.err = fmt.Errorf("Loop")
 				continue //avoid infinite recursion
 			}
 
-			dep.widget.checkForLoopInner(loop_id)
+			dep.widget.checkForLoopInner(find)
 		}
 	}
 }
 
-func (w *SAWidget) CheckForLoops(loop_id int) {
+func (w *SAWidget) CheckForLoops() {
 
-	w.checkForLoopInner(loop_id)
+	w.checkForLoopInner(w)
 
 	for _, it := range w.Subs {
-		loop_id++
-		it.CheckForLoops(loop_id)
+		it.CheckForLoops()
 	}
 }
 
@@ -774,7 +765,7 @@ func (w *SAWidget) NumNames(name string) int {
 }
 
 func _SAWidget_renderParamsValue(x, y, w, h int, it *SAWidgetValue, ui *Ui) {
-	if it.editExp {
+	if it.ShowExp {
 		ui.Comp_editbox(x, y, w, h, &it.Value, 2, "", "", false, false, true)
 	} else {
 		_, value, editable := it.GetDirectLink()
@@ -841,11 +832,11 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 		yy := w.findValue("grid_y")
 		ww := w.findValue("grid_w")
 		hh := w.findValue("grid_h")
-		if ui.Comp_buttonMenu(0, 0, 1, 1, "Grid", "", true, xx.editExp) > 0 {
-			xx.editExp = !xx.editExp
-			yy.editExp = !yy.editExp
-			ww.editExp = !ww.editExp
-			hh.editExp = !hh.editExp
+		if ui.Comp_buttonMenu(0, 0, 1, 1, "Grid", "", true, xx.ShowExp) > 0 {
+			xx.ShowExp = !xx.ShowExp
+			yy.ShowExp = !yy.ShowExp
+			ww.ShowExp = !ww.ShowExp
+			hh.ShowExp = !hh.ShowExp
 		}
 
 		//values
@@ -873,6 +864,11 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 			ui.Div_colMax(0, 3)
 			ui.Div_colMax(1, 100)
 
+			//highlight because it has expression
+			if len(it.depends) > 0 {
+				ui.Paint_rect(0, 0, 1, 1, 0.03, SAApp2_getYellow().SetAlpha(50), 0)
+			}
+
 			//error
 			if it.err != nil {
 				ui.Paint_tooltip(0, 0, 1, 1, it.err.Error())
@@ -881,8 +877,8 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 			}
 
 			//name
-			if ui.Comp_buttonMenu(0, 0, 1, 1, it.Name, "", true, it.editExp) > 0 {
-				it.editExp = !it.editExp
+			if ui.Comp_buttonMenu(0, 0, 1, 1, it.Name, "", true, it.ShowExp) > 0 {
+				it.ShowExp = !it.ShowExp
 			}
 
 			//value
@@ -892,6 +888,10 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 		y++
 	}
 }
+
+//execute in 2nd thread and copy back when done ...
+
+//expression language ...
 
 // reoder(d & d) Values ...
 // server + execute graph ...
