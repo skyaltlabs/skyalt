@@ -651,7 +651,7 @@ func (w *SAWidget) SetGridSize(v OsV2) {
 
 func (w *SAWidget) SetGrid(coord OsV4) {
 	w.SetGridStart(coord.Start)
-	w.SetGridStart(coord.Size)
+	w.SetGridSize(coord.Size)
 }
 func (w *SAWidget) GetGrid() OsV4 {
 	var v OsV4
@@ -888,11 +888,3 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 		y++
 	}
 }
-
-//execute in 2nd thread and copy back when done ...
-
-//expression language ...
-
-// reoder(d & d) Values ...
-// server + execute graph ...
-// resize widget ...
