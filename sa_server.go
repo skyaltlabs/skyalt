@@ -42,6 +42,7 @@ type SkyAltServerAttr struct {
 	Gui_type     string `json:",omitempty"`
 	Gui_options  string `json:",omitempty"`
 	Gui_ReadOnly bool   `json:",omitempty"` //output
+	Error        string `json:",omitempty"`
 }
 
 type SkyAltServer struct {
@@ -51,8 +52,8 @@ type SkyAltServer struct {
 
 type ServerNodeProgress struct {
 	Proc        float64
-	Description string
-	Error       string
+	Description string `json:",omitempty"`
+	Error       string `json:",omitempty"`
 }
 
 type SANodeConn struct {

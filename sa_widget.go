@@ -38,7 +38,8 @@ type SAWidgetAttr struct {
 	oldValue     string
 	depends      []*SAWidgetAttr
 	isDirectLink bool
-	err          error
+	errExp       error
+	errExe       error
 
 	Gui_type     string `json:",omitempty"`
 	Gui_options  string `json:",omitempty"`
@@ -88,8 +89,7 @@ type SAWidget struct {
 
 	running bool
 	done    bool
-	err     error
-	//loop_id int
+	errExe  error
 }
 
 func NewSAWidget(parent *SAWidget, name string, exe string, coord OsV4) *SAWidget {
@@ -183,13 +183,10 @@ func (a *SAWidget) Cmp(b *SAWidget) bool {
 	return true
 }
 
-func (w *SAWidget) HasError() bool {
-	if w.err != nil {
-		return true
-	}
+func (w *SAWidget) HasExpError() bool {
 
 	for _, it := range w.Attrs {
-		if it.err != nil {
+		if it.errExp != nil {
 			return true
 		}
 	}
@@ -201,7 +198,7 @@ func (w *SAWidget) UpdateExpresions() {
 	for _, it := range w.Attrs {
 		it.depends = nil
 		it.isDirectLink = false
-		it.err = nil
+		it.errExp = nil
 
 		var found bool
 		for found {
@@ -221,13 +218,13 @@ func (w *SAWidget) UpdateExpresions() {
 						it.depends = append(it.depends, vv) //add
 						it.isDirectLink = true              //...
 					} else {
-						it.err = fmt.Errorf("Value(%s) not found", vals[1])
+						it.errExp = fmt.Errorf("Value(%s) not found", vals[1])
 					}
 				} else {
-					it.err = fmt.Errorf("Widget(%s) not found", vals[0])
+					it.errExp = fmt.Errorf("Widget(%s) not found", vals[0])
 				}
 			} else {
-				it.err = fmt.Errorf("too short, use: node.value")
+				it.errExp = fmt.Errorf("too short, use: node.value")
 			}
 		}
 	}
@@ -242,7 +239,7 @@ func (w *SAWidget) checkForLoopInner(find *SAWidget) {
 	for _, v := range w.Attrs {
 		for _, dep := range v.depends {
 			if dep.widget == find {
-				v.err = fmt.Errorf("Loop")
+				v.errExp = fmt.Errorf("Loop")
 				continue //avoid infinite recursion
 			}
 
@@ -264,8 +261,8 @@ func (w *SAWidget) areAttrsErrorFree() bool {
 
 	for _, v := range w.Attrs {
 		for _, dep := range v.depends {
-			if dep.widget.HasError() {
-				w.err = fmt.Errorf("incomming error for Value(%s)", v.Name)
+			if dep.widget.HasExpError() {
+				v.errExp = fmt.Errorf("incomming error")
 				return false
 			}
 		}
@@ -325,7 +322,6 @@ func (w *SAWidget) IsReadyToBeExe() bool {
 func (w *SAWidget) ResetExecute() {
 	w.done = false
 	w.running = false
-	w.err = nil
 
 	for _, it := range w.Subs {
 		it.ResetExecute()
@@ -405,10 +401,13 @@ func (w *SAWidget) execute(server *SANodeServer) {
 	if nc != nil {
 		//add/update
 		for _, v := range nc.strct.Attrs {
+			v.Error = ""
+
 			a := w.GetAttr(v.Name, v.Value, v.Gui_type, v.Gui_options, v.Gui_ReadOnly)
 			a.Gui_type = v.Gui_type
 			a.Gui_options = v.Gui_options
 			a.Gui_ReadOnly = v.Gui_ReadOnly
+			a.errExe = nil
 		}
 
 		//set/remove
@@ -430,24 +429,28 @@ func (w *SAWidget) execute(server *SANodeServer) {
 
 		//copy back
 		for _, v := range nc.strct.Attrs {
+			a := w.GetAttr(v.Name, v.Value, v.Gui_type, v.Gui_options, v.Gui_ReadOnly)
 			if v.Gui_ReadOnly {
-				a := w.GetAttr(v.Name, v.Value, v.Gui_type, v.Gui_options, v.Gui_ReadOnly)
 				a.Value = v.Value
 				a.Gui_type = v.Gui_type
 				a.Gui_options = v.Gui_options
 				a.Gui_ReadOnly = v.Gui_ReadOnly
 			}
+			a.errExe = nil
+			if v.Error != "" {
+				a.errExe = errors.New(v.Error)
+			}
 		}
 
 		if nc.progress.Error != "" {
-			w.err = errors.New(nc.progress.Error)
+			w.errExe = errors.New(nc.progress.Error)
 		}
 	} else {
-		w.err = fmt.Errorf("can't find node exe(%s)", w.Exe)
+		w.errExe = fmt.Errorf("can't find node exe(%s)", w.Exe)
 	}
 
-	if w.err != nil {
-		fmt.Printf("Node(%s) has error(%v)\n", w.Name, w.err)
+	if w.errExe != nil {
+		fmt.Printf("Node(%s) has error(%v)\n", w.Name, w.errExe)
 	}
 
 	w.done = true
@@ -867,6 +870,17 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 	ui.Div_SpacerRow(0, y, 1, 1)
 	y++
 
+	if w.errExe != nil {
+		ui.Div_start(0, y, 1, 1)
+		{
+			pl := ui.buff.win.io.GetPalette()
+			ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0) //red rect
+		}
+		ui.Div_end()
+		ui.Comp_text(0, y, 1, 1, "Error: "+w.errExe.Error(), 0)
+		y++
+	}
+
 	for i, it := range w.Attrs {
 		if it.Name == "grid_x" || it.Name == "grid_y" || it.Name == "grid_w" || it.Name == "grid_h" {
 			continue
@@ -882,13 +896,6 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 			//highlight because it has expression
 			if len(it.depends) > 0 {
 				ui.Paint_rect(0, 0, 1, 1, 0.03, SAApp2_getYellow().SetAlpha(50), 0)
-			}
-
-			//error
-			if it.err != nil {
-				ui.Paint_tooltip(0, 0, 1, 1, it.err.Error())
-				pl := ui.buff.win.io.GetPalette()
-				ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0.03)
 			}
 
 			//name: drag & drop
@@ -908,7 +915,28 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 			}
 
 			//value
+			if it.errExp != nil {
+				ui.Div_start(1, 0, 1, 1)
+				{
+					ui.Paint_tooltip(0, 0, 1, 1, it.errExp.Error())
+					pl := ui.buff.win.io.GetPalette()
+					ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0.03)
+				}
+				ui.Div_end()
+			}
 			_SAWidget_renderParamsValue(1, 0, 1, 1, it, ui)
+
+			//error
+			if it.errExe != nil {
+				ui.Div_start(2, 0, 1, 1)
+				{
+					ui.Paint_tooltip(0, 0, 1, 1, it.errExe.Error())
+					pl := ui.buff.win.io.GetPalette()
+					ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0) //red rect
+				}
+				ui.Div_end()
+			}
+
 		}
 		ui.Div_end()
 		y++
