@@ -211,7 +211,7 @@ func (base *SABase) drawFrame(ui *Ui) {
 	}
 
 	ui.Div_start(0, 0, 1, 1)
-	base.drawIcons(app, ui, icon_rad)
+	base.drawLauncher(app, ui, icon_rad)
 	ui.Div_end()
 
 	if base.HasApp() {
