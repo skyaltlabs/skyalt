@@ -36,6 +36,7 @@ type SAWidgetAttr struct {
 	ShowExp bool
 
 	oldValue     string
+	instr        *VmInstr
 	depends      []*SAWidgetAttr
 	isDirectLink bool
 	errExp       error
@@ -193,9 +194,10 @@ func (w *SAWidget) HasExpError() bool {
 	return false
 }
 
-func (w *SAWidget) UpdateExpresions() {
+func (w *SAWidget) UpdateExpresions(app *SAApp2) {
 
 	for _, it := range w.Attrs {
+		it.instr = nil
 		it.depends = nil
 		it.isDirectLink = false
 		it.errExp = nil
@@ -207,30 +209,24 @@ func (w *SAWidget) UpdateExpresions() {
 
 		val, found := strings.CutPrefix(it.Value, "=")
 		if found {
-			val = strings.ReplaceAll(val, " ", "")
-			vals := strings.Split(val, ".")
-
-			if len(vals) == 2 {
-				ww := w.parent.FindNode(vals[0])
-				if ww != nil {
-					vv := ww.findValue(vals[1])
-					if vv != nil {
-						it.depends = append(it.depends, vv) //add
-						it.isDirectLink = true              //...
-					} else {
-						it.errExp = fmt.Errorf("Value(%s) not found", vals[1])
-					}
-				} else {
-					it.errExp = fmt.Errorf("Widget(%s) not found", vals[0])
+			ln, err := InitVmLine(val, app.ops, app.apis, app.prior, w)
+			if err == nil {
+				it.instr = ln.Parse()
+				if it.instr != nil {
+					it.depends = ln.depends
+					it.isDirectLink = it.instr.IsDirectLink()
+				}
+				if len(ln.errs) > 0 {
+					it.errExp = errors.New(ln.errs[0])
 				}
 			} else {
-				it.errExp = fmt.Errorf("too short, use: node.value")
+				it.errExp = err
 			}
 		}
 	}
 
 	for _, it := range w.Subs {
-		it.UpdateExpresions()
+		it.UpdateExpresions(app)
 	}
 }
 
@@ -287,13 +283,23 @@ func (w *SAWidget) areAttrsChangedAndUpdate() bool {
 	changed := false
 	for _, it := range w.Attrs {
 
-		_, value, _ := it.GetDirectLink()
-
-		if *value != it.oldValue {
-			changed = true
+		var val string
+		if it.isDirectLink {
+			_, value, _ := it.GetDirectLink()
+			val = *value
+		} else {
+			if it.instr != nil {
+				st := InitVmST()
+				rec := it.instr.Exe(nil, &st)
+				val = rec.GetString()
+			}
 		}
 
-		it.oldValue = *value
+		if val != it.oldValue {
+			changed = true
+		}
+		it.oldValue = val
+
 	}
 	return changed
 }
@@ -582,7 +588,7 @@ func (w *SAWidget) Remove() bool {
 	return false
 }
 
-func (w *SAWidget) findValue(name string) *SAWidgetAttr {
+func (w *SAWidget) findAttr(name string) *SAWidgetAttr {
 	for _, it := range w.Attrs {
 		if it.Name == name {
 			return it
@@ -592,7 +598,7 @@ func (w *SAWidget) findValue(name string) *SAWidgetAttr {
 }
 func (w *SAWidget) _getAttr(defValue SAWidgetAttr) *SAWidgetAttr {
 
-	v := w.findValue(defValue.Name)
+	v := w.findAttr(defValue.Name)
 	if v == nil {
 		v = &SAWidgetAttr{}
 		*v = defValue
@@ -847,10 +853,10 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 		w.GetAttrIntEdit("grid_w", "1")
 		w.GetAttrIntEdit("grid_h", "1")
 		//find
-		xx := w.findValue("grid_x")
-		yy := w.findValue("grid_y")
-		ww := w.findValue("grid_w")
-		hh := w.findValue("grid_h")
+		xx := w.findAttr("grid_x")
+		yy := w.findAttr("grid_y")
+		ww := w.findAttr("grid_w")
+		hh := w.findAttr("grid_h")
 
 		if len(xx.depends) > 0 || len(yy.depends) > 0 || len(ww.depends) > 0 || len(hh.depends) > 0 {
 			ui.Div_start(0, 0, 1, 1)

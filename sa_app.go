@@ -22,7 +22,7 @@ import (
 	"strings"
 )
 
-type SAApp2 struct {
+type SAApp2 struct { //rename to SAApp ...
 	base *SABase
 
 	Name string
@@ -34,12 +34,18 @@ type SAApp2 struct {
 	history_act []*SAWidget //JSONs
 	history     []*SAWidget //JSONs
 	history_pos int
-	saveIt      bool
+
+	saveIt bool
+	exeIt  bool
 
 	addWidgetCoord OsV4
 
 	startClickWidget *SAWidget
 	startClickRel    OsV2
+
+	ops   *VmOps
+	apis  *VmApis
+	prior int
 }
 
 func NewSAApp2(name string, base *SABase) *SAApp2 {
@@ -464,6 +470,7 @@ func (app *SAApp2) addHistory() {
 	app.history_pos++
 
 	app.saveIt = true
+	app.exeIt = true
 }
 
 func (app *SAApp2) recoverHistory() {
@@ -500,12 +507,22 @@ func (app *SAApp2) stepHistoryForward() bool {
 
 func (app *SAApp2) Execute(numThreads int) {
 
-	app.root.UpdateExpresions()
+	if !app.exeIt {
+		return
+	}
+
+	app.ops = NewVmOps()
+	app.apis = NewVmApis()
+	app.prior = 100
+
+	app.root.UpdateExpresions(app)
 
 	app.root.CheckForLoops()
 
 	app.root.ResetExecute()
 	app.root.ExecuteSubs(app.base.server, OsMax(numThreads, 1))
+
+	app.exeIt = false
 }
 
 func SAApp2_getYellow() OsCd {
