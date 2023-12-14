@@ -711,7 +711,7 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 	case "combo":
 		value, editable := w.GetAttrStringPtrEdit("value", "")
 		enable := w.GetAttrBoolSwitch("enable", "1") && editable
-		ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, w.GetAttrStringEdit("options", "a|b"), "", enable, w.GetAttrBoolSwitch("search", "0"))
+		ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, w.GetAttrStringEdit("options", "a;b"), "", enable, w.GetAttrBoolSwitch("search", "0"))
 
 	case "edit":
 		value, editable := w.GetAttrStringPtrEdit("value", "")
