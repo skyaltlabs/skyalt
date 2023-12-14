@@ -194,7 +194,7 @@ func (w *SAWidget) HasExpError() bool {
 	return false
 }
 
-func (w *SAWidget) UpdateExpresions(app *SAApp2) {
+func (w *SAWidget) UpdateExpresions(app *SAApp) {
 
 	for _, it := range w.Attrs {
 		it.instr = nil
@@ -685,7 +685,7 @@ func (w *SAWidget) GetGrid() OsV4 {
 	return v
 }
 
-func (w *SAWidget) Render(ui *Ui, app *SAApp2) {
+func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 
 	grid := w.GetGrid()
 
@@ -735,14 +735,14 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp2) {
 		if w.Selected && app.act == w.parent {
 			div := ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 			div.enableInput = false
-			ui.Paint_rect(0, 0, 1, 1, 0, SAApp2_getYellow(), 0.03)
+			ui.Paint_rect(0, 0, 1, 1, 0, SAApp_getYellow(), 0.03)
 			ui.Div_end()
 		}
 
 	}
 }
 
-func (w *SAWidget) RenderLayout(ui *Ui, app *SAApp2) {
+func (w *SAWidget) RenderLayout(ui *Ui, app *SAApp) {
 
 	//columns
 	for i, c := range w.Cols {
@@ -860,7 +860,7 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 
 		if len(xx.depends) > 0 || len(yy.depends) > 0 || len(ww.depends) > 0 || len(hh.depends) > 0 {
 			ui.Div_start(0, 0, 1, 1)
-			ui.Paint_rect(0, 0, 1, 1, 0.03, SAApp2_getYellow().SetAlpha(50), 0)
+			ui.Paint_rect(0, 0, 1, 1, 0.03, SAApp_getYellow().SetAlpha(50), 0)
 			ui.Div_end()
 		}
 
@@ -908,7 +908,7 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 
 			//highlight because it has expression
 			if len(it.depends) > 0 {
-				ui.Paint_rect(0, 0, 1, 1, 0.03, SAApp2_getYellow().SetAlpha(50), 0)
+				ui.Paint_rect(0, 0, 1, 1, 0.03, SAApp_getYellow().SetAlpha(50), 0)
 			}
 
 			//name: drag & drop

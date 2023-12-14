@@ -25,7 +25,7 @@ import (
 type SABase struct {
 	ui *Ui
 
-	Apps       []*SAApp2
+	Apps       []*SAApp
 	Selected   int
 	NewAppName string
 
@@ -156,7 +156,7 @@ func (base *SABase) Refresh() {
 
 		}
 		if base.findApp(f.Name) < 0 {
-			base.Apps = append(base.Apps, NewSAApp2(f.Name, base))
+			base.Apps = append(base.Apps, NewSAApp(f.Name, base))
 		}
 	}
 

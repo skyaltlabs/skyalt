@@ -220,7 +220,7 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 
 }
 
-func (base *SABase) drawIcons(app *SAApp2, ui *Ui, icon_rad float64) {
+func (base *SABase) drawIcons(app *SAApp, ui *Ui, icon_rad float64) {
 
 	ui.Paint_rect(0, 0, 1, 1, 0, ui.win.io.GetPalette().GetGrey(0.7), 0)
 

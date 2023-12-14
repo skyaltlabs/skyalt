@@ -22,7 +22,7 @@ import (
 	"strings"
 )
 
-type SAApp2 struct { //rename to SAApp ...
+type SAApp struct {
 	base *SABase
 
 	Name string
@@ -48,23 +48,23 @@ type SAApp2 struct { //rename to SAApp ...
 	prior int
 }
 
-func NewSAApp2(name string, base *SABase) *SAApp2 {
-	var app SAApp2
+func NewSAApp(name string, base *SABase) *SAApp {
+	var app SAApp
 	app.base = base
 	app.Name = name
 	app.IDE = true
 
 	return &app
 }
-func (app *SAApp2) Destroy() {
+func (app *SAApp) Destroy() {
 
 }
 
-func (app *SAApp2) GetPath() string {
+func (app *SAApp) GetPath() string {
 	return "apps/" + app.Name + "/app.json"
 }
 
-func (app *SAApp2) renderIDE(ui *Ui) {
+func (app *SAApp) renderIDE(ui *Ui) {
 
 	ui.Div_colMax(1, 100)
 	ui.Div_rowMax(1, 100)
@@ -133,7 +133,7 @@ func (app *SAApp2) renderIDE(ui *Ui) {
 				ui.Dialog_open(nm, 1)
 			}
 
-			_SAApp2_drawColsRowsDialog(nm, &lay.Cols, i, ui)
+			_SAApp_drawColsRowsDialog(nm, &lay.Cols, i, ui)
 
 		}
 	}
@@ -176,7 +176,7 @@ func (app *SAApp2) renderIDE(ui *Ui) {
 			if ui.Comp_buttonLight(0, i, 1, 1, fmt.Sprintf("%d", i), "", true) > 0 {
 				ui.Dialog_open(nm, 1)
 			}
-			_SAApp2_drawColsRowsDialog(nm, &lay.Rows, i, ui)
+			_SAApp_drawColsRowsDialog(nm, &lay.Rows, i, ui)
 		}
 
 	}
@@ -205,8 +205,8 @@ func (app *SAApp2) renderIDE(ui *Ui) {
 				rect := appDiv.data.Convert(ui.win.Cell(), grid)
 
 				rect.Start = rect.Start.Add(appDiv.canvas.Start)
-				ui.buff.AddRect(rect, SAApp2_getYellow(), ui.CellWidth(0.03))
-				ui.buff.AddText("+", rect, ui.win.fonts.Get(SKYALT_FONT_PATH), SAApp2_getYellow(), ui.win.io.GetDPI()/8, OsV2{1, 1}, nil, true)
+				ui.buff.AddRect(rect, SAApp_getYellow(), ui.CellWidth(0.03))
+				ui.buff.AddText("+", rect, ui.win.fonts.Get(SKYALT_FONT_PATH), SAApp_getYellow(), ui.win.io.GetDPI()/8, OsV2{1, 1}, nil, true)
 
 				if ui.win.io.touch.end {
 					app.addWidgetCoord = grid
@@ -271,7 +271,7 @@ func (app *SAApp2) renderIDE(ui *Ui) {
 
 }
 
-func (app *SAApp2) History(ui *Ui) {
+func (app *SAApp) History(ui *Ui) {
 	//init history
 	if len(app.history) == 0 {
 		app.addHistory()
@@ -300,7 +300,7 @@ func (app *SAApp2) History(ui *Ui) {
 
 var SAStandardWidgets = []string{"layout", "button", "text", "checkbox", "switch", "edit", "combo"}
 
-func (app *SAApp2) drawCreateWidget(ui *Ui) {
+func (app *SAApp) drawCreateWidget(ui *Ui) {
 
 	if ui.Dialog_start("nodes_list") {
 		ui.Div_colMax(0, 5)
@@ -335,7 +335,7 @@ func (app *SAApp2) drawCreateWidget(ui *Ui) {
 	}
 }
 
-func _SAApp2_drawColsRowsDialog(name string, items *[]SAWidgetColRow, i int, ui *Ui) bool {
+func _SAApp_drawColsRowsDialog(name string, items *[]SAWidgetColRow, i int, ui *Ui) bool {
 
 	changed := false
 	if ui.Dialog_start(name) {
@@ -400,7 +400,7 @@ func _SAApp2_drawColsRowsDialog(name string, items *[]SAWidgetColRow, i int, ui 
 	return changed
 }
 
-func (app *SAApp2) RenderHeader(ui *Ui) {
+func (app *SAApp) RenderHeader(ui *Ui) {
 	ui.Div_colMax(1, 100)
 	ui.Div_colMax(2, 6)
 
@@ -440,7 +440,7 @@ func (app *SAApp2) RenderHeader(ui *Ui) {
 	}
 }
 
-func (app *SAApp2) cmpAndAddHistory() bool {
+func (app *SAApp) cmpAndAddHistory() bool {
 	if len(app.history) > 0 {
 
 		if app.act == app.root.FindMirror(app.history[app.history_pos], app.history_act[app.history_pos]) {
@@ -454,7 +454,7 @@ func (app *SAApp2) cmpAndAddHistory() bool {
 	return true
 }
 
-func (app *SAApp2) addHistory() {
+func (app *SAApp) addHistory() {
 	//cut newer history
 	if app.history_pos+1 < len(app.history) {
 		app.history = app.history[:app.history_pos+1]
@@ -473,19 +473,19 @@ func (app *SAApp2) addHistory() {
 	app.exeIt = true
 }
 
-func (app *SAApp2) recoverHistory() {
+func (app *SAApp) recoverHistory() {
 	app.root, _ = app.history[app.history_pos].Copy()
 	app.act = app.root.FindMirror(app.history[app.history_pos], app.history_act[app.history_pos])
 }
 
-func (app *SAApp2) canHistoryBack() bool {
+func (app *SAApp) canHistoryBack() bool {
 	return app.history_pos > 0
 }
-func (app *SAApp2) canHistoryForward() bool {
+func (app *SAApp) canHistoryForward() bool {
 	return app.history_pos+1 < len(app.history)
 }
 
-func (app *SAApp2) stepHistoryBack() bool {
+func (app *SAApp) stepHistoryBack() bool {
 	if !app.canHistoryBack() {
 		return false
 	}
@@ -494,7 +494,7 @@ func (app *SAApp2) stepHistoryBack() bool {
 	app.recoverHistory()
 	return true
 }
-func (app *SAApp2) stepHistoryForward() bool {
+func (app *SAApp) stepHistoryForward() bool {
 
 	if !app.canHistoryForward() {
 		return false
@@ -505,7 +505,7 @@ func (app *SAApp2) stepHistoryForward() bool {
 	return true
 }
 
-func (app *SAApp2) Execute(numThreads int) {
+func (app *SAApp) Execute(numThreads int) {
 
 	if !app.exeIt {
 		return
@@ -525,6 +525,6 @@ func (app *SAApp2) Execute(numThreads int) {
 	app.exeIt = false
 }
 
-func SAApp2_getYellow() OsCd {
+func SAApp_getYellow() OsCd {
 	return OsCd{204, 204, 0, 255} //...
 }
