@@ -128,7 +128,7 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 
 		ui.Comp_image(0, 1, 1, 1, "file:apps/base/resources/logo.png", OsCd{A: 255}, 0, 1, 1, false)
 
-		ui.Comp_text(0, 2, 1, 1, "v0.4", 1)
+		ui.Comp_text(0, 2, 1, 1, "v0.1", 1)
 
 		ui.Comp_buttonText(0, 3, 1, 1, "www.skyalt.com", "https://www.skyalt.com", "", true, false)
 		ui.Comp_buttonText(0, 4, 1, 1, "github.com/skyaltlabs/skyalt/", "https://github.com/skyaltlabs/skyalt/", "", true, false)
