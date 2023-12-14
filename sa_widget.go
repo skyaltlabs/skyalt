@@ -284,15 +284,14 @@ func (w *SAWidget) areAttrsChangedAndUpdate() bool {
 	for _, it := range w.Attrs {
 
 		var val string
-		if it.isDirectLink {
+
+		if it.instr != nil && !it.isDirectLink {
+			st := InitVmST()
+			rec := it.instr.Exe(nil, &st)
+			val = rec.GetString()
+		} else {
 			_, value, _ := it.GetDirectLink()
 			val = *value
-		} else {
-			if it.instr != nil {
-				st := InitVmST()
-				rec := it.instr.Exe(nil, &st)
-				val = rec.GetString()
-			}
 		}
 
 		if val != it.oldValue {
@@ -957,9 +956,10 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 }
 
 // expression language ... => show num rows after SELECT COUNT(*) FROM ...
-//- sin/cos/sqrt/pow ...
 //- práce s json? ...
 
 // resize widget ...
 // execute in 2nd thread and copy back when done ...
 // change Node.Exe + Attr.Gui_type,.Gui_options ...
+// translations ...
+// test history re-execute()? ...
