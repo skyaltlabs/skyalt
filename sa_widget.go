@@ -568,9 +568,16 @@ func (w *SAWidget) getPath() string {
 	return path
 }
 
+func (w *SAWidget) CheckUniqueName() {
+	for w.parent.NumNames(w.Name) >= 2 {
+		w.Name += "1"
+	}
+}
+
 func (w *SAWidget) AddWidget(coord OsV4, exe string) *SAWidget {
 	nw := NewSAWidget(w, exe, exe, coord)
 	w.Subs = append(w.Subs, nw)
+	nw.CheckUniqueName()
 	return nw
 }
 
@@ -626,6 +633,10 @@ func (w *SAWidget) GetAttrStringEdit(name string, defValue string) string {
 
 func (w *SAWidget) GetAttrIntEdit(name string, defValue string) int {
 	vv, _ := strconv.Atoi(w.GetAttrStringEdit(name, defValue))
+	return vv
+}
+func (w *SAWidget) GetAttrFloatEdit(name string, defValue string) float64 {
+	vv, _ := strconv.ParseFloat(w.GetAttrStringEdit(name, defValue), 64)
 	return vv
 }
 
@@ -687,6 +698,8 @@ func (w *SAWidget) GetGrid() OsV4 {
 func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 
 	grid := w.GetGrid()
+	grid.Size.X = OsMax(grid.Size.X, 1)
+	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	switch w.Exe {
 
@@ -723,6 +736,11 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 		w.RenderLayout(ui, app)
 		ui.Div_end()
 
+	case "map":
+		ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
+		app.mapp.Render(w, ui)
+		ui.Div_end()
+
 	default: //layout
 		ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 		w.RenderLayout(ui, app)
@@ -736,8 +754,12 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 			div.enableInput = false
 			ui.Paint_rect(0, 0, 1, 1, 0, SAApp_getYellow(), 0.03)
 			ui.Div_end()
+
+			s := ui.CellWidth(0.2)
+			ui.buff.AddRect(InitOsV4Mid(div.crop.End(), OsV2{s, s}), SAApp_getYellow(), 0)
 		}
 
+		//full rectangle if expression(editbox) in params is activate ...
 	}
 }
 
@@ -824,10 +846,7 @@ func (w *SAWidget) RenderParams(ui *Ui) {
 		ui.Div_colMax(1, 2)
 		_, _, _, fnshd, _ := ui.Comp_editbox_desc("Name", 0, 2, 0, 0, 1, 1, &w.Name, 0, "", "Name", false, false, true)
 		if fnshd && w.parent != nil {
-			//create unique name
-			for w.parent.NumNames(w.Name) >= 2 {
-				w.Name += "1"
-			}
+			w.CheckUniqueName()
 		}
 
 		if ui.Comp_button(1, 0, 1, 1, "Delete", "", true) > 0 {
