@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"sync"
@@ -75,14 +76,16 @@ func (job *DiskNetJob) download() {
 }
 
 type DiskNet struct {
+	win       *Win
 	lock      sync.Mutex
 	interrupt atomic.Bool
 
 	jobs []*DiskNetJob
 }
 
-func NewDiskNet() *DiskNet {
+func NewDiskNet(win *Win) *DiskNet {
 	net := &DiskNet{}
+	net.win = win
 
 	go net.Loop()
 
@@ -149,6 +152,11 @@ func (net *DiskNet) add(url string, agent string) *DiskNetJob {
 }
 
 func (net *DiskNet) GetFile(url string, agent string) ([]byte, bool, float64, error) {
-	jb := net.add(url, agent)
-	return jb.data, jb.done, jb.progress, jb.err
+
+	if !net.win.io.ini.Offline {
+		jb := net.add(url, agent)
+		return jb.data, jb.done, jb.progress, jb.err
+	} else {
+		return nil, true, 0, fmt.Errorf("internet is off(enable Main Menu:Settings:Internet Connection)")
+	}
 }

@@ -72,7 +72,7 @@ func NewSABase(ui *Ui) (*SABase, error) {
 		return nil, fmt.Errorf("NewNodeServer() failed: %w", err)
 	}
 
-	base.net = NewDiskNet()
+	base.net = NewDiskNet(base.ui.win)
 
 	base.Refresh()
 
