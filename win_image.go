@@ -58,16 +58,13 @@ func NewWinImage(path WinMediaPath) (*WinImage, error) {
 	img.path = path
 	img.blobDbLoadTicks = -1
 
-	//load from file, from DB later
-	if path.IsFile() {
-		blob, err := path.GetFileBlob()
-		if err != nil {
-			return nil, fmt.Errorf("GetFileBlob() failed: %w", err)
-		}
-		err = img.SetBlob(blob)
-		if err != nil {
-			return nil, fmt.Errorf("SetBlob() failed: %w", err)
-		}
+	blob, err := path.GetBlob()
+	if err != nil {
+		return nil, fmt.Errorf("GetFileBlob() failed: %w", err)
+	}
+	err = img.SetBlob(blob)
+	if err != nil {
+		return nil, fmt.Errorf("SetBlob() failed: %w", err)
 	}
 
 	return &img, nil

@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"os"
@@ -49,7 +50,7 @@ func InitWinMedia(url string) (WinMediaPath, error) {
 
 	d := strings.Index(url, ":")
 	if d >= 0 {
-		ip.path = url
+		ip.path = url[:d]
 		//optional(table/column/row)
 		opt := url[d+1:]
 
@@ -97,14 +98,27 @@ func (a *WinMediaPath) Cmp(b *WinMediaPath) bool {
 	return a.path == b.path && a.table == b.table && a.column == b.column && a.row == b.row
 }
 
-func (ip *WinMediaPath) GetFileBlob() ([]byte, error) {
+func (ip *WinMediaPath) GetBlob() ([]byte, error) {
 	var data []byte
 	var err error
 
 	if ip.IsFile() {
+		//file
 		data, err = os.ReadFile(ip.path)
 		if err != nil {
 			return nil, fmt.Errorf("ReadFile(%s) failed: %w", ip.path, err)
+		}
+	} else {
+		//db
+		db, err := sql.Open("sqlite3", "file:"+ip.path)
+		if err != nil {
+			return nil, fmt.Errorf("sql.Open(%s) failed: %w", ip.path, err)
+		}
+
+		row := db.QueryRow(fmt.Sprintf("SELECT %s FROM %s WHERE rowid==%d", ip.column, ip.table, ip.row))
+		err = row.Scan(&data)
+		if err != nil {
+			return nil, fmt.Errorf("QueryRow(%s) failed: %w", ip.path, err)
 		}
 	}
 
