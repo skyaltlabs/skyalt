@@ -114,6 +114,8 @@ type WinIni struct {
 
 	Theme    int
 	Palettes []WinCdPalette //don't save, only custom colors ...
+
+	Offline bool
 }
 
 type WinIO struct {

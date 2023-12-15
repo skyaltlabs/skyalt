@@ -215,6 +215,9 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 		ui.Comp_switch(1, y, 1, 1, &ini.Stats, false, base.trns.SHOW_STATS, "", true)
 		y++
 
+		ui.Comp_switch(1, y, 1, 1, &ini.Offline, true, base.trns.ONLINE, "", true)
+		y++
+
 		ui.Dialog_end()
 	}
 
