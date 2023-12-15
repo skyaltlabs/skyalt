@@ -54,6 +54,7 @@ type SATranslations struct {
 	DPI        string
 	THREADS    string
 	SHOW_STATS string
+	ONLINE     string
 	SHOW_GRID  string
 	LANGUAGE   string
 	LANGUAGES  string
