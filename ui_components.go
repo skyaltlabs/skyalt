@@ -983,6 +983,7 @@ func (ui *Ui) Comp_switch(x, y, w, h int, valueIn interface{}, reverseValue bool
 
 	ret := ui.Comp_switch_s(&style, orig, label)
 	changed := (ret != orig)
+	ret = OsTrnBool(reverseValue, !ret, ret)
 	if changed {
 		switch v := valueIn.(type) {
 		case *bool:
@@ -997,6 +998,7 @@ func (ui *Ui) Comp_switch(x, y, w, h int, valueIn interface{}, reverseValue bool
 			*v = strconv.Itoa(OsTrn(ret, 1, 0))
 			//int8/16/32, uint8, byte, etc ...
 		}
+
 	}
 
 	ui.Div_end()
