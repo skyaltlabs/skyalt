@@ -25,7 +25,6 @@ import (
 	"strings"
 )
 
-//error handling ...
 //maybe SQL manager? ... images/map/etc. ...
 
 //add:
@@ -165,6 +164,7 @@ func (mp *SAMap) isZooming() (bool, float64, float64) {
 }
 
 func (mp *SAMap) Render(w *SAWidget, ui *Ui, net *DiskNet) {
+	w.errExe = nil
 
 	file := w.GetAttrStringEdit("file", "maps/osm")
 	url := w.GetAttrStringEdit("url", "https://tile.openstreetmap.org/{z}/{x}/{y}.png")
@@ -187,7 +187,7 @@ func (mp *SAMap) Render(w *SAWidget, ui *Ui, net *DiskNet) {
 
 	db, err := mp.GetDb(file)
 	if err != nil {
-		//...
+		w.errExe = fmt.Errorf("GetDb(%s) failed: %w", file, err)
 		return
 	}
 
@@ -206,7 +206,6 @@ func (mp *SAMap) Render(w *SAWidget, ui *Ui, net *DiskNet) {
 		zooming = 1
 
 		ui.win.SetRedraw()
-		//_SA_InfoSetNoSleep()
 	}
 
 	cell := ui.DivInfo_get(SA_DIV_GET_cell, 0)
@@ -247,31 +246,29 @@ func (mp *SAMap) Render(w *SAWidget, ui *Ui, net *DiskNet) {
 			rowid := int64(-1)
 			err = row.Scan(&rowid)
 			if err != nil {
+
 				//download
-				if !ui.win.io.ini.Offline {
+				u := url
+				u = strings.ReplaceAll(u, "{x}", strconv.Itoa(int(x)))
+				u = strings.ReplaceAll(u, "{y}", strconv.Itoa(int(y)))
+				u = strings.ReplaceAll(u, "{z}", strconv.Itoa(int(zoom)))
 
-					u := url
-					u = strings.ReplaceAll(u, "{x}", strconv.Itoa(int(x)))
-					u = strings.ReplaceAll(u, "{y}", strconv.Itoa(int(y)))
-					u = strings.ReplaceAll(u, "{z}", strconv.Itoa(int(zoom)))
-
-					img, done, _, err := net.GetFile(u, "Skyalt/0.1")
-					//, net *DiskNet
-
-					//img, err := _SAMap_downloadTile(url, int(x), int(y), int(zoom))
-					if done && err == nil {
+				img, done, _, err := net.GetFile(u, "Skyalt/0.1")
+				if done {
+					if err == nil {
 						//insert into db
 						res, err := db.Exec("INSERT INTO tiles(name, file) VALUES(?, ?);", name, img)
 						if err == nil {
 							rowid, err = res.LastInsertId()
 							if err != nil {
-								//...
+								w.errExe = fmt.Errorf("LastInsertId() failed: %w", err)
 							}
 						}
+					} else {
+						w.errExe = err
 					}
-				} else {
-					//internet disable in settings ...
 				}
+
 			}
 
 			if rowid > 0 {
