@@ -543,6 +543,10 @@ func (win *Win) needRedraw(inputChanged bool) bool {
 	return inputChanged
 }
 
+func (win *Win) SetRedraw() {
+	win.num_redraws = 0
+}
+
 func (win *Win) UpdateIO() (bool, bool, error) {
 	if win == nil {
 		return true, false, nil
@@ -559,7 +563,7 @@ func (win *Win) UpdateIO() (bool, bool, error) {
 	}
 
 	if win.needRedraw(redraw) {
-		win.num_redraws = 0
+		win.SetRedraw()
 		redraw = true
 	}
 
