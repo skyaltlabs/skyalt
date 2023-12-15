@@ -46,6 +46,8 @@ type SAApp struct {
 	ops   *VmOps
 	apis  *VmApis
 	prior int
+
+	mapp *SAMap
 }
 
 func NewSAApp(name string, base *SABase) *SAApp {
@@ -54,10 +56,12 @@ func NewSAApp(name string, base *SABase) *SAApp {
 	app.Name = name
 	app.IDE = true
 
+	app.mapp = NewSAMap()
+
 	return &app
 }
 func (app *SAApp) Destroy() {
-
+	app.mapp.Destroy()
 }
 
 func (app *SAApp) GetPath() string {
@@ -298,7 +302,7 @@ func (app *SAApp) History(ui *Ui) {
 
 }
 
-var SAStandardWidgets = []string{"layout", "button", "text", "checkbox", "switch", "edit", "combo"}
+var SAStandardWidgets = []string{"layout", "button", "text", "checkbox", "switch", "edit", "combo", "map"}
 
 func (app *SAApp) drawCreateWidget(ui *Ui) {
 

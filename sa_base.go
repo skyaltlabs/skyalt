@@ -55,6 +55,7 @@ func NewSABase(ui *Ui) (*SABase, error) {
 		}
 		for _, a := range base.Apps {
 			a.base = base
+			a.mapp = NewSAMap()
 		}
 	}
 
