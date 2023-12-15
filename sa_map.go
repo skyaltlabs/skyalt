@@ -19,48 +19,20 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"io"
 	"math"
-	"net/http"
 	"path/filepath"
 	"strconv"
 	"strings"
 )
 
 //error handling ...
-//download in 2nd thread? ... maybe download manager? ...
+//maybe SQL manager? ... images/map/etc. ...
 
 //add:
 //- Measure ...
 //- Locators ...
 
 // https://wiki.openstreetmap.org/wiki/Raster_tile_providers
-func _SAMap_downloadTile(url string, x, y, z int) ([]byte, error) {
-
-	url = strings.ReplaceAll(url, "{x}", strconv.Itoa(x))
-	url = strings.ReplaceAll(url, "{y}", strconv.Itoa(y))
-	url = strings.ReplaceAll(url, "{z}", strconv.Itoa(z))
-
-	client := &http.Client{}
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("User-Agent", "Skyalt/0.1")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	return body, nil
-}
 
 type SAMap struct {
 	lonOld, latOld, zoomOld float64
@@ -192,7 +164,7 @@ func (mp *SAMap) isZooming() (bool, float64, float64) {
 	return (dt < ANIM_TIME), dt, ANIM_TIME
 }
 
-func (mp *SAMap) Render(w *SAWidget, ui *Ui) {
+func (mp *SAMap) Render(w *SAWidget, ui *Ui, net *DiskNet) {
 
 	file := w.GetAttrStringEdit("file", "maps/osm")
 	url := w.GetAttrStringEdit("url", "https://tile.openstreetmap.org/{z}/{x}/{y}.png")
@@ -277,8 +249,17 @@ func (mp *SAMap) Render(w *SAWidget, ui *Ui) {
 			if err != nil {
 				//download
 				if !ui.win.io.ini.Offline {
-					img, err := _SAMap_downloadTile(url, int(x), int(y), int(zoom))
-					if err == nil {
+
+					u := url
+					u = strings.ReplaceAll(u, "{x}", strconv.Itoa(int(x)))
+					u = strings.ReplaceAll(u, "{y}", strconv.Itoa(int(y)))
+					u = strings.ReplaceAll(u, "{z}", strconv.Itoa(int(zoom)))
+
+					img, done, _, err := net.GetFile(u, "Skyalt/0.1")
+					//, net *DiskNet
+
+					//img, err := _SAMap_downloadTile(url, int(x), int(y), int(zoom))
+					if done && err == nil {
 						//insert into db
 						res, err := db.Exec("INSERT INTO tiles(name, file) VALUES(?, ?);", name, img)
 						if err == nil {

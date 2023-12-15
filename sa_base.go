@@ -34,6 +34,8 @@ type SABase struct {
 	trns SATranslations
 
 	server *SANodeServer
+
+	net *DiskNet
 }
 
 func NewSABase(ui *Ui) (*SABase, error) {
@@ -70,9 +72,24 @@ func NewSABase(ui *Ui) (*SABase, error) {
 		return nil, fmt.Errorf("NewNodeServer() failed: %w", err)
 	}
 
+	base.net = NewDiskNet()
+
 	base.Refresh()
 
 	return base, nil
+}
+
+func (base *SABase) Destroy() {
+	base.Save()
+
+	//close & save apps
+	for _, a := range base.Apps {
+		a.Destroy()
+	}
+
+	base.net.Destroy()
+
+	base.server.Destroy()
 }
 
 func (base *SABase) reloadTranslations(ui *Ui) error {
@@ -111,15 +128,6 @@ func (base *SABase) Save() {
 		}
 	}
 
-}
-
-func (base *SABase) Destroy() {
-	base.Save()
-
-	//close & save apps
-	for _, a := range base.Apps {
-		a.Destroy()
-	}
 }
 
 func (base *SABase) getPath() string {

@@ -738,7 +738,7 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 
 	case "map":
 		ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
-		app.mapp.Render(w, ui)
+		app.mapp.Render(w, ui, app.base.net)
 		ui.Div_end()
 
 	default: //layout
