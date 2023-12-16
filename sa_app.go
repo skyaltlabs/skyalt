@@ -200,7 +200,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	keys := &ui.buff.win.io.keys
 
 	//add widget
-	if appDiv.data.over && app.startClickWidget == nil && !keys.alt {
+	if (!ui.touch.IsAnyActive() || ui.touch.canvas == appDiv) && app.startClickWidget == nil && !keys.alt {
 		touchPos := ui.win.io.touch.pos
 		if appDiv.crop.Inside(touchPos) {
 			grid := appDiv.GetCloseCell(touchPos)
@@ -212,7 +212,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 				ui.buff.AddRect(rect, SAApp_getYellow(), ui.CellWidth(0.03))
 				ui.buff.AddText("+", rect, ui.win.fonts.Get(SKYALT_FONT_PATH), SAApp_getYellow(), ui.win.io.GetDPI()/8, OsV2{1, 1}, nil, true)
 
-				if ui.win.io.touch.end {
+				if appDiv.data.touch_end {
 					app.addWidgetCoord = grid
 					ui.Dialog_open("nodes_list", 2)
 				}
