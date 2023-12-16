@@ -17,15 +17,11 @@ limitations under the License.
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"math"
-	"path/filepath"
 	"strconv"
 	"strings"
 )
-
-//maybe SQL manager? ... images/map/etc. ...
 
 //add:
 //- Measure ...
@@ -38,50 +34,14 @@ type SAMap struct {
 	start_pos               OsV2f
 	start_tile              OsV2f
 	start_zoom_time         float64
-
-	dbs map[string]*sql.DB
 }
 
 func NewSAMap() *SAMap {
 	mp := &SAMap{}
-	mp.dbs = make(map[string]*sql.DB)
 	return mp
 }
 
 func (mp *SAMap) Destroy() {
-	for _, db := range mp.dbs {
-		db.Close()
-	}
-}
-
-func (mp *SAMap) GetDb(path string) (*sql.DB, error) {
-
-	//find
-	db, found := mp.dbs[path]
-
-	if !found {
-		folder := filepath.Dir(path)
-		err := OsFolderCreate(folder)
-		if err != nil {
-			return nil, fmt.Errorf("OsFolderCreate(%s) failed: %w", folder, err)
-		}
-
-		//open
-		db, err = sql.Open("sqlite3", "file:"+path)
-		if err != nil {
-			return nil, fmt.Errorf("sql.Open(%s) failed: %w", path, err)
-		}
-
-		_, err = db.Exec("CREATE TABLE IF NOT EXISTS tiles (name TEXT, file BLOB);")
-		if err != nil {
-			return nil, fmt.Errorf("CREATE TABLE for file(%s) failed: %w", path, err)
-		}
-
-		//add
-		mp.dbs[path] = db
-	}
-
-	return db, nil
 }
 
 func MetersPerPixel(lat, zoom float64) float64 {
@@ -163,7 +123,7 @@ func (mp *SAMap) isZooming() (bool, float64, float64) {
 	return (dt < ANIM_TIME), dt, ANIM_TIME
 }
 
-func (mp *SAMap) Render(w *SAWidget, ui *Ui, net *DiskNet) {
+func (mp *SAMap) Render(w *SAWidget, ui *Ui) {
 	w.errExe = nil
 
 	file := w.GetAttrStringEdit("file", "maps/osm")
@@ -185,10 +145,17 @@ func (mp *SAMap) Render(w *SAWidget, ui *Ui, net *DiskNet) {
 	lat := cam_lat
 	zoom := cam_zoom
 
-	db, err := mp.GetDb(file)
+	db, alreadyOpen, err := ui.win.disk.OpenDb(file)
 	if err != nil {
 		w.errExe = fmt.Errorf("GetDb(%s) failed: %w", file, err)
 		return
+	}
+	if !alreadyOpen {
+		_, err = db.Write("CREATE TABLE IF NOT EXISTS tiles (name TEXT, file BLOB);")
+		if err != nil {
+			w.errExe = fmt.Errorf("CREATE TABLE in db(%s) failed: %w", file, err)
+			return
+		}
 	}
 
 	scale := float64(1)
@@ -241,7 +208,7 @@ func (mp *SAMap) Render(w *SAWidget, ui *Ui, net *DiskNet) {
 			tileCoord_sy := (y - float64(bbStart.Y)) * tileH
 
 			name := strconv.Itoa(int(zoom)) + "-" + strconv.Itoa(int(x)) + "-" + strconv.Itoa(int(y)) + ".png"
-			row := db.QueryRow("SELECT rowid FROM tiles WHERE name=='" + name + "'")
+			row := db.ReadRow("SELECT rowid FROM tiles WHERE name=='" + name + "'")
 
 			rowid := int64(-1)
 			err = row.Scan(&rowid)
@@ -253,11 +220,11 @@ func (mp *SAMap) Render(w *SAWidget, ui *Ui, net *DiskNet) {
 				u = strings.ReplaceAll(u, "{y}", strconv.Itoa(int(y)))
 				u = strings.ReplaceAll(u, "{z}", strconv.Itoa(int(zoom)))
 
-				img, done, _, err := net.GetFile(u, "Skyalt/0.1")
+				img, done, _, err := ui.win.disk.net.GetFile(u, "Skyalt/0.1")
 				if done {
 					if err == nil {
 						//insert into db
-						res, err := db.Exec("INSERT INTO tiles(name, file) VALUES(?, ?);", name, img)
+						res, err := db.Write("INSERT INTO tiles(name, file) VALUES(?, ?);", name, img)
 						if err == nil {
 							rowid, err = res.LastInsertId()
 							if err != nil {
@@ -352,8 +319,6 @@ func (mp *SAMap) Render(w *SAWidget, ui *Ui, net *DiskNet) {
 	if edit {
 		*str = strconv.Itoa(int(cam_zoom))
 	}
-
-	fmt.Println("out", zoom)
 
 	//copyright
 	ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)

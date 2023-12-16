@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"os"
@@ -98,7 +97,7 @@ func (a *WinMediaPath) Cmp(b *WinMediaPath) bool {
 	return a.path == b.path && a.table == b.table && a.column == b.column && a.row == b.row
 }
 
-func (ip *WinMediaPath) GetBlob() ([]byte, error) {
+func (ip *WinMediaPath) GetBlob(disk *Disk) ([]byte, error) {
 	var data []byte
 	var err error
 
@@ -108,14 +107,14 @@ func (ip *WinMediaPath) GetBlob() ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("ReadFile(%s) failed: %w", ip.path, err)
 		}
-	} else {
+	} else if disk != nil {
 		//db
-		db, err := sql.Open("sqlite3", "file:"+ip.path)
+		db, _, err := disk.OpenDb(ip.path)
 		if err != nil {
-			return nil, fmt.Errorf("sql.Open(%s) failed: %w", ip.path, err)
+			return nil, fmt.Errorf("OpenDb(%s) failed: %w", ip.path, err)
 		}
 
-		row := db.QueryRow(fmt.Sprintf("SELECT %s FROM %s WHERE rowid==%d", ip.column, ip.table, ip.row))
+		row := db.ReadRow(fmt.Sprintf("SELECT %s FROM %s WHERE rowid==%d", ip.column, ip.table, ip.row))
 		err = row.Scan(&data)
 		if err != nil {
 			return nil, fmt.Errorf("QueryRow(%s) failed: %w", ip.path, err)

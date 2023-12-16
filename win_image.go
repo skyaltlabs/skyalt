@@ -51,14 +51,14 @@ type WinImage struct {
 	lastDrawTick int64
 }
 
-func NewWinImage(path WinMediaPath) (*WinImage, error) {
+func NewWinImage(path WinMediaPath, disk *Disk) (*WinImage, error) {
 
 	var img WinImage
 
 	img.path = path
 	img.blobDbLoadTicks = -1
 
-	blob, err := path.GetBlob()
+	blob, err := path.GetBlob(disk)
 	if err != nil {
 		return nil, fmt.Errorf("GetFileBlob() failed: %w", err)
 	}

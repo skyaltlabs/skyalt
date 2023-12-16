@@ -97,16 +97,20 @@ type Win struct {
 
 	stat       WinStats
 	start_time int64
+
+	disk *Disk
 }
 
-func NewWin() (*Win, error) {
+// disk can be nil
+func NewWin(disk *Disk) (*Win, error) {
 	win := &Win{}
-	var err error
+	win.disk = disk
 
 	win.startupAnim = !OsFileExists(SKYALT_INI_PATH)
 
 	win.fonts = NewWinFonts()
 
+	var err error
 	win.io, err = NewWinIO()
 	if err != nil {
 		return nil, fmt.Errorf("NewIO() failed: %w", err)
@@ -318,7 +322,7 @@ func (win *Win) AddImage(path WinMediaPath) (*WinImage, error) {
 
 	if img == nil {
 		var err error
-		img, err = NewWinImage(path)
+		img, err = NewWinImage(path, win.disk)
 		if err != nil {
 			return nil, fmt.Errorf("NewImage() failed: %w", err)
 		}
@@ -740,10 +744,11 @@ func (win *Win) renderStats() error {
 
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
-	text := fmt.Sprintf("FPS(worst: %.1f, best: %.1f, avg: %.1f), Memory(%d imgs: %.2fMB, process: %.2fMB), Threads(%d)",
+	text := fmt.Sprintf("FPS(worst: %.1f, best: %.1f, avg: %.1f), Memory(%d imgs: %.2fMB, process: %.2fMB), Threads(%d), Net(downloads: %d, erros: %d)",
 		win.stat.out_worst_fps, win.stat.out_best_fps, win.stat.out_avg_fps,
 		win.NumTextures(), float64(win.GetImagesBytes())/1024/1024, float64(mem.Sys)/1024/1024,
-		runtime.NumGoroutine())
+		runtime.NumGoroutine(),
+		OsTrn(win.disk != nil, win.disk.net.num_jobs_done, 0), OsTrn(win.disk != nil, win.disk.net.num_jobs_errors, 0))
 
 	sz, _ := font.GetTextSize(text, g_WinFont_DEFAULT_Weight, textH, int(float32(textH)*1.2), true)
 

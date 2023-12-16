@@ -38,15 +38,16 @@ func main() {
 		fmt.Printf("InitSQLiteGlobal() failed: %v\n", err)
 		return
 	}
-	dbs, err := NewDisk("databases")
+
+	disk, err := NewDisk("databases")
 	if err != nil {
 		fmt.Printf("NewDbs() failed: %v\n", err)
 		return
 	}
-	defer dbs.Destroy()
+	defer disk.Destroy()
 
 	//Window(GL)
-	win, err := NewWin()
+	win, err := NewWin(disk)
 	if err != nil {
 		fmt.Printf("NewUi() failed: %v\n", err)
 		return
@@ -72,6 +73,8 @@ func main() {
 	//Main loop
 	run := true
 	for run {
+		disk.net.online = !win.io.ini.Offline //update
+
 		var redraw bool
 		run, redraw, err = win.UpdateIO()
 		if err != nil {
@@ -93,6 +96,6 @@ func main() {
 			time.Sleep(10 * time.Millisecond)
 		}
 
-		dbs.Tick()
+		disk.Tick()
 	}
 }

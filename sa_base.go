@@ -34,13 +34,10 @@ type SABase struct {
 	trns SATranslations
 
 	server *SANodeServer
-
-	net *DiskNet
 }
 
 func NewSABase(ui *Ui) (*SABase, error) {
 	base := &SABase{}
-
 	base.ui = ui
 
 	//open
@@ -72,8 +69,6 @@ func NewSABase(ui *Ui) (*SABase, error) {
 		return nil, fmt.Errorf("NewNodeServer() failed: %w", err)
 	}
 
-	base.net = NewDiskNet(base.ui.win)
-
 	base.Refresh()
 
 	return base, nil
@@ -86,8 +81,6 @@ func (base *SABase) Destroy() {
 	for _, a := range base.Apps {
 		a.Destroy()
 	}
-
-	base.net.Destroy()
 
 	base.server.Destroy()
 }
