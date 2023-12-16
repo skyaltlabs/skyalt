@@ -242,33 +242,30 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 		}
 	}
 
-	// Access
+	//Access:
+	//attr		//same widget
+	//.attr		//parent
+	//widget.attr
 	if lexer.subs[0].tp == VmLexerWord {
 
 		instr := NewVmInstr(VmBasic_Access)
 
-		if len(lexer.subs) >= 2 && lexer.subs[1].tp == VmLexerDot {
+		if len(lexer.subs) == 1 {
+			//attribute from same widget
+			line.addAccess(line.widget, lexer.subs[0].GetString(line.line), instr, lexer)
+		} else if len(lexer.subs) >= 2 && lexer.subs[1].tp == VmLexerDot {
 			if len(lexer.subs) >= 3 && lexer.subs[2].tp == VmLexerWord {
-
 				if len(lexer.subs) == 3 {
-
+					//widget.attribute
 					widgetName := lexer.subs[0].GetString(line.line)
-					attrName := lexer.subs[2].GetString(line.line)
-
 					ww := line.widget.parent.FindNode(widgetName)
 					if ww != nil {
-						vv := ww.findAttr(attrName)
-						if vv != nil {
-							instr.attr = vv
-							line.depends = append(line.depends, vv) //add
-						} else {
-							line.addError(lexer, fmt.Sprintf("Attribute(%s) not found", attrName))
-						}
+						line.addAccess(ww, lexer.subs[2].GetString(line.line), instr, lexer)
 					} else {
 						line.addError(lexer, fmt.Sprintf("Widget(%s) not found", widgetName))
 					}
 				} else {
-					line.addError(lexer, "Access must be in form of <widget>.<attribute>")
+					line.addError(lexer, "Access must be in form of <widget>.<attribute> or .<attribute>")
 				}
 			} else {
 				line.addError(lexer, "Missing attribute")
@@ -278,10 +275,37 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 		}
 
 		return instr
+	} else if lexer.subs[0].tp == VmLexerDot {
+
+		instr := NewVmInstr(VmBasic_Access)
+
+		if len(lexer.subs) >= 2 && lexer.subs[1].tp == VmLexerWord {
+			if len(lexer.subs) == 2 {
+				//attribute from parent widget
+				line.addAccess(line.widget.parent, lexer.subs[1].GetString(line.line), instr, lexer)
+			} else {
+				line.addError(lexer, "Access must be in form of <widget>.<attribute> or .<attribute>")
+			}
+		} else {
+			line.addError(lexer, "Missing attribute")
+		}
+		return instr
 	}
 
 	line.addError(lexer, "Unrecognize syntax")
 	return nil
+}
+
+func (line *VmLine) addAccess(widget *SAWidget, attrName string, instr *VmInstr, lexer *VmLexer) {
+
+	vv := widget.findAttr(attrName)
+	if vv != nil {
+		instr.attr = vv
+		line.depends = append(line.depends, vv) //add
+	} else {
+		line.addError(lexer, fmt.Sprintf("Attribute(%s) not found", attrName))
+	}
+
 }
 
 func (line *VmLine) Parse() *VmInstr {
