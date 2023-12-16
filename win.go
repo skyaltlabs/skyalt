@@ -744,7 +744,7 @@ func (win *Win) renderStats() error {
 
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
-	text := fmt.Sprintf("FPS(worst: %.1f, best: %.1f, avg: %.1f), Memory(%d imgs: %.2fMB, process: %.2fMB), Threads(%d), Net(downloads: %d, erros: %d)",
+	text := fmt.Sprintf("FPS(worst: %.1f, best: %.1f, avg: %.1f), Memory(%d imgs: %.2fMB, process: %.2fMB), Threads(%d), Net(downloads: %d, errors: %d)",
 		win.stat.out_worst_fps, win.stat.out_best_fps, win.stat.out_avg_fps,
 		win.NumTextures(), float64(win.GetImagesBytes())/1024/1024, float64(mem.Sys)/1024/1024,
 		runtime.NumGoroutine(),
