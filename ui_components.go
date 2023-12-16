@@ -49,7 +49,6 @@ func (ui *Ui) _compIsClicked(enable bool) (int, int, bool, bool, bool) {
 		active = lv.call.data.touch_active
 		end = lv.call.data.touch_end
 
-		end := lv.call.data.touch_end
 		force := ui.win.io.touch.rm
 
 		if inside && end {
