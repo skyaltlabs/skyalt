@@ -27,10 +27,11 @@ type DiskDb struct {
 	inMemory bool
 
 	db *sql.DB
-	tx *sql.Tx
+	//tx *sql.Tx
 
 	//cache          []*DiskDbCache
 	lastWriteTicks int64
+	lastReadTicks  int64
 }
 
 func NewDiskDb(path string, inMemory bool, disk *Disk) (*DiskDb, error) {
@@ -59,12 +60,24 @@ func (db *DiskDb) Destroy() {
 
 	db.db.Exec("PRAGMA wal_checkpoint(full);")
 
-	db.Commit()
+	//db.Commit()
 
 	err := db.db.Close()
 	if err != nil {
 		fmt.Printf("db(%s).Destroy() failed: %v\n", db.path, err)
 	}
+}
+
+func DiskDb_Vacuum(path string) error {
+	db, err := sql.Open("sqlite3", "file:"+path)
+	if err != nil {
+		return fmt.Errorf("sql.Open(%s) failed: %w", path, err)
+	}
+	defer db.Close()
+
+	db.Exec("VACUUM;")
+
+	return nil
 }
 
 func (db *DiskDb) Attach(path string, alias string, inMemory bool) error {
@@ -127,7 +140,7 @@ func (db *DiskDb) Vacuum() {
 	db.db.Exec("VACUUM;")
 }
 
-func (db *DiskDb) Begin() (*sql.Tx, error) {
+/*func (db *DiskDb) Begin() (*sql.Tx, error) {
 	if db.tx == nil {
 		var err error
 		db.tx, err = db.db.Begin()
@@ -165,16 +178,17 @@ func (db *DiskDb) Rollback() error {
 
 	db.disk.ResetTick()
 	return err
-}
+}*/
 
 func (db *DiskDb) Write(query string, params ...any) (sql.Result, error) {
 
-	tx, err := db.Begin()
+	/*tx, err := db.Begin()
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := tx.Exec(query, params...)
+	res, err := tx.Exec(query, params...)*/
+	res, err := db.db.Exec(query, params...)
 	if err != nil {
 		return nil, fmt.Errorf("query(%s) failed: %w", query, err)
 	}
@@ -184,7 +198,13 @@ func (db *DiskDb) Write(query string, params ...any) (sql.Result, error) {
 	return res, nil
 }
 
+func (db *DiskDb) ReadRow(query string, params ...any) *sql.Row {
+	db.lastReadTicks = int64(OsTicks())
+	return db.db.QueryRow(query, params...)
+}
+
 func (db *DiskDb) Read(query string, params ...any) (*sql.Rows, error) {
+	db.lastReadTicks = int64(OsTicks())
 	return db.db.Query(query, params...)
 }
 
