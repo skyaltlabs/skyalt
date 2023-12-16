@@ -56,7 +56,7 @@ func (ui *Ui) Paint_textGrid(grid OsV4, cd OsCd, style *UiComp, value string, va
 	}
 
 	if !style.enable {
-		lv.call.data.touch_enabled = false
+		lv.call.touch_enabled = false
 	}
 	lv.call.data.scrollH.narrow = true
 	lv.call.data.scrollV.show = false
@@ -279,7 +279,7 @@ func (ui *Ui) _UiPaint_TextSelectTouch(str string, strEditOrig string, touchPos 
 		edit.tab = false
 
 		ui.win.SetTextCursorMove()
-	} else if lv.call.data.touch_inside && touch.start {
+	} else if lv.call.IsTouchInside(ui) && touch.start {
 		//click inside
 		if !active {
 			edit.next_uid = this_uid //set next_uid
@@ -305,7 +305,7 @@ func (ui *Ui) _UiPaint_TextSelectTouch(str string, strEditOrig string, touchPos 
 	}
 
 	//keep selecting
-	if active && lv.call.data.touch_active && (touch.numClicks != 2 && touch.numClicks != 3) {
+	if active && lv.call.IsTouchActive(ui) && (touch.numClicks != 2 && touch.numClicks != 3) {
 		edit.end = touchPos //set end
 
 		//scroll
@@ -675,7 +675,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4, lineY int, lineEnd OsV2,
 			return false
 		}
 
-		if (lv.call.data.over || lv.call.data.touch_active) || edit.setFirstEditbox {
+		if (lv.call.IsOver(ui) || lv.call.IsTouchActive(ui)) || edit.setFirstEditbox {
 			ui._UiPaint_TextSelectTouch(value, valueOrigEdit, OsV2{touchPos, lineY}, lineEnd, editable, font, textH, lineH, margin, marginX, enableFormating)
 		}
 
@@ -694,7 +694,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4, lineY int, lineEnd OsV2,
 
 				//enter or Tab(key) or outside => save
 				isOutside := false
-				if touch.start && !lv.call.data.touch_inside {
+				if touch.start && !lv.call.IsTouchInside(ui) {
 					uid := edit.uid
 					isOutside = (uid != nil && uid == lv.call)
 				}

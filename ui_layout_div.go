@@ -36,7 +36,8 @@ type UiLayoutDiv struct {
 
 	data UiLayout
 
-	enableInput bool
+	touch_enabled bool //this is set by user
+	enableInput   bool //this is computed
 
 	childs    []*UiLayoutDiv
 	lastChild *UiLayoutDiv
@@ -46,12 +47,6 @@ type UiLayoutDiv struct {
 
 	touchResizeIndex int
 	touchResizeIsCol bool
-
-	//buff *PaintBuff
-	//buff_pre *PaintBuff
-	//changed_size  bool
-	//changed_touch bool
-	//changed_key   bool
 }
 
 func (div *UiLayoutDiv) Use() {
@@ -137,6 +132,7 @@ func NewUiLayoutPack(parent *UiLayoutDiv, name string, grid OsV4, app *UiLayoutA
 	div.parent = parent
 	div.grid = grid
 
+	div.touch_enabled = true
 	div.data.Init(div.ComputeHash(), app)
 
 	div.Use()
@@ -532,4 +528,31 @@ func (div *UiLayoutDiv) GetCloseCell(touchPos OsV2) OsV4 {
 	grid.Size.X = 1
 	grid.Size.Y = 1
 	return grid
+}
+
+func (div *UiLayoutDiv) IsOver(ui *Ui) bool {
+	return div.enableInput && div.crop.Inside(ui.win.io.touch.pos) && !ui.touch.IsResizeActive()
+}
+
+func (div *UiLayoutDiv) IsOverScroll(ui *Ui) bool {
+	insideScrollV, insideScrollH := ui._render_touchScrollEnabled(div)
+	return div.enableInput && (insideScrollV || insideScrollH)
+}
+
+func (div *UiLayoutDiv) IsTouchActive(ui *Ui) bool {
+	return ui.touch.IsFnMove(div, nil, nil, nil)
+}
+
+func (div *UiLayoutDiv) IsTouchInside(ui *Ui) bool {
+	inside := div.IsOver(ui)
+
+	if !div.IsTouchActive(ui) && div.enableInput && ui.touch.IsAnyActive() { // when click and move, other Buttons, etc. are disabled
+		inside = false
+	}
+
+	return inside
+}
+
+func (div *UiLayoutDiv) IsTouchEnd(ui *Ui) bool {
+	return div.enableInput && ui.win.io.touch.end && div.IsTouchActive(ui) //doesn't have to be inside!
 }

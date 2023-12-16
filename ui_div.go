@@ -48,7 +48,7 @@ func (ui *Ui) Div_startCoord(x, y, w, h int, coord OsV4, name string) *UiLayoutD
 	cz := lv.call.canvas.Size
 	s := coord.Start.Sub(lv.call.canvas.Start)
 
-	return ui.Div_startEx(0, 0, 1, 1, float64(s.X)/float64(cz.X), float64(s.Y)/float64(cz.Y), float64(coord.Size.X)/float64(cz.X), float64(coord.Size.Y)/float64(cz.Y), name)
+	return ui.Div_startEx(x, y, w, h, float64(s.X)/float64(cz.X), float64(s.Y)/float64(cz.Y), float64(coord.Size.X)/float64(cz.X), float64(coord.Size.Y)/float64(cz.Y), name)
 }
 
 func (ui *Ui) Div_startName(x, y, w, h int, name string) *UiLayoutDiv {
@@ -201,7 +201,7 @@ func (ui *Ui) Div_drag(groupName string, id int) {
 
 	lv := ui.GetCall()
 
-	if lv.call.data.touch_active {
+	if lv.call.IsTouchActive(ui) {
 		drag := &ui.drag
 		//set
 		drag.div = lv.call

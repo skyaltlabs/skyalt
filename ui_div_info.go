@@ -114,13 +114,13 @@ func (ui *Ui) DivInfo_get(cmd uint8, uid float64) float64 {
 		return float64(rpos.Y) / float64(div.canvas.Size.Y)
 
 	case SA_DIV_GET_touchOver:
-		return OsTrnFloat(div.data.over, 1, 0)
+		return OsTrnFloat(div.IsOver(ui), 1, 0)
 
 	case SA_DIV_GET_touchOverScroll:
-		return OsTrnFloat(div.data.overScroll, 1, 0)
+		return OsTrnFloat(div.IsOverScroll(ui), 1, 0)
 
 	case SA_DIV_GET_touchInside:
-		return OsTrnFloat(div.data.touch_inside, 1, 0)
+		return OsTrnFloat(div.IsTouchInside(ui), 1, 0)
 
 	case SA_DIV_GET_touchStart:
 		if div.enableInput {
@@ -148,9 +148,9 @@ func (ui *Ui) DivInfo_get(cmd uint8, uid float64) float64 {
 		}
 
 	case SA_DIV_GET_touchActive:
-		return OsTrnFloat(div.data.touch_active, 1, 0)
+		return OsTrnFloat(div.IsTouchActive(ui), 1, 0)
 	case SA_DIV_GET_touchEnd:
-		return OsTrnFloat(div.data.touch_end, 1, 0)
+		return OsTrnFloat(div.IsTouchEnd(ui), 1, 0)
 
 	case SA_DIV_GET_touchCol:
 		return float64(div.data.cols.GetCloseCell(div.GetRelativePos(ui.win.io.touch.pos).X))
@@ -197,8 +197,8 @@ func (ui *Ui) DivInfo_set(cmd uint8, val float64, uid float64) float64 {
 
 	switch cmd {
 	case SA_DIV_SET_touch_enable:
-		bck := div.data.touch_enabled
-		div.data.touch_enabled = OsTrnBool(val > 0, true, false)
+		bck := div.touch_enabled
+		div.touch_enabled = OsTrnBool(val > 0, true, false)
 		return OsTrnFloat(bck, 1, 0)
 
 	case SA_DIV_SET_scrollVpos:

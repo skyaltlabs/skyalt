@@ -24,14 +24,6 @@ type UiLayout struct {
 	scrollH        UiLayoutScroll
 	scrollOnScreen bool //show scroll all the time
 
-	//maybe have them one time in Root like a 'over* Layout', 'overScroll* Layout', etc. - in LayoutTouch ...
-	over          bool
-	overScroll    bool
-	touch_inside  bool
-	touch_active  bool
-	touch_end     bool
-	touch_enabled bool
-
 	app  *UiLayoutApp
 	hash uint64
 }
@@ -40,7 +32,6 @@ func (lay *UiLayout) Init(hash uint64, app *UiLayoutApp) {
 
 	lay.app = app
 	lay.hash = hash
-	lay.touch_enabled = true
 
 	lay.scrollV.Init()
 	lay.scrollH.Init()

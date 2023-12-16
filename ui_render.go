@@ -74,14 +74,10 @@ func (ui *Ui) renderStart(rx, ry, rw, rh float64, drawBack bool) {
 
 	lv := ui.GetCall()
 
-	//st.stack.changed_size = false
-	//st.stack.changed_touch = false
-	//st.stack.changed_key = false
-
 	lv.call.data.Reset() //here because after *dialog* needs to know old size
 	lv.call.UpdateCoord(rx, ry, rw, rh, ui.win)
 
-	enableInput := lv.call.data.touch_enabled
+	enableInput := lv.call.touch_enabled
 	if lv.call.parent == nil {
 		enableInput = ui.IsStackTop()
 	} else {
@@ -91,59 +87,26 @@ func (ui *Ui) renderStart(rx, ry, rw, rh float64, drawBack bool) {
 
 	// scroll touch
 	insideScrollV, insideScrollH := ui._render_touchScrollEnabled(lv.call)
-	overScroll := enableInput && (insideScrollV || insideScrollH)
 	enableInput = enableInput && !insideScrollV && !insideScrollH //can NOT click through
-
 	startTouch := enableInput && ui.win.io.touch.start && !ui.win.io.keys.alt
-	endTouch := enableInput && ui.win.io.touch.end
 	over := enableInput && lv.call.crop.Inside(ui.win.io.touch.pos) && !ui.touch.IsResizeActive()
 
-	inside := over
-	if inside && startTouch && enableInput {
+	if over && startTouch && enableInput {
 		if !ui.touch.IsScrollOrResizeActive() { //if lower resize or scroll is activated than don't rewrite it with higher canvas
 			ui.touch.Set(lv.call, nil, nil, nil)
+			//lv.call.Print(true)
 		}
 	}
-	touchActiveMove := ui.touch.IsFnMove(lv.call, nil, nil, nil)
-
-	if !touchActiveMove && enableInput && ui.touch.IsAnyActive() { // when click and move, other Buttons, etc. are disabled
-		inside = false
-	}
-
-	touch_end := (endTouch && touchActiveMove)
 
 	lv.call.enableInput = enableInput
 
-	//jump between inside/outside or action/noaction
-	//st.stack.changed_touch = (st.stack.data.over != over || st.stack.data.overScroll != overScroll || st.stack.data.touch_inside != inside || st.stack.data.touch_active != touchActiveMove || st.stack.data.touch_end != touch_end)
-
-	lv.call.data.over = over
-	lv.call.data.overScroll = overScroll
-	lv.call.data.touch_inside = inside
-	lv.call.data.touch_active = touchActiveMove
-	lv.call.data.touch_end = touch_end //&& inside
-
-	//there is action inside
-	/*if st.stack.data.over || st.stack.data.overScroll || st.stack.data.touch_inside || st.stack.data.touch_active || st.stack.data.touch_end {
-		st.stack.changed_touch = true
-	}*/
-
-	/*if st.stack.changed_touch {
-		p := st.stack.parent
-		for p != nil {
-			p.changed_touch = true
-			p = p.parent
-		}
-	}*/
-
-	//root.buff.Reset(st.stack.crop, root, drawBack)
 	ui.buff.AddCrop(lv.call.crop)
 
 	if ui.win.io.ini.Grid {
 		ui.renderGrid()
 	}
 
-	lv.call.data.touch_enabled = true //reset for next tick
+	lv.call.touch_enabled = true //reset for next tick
 }
 
 func (ui *Ui) renderGrid() {
