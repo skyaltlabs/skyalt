@@ -102,17 +102,7 @@ func (indf *DiskIndexFile) updateDb(folder string) error {
 }
 
 func (indf *DiskIndexFile) Vacuum(folder string) error {
-
-	path := folder + "/" + indf.Name
-	db, err := sql.Open("sqlite3", "file:"+path)
-	if err != nil {
-		return fmt.Errorf("sql.Open(%s) failed: %w", path, err)
-	}
-	defer db.Close()
-
-	db.Exec("VACUUM;")
-
-	return nil
+	return DiskDb_Vacuum(folder + "/" + indf.Name)
 }
 
 type DiskIndexFolder struct {
@@ -232,6 +222,10 @@ type Disk struct {
 	index DiskIndexFolder
 
 	last_ticks int64
+
+	dbs map[string]*DiskDb
+
+	net *DiskNet
 }
 
 func NewDisk(folder string) (*Disk, error) {
@@ -254,6 +248,10 @@ func NewDisk(folder string) (*Disk, error) {
 
 	disk.UpdateIndex()
 
+	disk.dbs = make(map[string]*DiskDb)
+
+	disk.net = NewDiskNet()
+
 	return &disk, nil
 }
 
@@ -263,6 +261,37 @@ func (disk *Disk) Destroy() {
 	if err != nil {
 		fmt.Printf("SaveIndex() failed: %v\n", err)
 	}
+
+	for _, db := range disk.dbs {
+		db.Destroy()
+	}
+
+	disk.net.Destroy()
+}
+
+func (disk *Disk) OpenDb(path string) (*DiskDb, bool, error) {
+
+	//find
+	db, found := disk.dbs[path]
+
+	if !found {
+		folder := filepath.Dir(path)
+		err := OsFolderCreate(folder)
+		if err != nil {
+			return nil, false, fmt.Errorf("OsFolderCreate(%s) failed: %w", folder, err)
+		}
+
+		//open
+		db, err = NewDiskDb(path, false, disk)
+		if err != nil {
+			return nil, false, fmt.Errorf("NewDiskDb(%s) failed: %w", path, err)
+		}
+
+		//add
+		disk.dbs[path] = db
+	}
+
+	return db, found, nil
 }
 
 func (disk *Disk) GetIndexPath() string {
@@ -310,6 +339,10 @@ func (disk *Disk) Tick() {
 		disk.UpdateIndex()
 		disk.last_ticks = OsTicks()
 	}
+
+	//close innactive databases
+	//..
+
 }
 
 func (disk *Disk) GetFileTable(path string) []*DiskIndexTable {
