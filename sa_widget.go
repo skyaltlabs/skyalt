@@ -194,6 +194,20 @@ func (w *SAWidget) HasExpError() bool {
 	return false
 }
 
+func (w *SAWidget) HasExeError() bool {
+
+	if w.errExe != nil {
+		return true
+	}
+
+	for _, it := range w.Attrs {
+		if it.errExe != nil {
+			return true
+		}
+	}
+	return false
+}
+
 func (w *SAWidget) UpdateExpresions(app *SAApp) {
 
 	for _, it := range w.Attrs {
@@ -234,6 +248,10 @@ func (w *SAWidget) checkForLoopInner(find *SAWidget) {
 
 	for _, v := range w.Attrs {
 		for _, dep := range v.depends {
+			if dep.widget == w {
+				continue //skip self-depends
+			}
+
 			if dep.widget == find {
 				v.errExp = fmt.Errorf("Loop")
 				continue //avoid infinite recursion
@@ -270,6 +288,10 @@ func (w *SAWidget) areAttrsErrorFree() bool {
 func (w *SAWidget) areAttrsReadyToRun() bool {
 	for _, v := range w.Attrs {
 		for _, dep := range v.depends {
+			if dep.widget == w {
+				continue //skip self-depends
+			}
+
 			if dep.widget.running || !dep.widget.done {
 				return false //still running
 			}
@@ -283,8 +305,11 @@ func (w *SAWidget) areAttrsChangedAndUpdate() bool {
 	changed := false
 	for _, it := range w.Attrs {
 
-		var val string
+		if it.errExp != nil {
+			return true
+		}
 
+		var val string
 		if it.instr != nil && !it.isDirectLink {
 			st := InitVmST()
 			rec := it.instr.Exe(nil, &st)
@@ -344,17 +369,22 @@ func (w *SAWidget) IsGuiLayout() bool {
 	return w.Exe == "layout" || !w.IsGui() //every exe is layout
 }
 func (w *SAWidget) IsGui() bool {
-
 	if w.Exe == "" {
 		return true
 	}
-
-	for _, fn := range SAStandardWidgets {
-		if fn == w.Exe {
-			return true
-		}
+	return SAApp_IsStdPrimitive(w.Exe)
+}
+func (w *SAWidget) IsExe() bool {
+	if w.Exe == "" {
+		return false
 	}
-	return false
+	if SAApp_IsStdPrimitive(w.Exe) {
+		return false
+	}
+	if SAApp_IsStdComponent(w.Exe) {
+		return false
+	}
+	return true
 }
 
 func (w *SAWidget) ExecuteSubs(server *SANodeServer, max_threads int) {
@@ -372,7 +402,7 @@ func (w *SAWidget) ExecuteSubs(server *SANodeServer, max_threads int) {
 			if !it.done {
 				run = true
 				if it.IsReadyToBeExe() {
-					if !it.IsGui() {
+					if it.IsExe() {
 
 						//maximum concurent threads
 						if numActiveThreads.Load() >= int64(max_threads) {
@@ -454,9 +484,9 @@ func (w *SAWidget) execute(server *SANodeServer) {
 		w.errExe = fmt.Errorf("can't find node exe(%s)", w.Exe)
 	}
 
-	if w.errExe != nil {
-		fmt.Printf("Node(%s) has error(%v)\n", w.Name, w.errExe)
-	}
+	//if w.HasExeError() {
+	//	fmt.Printf("Node(%s) has error(%v)\n", w.Name, w.errExe)
+	//}
 
 	w.done = true
 	w.running = false
@@ -569,6 +599,7 @@ func (w *SAWidget) getPath() string {
 }
 
 func (w *SAWidget) CheckUniqueName() {
+	w.Name = strings.ReplaceAll(w.Name, ".", "") //remove all '.'
 	for w.parent.NumNames(w.Name) >= 2 {
 		w.Name += "1"
 	}
@@ -613,6 +644,16 @@ func (w *SAWidget) _getAttr(defValue SAWidgetAttr) *SAWidgetAttr {
 	}
 
 	return v
+}
+
+func (w *SAWidget) findAttrFloat(name string) (*SAWidgetAttr, float64) {
+	for _, it := range w.Attrs {
+		if it.Name == name {
+			vv, _ := strconv.ParseFloat(it.Value, 64)
+			return it, vv
+		}
+	}
+	return nil, 0
 }
 
 // this should be use for Gui_ReadOnly=true
@@ -731,34 +772,61 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 		enable := w.GetAttrBoolSwitch("enable", "1") && editable
 		ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, w.GetAttrIntEdit("precision", "2"), "", w.GetAttrStringEdit("ghost", ""), false, w.GetAttrBoolSwitch("tempToValue", "0"), enable)
 
-	case "layout":
-		ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
-		w.RenderLayout(ui, app)
-		ui.Div_end()
-
 	case "map":
-		ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
+		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
 		app.mapp.Render(w, ui)
 		ui.Div_end()
 
+		div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, ".subs.")
+		div.touch_enabled = false
+		w.RenderLayout(ui, app)
+		ui.Div_end()
+
+	case "map_locators":
+		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
+		app.mapp.RenderLocators(w, ui)
+		ui.Div_end()
+
+	case "layout":
+		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
+		w.RenderLayout(ui, app)
+		ui.Div_end()
+
 	default: //layout
-		ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
+		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
 		w.RenderLayout(ui, app)
 		ui.Div_end()
 	}
 
 	if app.IDE {
 		//draw Select rectangle
-		if w.Selected && app.act == w.parent {
-			div := ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
-			div.enableInput = false
-			ui.Paint_rect(0, 0, 1, 1, 0, SAApp_getYellow(), 0.03)
-			ui.Div_end()
+		if app.act == w.parent {
+			if w.HasExeError() || w.HasExpError() {
+				pl := ui.buff.win.io.GetPalette()
+				cd := pl.E
+				cd.A = 150
 
-			s := ui.CellWidth(0.2)
-			ui.buff.AddRect(InitOsV4Mid(div.crop.End(), OsV2{s, s}), SAApp_getYellow(), 0)
+				//rect
+				div := ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
+				div.touch_enabled = false
+				ui.Paint_rect(0, 0, 1, 1, 0, cd, 0)
+				ui.Div_end()
+			}
+
+			if w.Selected {
+				cd := SAApp_getYellow()
+
+				//rect
+				div := ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
+				div.touch_enabled = false
+				ui.Paint_rect(0, 0, 1, 1, 0, cd, 0.06)
+				ui.Div_end()
+
+				//resizer
+				s := ui.CellWidth(0.2)
+				ui.buff.AddRect(InitOsV4Mid(div.crop.End(), OsV2{s, s}), cd, 0)
+			}
 		}
-
 		//full rectangle if expression(editbox) in params is activate ...
 	}
 }
@@ -832,24 +900,41 @@ func _SAWidget_renderParamsValue(x, y, w, h int, attr *SAWidgetAttr, ui *Ui) {
 	}
 }
 
-func (w *SAWidget) RenderParams(ui *Ui) {
+func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 
 	ui.Div_colMax(0, 100)
-	ui.Div_row(2, 0.5) //spacer
+	if w.IsGuiLayout() {
+		ui.Div_row(3, 0.5) //spacer
+	} else {
+		ui.Div_row(2, 0.5) //spacer
+	}
 
 	y := 0
 
-	//Name
+	if w.IsGuiLayout() {
+		if ui.Comp_buttonLight(0, y, 1, 1, "Open", "", true) > 0 {
+			app.act = w
+		}
+		y++
+	}
+
 	ui.Div_start(0, y, 1, 1)
 	{
 		ui.Div_colMax(0, 100)
 		ui.Div_colMax(1, 2)
+		ui.Div_colMax(2, 2)
+
+		//Name
 		_, _, _, fnshd, _ := ui.Comp_editbox_desc("Name", 0, 2, 0, 0, 1, 1, &w.Name, 0, "", "Name", false, false, true)
 		if fnshd && w.parent != nil {
 			w.CheckUniqueName()
 		}
 
-		if ui.Comp_button(1, 0, 1, 1, "Delete", "", true) > 0 {
+		//type
+		w.Exe = app.ComboListOfWidgets(1, 0, 1, 1, w.Exe, ui)
+
+		//delete
+		if ui.Comp_button(2, 0, 1, 1, "Delete", "", true) > 0 {
 			w.Remove()
 		}
 	}

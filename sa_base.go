@@ -246,7 +246,7 @@ func (base *SABase) drawFrame(ui *Ui) {
 
 		sel := app.act.FindSelected()
 		if sel != nil {
-			sel.RenderParams(ui)
+			sel.RenderParams(app, ui)
 		}
 
 		ui.Div_end()

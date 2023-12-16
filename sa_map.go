@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"strconv"
@@ -121,6 +122,64 @@ func (mp *SAMap) isZooming() (bool, float64, float64) {
 	ANIM_TIME := 0.4
 	dt := OsTime() - mp.start_zoom_time
 	return (dt < ANIM_TIME), dt, ANIM_TIME
+}
+
+func (mp *SAMap) RenderLocators(w *SAWidget, ui *Ui) {
+	w.errExe = nil
+
+	items := w.GetAttrStringEdit("items", "[{\"lon\":14.4071117049, \"lat\":50.0852013259, \"label\":\"1\"}, {\"lon\":14, \"lat\":50, \"label\":\"2\"}]")
+
+	lonAttr, cam_lon := w.parent.findAttrFloat("lon")
+	latAttr, cam_lat := w.parent.findAttrFloat("lat")
+	zoomAttr, cam_zoom := w.parent.findAttrFloat("zoom")
+	if lonAttr == nil || latAttr == nil || zoomAttr == nil {
+		w.errExe = fmt.Errorf("parent widget is not 'Map' type")
+		return
+	}
+
+	cell := ui.DivInfo_get(SA_DIV_GET_cell, 0)
+	width := ui.DivInfo_get(SA_DIV_GET_screenWidth, 0)
+	height := ui.DivInfo_get(SA_DIV_GET_screenHeight, 0)
+
+	coord := OsV2f{float32(width), float32(height)}
+
+	tile := 256 / cell * 1 /*1=scale*/
+	tileW := tile / width
+	tileH := tile / height
+
+	CamCheck(coord, tile, cam_lon, cam_lat, cam_zoom)
+	bbStart, _, _ := CamBbox(coord, tile, cam_lon, cam_lat, cam_zoom)
+
+	type Item struct {
+		Lon   float64
+		Lat   float64
+		Label string
+	}
+	var its []Item
+	err := json.Unmarshal([]byte(items), &its)
+	if err != nil {
+		w.findAttr("items").errExe = fmt.Errorf("invalide json: %w", err)
+		return
+	}
+
+	ui.Div_colMax(0, 100)
+	ui.Div_rowMax(0, 100)
+	for i, it := range its {
+		p := LonLatToPos(it.Lon, it.Lat, cam_zoom)
+
+		x := float64(p.X-bbStart.X) * tileW
+		y := float64(p.Y-bbStart.Y) * tileH
+
+		rad := 1.0
+		rad_x := rad / width
+		rad_y := rad / height
+
+		ui.Div_startEx(0, 0, 1, 1, x-rad_x/2, y-rad_y, rad_x, rad_y, strconv.Itoa(i))
+		ui.Paint_file(0, 0, 1, 1, 0, "file:apps/base/resources/locator.png", InitOsCd32(200, 20, 20, 255), 1, 0, false) //red
+		ui.Div_end()
+		//ui.Paint_file(x-rad_x/2, y-rad_y, rad_x, rad_y, 0, "file:apps/base/resources/locator.png", InitOsCd32(200, 20, 20, 255), 1, 0, false) //red
+	}
+
 }
 
 func (mp *SAMap) Render(w *SAWidget, ui *Ui) {
