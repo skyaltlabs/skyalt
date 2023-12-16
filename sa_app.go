@@ -212,7 +212,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 				ui.buff.AddRect(rect, SAApp_getYellow(), ui.CellWidth(0.03))
 				ui.buff.AddText("+", rect, ui.win.fonts.Get(SKYALT_FONT_PATH), SAApp_getYellow(), ui.win.io.GetDPI()/8, OsV2{1, 1}, nil, true)
 
-				if appDiv.data.touch_end {
+				if appDiv.IsTouchEnd(ui) {
 					app.addWidgetCoord = grid
 					ui.Dialog_open("nodes_list", 2)
 				}
@@ -222,7 +222,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	app.drawCreateWidget(ui)
 
 	//select/move widget
-	if appDiv.data.over {
+	if appDiv.IsOver(ui) {
 		grid := appDiv.GetCloseCell(touch.pos)
 
 		var found *SAWidget
@@ -256,7 +256,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 		//}
 	}
 	if touch.end {
-		if appDiv.data.over && keys.alt && app.startClickWidget == nil { //click outside widgets
+		if appDiv.IsOver(ui) && keys.alt && app.startClickWidget == nil { //click outside widgets
 			app.act.DeselectAll()
 		}
 		app.startClickWidget = nil
@@ -267,7 +267,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 		keys := &ui.buff.win.io.keys
 
 		//delete
-		if appDiv.data.over && keys.delete {
+		if appDiv.IsOver(ui) && keys.delete {
 			app.act.RemoveSelectedNodes()
 		}
 
@@ -288,11 +288,11 @@ func (app *SAApp) History(ui *Ui) {
 	keys := &ui.buff.win.io.keys
 	//over := lv.call.data.over
 
-	if lv.call.data.over && ui.win.io.keys.backward {
+	if lv.call.IsOver(ui) && ui.win.io.keys.backward {
 		app.stepHistoryBack()
 
 	}
-	if lv.call.data.over && ui.win.io.keys.forward {
+	if lv.call.IsOver(ui) && ui.win.io.keys.forward {
 		app.stepHistoryForward()
 	}
 
@@ -302,7 +302,52 @@ func (app *SAApp) History(ui *Ui) {
 
 }
 
-var SAStandardWidgets = []string{"layout", "button", "text", "checkbox", "switch", "edit", "combo", "map"}
+var SAStandardPrimitives = []string{"button", "text", "checkbox", "switch", "edit", "combo"}
+var SAStandardComponents = []string{"layout", "map", "map_locators"}
+
+func SAApp_IsStdPrimitive(name string) bool {
+	for _, fn := range SAStandardPrimitives {
+		if fn == name {
+			return true
+		}
+	}
+	return false
+}
+func SAApp_IsStdComponent(name string) bool {
+	for _, fn := range SAStandardComponents {
+		if fn == name {
+			return true
+		}
+	}
+	return false
+}
+
+func (app *SAApp) getListOfWidgets() []string {
+	fns := SAStandardPrimitives
+	fns = append(fns, SAStandardComponents...)
+	fns = append(fns, app.base.server.nodes...) //from /nodes dir
+	return fns
+}
+
+func (app *SAApp) ComboListOfWidgets(x, y, w, h int, act string, ui *Ui) string {
+	fns := app.getListOfWidgets()
+	i := 0
+	found_i := 0
+	options := ""
+	for _, fn := range fns {
+		options += fn + ";"
+		if fn == act {
+			found_i = i
+		}
+		i++
+	}
+	options, _ = strings.CutSuffix(options, ";")
+
+	if ui.Comp_combo(x, y, w, h, &found_i, options, "", true, true) {
+		act = fns[found_i]
+	}
+	return act
+}
 
 func (app *SAApp) drawCreateWidget(ui *Ui) {
 
@@ -314,11 +359,9 @@ func (app *SAApp) drawCreateWidget(ui *Ui) {
 		ui.Comp_editbox(0, 0, 1, 1, &search, 0, "", app.base.trns.SAVE, search != "", true, true)
 		y++
 
-		fns := SAStandardWidgets                    //stds
-		fns = append(fns, app.base.server.nodes...) //from /nodes dir
-
 		keys := &ui.buff.win.io.keys
 
+		fns := app.getListOfWidgets()
 		for _, fn := range fns {
 			if search == "" || strings.Contains(fn, search) {
 
