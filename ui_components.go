@@ -45,9 +45,9 @@ func (ui *Ui) _compIsClicked(enable bool) (int, int, bool, bool, bool) {
 	var inside, active, end bool
 	if enable {
 		lv := ui.GetCall()
-		inside = lv.call.data.touch_inside
-		active = lv.call.data.touch_active
-		end = lv.call.data.touch_end
+		inside = lv.call.IsTouchInside(ui)
+		active = lv.call.IsTouchActive(ui)
+		end = lv.call.IsTouchEnd(ui)
 
 		force := ui.win.io.touch.rm
 
@@ -158,7 +158,7 @@ func (ui *Ui) _compDrawText(coord OsV4, value string, valueOrigEdit string, cd O
 
 	if selection {
 		lv := ui.GetCall()
-		if lv.call.data.touch_inside {
+		if lv.call.IsTouchInside(ui) {
 			ui.Paint_cursor("ibeam")
 		}
 	}
@@ -538,7 +538,7 @@ func (ui *Ui) Comp_edit_s(style *UiComp, valueIn string, valueInOrig string, ico
 	} else {
 		value = valueIn
 	}
-	inDiv.data.touch_enabled = style.enable
+	inDiv.touch_enabled = style.enable
 
 	coord := lv.call.canvas
 	coord = coord.AddSpace(ui.CellWidth(0.03))
