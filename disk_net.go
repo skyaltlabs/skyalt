@@ -76,16 +76,19 @@ func (job *DiskNetJob) download() {
 }
 
 type DiskNet struct {
-	win       *Win
 	lock      sync.Mutex
 	interrupt atomic.Bool
 
-	jobs []*DiskNetJob
+	jobs   []*DiskNetJob
+	online bool
+
+	num_jobs_done   int
+	num_jobs_errors int
 }
 
-func NewDiskNet(win *Win) *DiskNet {
+func NewDiskNet() *DiskNet {
 	net := &DiskNet{}
-	net.win = win
+	net.online = true
 
 	go net.Loop()
 
@@ -111,6 +114,11 @@ func (net *DiskNet) Loop() {
 				jb.download()
 			}
 			jb.done = true
+
+			net.num_jobs_done++
+			if jb.err != nil {
+				net.num_jobs_errors++
+			}
 		} else {
 			time.Sleep(10 * time.Millisecond)
 		}
@@ -153,7 +161,7 @@ func (net *DiskNet) add(url string, agent string) *DiskNetJob {
 
 func (net *DiskNet) GetFile(url string, agent string) ([]byte, bool, float64, error) {
 
-	if !net.win.io.ini.Offline {
+	if net.online {
 		jb := net.add(url, agent)
 		return jb.data, jb.done, jb.progress, jb.err
 	} else {
