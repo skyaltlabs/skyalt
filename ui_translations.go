@@ -23,7 +23,7 @@ import (
 	"strings"
 )
 
-type SATranslations struct {
+type UiTranslations struct {
 	SAVE            string
 	SETTINGS        string
 	ZOOM            string
@@ -89,9 +89,72 @@ type SATranslations struct {
 
 	SIZE string
 	LOGS string
+
+	RED   string
+	GREEN string
+	BLUE  string
+
+	HUE        string
+	SATURATION string
+	LIGHTNESS  string
+
+	YEAR      string
+	MONTH     string
+	DAY       string
+	WEEK      string
+	HOUR      string
+	MINUTE    string
+	SECOND    string
+	JANUARY   string
+	FEBRUARY  string
+	MARCH     string
+	APRIL     string
+	MAY       string
+	JUNE      string
+	JULY      string
+	AUGUST    string
+	SEPTEMBER string
+	OCTOBER   string
+	NOVEMBER  string
+	DECEMBER  string
+	MON       string
+	TUE       string
+	WED       string
+	THU       string
+	FRI       string
+	SAT       string
+	SUN       string
+
+	MONDAY    string
+	TUESDAY   string
+	WEDNESDAY string
+	THURSDAY  string
+	FRIDAY    string
+	SATURDAY  string
+	SUNDAY    string
+
+	NEW_EVENT string
+	OK        string
+	TODAY     string
+	BETWEEN   string
+
+	TITLE       string
+	DESCRIPTION string
+	FILE        string
+	ADD_EVENT   string
+	CANCEL      string
+
+	BEGIN  string
+	FINISH string
+
+	EMPTY  string
+	EDIT   string
+	DELETE string
+
+	COLOR string
 }
 
-func SATranslations_fromJson(js []byte, langs []string) ([]byte, error) {
+func UiTranslations_fromJson(js []byte, langs []string) ([]byte, error) {
 
 	keys := make(map[string]string)
 
@@ -130,11 +193,11 @@ func SATranslations_fromJson(js []byte, langs []string) ([]byte, error) {
 	return js, nil
 }
 
-func SATranslations_fromJsonFile(path string, langs []string) ([]byte, error) {
+func UiTranslations_fromJsonFile(path string, langs []string) ([]byte, error) {
 	js, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("ReadFile(%s) failed: %w", path, err)
 	}
 
-	return SATranslations_fromJson(js, langs)
+	return UiTranslations_fromJson(js, langs)
 }
