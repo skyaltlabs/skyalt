@@ -26,36 +26,35 @@ import (
 
 //add:
 //- Measure ...
-//- Locators ...
 
 // https://wiki.openstreetmap.org/wiki/Raster_tile_providers
 
-type SAMap struct {
+type UiLayoutMap struct {
 	lonOld, latOld, zoomOld float64
 	start_pos               OsV2f
 	start_tile              OsV2f
 	start_zoom_time         float64
 }
 
-func NewSAMap() *SAMap {
-	mp := &SAMap{}
+func NewUiLayoutMap() *UiLayoutMap {
+	mp := &UiLayoutMap{}
 	return mp
 }
 
-func (mp *SAMap) Destroy() {
+func (mp *UiLayoutMap) Destroy() {
 }
 
-func MetersPerPixel(lat, zoom float64) float64 {
+func UiLayoutMap_metersPerPixel(lat, zoom float64) float64 {
 	return 156543.034 * math.Cos(lat/180*math.Pi) / math.Pow(2, zoom)
 }
 
-func LonLatToPos(lon, lat, zoom float64) OsV2f {
+func UiLayoutMap_lonLatToPos(lon, lat, zoom float64) OsV2f {
 	x := (lon + 180) / 360 * math.Pow(2, zoom)
 	y := (1 - math.Log(math.Tan(lat*math.Pi/180)+1/math.Cos(lat*math.Pi/180))/math.Pi) / 2 * math.Pow(2, zoom)
 	return OsV2f{float32(x), float32(y)}
 }
 
-func PosToLonLat(pos OsV2f, zoom float64) (float64, float64) {
+func UiLayoutMap_posToLonLat(pos OsV2f, zoom float64) (float64, float64) {
 	lon := float64(pos.X)/math.Pow(2, zoom)*360 - 180 //long
 
 	n := math.Pi - 2*math.Pi*float64(pos.Y)/math.Pow(2, zoom)
@@ -63,8 +62,8 @@ func PosToLonLat(pos OsV2f, zoom float64) (float64, float64) {
 	return lon, lat
 }
 
-func CamBbox(res OsV2f, tile float64, lon, lat, zoom float64) (OsV2f, OsV2f, OsV2f) {
-	tilePos := LonLatToPos(lon, lat, zoom)
+func UiLayoutMap_camBbox(res OsV2f, tile float64, lon, lat, zoom float64) (OsV2f, OsV2f, OsV2f) {
+	tilePos := UiLayoutMap_lonLatToPos(lon, lat, zoom)
 	max_res := math.Pow(2, zoom)
 
 	var start, end, size OsV2f
@@ -80,12 +79,12 @@ func CamBbox(res OsV2f, tile float64, lon, lat, zoom float64) (OsV2f, OsV2f, OsV
 	return start, end, size
 }
 
-func CamCheck(res OsV2f, tile float64, lon, lat, zoom float64) (float64, float64) {
+func UiLayoutMap_camCheck(res OsV2f, tile float64, lon, lat, zoom float64) (float64, float64) {
 	if res.X <= 0 || res.Y <= 0 {
 		return 0, 0
 	}
 
-	bbStart, bbEnd, bbSize := CamBbox(res, tile, lon, lat, zoom)
+	bbStart, bbEnd, bbSize := UiLayoutMap_camBbox(res, tile, lon, lat, zoom)
 
 	maxTiles := math.Pow(2, zoom)
 
@@ -111,32 +110,20 @@ func CamCheck(res OsV2f, tile float64, lon, lat, zoom float64) (float64, float64
 		bbStart.Y = float32(OsMaxFloat(0, maxTiles-float64(bbSize.Y)))
 	}
 
-	return PosToLonLat(OsV2f{bbStart.X + bbSize.X/2, bbStart.Y + bbSize.Y/2}, zoom)
+	return UiLayoutMap_posToLonLat(OsV2f{bbStart.X + bbSize.X/2, bbStart.Y + bbSize.Y/2}, zoom)
 }
 
-func zoomClamp(z float64) float64 {
+func UiLayoutMap_zoomClamp(z float64) float64 {
 	return OsClampFloat(z, 0, 19)
 }
 
-func (mp *SAMap) isZooming() (bool, float64, float64) {
+func (mp *UiLayoutMap) isZooming() (bool, float64, float64) {
 	ANIM_TIME := 0.4
 	dt := OsTime() - mp.start_zoom_time
 	return (dt < ANIM_TIME), dt, ANIM_TIME
 }
 
-func (mp *SAMap) RenderLocators(w *SAWidget, ui *Ui) {
-	w.errExe = nil
-
-	items := w.GetAttrStringEdit("items", "[{\"lon\":14.4071117049, \"lat\":50.0852013259, \"label\":\"1\"}, {\"lon\":14, \"lat\":50, \"label\":\"2\"}]")
-
-	lonAttr, cam_lon := w.parent.findAttrFloat("lon")
-	latAttr, cam_lat := w.parent.findAttrFloat("lat")
-	zoomAttr, cam_zoom := w.parent.findAttrFloat("zoom")
-	if lonAttr == nil || latAttr == nil || zoomAttr == nil {
-		w.errExe = fmt.Errorf("parent widget is not 'Map' type")
-		return
-	}
-
+func (ui *Ui) comp_mapLocators(mp *UiLayoutMap, cam_lon, cam_lat, cam_zoom float64, items string) error {
 	cell := ui.DivInfo_get(SA_DIV_GET_cell, 0)
 	width := ui.DivInfo_get(SA_DIV_GET_screenWidth, 0)
 	height := ui.DivInfo_get(SA_DIV_GET_screenHeight, 0)
@@ -147,8 +134,8 @@ func (mp *SAMap) RenderLocators(w *SAWidget, ui *Ui) {
 	tileW := tile / width
 	tileH := tile / height
 
-	CamCheck(coord, tile, cam_lon, cam_lat, cam_zoom)
-	bbStart, _, _ := CamBbox(coord, tile, cam_lon, cam_lat, cam_zoom)
+	UiLayoutMap_camCheck(coord, tile, cam_lon, cam_lat, cam_zoom)
+	bbStart, _, _ := UiLayoutMap_camBbox(coord, tile, cam_lon, cam_lat, cam_zoom)
 
 	type Item struct {
 		Lon   float64
@@ -158,14 +145,13 @@ func (mp *SAMap) RenderLocators(w *SAWidget, ui *Ui) {
 	var its []Item
 	err := json.Unmarshal([]byte(items), &its)
 	if err != nil {
-		w.findAttr("items").errExe = fmt.Errorf("invalide json: %w", err)
-		return
+		return fmt.Errorf("invalide json: %w", err)
 	}
 
 	ui.Div_colMax(0, 100)
 	ui.Div_rowMax(0, 100)
 	for i, it := range its {
-		p := LonLatToPos(it.Lon, it.Lat, cam_zoom)
+		p := UiLayoutMap_lonLatToPos(it.Lon, it.Lat, cam_zoom)
 
 		x := float64(p.X-bbStart.X) * tileW
 		y := float64(p.Y-bbStart.Y) * tileH
@@ -179,41 +165,28 @@ func (mp *SAMap) RenderLocators(w *SAWidget, ui *Ui) {
 		ui.Div_end()
 		//ui.Paint_file(x-rad_x/2, y-rad_y, rad_x, rad_y, 0, "file:apps/base/resources/locator.png", InitOsCd32(200, 20, 20, 255), 1, 0, false) //red
 	}
-
+	return nil
 }
 
-func (mp *SAMap) Render(w *SAWidget, ui *Ui) {
-	w.errExe = nil
+func (ui *Ui) comp_map(mp *UiLayoutMap, cam_lon, cam_lat, cam_zoom *float64, file, url, copyright, copyright_url string) error {
 
-	file := w.GetAttrStringEdit("file", "maps/osm")
-	url := w.GetAttrStringEdit("url", "https://tile.openstreetmap.org/{z}/{x}/{y}.png")
-	copyright := w.GetAttrStringEdit("copyright", "(c)OpenStreetMap contributors")
-	copyright_url := w.GetAttrStringEdit("copyright_url", "https://www.openstreetmap.org/copyright")
-
-	file = "databases/" + file
-
-	cam_lon := w.GetAttrFloatEdit("lon", "14.4071117049")
-	cam_lat := w.GetAttrFloatEdit("lat", "50.0852013259")
-	cam_zoom := w.GetAttrFloatEdit("zoom", "5")
-
-	cam_zoom = zoomClamp(cam_zoom) //check
+	*cam_zoom = UiLayoutMap_zoomClamp(*cam_zoom) //check
 
 	zooming := 0
 
-	lon := cam_lon
-	lat := cam_lat
-	zoom := cam_zoom
+	lon := *cam_lon
+	lat := *cam_lat
+	zoom := *cam_zoom
 
 	db, alreadyOpen, err := ui.win.disk.OpenDb(file)
 	if err != nil {
-		w.errExe = fmt.Errorf("GetDb(%s) failed: %w", file, err)
-		return
+		return fmt.Errorf("GetDb(%s) failed: %w", file, err)
+
 	}
 	if !alreadyOpen {
 		_, err = db.Write("CREATE TABLE IF NOT EXISTS tiles (name TEXT, file BLOB);")
 		if err != nil {
-			w.errExe = fmt.Errorf("CREATE TABLE in db(%s) failed: %w", file, err)
-			return
+			return fmt.Errorf("CREATE TABLE in db(%s) failed: %w", file, err)
 		}
 	}
 
@@ -221,14 +194,14 @@ func (mp *SAMap) Render(w *SAWidget, ui *Ui) {
 	isZooming, dt, ANIM_TIME := mp.isZooming()
 	if isZooming {
 		t := dt / ANIM_TIME
-		if cam_zoom > mp.zoomOld {
+		if *cam_zoom > mp.zoomOld {
 			scale = 1 + t
 		} else {
 			scale = 1 - t/2
 		}
 		zoom = mp.zoomOld
-		lon = mp.lonOld + (cam_lon-mp.lonOld)*t
-		lat = mp.latOld + (cam_lat-mp.latOld)*t
+		lon = mp.lonOld + (*cam_lon-mp.lonOld)*t
+		lat = mp.latOld + (*cam_lat-mp.latOld)*t
 		zooming = 1
 
 		ui.win.SetRedraw()
@@ -253,8 +226,8 @@ func (mp *SAMap) Render(w *SAWidget, ui *Ui) {
 	tileW := tile / width
 	tileH := tile / height
 
-	CamCheck(coord, tile, cam_lon, cam_lat, cam_zoom)
-	bbStart, bbEnd, bbSize := CamBbox(coord, tile, lon, lat, zoom)
+	UiLayoutMap_camCheck(coord, tile, *cam_lon, *cam_lat, *cam_zoom)
+	bbStart, bbEnd, bbSize := UiLayoutMap_camBbox(coord, tile, lon, lat, zoom)
 
 	//draw tiles
 	for y := float64(int(bbStart.Y)); y < float64(bbEnd.Y); y++ {
@@ -287,11 +260,11 @@ func (mp *SAMap) Render(w *SAWidget, ui *Ui) {
 						if err == nil {
 							rowid, err = res.LastInsertId()
 							if err != nil {
-								w.errExe = fmt.Errorf("LastInsertId() failed: %w", err)
+								return fmt.Errorf("LastInsertId() failed: %w", err)
 							}
 						}
 					} else {
-						w.errExe = err
+						return err
 					}
 				}
 
@@ -311,22 +284,22 @@ func (mp *SAMap) Render(w *SAWidget, ui *Ui) {
 	if start && inside {
 		mp.start_pos.X = touch_x //rel, not pixels!
 		mp.start_pos.Y = touch_y
-		mp.start_tile = LonLatToPos(lon, lat, zoom)
+		mp.start_tile = UiLayoutMap_lonLatToPos(lon, lat, zoom)
 	}
 
 	if wheel != 0 && inside && !isZooming {
-		mp.zoomOld = cam_zoom
-		cam_zoom = zoomClamp(cam_zoom - wheel)
-		if mp.zoomOld != cam_zoom {
-			mp.lonOld = cam_lon
-			mp.latOld = cam_lat
+		mp.zoomOld = *cam_zoom
+		*cam_zoom = UiLayoutMap_zoomClamp(*cam_zoom - wheel)
+		if mp.zoomOld != *cam_zoom {
+			mp.lonOld = *cam_lon
+			mp.latOld = *cam_lat
 
 			//where the mouse is
 			if wheel < 0 {
 				var pos OsV2f
 				pos.X = bbStart.X + bbSize.X*touch_x
 				pos.Y = bbStart.Y + bbSize.Y*touch_y
-				cam_lon, cam_lat = PosToLonLat(pos, zoom)
+				*cam_lon, *cam_lat = UiLayoutMap_posToLonLat(pos, zoom)
 			}
 
 			mp.start_zoom_time = OsTime()
@@ -344,39 +317,25 @@ func (mp *SAMap) Render(w *SAWidget, ui *Ui) {
 		tileX := mp.start_tile.X + rx
 		tileY := mp.start_tile.Y + ry
 
-		cam_lon, cam_lat = PosToLonLat(OsV2f{tileX, tileY}, cam_zoom)
+		*cam_lon, *cam_lat = UiLayoutMap_posToLonLat(OsV2f{tileX, tileY}, *cam_zoom)
 	}
 
 	//double click
 	if clicks > 1 && end && !isZooming {
-		mp.zoomOld = cam_zoom
-		cam_zoom = zoomClamp(cam_zoom + 1)
+		mp.zoomOld = *cam_zoom
+		*cam_zoom = UiLayoutMap_zoomClamp(*cam_zoom + 1)
 
-		if mp.zoomOld != cam_zoom {
-			mp.lonOld = cam_lon
-			mp.latOld = cam_lat
+		if mp.zoomOld != *cam_zoom {
+			mp.lonOld = *cam_lon
+			mp.latOld = *cam_lat
 
 			var pos OsV2f
 			pos.X = bbStart.X + bbSize.X*touch_x
 			pos.Y = bbStart.Y + bbSize.Y*touch_y
-			cam_lon, cam_lat = PosToLonLat(pos, zoom)
+			*cam_lon, *cam_lat = UiLayoutMap_posToLonLat(pos, zoom)
 
 			mp.start_zoom_time = OsTime()
 		}
-	}
-
-	//set back
-	str, edit := w.GetAttrStringPtrEdit("lon", "0")
-	if edit {
-		*str = strconv.FormatFloat(cam_lon, 'f', -1, 64)
-	}
-	str, edit = w.GetAttrStringPtrEdit("lat", "0")
-	if edit {
-		*str = strconv.FormatFloat(cam_lat, 'f', -1, 64)
-	}
-	str, edit = w.GetAttrStringPtrEdit("zoom", "0")
-	if edit {
-		*str = strconv.Itoa(int(cam_zoom))
 	}
 
 	//copyright
@@ -388,4 +347,5 @@ func (mp *SAMap) Render(w *SAWidget, ui *Ui) {
 	ui.Div_row(1, 0.5)
 
 	ui.Comp_buttonText(1, 1, 1, 1, copyright, copyright_url, "", true, false)
+	return nil
 }
