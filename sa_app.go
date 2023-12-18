@@ -47,7 +47,7 @@ type SAApp struct {
 	apis  *VmApis
 	prior int
 
-	mapp *SAMap
+	mapp *UiLayoutMap
 }
 
 func NewSAApp(name string, base *SABase) *SAApp {
@@ -56,7 +56,7 @@ func NewSAApp(name string, base *SABase) *SAApp {
 	app.Name = name
 	app.IDE = true
 
-	app.mapp = NewSAMap()
+	app.mapp = NewUiLayoutMap()
 
 	return &app
 }
