@@ -32,7 +32,7 @@ type SAWidgetAttr struct {
 	widget *SAWidget
 
 	Name    string
-	Value   string
+	Value   string `json:",omitempty"`
 	ShowExp bool
 
 	oldValue     string
@@ -140,7 +140,7 @@ func (w *SAWidget) Save(path string) error {
 }
 
 func (a *SAWidget) Cmp(b *SAWidget) bool {
-	if a.Name != b.Name || a.Exe != b.Exe || !a.GetGrid().Cmp(b.GetGrid()) || a.Selected != b.Selected {
+	if a.Name != b.Name || a.Exe != b.Exe || a.Selected != b.Selected {
 		return false
 	}
 
@@ -303,28 +303,34 @@ func (w *SAWidget) areAttrsReadyToRun() bool {
 func (w *SAWidget) areAttrsChangedAndUpdate() bool {
 
 	changed := false
-	for _, it := range w.Attrs {
 
-		if it.errExp != nil {
-			return true
-		}
+	for i := 0; i < 2; i++ { //run 2x, because attributes can depend in same node - dirty hack, need to find better solution ...
 
-		var val string
-		if it.instr != nil && !it.isDirectLink {
-			st := InitVmST()
-			rec := it.instr.Exe(nil, &st)
-			val = rec.GetString()
-		} else {
-			_, value, _ := it.GetDirectLink()
-			val = *value
-		}
+		for _, it := range w.Attrs {
 
-		if val != it.oldValue {
-			changed = true
+			if it.errExp != nil {
+				return true
+			}
+
+			var val string
+			if it.instr != nil && !it.isDirectLink {
+				st := InitVmST()
+				rec := it.instr.Exe(nil, &st)
+				val = rec.GetString()
+			} else {
+				_, value, _ := it.GetDirectLink()
+				val = *value
+			}
+
+			if val != it.oldValue {
+				changed = true
+			}
+			it.oldValue = val
+
 		}
-		it.oldValue = val
 
 	}
+
 	return changed
 }
 
@@ -572,7 +578,7 @@ func (w *SAWidget) FindSelected() *SAWidget {
 func (w *SAWidget) buildSubsList(listPathes *string, listNodes *[]*SAWidget) {
 	nm := w.getPath()
 	if len(nm) > 2 {
-		nm = nm[:len(nm)-1] //cut last '/'
+		nm = nm[:len(nm)-1] //cut last ';'
 	}
 
 	*listPathes += nm + ";"
@@ -676,6 +682,7 @@ func (w *SAWidget) GetAttrIntEdit(name string, defValue string) int {
 	vv, _ := strconv.Atoi(w.GetAttrStringEdit(name, defValue))
 	return vv
 }
+
 func (w *SAWidget) GetAttrFloatEdit(name string, defValue string) float64 {
 	vv, _ := strconv.ParseFloat(w.GetAttrStringEdit(name, defValue), 64)
 	return vv
@@ -736,7 +743,15 @@ func (w *SAWidget) GetGrid() OsV4 {
 	return v
 }
 
+func (w *SAWidget) GetGridShow() bool {
+	return w.GetAttrBoolSwitch("grid_show", "1")
+}
+
 func (w *SAWidget) Render(ui *Ui, app *SAApp) {
+
+	if !w.GetGridShow() {
+		return
+	}
 
 	grid := w.GetGrid()
 	grid.Size.X = OsMax(grid.Size.X, 1)
@@ -746,8 +761,59 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 
 	case "button":
 		enable := w.GetAttrBoolSwitch("enable", "1")
-		ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttrStringEdit("label", ""), "", enable)
-		//outputs(readOnly): is clicked ...
+		tp := w.GetAttrIntCombo("type", "0", "Classic;Light;Menu;Segments")
+
+		clicked := false
+		switch tp {
+		case 0:
+			clicked = ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttrStringEdit("label", ""), "", enable) > 0
+		case 1:
+			clicked = ui.Comp_buttonLight(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttrStringEdit("label", ""), "", enable) > 0
+		case 2:
+			selected := w.GetAttrBoolSwitch("selected", "0")
+			clicked = ui.Comp_buttonMenu(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttrStringEdit("label", ""), "", enable, selected) > 0
+			if clicked {
+				sel := w.findAttr("selected")
+				_, val, editable := sel.GetDirectLink()
+				if editable {
+					*val = OsTrnString(selected, "0", "1")
+				}
+			}
+
+		case 3:
+			labels := w.GetAttrStringEdit("label", "")
+			butts := strings.Split(labels, ";")
+
+			selected := w.GetAttrIntCombo("selected", "0", labels)
+			ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
+			{
+				for i, _ := range butts {
+					ui.Div_colMax(i*2+0, 100)
+					if i+1 < len(butts) {
+						ui.Div_col(i*2+1, 0.1)
+					}
+				}
+				for i, it := range butts {
+					clicked = ui.Comp_buttonText(i*2+0, 0, 1, 1, it, "", "", enable, selected == i) > 0
+					if clicked {
+						sel := w.findAttr("selected")
+						_, val, editable := sel.GetDirectLink()
+						if editable {
+							*val = strconv.Itoa(i)
+						}
+					}
+					if i+1 < len(butts) {
+						ui.Div_SpacerCol(i*2+1, 0, 1, 1)
+					}
+				}
+				//ui.Paint_rect(0, 0, 1, 1, 0, ui.buff.win.io.GetPalette().GetGrey(0.5), 0.03)
+			}
+			ui.Div_end()
+		}
+		w.GetAttrBoolSwitch("clicked", "0")
+		cl := w.findAttr("clicked")
+		cl.Gui_ReadOnly = true
+		cl.Value = OsTrnString(clicked, "1", "0")
 
 	case "text":
 		ui.Comp_text(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttrStringEdit("label", ""), w.GetAttrIntCombo("align", "0", "Left|Center|Right"))
@@ -772,9 +838,107 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 		enable := w.GetAttrBoolSwitch("enable", "1") && editable
 		ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, w.GetAttrIntEdit("precision", "2"), "", w.GetAttrStringEdit("ghost", ""), false, w.GetAttrBoolSwitch("tempToValue", "0"), enable)
 
+	case "divider":
+		tp := w.GetAttrIntCombo("type", "0", "Column;Row")
+		switch tp {
+		case 0:
+			ui.Div_SpacerCol(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
+		case 1:
+			ui.Div_SpacerRow(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
+		}
+
+	case "color_palette":
+		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
+		//jako params, potřebuji nastavit jednotlivé expression, nebo hodnoty, nebo picker? ... jak budu posílat hodnotu jinam? ..........
+		//ui.comp_colorPalette()
+		ui.Div_end()
+
+	case "color_picker":
+		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
+
+		var cd OsCd //func to get OsCd ................. prefix="cd_" ...
+		cd.R = byte(w.GetAttrIntEdit("cd_r", "0"))
+		cd.G = byte(w.GetAttrIntEdit("cd_g", "0"))
+		cd.B = byte(w.GetAttrIntEdit("cd_b", "0"))
+		cd.A = byte(w.GetAttrIntEdit("cd_a", "255"))
+		if ui.comp_colorPicker(&cd, w.Name) {
+			str, edit := w.GetAttrStringPtrEdit("cd_r", "0") //func ............
+			if edit {
+				*str = strconv.Itoa(int(cd.R))
+			}
+			str, edit = w.GetAttrStringPtrEdit("cd_g", "0")
+			if edit {
+				*str = strconv.Itoa(int(cd.G))
+			}
+			str, edit = w.GetAttrStringPtrEdit("cd_b", "0")
+			if edit {
+				*str = strconv.Itoa(int(cd.B))
+			}
+			str, edit = w.GetAttrStringPtrEdit("cd_a", "255")
+			if edit {
+				*str = strconv.Itoa(int(cd.A))
+			}
+		}
+
+		ui.Div_end()
+
+	case "calendar":
+		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
+		value := int64(w.GetAttrIntEdit("value", "0")) //show param as calendar ...
+		page := int64(w.GetAttrIntEdit("page", "0"))   //show param as calendar ...
+
+		ui.Comp_Calendar(&value, &page)
+
+		str, edit := w.GetAttrStringPtrEdit("value", "0")
+		if edit {
+			*str = strconv.Itoa(int(value))
+		}
+		str, edit = w.GetAttrStringPtrEdit("page", "0")
+		if edit {
+			*str = strconv.Itoa(int(page))
+		}
+
+		ui.Div_end()
+
+	case "date_picker":
+		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
+		//ui.ColorPicker()
+		ui.Div_end()
+
 	case "map":
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-		app.mapp.Render(w, ui)
+
+		file := w.GetAttrStringEdit("file", "maps/osm")
+		url := w.GetAttrStringEdit("url", "https://tile.openstreetmap.org/{z}/{x}/{y}.png")
+		copyright := w.GetAttrStringEdit("copyright", "(c)OpenStreetMap contributors")
+		copyright_url := w.GetAttrStringEdit("copyright_url", "https://www.openstreetmap.org/copyright")
+
+		file = "databases/" + file
+
+		cam_lon := w.GetAttrFloatEdit("lon", "14.4071117049")
+		cam_lat := w.GetAttrFloatEdit("lat", "50.0852013259")
+		cam_zoom := w.GetAttrFloatEdit("zoom", "5")
+
+		err := ui.comp_map(app.mapp, &cam_lon, &cam_lat, &cam_zoom, file, url, copyright, copyright_url)
+		if err != nil {
+			w.errExe = err
+		}
+
+		//set back
+		str, edit := w.GetAttrStringPtrEdit("lon", "0")
+		if edit {
+			*str = strconv.FormatFloat(cam_lon, 'f', -1, 64)
+		}
+		str, edit = w.GetAttrStringPtrEdit("lat", "0")
+		if edit {
+			*str = strconv.FormatFloat(cam_lat, 'f', -1, 64)
+		}
+		str, edit = w.GetAttrStringPtrEdit("zoom", "0")
+		if edit {
+			*str = strconv.Itoa(int(cam_zoom))
+		}
+
+		//app.mapp.comp_map(w, ui)
 		ui.Div_end()
 
 		div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, ".subs.")
@@ -784,7 +948,20 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 
 	case "map_locators":
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-		app.mapp.RenderLocators(w, ui)
+
+		lonAttr, cam_lon := w.parent.findAttrFloat("lon")
+		latAttr, cam_lat := w.parent.findAttrFloat("lat")
+		zoomAttr, cam_zoom := w.parent.findAttrFloat("zoom")
+		if lonAttr == nil || latAttr == nil || zoomAttr == nil {
+			w.errExe = fmt.Errorf("parent widget is not 'Map' type")
+			return
+		}
+		items := w.GetAttrStringEdit("items", "[{\"lon\":14.4071117049, \"lat\":50.0852013259, \"label\":\"1\"}, {\"lon\":14, \"lat\":50, \"label\":\"2\"}]")
+
+		err := ui.comp_mapLocators(app.mapp, cam_lon, cam_lat, cam_zoom, items)
+		if err != nil {
+			w.findAttr("items").errExe = err
+		}
 		ui.Div_end()
 
 	case "layout":
@@ -807,7 +984,7 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 				cd.A = 150
 
 				//rect
-				div := ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
+				div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, ".err.")
 				div.touch_enabled = false
 				ui.Paint_rect(0, 0, 1, 1, 0, cd, 0)
 				ui.Div_end()
@@ -817,7 +994,7 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 				cd := SAApp_getYellow()
 
 				//rect
-				div := ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
+				div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, ".sel.")
 				div.touch_enabled = false
 				ui.Paint_rect(0, 0, 1, 1, 0, cd, 0.06)
 				ui.Div_end()
@@ -827,7 +1004,7 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 				ui.buff.AddRect(InitOsV4Mid(div.crop.End(), OsV2{s, s}), cd, 0)
 			}
 		}
-		//full rectangle if expression(editbox) in params is activate ...
+		//when editbox with expression is active - match colors between access(text) and widgets(coords) ...
 	}
 }
 
@@ -875,7 +1052,7 @@ func (w *SAWidget) NumNames(name string) int {
 
 }
 
-func _SAWidget_renderParamsValue(x, y, w, h int, attr *SAWidgetAttr, ui *Ui) {
+func _SAWidget_renderParamsValue(x, y, w, h int, attr *SAWidgetAttr, ui *Ui, enable bool) {
 	if attr.ShowExp {
 		ui.Comp_editbox(x, y, w, h, &attr.Value, 2, "", "", false, false, true)
 	} else {
@@ -883,19 +1060,19 @@ func _SAWidget_renderParamsValue(x, y, w, h int, attr *SAWidgetAttr, ui *Ui) {
 
 		switch attr.Gui_type {
 		case "checkbox":
-			ui.Comp_checkbox(x, y, w, h, value, false, "", "", editable)
+			ui.Comp_checkbox(x, y, w, h, value, false, "", "", editable && enable)
 
 		case "switch":
-			ui.Comp_switch(x, y, w, h, value, false, "", "", editable)
+			ui.Comp_switch(x, y, w, h, value, false, "", "", editable && enable)
 
 		case "combo":
-			ui.Comp_combo(x, y, w, h, value, attr.Gui_options, "", editable, false)
+			ui.Comp_combo(x, y, w, h, value, attr.Gui_options, "", editable && enable, false)
 
 		case "edit":
-			ui.Comp_editbox(x, y, w, h, value, 2, "", "", false, false, editable)
+			ui.Comp_editbox(x, y, w, h, value, 2, "", "", false, false, editable && enable)
 
 		default: //edit
-			ui.Comp_editbox(x, y, w, h, value, 2, "", "", false, false, editable)
+			ui.Comp_editbox(x, y, w, h, value, 2, "", "", false, false, editable && enable)
 		}
 	}
 }
@@ -904,9 +1081,9 @@ func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 
 	ui.Div_colMax(0, 100)
 	if w.IsGuiLayout() {
-		ui.Div_row(3, 0.5) //spacer
+		ui.Div_row(4, 0.5) //spacer
 	} else {
-		ui.Div_row(2, 0.5) //spacer
+		ui.Div_row(3, 0.5) //spacer
 	}
 
 	y := 0
@@ -941,6 +1118,25 @@ func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 	ui.Div_end()
 	y++
 
+	//visibility
+	var visible bool
+	ui.Div_start(0, y, 1, 1)
+	{
+		ui.Div_colMax(0, 2)
+		ui.Div_colMax(1, 100)
+
+		visible = w.GetGridShow() //create if not exist
+		show := w.findAttr("grid_show")
+
+		if ui.Comp_buttonMenu(0, 0, 1, 1, "Visibility", "", true, show.ShowExp) > 0 {
+			show.ShowExp = !show.ShowExp
+		}
+
+		_SAWidget_renderParamsValue(1, 0, 1, 1, show, ui, true)
+	}
+	ui.Div_end()
+	y++
+
 	//Grid
 	ui.Div_start(0, y, 1, 1)
 	{
@@ -951,11 +1147,7 @@ func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 		ui.Div_colMax(4, 100)
 
 		//label
-		w.GetAttrIntEdit("grid_x", "0") //create if not exist
-		w.GetAttrIntEdit("grid_y", "0")
-		w.GetAttrIntEdit("grid_w", "1")
-		w.GetAttrIntEdit("grid_h", "1")
-		//find
+		w.GetGrid() //create if not exist
 		xx := w.findAttr("grid_x")
 		yy := w.findAttr("grid_y")
 		ww := w.findAttr("grid_w")
@@ -975,10 +1167,10 @@ func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 		}
 
 		//values
-		_SAWidget_renderParamsValue(1, 0, 1, 1, xx, ui)
-		_SAWidget_renderParamsValue(2, 0, 1, 1, yy, ui)
-		_SAWidget_renderParamsValue(3, 0, 1, 1, ww, ui)
-		_SAWidget_renderParamsValue(4, 0, 1, 1, hh, ui)
+		_SAWidget_renderParamsValue(1, 0, 1, 1, xx, ui, visible)
+		_SAWidget_renderParamsValue(2, 0, 1, 1, yy, ui, visible)
+		_SAWidget_renderParamsValue(3, 0, 1, 1, ww, ui, visible)
+		_SAWidget_renderParamsValue(4, 0, 1, 1, hh, ui, visible)
 	}
 	ui.Div_end()
 	y++
@@ -998,7 +1190,7 @@ func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 	}
 
 	for i, it := range w.Attrs {
-		if it.Name == "grid_x" || it.Name == "grid_y" || it.Name == "grid_w" || it.Name == "grid_h" {
+		if it.Name == "grid_x" || it.Name == "grid_y" || it.Name == "grid_w" || it.Name == "grid_h" || it.Name == "grid_show" {
 			continue
 		}
 
@@ -1040,7 +1232,7 @@ func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 				}
 				ui.Div_end()
 			}
-			_SAWidget_renderParamsValue(1, 0, 1, 1, it, ui)
+			_SAWidget_renderParamsValue(1, 0, 1, 1, it, ui, true)
 
 			//error
 			if it.errExe != nil {
