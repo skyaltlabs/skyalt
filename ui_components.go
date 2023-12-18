@@ -602,20 +602,44 @@ func (ui *Ui) Comp_progress(style *UiComp, value float64, prec int) int64 {
 	return 1
 }
 
-func (ui *Ui) Comp_sliderSimple(value *float64, minValue float64, maxValue float64, jumpValue float64, description string, desc_align int, desc_size int) bool {
+func (ui *Ui) Comp_slider(x, y, w, h int, value *float64, minValue float64, maxValue float64, jumpValue float64) bool {
+
+	ui.Div_start(x, y, w, h)
+
 	styleSlider := UiComp{enable: true, label_formating: true, cd: CdPalette_P}
-	//styleDesc := Comp{enable: true, label_formating: true, cd: CdPalette_B}
+	_, changed, _ := ui.Comp_slider_s(&styleSlider, value, minValue, maxValue, jumpValue, "", 0)
 
-	// description ....
-	//if description != "" {
-	//}
-
-	_, changed, _ := ui.Comp_slider(&styleSlider, value, minValue, maxValue, jumpValue, "", 0)
+	ui.Div_end()
 
 	return changed
 }
 
-func (ui *Ui) Comp_slider(style *UiComp, value *float64, minValue float64, maxValue float64, jumpValue float64, imgPath string, imgMargin float64) (bool, bool, bool) {
+func (ui *Ui) Comp_slider_desc(description string, description_alignH int, width float64, x, y, w, h int, value *float64, minValue float64, maxValue float64, jumpValue float64) bool {
+
+	ui.Div_start(x, y, w, h)
+
+	xx := 0
+
+	if width > 0 {
+		//1 row
+		ui.Div_col(0, width)
+		ui.Div_colMax(1, 100)
+		ui.Comp_text(0, 0, 1, 1, description, description_alignH)
+		xx = 1
+	} else {
+		//2 rows
+		ui.Div_colMax(0, 100)
+		ui.Comp_text(0, 0, 1, 1, description, description_alignH)
+	}
+
+	changed := ui.Comp_slider(xx, 0, 1, 1, value, minValue, maxValue, jumpValue)
+
+	ui.Div_end()
+
+	return changed
+}
+
+func (ui *Ui) Comp_slider_s(style *UiComp, value *float64, minValue float64, maxValue float64, jumpValue float64, imgPath string, imgMargin float64) (bool, bool, bool) {
 
 	lv := ui.GetCall()
 
@@ -1105,31 +1129,3 @@ func (ui *Ui) Comp_image(x, y, w, h int, path string, cd OsCd, margin float64, a
 
 	ui.Div_end()
 }
-
-/*func (levels *UiLayoutLevels) paint_textWidth(style *UiComp, value string, cursorPos int64, ratioH float64, fontPath string, enableFormating bool) float64 {
-
-	//sdiv := style.GetDiv(true, app)
-
-	if ratioH <= 0 {
-		ratioH = SKYALT_FONT_HEIGHT
-	}
-	if len(fontPath) == 0 {
-		fontPath = SKYALT_FONT_PATH
-	}
-
-	font := ui.buff.win.fonts.Get(SKYALT_FONT_PATH)
-	textH := ui.CellWidth(ratioH)
-	cell := float64(ui.buff.win.Cell())
-	if cursorPos < 0 {
-		size, err := font.GetTextSize(value, g_WinFont_DEFAULT_Weight, textH, 0, enableFormating)
-		if err == nil {
-			return float64(size.X) / cell // pixels for the whole string
-		}
-	} else {
-		px, err := font.GetPxPos(value, g_WinFont_DEFAULT_Weight, textH, int(cursorPos), enableFormating)
-		if err == nil {
-			return float64(px) / cell // pixels to cursor
-		}
-	}
-	return -1
-}*/
