@@ -129,6 +129,6 @@ func VmBasic_Bracket(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 }
 
 func VmBasic_Access(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-	instr.temp.value = instr.attr.Value
+	instr.temp.value = instr.attr.oldValue
 	return instr.temp
 }
