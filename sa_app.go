@@ -227,7 +227,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 
 		var found *SAWidget
 		for _, w := range app.act.Subs {
-			if w.GetGrid().Inside(grid.Start) {
+			if w.GetGridShow() && w.GetGrid().Inside(grid.Start) {
 				found = w
 				break
 			}
@@ -302,7 +302,7 @@ func (app *SAApp) History(ui *Ui) {
 
 }
 
-var SAStandardPrimitives = []string{"button", "text", "checkbox", "switch", "edit", "combo"}
+var SAStandardPrimitives = []string{"button", "text", "checkbox", "switch", "edit", "divider", "combo", "color", "color_picker"}
 var SAStandardComponents = []string{"layout", "map", "map_locators"}
 
 func SAApp_IsStdPrimitive(name string) bool {
@@ -450,6 +450,7 @@ func _SAApp_drawColsRowsDialog(name string, items *[]SAWidgetColRow, i int, ui *
 func (app *SAApp) RenderHeader(ui *Ui) {
 	ui.Div_colMax(1, 100)
 	ui.Div_colMax(2, 6)
+	ui.Div_colMax(5, 2)
 
 	//level up
 	if ui.Comp_buttonIcon(0, 0, 1, 1, "file:apps/base/resources/levelup.png", 0.3, "One level up", app.act.parent != nil) > 0 {
@@ -459,19 +460,19 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 	//list
 	{
 		var listPathes string
-		var listNodes []*SAWidget
-		app.root.buildSubsList(&listPathes, &listNodes)
+		var listWidges []*SAWidget
+		app.root.buildSubsList(&listPathes, &listWidges)
 		if len(listPathes) >= 1 {
 			listPathes = listPathes[:len(listPathes)-1] //cut last ';'
 		}
 		combo := 0
-		for i, n := range listNodes {
+		for i, n := range listWidges {
 			if app.act == n {
 				combo = i
 			}
 		}
 		if ui.Comp_combo(1, 0, 1, 1, &combo, listPathes, "", true, true) {
-			app.act = listNodes[combo]
+			app.act = listWidges[combo]
 		}
 	}
 
@@ -484,6 +485,24 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 	}
 	if ui.Comp_buttonLight(4, 0, 1, 1, "→", "Forward", app.canHistoryForward()) > 0 {
 		app.stepHistoryForward()
+	}
+
+	//list of widgets(if hidden, it can be selected)
+	{
+		val := 0
+		options := ""
+		for i, w := range app.act.Subs {
+			options += w.Name + ";"
+			if w.Selected {
+				val = i
+			}
+		}
+		options, _ = strings.CutSuffix(options, ";")
+
+		if ui.Comp_combo(5, 0, 1, 1, &val, options, "", true, true) {
+			app.act.DeselectAll()
+			app.act.Subs[val].Selected = true
+		}
 	}
 }
 
