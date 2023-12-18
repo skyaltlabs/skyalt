@@ -31,8 +31,6 @@ type SABase struct {
 
 	exit bool
 
-	trns SATranslations
-
 	server *SANodeServer
 }
 
@@ -58,12 +56,7 @@ func NewSABase(ui *Ui) (*SABase, error) {
 		}
 	}
 
-	//translations
-	err := base.reloadTranslations(ui)
-	if err != nil {
-		return nil, fmt.Errorf("reloadTranslations() failed: %w", err)
-	}
-
+	var err error
 	base.server, err = NewSANodeServer("nodes", 4567)
 	if err != nil {
 		return nil, fmt.Errorf("NewNodeServer() failed: %w", err)
@@ -83,18 +76,6 @@ func (base *SABase) Destroy() {
 	}
 
 	base.server.Destroy()
-}
-
-func (base *SABase) reloadTranslations(ui *Ui) error {
-	js, err := SATranslations_fromJsonFile("apps/base/translations.json", ui.win.io.ini.Languages)
-	if err != nil {
-		return fmt.Errorf("SATranslations_fromJsonFile() failed: %w", err)
-	}
-	err = json.Unmarshal(js, &base.trns)
-	if err != nil {
-		fmt.Printf("warnning: Unmarshal() failed: %v\n", err)
-	}
-	return nil
 }
 
 func (base *SABase) Save() {

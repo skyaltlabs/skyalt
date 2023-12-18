@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 )
@@ -56,6 +57,10 @@ type Ui struct {
 
 	base_app  *UiLayoutApp
 	app_calls []*UiLayoutApp
+
+	trns UiTranslations
+
+	date_page int64
 }
 
 func NewUi(win *Win, base_app_layout_path string) (*Ui, error) {
@@ -67,6 +72,12 @@ func NewUi(win *Win, base_app_layout_path string) (*Ui, error) {
 	ui.buff = NewWinPaintBuff(win)
 
 	ui.AddDialog("", OsV4{}, win)
+
+	//translations
+	err := ui.reloadTranslations()
+	if err != nil {
+		return nil, fmt.Errorf("reloadTranslations() failed: %w", err)
+	}
 
 	return &ui, nil
 }
@@ -82,6 +93,18 @@ func (ui *Ui) Destroy() {
 	}
 	ui.dialogs = nil
 	ui.calls = nil
+}
+
+func (ui *Ui) reloadTranslations() error {
+	js, err := UiTranslations_fromJsonFile("apps/base/translations.json", ui.win.io.ini.Languages)
+	if err != nil {
+		return fmt.Errorf("reloadTranslations() failed: %w", err)
+	}
+	err = json.Unmarshal(js, &ui.trns)
+	if err != nil {
+		fmt.Printf("Unmarshal() failed: %v\n", err)
+	}
+	return nil
 }
 
 func (ui *Ui) CellWidth(width float64) int {
