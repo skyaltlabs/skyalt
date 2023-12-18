@@ -241,10 +241,42 @@ func (ui *Ui) Comp_buttonText(x, y, w, h int, label string, url string, tooltip 
 	return 0
 }
 
+func (ui *Ui) Comp_buttonTextFade(x, y, w, h int, label string, url string, tooltip string, enable bool, selected bool, fade bool) int {
+	ui.Div_start(x, y, w, h)
+
+	style := ui._buttonBasicStyle(enable, tooltip)
+	style.fade = fade
+	click, rclick := ui.Comp_button_s(&style, label, "", url, OsTrnFloat(selected, 1, 0), false)
+
+	ui.Div_end()
+	if rclick > 0 {
+		return 2
+	} else if click > 0 {
+		return 1
+	}
+	return 0
+}
+
 func (ui *Ui) Comp_buttonOutlined(x, y, w, h int, label string, tooltip string, enable bool, selected bool) int {
 	ui.Div_start(x, y, w, h)
 
 	style := ui._buttonBasicStyle(enable, tooltip)
+	click, rclick := ui.Comp_button_s(&style, label, "", "", OsTrnFloat(selected, 1, 0), true)
+
+	ui.Div_end()
+	if rclick > 0 {
+		return 2
+	} else if click > 0 {
+		return 1
+	}
+	return 0
+}
+
+func (ui *Ui) Comp_buttonOutlinedFade(x, y, w, h int, label string, tooltip string, enable bool, selected bool, fade bool) int {
+	ui.Div_start(x, y, w, h)
+
+	style := ui._buttonBasicStyle(enable, tooltip)
+	style.fade = fade
 	click, rclick := ui.Comp_button_s(&style, label, "", "", OsTrnFloat(selected, 1, 0), true)
 
 	ui.Div_end()
@@ -324,18 +356,14 @@ func (ui *Ui) Comp_button_s(style *UiComp, value string, icon string, url string
 
 	//background
 	if drawBack > 0 {
-
 		//light
 		if drawBack <= 0.6 {
-			//t := cd
-			//cd = onCd
-			//onCd = t
 			onCd = cd
-
 			cd.A = 30
 		}
 
-		ui._compDrawShape(coord, style.shape, cd, 0, 0)
+		margin := OsTrnFloat(drawBorder, 0.06, 0)
+		ui._compDrawShape(coord, style.shape, cd, margin, 0)
 	}
 
 	if drawBorder {
