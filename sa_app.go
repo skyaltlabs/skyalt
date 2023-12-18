@@ -302,7 +302,7 @@ func (app *SAApp) History(ui *Ui) {
 
 }
 
-var SAStandardPrimitives = []string{"button", "text", "checkbox", "switch", "edit", "divider", "combo", "color", "color_picker"}
+var SAStandardPrimitives = []string{"button", "text", "checkbox", "switch", "edit", "divider", "combo", "color_palette", "color_picker", "calendar", "date_picker"}
 var SAStandardComponents = []string{"layout", "map", "map_locators"}
 
 func SAApp_IsStdPrimitive(name string) bool {
@@ -356,7 +356,7 @@ func (app *SAApp) drawCreateWidget(ui *Ui) {
 
 		y := 0
 		var search string
-		ui.Comp_editbox(0, 0, 1, 1, &search, 0, "", app.base.trns.SAVE, search != "", true, true)
+		ui.Comp_editbox(0, 0, 1, 1, &search, 0, "", ui.trns.SAVE, search != "", true, true)
 		y++
 
 		keys := &ui.buff.win.io.keys
