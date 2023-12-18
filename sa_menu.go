@@ -33,7 +33,7 @@ func (base *SABase) drawMenu(ui *Ui) {
 	ini := &ui.win.io.ini
 	y := 0
 	//save
-	if ui.Comp_buttonMenuIcon(0, y, 1, 1, base.trns.SAVE, "file:apps/base/resources/save.png", iconMargin, "", true, false) > 0 {
+	if ui.Comp_buttonMenuIcon(0, y, 1, 1, ui.trns.SAVE, "file:apps/base/resources/save.png", iconMargin, "", true, false) > 0 {
 		base.Save()
 		ui.Dialog_close()
 	}
@@ -42,7 +42,7 @@ func (base *SABase) drawMenu(ui *Ui) {
 	y++
 
 	//settings
-	if ui.Comp_buttonMenuIcon(0, y, 1, 1, base.trns.SETTINGS, "file:apps/base/resources/settings.png", iconMargin, "", true, false) > 0 {
+	if ui.Comp_buttonMenuIcon(0, y, 1, 1, ui.trns.SETTINGS, "file:apps/base/resources/settings.png", iconMargin, "", true, false) > 0 {
 		ui.Dialog_close()
 		ui.Dialog_open("settings", 0)
 	}
@@ -56,7 +56,7 @@ func (base *SABase) drawMenu(ui *Ui) {
 		ui.Div_colMax(0, 100)
 		ui.Div_colMax(2, 2)
 
-		ui.Comp_textIcon(0, 0, 1, 1, base.trns.ZOOM, "file:apps/base/resources/zoom.png", iconMargin)
+		ui.Comp_textIcon(0, 0, 1, 1, ui.trns.ZOOM, "file:apps/base/resources/zoom.png", iconMargin)
 
 		if ui.Comp_buttonOutlined(1, 0, 1, 1, "+", "", true, false) > 0 {
 			ini.Dpi += 3
@@ -76,10 +76,10 @@ func (base *SABase) drawMenu(ui *Ui) {
 
 	//window/fullscreen switch
 	{
-		ff := base.trns.WINDOW_MODE
+		ff := ui.trns.WINDOW_MODE
 		icon := "file:apps/base/resources/window_mode.png"
 		if !ini.Fullscreen {
-			ff = base.trns.FULLSCREEN_MODE
+			ff = ui.trns.FULLSCREEN_MODE
 			icon = "file:apps/base/resources/fullscreen_mode.png"
 		}
 		if ui.Comp_buttonMenuIcon(0, y, 1, 1, ff, icon, iconMargin, "", true, false) > 0 {
@@ -90,7 +90,7 @@ func (base *SABase) drawMenu(ui *Ui) {
 	ui.Div_SpacerRow(0, y, 1, 1)
 	y++
 
-	if ui.Comp_buttonMenuIcon(0, y, 1, 1, base.trns.ABOUT, "file:apps/base/resources/about.png", iconMargin, "", true, false) > 0 {
+	if ui.Comp_buttonMenuIcon(0, y, 1, 1, ui.trns.ABOUT, "file:apps/base/resources/about.png", iconMargin, "", true, false) > 0 {
 		ui.Dialog_close()
 		ui.Dialog_open("about", 0)
 	}
@@ -98,7 +98,7 @@ func (base *SABase) drawMenu(ui *Ui) {
 	ui.Div_SpacerRow(0, y, 1, 1)
 	y++
 
-	if ui.Comp_buttonMenuIcon(0, y, 1, 1, base.trns.QUIT, "file:apps/base/resources/quit.png", iconMargin, "", true, false) > 0 {
+	if ui.Comp_buttonMenuIcon(0, y, 1, 1, ui.trns.QUIT, "file:apps/base/resources/quit.png", iconMargin, "", true, false) > 0 {
 		base.exit = true
 		ui.Dialog_close()
 	}
@@ -124,7 +124,7 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 		ui.Div_colMax(0, 15)
 		ui.Div_row(1, 3)
 
-		ui.Comp_text(0, 0, 1, 1, base.trns.ABOUT, 1)
+		ui.Comp_text(0, 0, 1, 1, ui.trns.ABOUT, 1)
 
 		ui.Comp_image(0, 1, 1, 1, "file:apps/base/resources/logo.png", OsCd{A: 255}, 0, 1, 1, false)
 
@@ -133,8 +133,8 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 		ui.Comp_buttonText(0, 3, 1, 1, "www.skyalt.com", "https://www.skyalt.com", "", true, false)
 		ui.Comp_buttonText(0, 4, 1, 1, "github.com/skyaltlabs/skyalt/", "https://github.com/skyaltlabs/skyalt/", "", true, false)
 
-		ui.Comp_text(0, 5, 1, 1, base.trns.COPYRIGHT, 1)
-		ui.Comp_text(0, 6, 1, 1, base.trns.WARRANTY, 1)
+		ui.Comp_text(0, 5, 1, 1, ui.trns.COPYRIGHT, 1)
+		ui.Comp_text(0, 6, 1, 1, ui.trns.WARRANTY, 1)
 		ui.Dialog_end()
 	}
 
@@ -144,14 +144,14 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 
 		y := 0
 
-		ui.Comp_text(1, 0, 1, 1, base.trns.SETTINGS, 1)
+		ui.Comp_text(1, 0, 1, 1, ui.trns.SETTINGS, 1)
 		y++
 
 		ini := &ui.win.io.ini
 
 		//languages
 		{
-			ui.Comp_text(1, y, 1, 1, base.trns.LANGUAGES, 0)
+			ui.Comp_text(1, y, 1, 1, ui.trns.LANGUAGES, 0)
 			y++
 			for i, lng := range ini.Languages {
 
@@ -168,7 +168,7 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 						src, pos, done := ui.Div_drop("lang", true, false, false)
 						if done {
 							Div_DropMoveElement(&ini.Languages, &ini.Languages, src, i, pos)
-							base.reloadTranslations(ui)
+							ui.reloadTranslations()
 						}
 						ui.Comp_image(0, 0, 1, 1, "file:apps/base/resources/reorder.png", OsCd{A: 255}, 0.15, 1, 1, false)
 					}
@@ -176,12 +176,12 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 
 					if ui.Comp_combo(2, 0, 1, 1, &lang_id, g_langs, "", true, true) {
 						ini.Languages[i] = g_lang_codes[lang_id]
-						base.reloadTranslations(ui)
+						ui.reloadTranslations()
 					}
 
 					if ui.Comp_buttonLight(3, 0, 1, 1, "X", "", len(ini.Languages) > 1 || i > 0) > 0 {
 						ini.Languages = append(ini.Languages[:i], ini.Languages[i+1:]...)
-						base.reloadTranslations(ui)
+						ui.reloadTranslations()
 					}
 				}
 				ui.Div_end()
@@ -192,7 +192,7 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 			ui.Div_start(1, y, 1, 1)
 			if ui.Comp_buttonLight(0, 0, 1, 1, "+", "", true) > 0 {
 				ini.Languages = append(ini.Languages, "en")
-				base.reloadTranslations(ui)
+				ui.reloadTranslations()
 			}
 			y++
 			ui.Div_end()
@@ -200,22 +200,22 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 			y++ //space
 		}
 
-		ui.Comp_combo_desc(base.trns.DATE_FORMAT, 0, 4, 1, y, 1, 2, &ini.DateFormat, base.trns.DATE_FORMAT_EU+";"+base.trns.DATE_FORMAT_US+";"+base.trns.DATE_FORMAT_ISO+";"+base.trns.DATE_FORMAT_TEXT, "", true, true)
+		ui.Comp_combo_desc(ui.trns.DATE_FORMAT, 0, 4, 1, y, 1, 2, &ini.DateFormat, ui.trns.DATE_FORMAT_EU+";"+ui.trns.DATE_FORMAT_US+";"+ui.trns.DATE_FORMAT_ISO+";"+ui.trns.DATE_FORMAT_TEXT, "", true, true)
 		y += 2
 
-		ui.Comp_combo_desc(base.trns.THEME, 0, 4, 1, y, 1, 2, &ini.Theme, base.trns.THEME_OCEAN+";"+base.trns.THEME_RED+";"+base.trns.THEME_BLUE+";"+base.trns.THEME_GREEN+";"+base.trns.THEME_GREY, "", true, true)
+		ui.Comp_combo_desc(ui.trns.THEME, 0, 4, 1, y, 1, 2, &ini.Theme, ui.trns.THEME_OCEAN+";"+ui.trns.THEME_RED+";"+ui.trns.THEME_BLUE+";"+ui.trns.THEME_GREEN+";"+ui.trns.THEME_GREY, "", true, true)
 		y += 2
 
-		ui.Comp_editbox_desc(base.trns.DPI, 0, 4, 1, y, 1, 2, &ini.Dpi, 0, "", "", false, false, true)
+		ui.Comp_editbox_desc(ui.trns.DPI, 0, 4, 1, y, 1, 2, &ini.Dpi, 0, "", "", false, false, true)
 		y += 2
 
-		ui.Comp_editbox_desc(base.trns.THREADS, 0, 4, 1, y, 1, 2, &ini.Threads, 0, "", "", false, false, true)
+		ui.Comp_editbox_desc(ui.trns.THREADS, 0, 4, 1, y, 1, 2, &ini.Threads, 0, "", "", false, false, true)
 		y += 2
 
-		ui.Comp_switch(1, y, 1, 1, &ini.Stats, false, base.trns.SHOW_STATS, "", true)
+		ui.Comp_switch(1, y, 1, 1, &ini.Stats, false, ui.trns.SHOW_STATS, "", true)
 		y++
 
-		ui.Comp_switch(1, y, 1, 1, &ini.Offline, true, base.trns.ONLINE, "", true)
+		ui.Comp_switch(1, y, 1, 1, &ini.Offline, true, ui.trns.ONLINE, "", true)
 		y++
 
 		ui.Dialog_end()
@@ -293,14 +293,14 @@ func (base *SABase) drawLauncher(app *SAApp, ui *Ui, icon_rad float64) {
 				ui.Div_colMax(0, 5)
 				ui.Div_row(1, 0.1)
 
-				if ui.Comp_buttonMenu(0, 0, 1, 1, base.trns.RENAME, "", true, false) > 0 {
+				if ui.Comp_buttonMenu(0, 0, 1, 1, ui.trns.RENAME, "", true, false) > 0 {
 					ui.Dialog_open(appUid+"_rename", 1)
 					//dialog(new_name + button) ...
 				}
 
 				ui.Div_SpacerRow(0, 1, 1, 1)
 
-				if ui.Comp_buttonMenu(0, 2, 1, 1, base.trns.REMOVE, "", true, false) > 0 {
+				if ui.Comp_buttonMenu(0, 2, 1, 1, ui.trns.REMOVE, "", true, false) > 0 {
 					ui.Dialog_open(appUid+"_delete", 1)
 					//dialog confirm ...
 				}
@@ -315,7 +315,7 @@ func (base *SABase) drawLauncher(app *SAApp, ui *Ui, icon_rad float64) {
 
 	//+
 	{
-		if ui.Comp_buttonText(0, 3, 1, 1, "+", "", base.trns.CREATE_APP, true, false) > 0 {
+		if ui.Comp_buttonText(0, 3, 1, 1, "+", "", ui.trns.CREATE_APP, true, false) > 0 {
 			ui.Dialog_open("new_app", 1)
 		}
 		if ui.Dialog_start("new_app") {
@@ -323,7 +323,7 @@ func (base *SABase) drawLauncher(app *SAApp, ui *Ui, icon_rad float64) {
 
 			ui.Comp_editbox(0, 0, 1, 1, &base.NewAppName, 0, "", "", false, false, true)
 
-			if ui.Comp_button(0, 1, 1, 1, base.trns.CREATE_APP, "", true) > 0 {
+			if ui.Comp_button(0, 1, 1, 1, ui.trns.CREATE_APP, "", true) > 0 {
 				OsFolderCreate("apps/" + base.NewAppName)
 				base.Refresh()
 				ui.Dialog_close()
