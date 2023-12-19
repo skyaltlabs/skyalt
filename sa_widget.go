@@ -441,7 +441,7 @@ func (w *SAWidget) execute(server *SANodeServer) {
 	nc := server.Start(w.Exe)
 	if nc != nil {
 		//add/update
-		for _, v := range nc.strct.Attrs {
+		for _, v := range nc.Attrs {
 			v.Error = ""
 
 			a := w.GetAttr(v.Name, v.Value, v.Gui_type, v.Gui_options, v.Gui_ReadOnly)
@@ -469,7 +469,7 @@ func (w *SAWidget) execute(server *SANodeServer) {
 		nc.Start()
 
 		//copy back
-		for _, v := range nc.strct.Attrs {
+		for _, v := range nc.Attrs {
 			a := w.GetAttr(v.Name, v.Value, v.Gui_type, v.Gui_options, v.Gui_ReadOnly)
 			if v.Gui_ReadOnly {
 				a.Value = v.Value
@@ -787,7 +787,7 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 			selected := w.GetAttrIntCombo("selected", "0", labels)
 			ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 			{
-				for i, _ := range butts {
+				for i := range butts {
 					ui.Div_colMax(i*2+0, 100)
 					if i+1 < len(butts) {
 						ui.Div_col(i*2+1, 0.1)
@@ -913,7 +913,7 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 		copyright := w.GetAttrStringEdit("copyright", "(c)OpenStreetMap contributors")
 		copyright_url := w.GetAttrStringEdit("copyright_url", "https://www.openstreetmap.org/copyright")
 
-		file = "databases/" + file
+		file = "disk/" + file
 
 		cam_lon := w.GetAttrFloatEdit("lon", "14.4071117049")
 		cam_lat := w.GetAttrFloatEdit("lat", "50.0852013259")

@@ -39,7 +39,7 @@ func main() {
 		return
 	}
 
-	disk, err := NewDisk("databases")
+	disk, err := NewDisk("disk")
 	if err != nil {
 		fmt.Printf("NewDbs() failed: %v\n", err)
 		return

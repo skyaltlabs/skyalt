@@ -18,7 +18,6 @@ package main
 
 import (
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net"
@@ -27,37 +26,24 @@ import (
 	"sync/atomic"
 )
 
-const (
-	SkyAltServer_READ_ATTRS = 0
-
-	SkyAltServer_WRITE_STRUCT   = 10
-	SkyAltServer_WRITE_PROGRESS = 11
-	SkyAltServer_WRITE_ATTRS    = 12
-)
-
 type SkyAltServerAttr struct {
 	Name  string
 	Value string
 
-	Gui_type     string `json:",omitempty"`
-	Gui_options  string `json:",omitempty"`
-	Gui_ReadOnly bool   `json:",omitempty"` //output
-	Error        string `json:",omitempty"`
-}
-
-type SkyAltServer struct {
-	UID   string
-	Attrs []*SkyAltServerAttr
+	Gui_type     string
+	Gui_options  string
+	Gui_ReadOnly bool //output
+	Error        string
 }
 
 type ServerNodeProgress struct {
 	Proc        float64
-	Description string `json:",omitempty"`
-	Error       string `json:",omitempty"`
+	Description string
+	Error       string
 }
 
 type SANodeConn struct {
-	strct    SkyAltServer
+	Attrs    []*SkyAltServerAttr
 	progress ServerNodeProgress
 
 	cmd  *exec.Cmd
@@ -69,7 +55,7 @@ func (conn *SANodeConn) Destroy() {
 }
 
 func (conn *SANodeConn) FindAttr(name string) *SkyAltServerAttr {
-	for _, it := range conn.strct.Attrs {
+	for _, it := range conn.Attrs {
 		if it.Name == name {
 			return it
 		}
@@ -77,33 +63,123 @@ func (conn *SANodeConn) FindAttr(name string) *SkyAltServerAttr {
 	return nil
 }
 
+func (conn *SANodeConn) AddAttr(name string) *SkyAltServerAttr {
+
+	attr := conn.FindAttr(name)
+	if attr == nil {
+		attr = &SkyAltServerAttr{Name: name}
+		conn.Attrs = append(conn.Attrs, attr)
+	}
+	return attr
+}
+
+func (conn *SANodeConn) sendAttrs() bool {
+
+	if !conn.sendPairNumber("attrs", len(conn.Attrs)) {
+		return false
+	}
+
+	for _, attr := range conn.Attrs {
+
+		//num pairs
+		if !conn.sendPairNumber(attr.Name, 5) {
+			return false
+		}
+
+		//values
+		if !conn.sendPair("value", attr.Value) {
+			return false
+		}
+		if !conn.sendPair("gui_type", attr.Gui_type) {
+			return false
+		}
+		if !conn.sendPair("gui_options", attr.Gui_options) {
+			return false
+		}
+		if !conn.sendPair("error", attr.Error) {
+			return false
+		}
+		ro := "0"
+		if attr.Gui_ReadOnly {
+			ro = "1"
+		}
+		if !conn.sendPair("gui_read_only", ro) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (conn *SANodeConn) recvAttrs(numAttrs int) bool {
+
+	for i := 0; i < numAttrs; i++ {
+		name, num2, ok := conn.recvPairNumber()
+		if !ok {
+			return false
+		}
+		attr := conn.AddAttr(name)
+
+		for ii := 0; ii < num2; ii++ {
+			name, value, ok := conn.recvPair()
+			if !ok {
+				return false
+			}
+
+			switch name {
+			case "value":
+				attr.Value = value
+			case "gui_type":
+				attr.Gui_type = value
+			case "gui_options":
+				attr.Gui_options = value
+			case "error":
+				attr.Error = value
+			case "gui_read_only":
+				val, err := strconv.Atoi(value)
+				if err != nil {
+					fmt.Printf("Warning: Atoi(%s) failed: %v\n", value, err)
+				}
+				attr.Gui_ReadOnly = (val != 0)
+			default:
+				fmt.Printf("Warning: Unknown name(%s)\n", name)
+			}
+		}
+	}
+	return true
+}
+
 func (conn *SANodeConn) Start() bool {
 
 	//attributes
-	js, err := json.Marshal(&conn.strct.Attrs)
-	if err != nil {
-		fmt.Printf("Unmarshal() Attributes failed: %v\n", err)
-		return false
-	}
-	if !conn.write(js, SkyAltServer_READ_ATTRS) {
-		return false
-	}
+	conn.sendAttrs()
 
-	conn.progress = ServerNodeProgress{} //reset
+	//reset
+	conn.progress = ServerNodeProgress{}
 
 	for {
-		js, tp, ok := conn.read()
+		name, num, ok := conn.recvPairNumber()
 		if !ok {
 			return false
 		}
 
-		switch tp {
-		case SkyAltServer_WRITE_PROGRESS:
-
-			err := json.Unmarshal(js, &conn.progress)
-			if err != nil {
-				fmt.Printf("Unmarshal() failed: %v\n", err)
-				return false
+		switch name {
+		case "progress":
+			for i := 0; i < num; i++ {
+				name, value, ok := conn.recvPair()
+				if !ok {
+					return false
+				}
+				switch name {
+				case "proc":
+					conn.progress.Proc, _ = strconv.ParseFloat(value, 64)
+				case "desc":
+					conn.progress.Description = value
+				case "error":
+					conn.progress.Error = value
+				default:
+					fmt.Printf("Warning: Unknown name(%s)\n", name)
+				}
 			}
 
 			if conn.progress.Error != "" {
@@ -114,34 +190,80 @@ func (conn *SANodeConn) Start() bool {
 				return true //ok!
 			}
 
-		case SkyAltServer_WRITE_ATTRS:
-			err := json.Unmarshal(js, &conn.strct.Attrs)
-			if err != nil {
-				fmt.Printf("Unmarshal() failed: %v\n", err)
+		case "attrs":
+			if !conn.recvAttrs(num) {
 				return false
 			}
 
 		default:
-			fmt.Printf("Unknown message type(%d)\n", tp)
+			fmt.Printf("Unknown message name(%s)\n", name)
 			return false
 		}
 	}
 }
 
-func (conn *SANodeConn) write(js []byte, tp uint64) bool {
+func (conn *SANodeConn) recvPair() (string, string, bool) {
 
-	//type
-	var tt [8]byte
-	binary.LittleEndian.PutUint64(tt[:], tp)
-	_, err := conn.conn.Write(tt[:]) //n? ...
-	if err != nil {
-		fmt.Printf("Write() failed: %v\n", err)
-		return false
-	}
+	var err error
 
 	//size
 	var t [8]byte
-	binary.LittleEndian.PutUint64(t[:], uint64(len(js)))
+	_, err = conn.conn.Read(t[:]) //n? ...
+	if err != nil {
+		fmt.Printf("Read() failed: %v\n", err)
+		return "", "", false
+	}
+	sz := binary.LittleEndian.Uint64(t[:])
+
+	//data
+	name := make([]byte, sz)
+	_, err = conn.conn.Read(name) //n? ...
+	if err != nil {
+		fmt.Printf("Read() failed: %v\n", err)
+		return "", "", false
+	}
+
+	//size
+	_, err = conn.conn.Read(t[:]) //n? ...
+	if err != nil {
+		fmt.Printf("Read() failed: %v\n", err)
+		return "", "", false
+	}
+	sz = binary.LittleEndian.Uint64(t[:])
+
+	//data
+	value := make([]byte, sz)
+	_, err = conn.conn.Read(value) //n? ...
+	if err != nil {
+		fmt.Printf("Read() failed: %v\n", err)
+		return "", "", false
+	}
+
+	return string(name), string(value), true
+}
+
+func (conn *SANodeConn) recvPairNumber() (string, int, bool) {
+	var value int
+
+	name, val, ok := conn.recvPair()
+	if ok {
+		var err error
+		value, err = strconv.Atoi(val)
+		if err != nil {
+			fmt.Printf("Atoi(%s) failed: %v\n", val, err)
+			return "", 0, false
+		}
+	}
+	return name, value, ok
+}
+
+func (conn *SANodeConn) sendPair(name, value string) bool {
+
+	var err error
+
+	//size
+	var t [8]byte
+	binary.LittleEndian.PutUint64(t[:], uint64(len(name)))
 	_, err = conn.conn.Write(t[:]) //n? ...
 	if err != nil {
 		fmt.Printf("Write() failed: %v\n", err)
@@ -149,7 +271,22 @@ func (conn *SANodeConn) write(js []byte, tp uint64) bool {
 	}
 
 	//data
-	_, err = conn.conn.Write(js) //n? ...
+	_, err = conn.conn.Write([]byte(name)) //n? ...
+	if err != nil {
+		fmt.Printf("Write() failed: %v\n", err)
+		return false
+	}
+
+	//size
+	binary.LittleEndian.PutUint64(t[:], uint64(len(value)))
+	_, err = conn.conn.Write(t[:]) //n? ...
+	if err != nil {
+		fmt.Printf("Write() failed: %v\n", err)
+		return false
+	}
+
+	//data
+	_, err = conn.conn.Write([]byte(value)) //n? ...
 	if err != nil {
 		fmt.Printf("Write() failed: %v\n", err)
 		return false
@@ -157,34 +294,9 @@ func (conn *SANodeConn) write(js []byte, tp uint64) bool {
 
 	return true
 }
-func (conn *SANodeConn) read() ([]byte, uint64, bool) {
 
-	//type
-	var tp [8]byte
-	_, err := conn.conn.Read(tp[:]) //n? ...
-	if err != nil {
-		fmt.Printf("Read() failed: %v\n", err)
-		return nil, 0, false
-	}
-
-	//size
-	var t [8]byte
-	_, err = conn.conn.Read(t[:]) //n? ...
-	if err != nil {
-		fmt.Printf("Read() failed: %v\n", err)
-		return nil, 0, false
-	}
-	sz := binary.LittleEndian.Uint64(t[:])
-
-	//data
-	js := make([]byte, sz)
-	_, err = conn.conn.Read(js) //n? ...
-	if err != nil {
-		fmt.Printf("Read() failed: %v\n", err)
-		return nil, 0, false
-	}
-
-	return js, binary.LittleEndian.Uint64(tp[:]), true
+func (conn *SANodeConn) sendPairNumber(name string, value int) bool {
+	return conn.sendPair(name, strconv.Itoa(value))
 }
 
 type SANodeServer struct {
@@ -237,30 +349,39 @@ func (server *SANodeServer) Start(path string) *SANodeConn {
 		return nil
 	}
 
-	node := SANodeConn{conn: c, cmd: cmd}
-	js, tp, ok := node.read()
+	conn := SANodeConn{conn: c, cmd: cmd}
+
+	//UID
+	name, value, ok := conn.recvPair()
 	if !ok {
 		return nil
 	}
-
-	if tp != SkyAltServer_WRITE_STRUCT {
-		fmt.Printf("type(%d) != SkyAltServer_WRITE_STRUCT\n", tp)
+	if name != "uid" {
+		fmt.Printf("name(%s) != 'uid'\n", name)
 		return nil
 	}
 
-	err = json.Unmarshal(js, &node.strct)
-	if err != nil {
-		fmt.Printf("Unmarshal() failed: %v\n", err)
+	if value != uid {
+		fmt.Printf("recv uid(%s) != uid(%s)\n", value, uid)
 		return nil
 	}
 
-	if node.strct.UID != uid {
-		fmt.Printf("uid(%s) != uid(%s)\n", node.strct.UID, uid)
+	//Attributes
+	name, numAttrs, ok := conn.recvPairNumber()
+	if !ok {
 		return nil
 	}
+	if name != "attrs" {
+		fmt.Printf("name(%s) != 'attrs'\n", name)
+		return nil
+	}
+	if !conn.recvAttrs(numAttrs) {
+		return nil
+	}
+	//...........................
 
 	//cmd.Wait()
 	//cmd.Cancel()
 
-	return &node
+	return &conn
 }
