@@ -57,7 +57,7 @@ func NewSABase(ui *Ui) (*SABase, error) {
 	}
 
 	var err error
-	base.server, err = NewSANodeServer("widgets", 4567)
+	base.server, err = NewSANodeServer("programs", 4567)
 	if err != nil {
 		return nil, fmt.Errorf("NewNodeServer() failed: %w", err)
 	}
