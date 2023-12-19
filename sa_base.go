@@ -200,7 +200,6 @@ func (base *SABase) drawFrame(ui *Ui) {
 	if base.HasApp() {
 		ui.Div_startName(1, 0, 1, 1, base.Apps[base.Selected].Name)
 		{
-
 			app.Execute(ui.win.io.ini.Threads)
 
 			if app.IDE {
@@ -233,7 +232,7 @@ func (base *SABase) drawFrame(ui *Ui) {
 		ui.Div_end()
 	}
 
-	if app.IDE {
-		app.History(ui)
-	}
+	//if app.IDE {
+	app.History(ui)
+	//}
 }
