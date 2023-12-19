@@ -378,7 +378,6 @@ func (server *SANodeServer) Start(path string) *SANodeConn {
 	if !conn.recvAttrs(numAttrs) {
 		return nil
 	}
-	//...........................
 
 	//cmd.Wait()
 	//cmd.Cancel()

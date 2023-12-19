@@ -508,7 +508,6 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 
 func (app *SAApp) cmpAndAddHistory() bool {
 	if len(app.history) > 0 {
-
 		if app.act == app.root.FindMirror(app.history[app.history_pos], app.history_act[app.history_pos]) {
 			if app.root.Cmp(app.history[app.history_pos]) {
 				return false //same
@@ -572,7 +571,6 @@ func (app *SAApp) stepHistoryForward() bool {
 }
 
 func (app *SAApp) Execute(numThreads int) {
-
 	if !app.exeIt {
 		return
 	}
