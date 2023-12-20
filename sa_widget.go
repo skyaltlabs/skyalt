@@ -45,7 +45,6 @@ type SAWidgetAttr struct {
 	Gui_type     string `json:",omitempty"`
 	Gui_options  string `json:",omitempty"`
 	Gui_ReadOnly bool   `json:",omitempty"` //output
-
 }
 
 func (attr *SAWidgetAttr) GetDirectLink() (*SAWidgetAttr, *string, bool) {
@@ -59,6 +58,24 @@ func (attr *SAWidgetAttr) GetDirectLink() (*SAWidgetAttr, *string, bool) {
 	}
 
 	return attr, &attr.Value, true //this
+}
+func (attr *SAWidgetAttr) SetString(value string) {
+	_, val, editable := attr.GetDirectLink()
+	if editable {
+		*val = value
+	}
+}
+func (attr *SAWidgetAttr) SetInt(value int) {
+	_, val, editable := attr.GetDirectLink()
+	if editable {
+		*val = strconv.Itoa(value)
+	}
+}
+func (attr *SAWidgetAttr) SetFloat(value float64) {
+	_, val, editable := attr.GetDirectLink()
+	if editable {
+		*val = strconv.FormatFloat(value, 'f', -1, 64)
+	}
 }
 
 type SAWidgetColRow struct {
@@ -667,15 +684,14 @@ func (w *SAWidget) GetAttr(name string, value string, gui_type string, gui_optio
 	return w._getAttr(SAWidgetAttr{Name: name, Value: value, Gui_type: gui_type, Gui_options: gui_options, Gui_ReadOnly: gui_readOnly})
 }
 
-func (w *SAWidget) GetAttrStringPtrEdit(name string, defValue string) (*string, bool) {
-	v := w._getAttr(SAWidgetAttr{Name: name, Value: defValue, Gui_type: "edit"})
-	_, val, editable := v.GetDirectLink()
-	return val, editable
+func (w *SAWidget) GetAttrEdit(name string, defValue string) *SAWidgetAttr {
+	return w._getAttr(SAWidgetAttr{Name: name, Value: defValue, Gui_type: "edit"})
 }
 
 func (w *SAWidget) GetAttrStringEdit(name string, defValue string) string {
-	s, _ := w.GetAttrStringPtrEdit(name, defValue)
-	return *s
+	attr := w.GetAttrEdit(name, defValue)
+	_, val, _ := attr.GetDirectLink()
+	return *val
 }
 
 func (w *SAWidget) GetAttrIntEdit(name string, defValue string) int {
@@ -709,31 +725,21 @@ func (w *SAWidget) GetAttrBoolSwitch(name string, defValue string) bool {
 	return vv != 0
 }
 
-func (w *SAWidget) SetGridStart(v OsV2) {
-	str, edit := w.GetAttrStringPtrEdit("grid_x", "0")
-	if edit {
-		*str = strconv.Itoa(v.X)
-	}
-	str, edit = w.GetAttrStringPtrEdit("grid_y", "0")
-	if edit {
-		*str = strconv.Itoa(v.Y)
-	}
+func (w *SAWidget) GetAttrColor(prefix_name string) OsCd {
+	var cd OsCd
+	cd.R = byte(w.GetAttrIntEdit(prefix_name+"r", "0"))
+	cd.G = byte(w.GetAttrIntEdit(prefix_name+"g", "0"))
+	cd.B = byte(w.GetAttrIntEdit(prefix_name+"b", "0"))
+	cd.A = byte(w.GetAttrIntEdit(prefix_name+"a", "255"))
+	return cd
 }
-func (w *SAWidget) SetGridSize(v OsV2) {
-	str, edit := w.GetAttrStringPtrEdit("grid_w", "0")
-	if edit {
-		*str = strconv.Itoa(v.X)
-	}
-	str, edit = w.GetAttrStringPtrEdit("grid_h", "0")
-	if edit {
-		*str = strconv.Itoa(v.Y)
-	}
+func (w *SAWidget) SetAttrColor(prefix_name string, cd OsCd) {
+	w.GetAttrEdit(prefix_name+"r", "0").SetInt(int(cd.R))
+	w.GetAttrEdit(prefix_name+"g", "0").SetInt(int(cd.G))
+	w.GetAttrEdit(prefix_name+"b", "0").SetInt(int(cd.B))
+	w.GetAttrEdit(prefix_name+"a", "255").SetInt(int(cd.A))
 }
 
-func (w *SAWidget) SetGrid(coord OsV4) {
-	w.SetGridStart(coord.Start)
-	w.SetGridSize(coord.Size)
-}
 func (w *SAWidget) GetGrid() OsV4 {
 	var v OsV4
 	v.Start.X = w.GetAttrIntEdit("grid_x", "0")
@@ -741,6 +747,18 @@ func (w *SAWidget) GetGrid() OsV4 {
 	v.Size.X = w.GetAttrIntEdit("grid_w", "1")
 	v.Size.Y = w.GetAttrIntEdit("grid_h", "1")
 	return v
+}
+func (w *SAWidget) SetGridStart(v OsV2) {
+	w.GetAttrEdit("grid_x", "0").SetInt(v.X)
+	w.GetAttrEdit("grid_y", "0").SetInt(v.Y)
+}
+func (w *SAWidget) SetGridSize(v OsV2) {
+	w.GetAttrEdit("grid_w", "0").SetInt(v.X)
+	w.GetAttrEdit("grid_h", "0").SetInt(v.X)
+}
+func (w *SAWidget) SetGrid(coord OsV4) {
+	w.SetGridStart(coord.Start)
+	w.SetGridSize(coord.Size)
 }
 
 func (w *SAWidget) GetGridShow() bool {
@@ -819,22 +837,22 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 		ui.Comp_text(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttrStringEdit("label", ""), w.GetAttrIntCombo("align", "0", "Left|Center|Right"))
 
 	case "switch":
-		value, editable := w.GetAttrStringPtrEdit("value", "")
+		_, value, editable := w.GetAttrEdit("value", "").GetDirectLink()
 		enable := w.GetAttrBoolSwitch("enable", "1") && editable
 		ui.Comp_switch(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, false, w.GetAttrStringEdit("label", ""), "", enable)
 
 	case "checkbox":
-		value, editable := w.GetAttrStringPtrEdit("value", "")
+		_, value, editable := w.GetAttrEdit("value", "").GetDirectLink()
 		enable := w.GetAttrBoolSwitch("enable", "1") && editable
 		ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, false, w.GetAttrStringEdit("label", ""), "", enable)
 
 	case "combo":
-		value, editable := w.GetAttrStringPtrEdit("value", "")
+		_, value, editable := w.GetAttrEdit("value", "").GetDirectLink()
 		enable := w.GetAttrBoolSwitch("enable", "1") && editable
 		ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, w.GetAttrStringEdit("options", "a;b"), "", enable, w.GetAttrBoolSwitch("search", "0"))
 
 	case "edit":
-		value, editable := w.GetAttrStringPtrEdit("value", "")
+		_, value, editable := w.GetAttrEdit("value", "").GetDirectLink()
 		enable := w.GetAttrBoolSwitch("enable", "1") && editable
 		ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, w.GetAttrIntEdit("precision", "2"), "", w.GetAttrStringEdit("ghost", ""), false, w.GetAttrBoolSwitch("tempToValue", "0"), enable)
 
@@ -849,35 +867,19 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 
 	case "color_palette":
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-		//jako params, potřebuji nastavit jednotlivé expression, nebo hodnoty, nebo picker? ... jak budu posílat hodnotu jinam? ..........
-		//ui.comp_colorPalette()
+
+		cd := w.GetAttrColor("cd_") //show param as color ...
+		if ui.comp_colorPalette(&cd) {
+			w.SetAttrColor("cd_", cd)
+		}
 		ui.Div_end()
 
 	case "color_picker":
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
 
-		var cd OsCd //func to get OsCd ................. prefix="cd_" ...
-		cd.R = byte(w.GetAttrIntEdit("cd_r", "0"))
-		cd.G = byte(w.GetAttrIntEdit("cd_g", "0"))
-		cd.B = byte(w.GetAttrIntEdit("cd_b", "0"))
-		cd.A = byte(w.GetAttrIntEdit("cd_a", "255"))
+		cd := w.GetAttrColor("cd_") //show param as color ...
 		if ui.comp_colorPicker(&cd, w.Name) {
-			str, edit := w.GetAttrStringPtrEdit("cd_r", "0") //func ............
-			if edit {
-				*str = strconv.Itoa(int(cd.R))
-			}
-			str, edit = w.GetAttrStringPtrEdit("cd_g", "0")
-			if edit {
-				*str = strconv.Itoa(int(cd.G))
-			}
-			str, edit = w.GetAttrStringPtrEdit("cd_b", "0")
-			if edit {
-				*str = strconv.Itoa(int(cd.B))
-			}
-			str, edit = w.GetAttrStringPtrEdit("cd_a", "255")
-			if edit {
-				*str = strconv.Itoa(int(cd.A))
-			}
+			w.SetAttrColor("cd_", cd)
 		}
 
 		ui.Div_end()
@@ -889,14 +891,8 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 
 		ui.Comp_Calendar(&value, &page)
 
-		str, edit := w.GetAttrStringPtrEdit("value", "0")
-		if edit {
-			*str = strconv.Itoa(int(value))
-		}
-		str, edit = w.GetAttrStringPtrEdit("page", "0")
-		if edit {
-			*str = strconv.Itoa(int(page))
-		}
+		w.GetAttrEdit("value", "0").SetInt(int(value))
+		w.GetAttrEdit("page", "0").SetInt(int(page))
 
 		ui.Div_end()
 
@@ -925,18 +921,9 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 		}
 
 		//set back
-		str, edit := w.GetAttrStringPtrEdit("lon", "0")
-		if edit {
-			*str = strconv.FormatFloat(cam_lon, 'f', -1, 64)
-		}
-		str, edit = w.GetAttrStringPtrEdit("lat", "0")
-		if edit {
-			*str = strconv.FormatFloat(cam_lat, 'f', -1, 64)
-		}
-		str, edit = w.GetAttrStringPtrEdit("zoom", "0")
-		if edit {
-			*str = strconv.Itoa(int(cam_zoom))
-		}
+		w.GetAttrEdit("lon", "0").SetFloat(cam_lon)
+		w.GetAttrEdit("lat", "0").SetFloat(cam_lat)
+		w.GetAttrEdit("zoom", "5").SetInt(int(cam_zoom))
 
 		//app.mapp.comp_map(w, ui)
 		ui.Div_end()
