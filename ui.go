@@ -190,6 +190,7 @@ func (ui *Ui) Maintenance() {
 		}
 		ui.dialogs = lvls
 
+		ui.edit.setFirstEditbox = false
 	}
 
 	//layout
