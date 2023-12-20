@@ -216,21 +216,13 @@ func UiCalendar_GetYear(unix_sec int64) string {
 	return strconv.Itoa(d.Year)
 }
 
-/*func (ui *Ui) Comp_calendar(x, y, w, h int, value *int64, page *int64) bool {
-	ui.Div_start(x, y, w, h)
-	changed := ui.Comp_Calendar_s(value, page)
-	ui.Div_end()
-
-	return changed
-}*/
-
-func (ui *Ui) Comp_Calendar(value *int64, page *int64) bool {
+func (ui *Ui) Comp_Calendar(value *int64, page *int64, maxColSize, maxRowSize float64) bool {
 
 	old_value := *value
 	format := ui.win.io.ini.DateFormat
 
-	ui.Div_colMax(0, 100)
-	ui.Div_rowMax(1, 100)
+	ui.Div_colMax(0, maxColSize)
+	ui.Div_rowMax(1, maxRowSize)
 
 	//head
 	ui.Div_start(0, 0, 1, 1)
@@ -292,21 +284,16 @@ func (ui *Ui) Comp_Calendar(value *int64, page *int64) bool {
 		for y := 0; y < 6; y++ {
 			for x := 0; x < 7; x++ {
 				showBack := false
-				//backCd := SACd_B //GetThemeCd()
 				fade := false //default
 
 				dtt := SA_InfoGetDateFromTime(dt)
-				isDayToday := today.CmpYMD(&dtt)        //CmpDates(dtt.Unix(), now)
-				isDaySelected := value_dtt.CmpYMD(&dtt) //CmpDates(dtt.Unix(), *value)
+				isDayToday := today.CmpYMD(&dtt)
+				isDaySelected := value_dtt.CmpYMD(&dtt)
 				isDayInMonth := dtt.Month == curr_month
 
 				if isDaySelected && isDayInMonth { //selected day
 					showBack = true
-					//backCd = SACd_P
 				}
-				//if isDayToday {
-				//backCd = SACd_T
-				//}
 				if !isDayInMonth { //is day in current month
 					fade = true
 				}
@@ -331,65 +318,59 @@ func (ui *Ui) Comp_Calendar(value *int64, page *int64) bool {
 	return old_value != *value
 }
 
-func (ui *Ui) Comp_CalendarDataPicker(date_unix int64, divName string) int64 {
-	//ui.Div_colMax(0, 3)
-	ui.Div_colMax(0, 15)
+func (ui *Ui) Comp_CalendarDataPicker(date_unix *int64, show_time bool, dialogName string, enable bool) bool {
+	ui.Div_colMax(0, 100)
+	if show_time {
+		ui.Div_col(1, 0.5) //space
+		ui.Div_colMax(2, 1.7)
+	}
 
-	//SA_Text(name).Show(0, 0, 1, 1)
+	orig_date := *date_unix
 
-	hm_over := date_unix - UiCalendar_GetStartDay(date_unix)
+	hm_over := *date_unix - UiCalendar_GetStartDay(*date_unix)
 
 	//date
-	if ui.Comp_button(0, 0, 1, 1, ui.GetTextDate(date_unix), "", true) > 0 {
-		ui.Dialog_open("DateTimePicker_"+divName, 1)
+	if ui.Comp_button(0, 0, 1, 1, ui.GetTextDate(*date_unix), "", enable) > 0 {
+		ui.Dialog_open("DateTimePicker_"+dialogName, 1)
 		ui.date_page = int64(OsTime())
 	}
 
-	if ui.Dialog_start("DateTimePicker_" + divName) {
-		if ui.Comp_Calendar(&date_unix, &ui.date_page) {
+	if ui.Dialog_start("DateTimePicker_" + dialogName) {
+
+		if ui.Comp_Calendar(date_unix, &ui.date_page, 9, 8) {
 			//keep old hour/minute
-			date_unix = UiCalendar_GetStartDay(date_unix) //date_unix % (24 * 3600)
-			date_unix += hm_over
+			*date_unix = UiCalendar_GetStartDay(*date_unix) //date_unix % (24 * 3600)
+			*date_unix += hm_over
 		}
 		ui.Dialog_end()
 	}
 
 	//time
-	tm := SA_InfoGetDateFromTime(date_unix)
-	hour := tm.Hour
-	minute := tm.Minute
+	if show_time {
+		tm := SA_InfoGetDateFromTime(*date_unix)
+		val := fmt.Sprintf("%d:%d:%d", tm.Hour, tm.Minute, tm.Second)
+		_, _, _, fnshd, _ := ui.Comp_editbox(2, 0, 1, 1, &val, 0, "", ui.trns.TIME, false, true, enable)
+		if fnshd {
 
-	editChanged := false
-	_, _, _, fnshd, _ := ui.Comp_editbox(2, 0, 1, 1, &hour, 0, "", ui.trns.HOUR, false, true, true)
-	if fnshd {
-		if hour < 0 {
-			hour = 0
+			var h, m, s int
+			n, _ := fmt.Sscanf(val, "%d:%d:%d", &h, &m, &s)
+
+			d := SADate{Year: tm.Year, Month: tm.Month, Day: tm.Day}
+			if n > 0 {
+				d.Hour = OsClamp(h, 0, 23)
+			}
+			if n > 1 {
+				d.Minute = OsClamp(m, 0, 59)
+			}
+			if n > 2 {
+				d.Second = OsClamp(s, 0, 59)
+			}
+
+			if n > 0 {
+				*date_unix = SA_InfoGetTimeFromDate(&d)
+			}
 		}
-		if hour > 23 {
-			hour = 23
-		}
-		editChanged = true
 	}
 
-	ui.Comp_text(3, 0, 1, 1, ":", 1)
-
-	_, _, _, fnshd, _ = ui.Comp_editbox(4, 0, 1, 1, &minute, 0, "", ui.trns.MINUTE, false, true, true)
-	if fnshd {
-		if minute < 0 {
-			minute = 0
-		}
-		if minute > 59 {
-			minute = 59
-		}
-		editChanged = true
-	}
-
-	//modify hour/minute
-	if editChanged {
-		date_unix = SA_InfoGetTimeFromDate(&SADate{Year: tm.Year, Month: tm.Month, Day: tm.Day, Hour: hour, Minute: minute}) //- int64(store.timezone)
-		//tm = GetTimeSt(date_unix)
-		//date_unix = time.Date(tm.Year(), tm.Month(), tm.Day(), hour, minute, 0, 0, tm.Location()).Unix()
-	}
-
-	return date_unix
+	return orig_date != *date_unix
 }
