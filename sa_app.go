@@ -202,7 +202,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	//add widget
 	if (!ui.touch.IsAnyActive() || ui.touch.canvas == appDiv) && app.startClickWidget == nil && !keys.alt {
 		touchPos := ui.win.io.touch.pos
-		if appDiv.crop.Inside(touchPos) {
+		if appDiv.IsOver(ui) { // appDiv.crop.Inside(touchPos)
 			grid := appDiv.GetCloseCell(touchPos)
 
 			if appDiv.FindFromGridPos(grid.Start) == nil { //no widget under touch
