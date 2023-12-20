@@ -131,7 +131,7 @@ func (ui *Ui) comp_colorPalette(cd *OsCd) bool {
 	}
 	ui.Div_end()
 
-	return orig_cd.Cmp(*cd)
+	return !orig_cd.Cmp(*cd)
 }
 
 func (ui *Ui) _colorButton(x, y, w, h int, value string, tooltip string, cd OsCd, rowSize float64) bool {
