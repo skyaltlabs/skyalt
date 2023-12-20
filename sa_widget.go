@@ -78,6 +78,29 @@ func (attr *SAWidgetAttr) SetFloat(value float64) {
 	}
 }
 
+func (attr *SAWidgetAttr) GetString() string {
+	_, val, _ := attr.GetDirectLink()
+	return *val
+}
+func (attr *SAWidgetAttr) GetInt() int {
+	v, _ := strconv.Atoi(attr.GetString())
+	return v
+}
+func (attr *SAWidgetAttr) GetInt64() int64 {
+	v, _ := strconv.Atoi(attr.GetString())
+	return int64(v)
+}
+func (attr *SAWidgetAttr) GetFloat() float64 {
+	v, _ := strconv.ParseFloat(attr.GetString(), 64)
+	return v
+}
+func (attr *SAWidgetAttr) GetBool() bool {
+	return attr.GetInt() != 0
+}
+func (attr *SAWidgetAttr) GetByte() byte {
+	return byte(attr.GetInt())
+}
+
 type SAWidgetColRow struct {
 	Min, Max, Resize float64 `json:",omitempty"`
 	ResizeName       string  `json:",omitempty"`
@@ -679,7 +702,6 @@ func (w *SAWidget) findAttrFloat(name string) (*SAWidgetAttr, float64) {
 	return nil, 0
 }
 
-// this should be use for Gui_ReadOnly=true
 func (w *SAWidget) GetAttr(name string, value string, gui_type string, gui_options string, gui_readOnly bool) *SAWidgetAttr {
 	return w._getAttr(SAWidgetAttr{Name: name, Value: value, Gui_type: gui_type, Gui_options: gui_options, Gui_ReadOnly: gui_readOnly})
 }
@@ -688,49 +710,28 @@ func (w *SAWidget) GetAttrEdit(name string, defValue string) *SAWidgetAttr {
 	return w._getAttr(SAWidgetAttr{Name: name, Value: defValue, Gui_type: "edit"})
 }
 
-func (w *SAWidget) GetAttrStringEdit(name string, defValue string) string {
-	attr := w.GetAttrEdit(name, defValue)
-	_, val, _ := attr.GetDirectLink()
-	return *val
+func (w *SAWidget) GetAttrCombo(name string, defValue string, defOptions string) *SAWidgetAttr {
+	return w._getAttr(SAWidgetAttr{Name: name, Value: defValue, Gui_type: "combo", Gui_options: defOptions})
 }
 
-func (w *SAWidget) GetAttrIntEdit(name string, defValue string) int {
-	vv, _ := strconv.Atoi(w.GetAttrStringEdit(name, defValue))
-	return vv
+func (w *SAWidget) GetAttrCheckbox(name string, defValue string) *SAWidgetAttr {
+	return w._getAttr(SAWidgetAttr{Name: name, Value: defValue, Gui_type: "checkbox"})
 }
 
-func (w *SAWidget) GetAttrFloatEdit(name string, defValue string) float64 {
-	vv, _ := strconv.ParseFloat(w.GetAttrStringEdit(name, defValue), 64)
-	return vv
+func (w *SAWidget) GetAttrSwitch(name string, defValue string) *SAWidgetAttr {
+	return w._getAttr(SAWidgetAttr{Name: name, Value: defValue, Gui_type: "switch"})
 }
 
-func (w *SAWidget) GetAttrIntCombo(name string, defValue string, defOptions string) int {
-	v := w._getAttr(SAWidgetAttr{Name: name, Value: defValue, Gui_type: "combo", Gui_options: defOptions})
-	_, val, _ := v.GetDirectLink()
-	vv, _ := strconv.Atoi(*val)
-	return vv
-}
-
-func (w *SAWidget) GetAttrBoolCheckbox(name string, defValue string) bool {
-	v := w._getAttr(SAWidgetAttr{Name: name, Value: defValue, Gui_type: "checkbox"})
-	_, val, _ := v.GetDirectLink()
-	vv, _ := strconv.Atoi(*val)
-	return vv != 0
-}
-
-func (w *SAWidget) GetAttrBoolSwitch(name string, defValue string) bool {
-	v := w._getAttr(SAWidgetAttr{Name: name, Value: defValue, Gui_type: "switch"})
-	_, val, _ := v.GetDirectLink()
-	vv, _ := strconv.Atoi(*val)
-	return vv != 0
+func (w *SAWidget) GetAttrDate(name string, defValue string) *SAWidgetAttr {
+	return w._getAttr(SAWidgetAttr{Name: name, Value: defValue, Gui_type: "date"})
 }
 
 func (w *SAWidget) GetAttrColor(prefix_name string) OsCd {
 	var cd OsCd
-	cd.R = byte(w.GetAttrIntEdit(prefix_name+"r", "0"))
-	cd.G = byte(w.GetAttrIntEdit(prefix_name+"g", "0"))
-	cd.B = byte(w.GetAttrIntEdit(prefix_name+"b", "0"))
-	cd.A = byte(w.GetAttrIntEdit(prefix_name+"a", "255"))
+	cd.R = w.GetAttrEdit(prefix_name+"r", "0").GetByte()
+	cd.G = w.GetAttrEdit(prefix_name+"g", "0").GetByte()
+	cd.B = w.GetAttrEdit(prefix_name+"b", "0").GetByte()
+	cd.A = w.GetAttrEdit(prefix_name+"a", "255").GetByte()
 	return cd
 }
 func (w *SAWidget) SetAttrColor(prefix_name string, cd OsCd) {
@@ -742,10 +743,10 @@ func (w *SAWidget) SetAttrColor(prefix_name string, cd OsCd) {
 
 func (w *SAWidget) GetGrid() OsV4 {
 	var v OsV4
-	v.Start.X = w.GetAttrIntEdit("grid_x", "0")
-	v.Start.Y = w.GetAttrIntEdit("grid_y", "0")
-	v.Size.X = w.GetAttrIntEdit("grid_w", "1")
-	v.Size.Y = w.GetAttrIntEdit("grid_h", "1")
+	v.Start.X = w.GetAttrEdit("grid_x", "0").GetInt()
+	v.Start.Y = w.GetAttrEdit("grid_y", "0").GetInt()
+	v.Size.X = w.GetAttrEdit("grid_w", "1").GetInt()
+	v.Size.Y = w.GetAttrEdit("grid_h", "1").GetInt()
 	return v
 }
 func (w *SAWidget) SetGridStart(v OsV2) {
@@ -753,8 +754,8 @@ func (w *SAWidget) SetGridStart(v OsV2) {
 	w.GetAttrEdit("grid_y", "0").SetInt(v.Y)
 }
 func (w *SAWidget) SetGridSize(v OsV2) {
-	w.GetAttrEdit("grid_w", "0").SetInt(v.X)
-	w.GetAttrEdit("grid_h", "0").SetInt(v.X)
+	w.GetAttrEdit("grid_w", "1").SetInt(v.X)
+	w.GetAttrEdit("grid_h", "1").SetInt(v.X)
 }
 func (w *SAWidget) SetGrid(coord OsV4) {
 	w.SetGridStart(coord.Start)
@@ -762,7 +763,7 @@ func (w *SAWidget) SetGrid(coord OsV4) {
 }
 
 func (w *SAWidget) GetGridShow() bool {
-	return w.GetAttrBoolSwitch("grid_show", "1")
+	return w.GetAttrSwitch("grid_show", "1").GetBool()
 }
 
 func (w *SAWidget) Render(ui *Ui, app *SAApp) {
@@ -778,18 +779,18 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 	switch w.Exe {
 
 	case "button":
-		enable := w.GetAttrBoolSwitch("enable", "1")
-		tp := w.GetAttrIntCombo("type", "0", "Classic;Light;Menu;Segments")
+		enable := w.GetAttrSwitch("enable", "1").GetBool()
+		tp := w.GetAttrCombo("type", "0", "Classic;Light;Menu;Segments").GetInt()
 
 		clicked := false
 		switch tp {
 		case 0:
-			clicked = ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttrStringEdit("label", ""), "", enable) > 0
+			clicked = ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttrEdit("label", "").GetString(), "", enable) > 0
 		case 1:
-			clicked = ui.Comp_buttonLight(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttrStringEdit("label", ""), "", enable) > 0
+			clicked = ui.Comp_buttonLight(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttrEdit("label", "").GetString(), "", enable) > 0
 		case 2:
-			selected := w.GetAttrBoolSwitch("selected", "0")
-			clicked = ui.Comp_buttonMenu(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttrStringEdit("label", ""), "", enable, selected) > 0
+			selected := w.GetAttrSwitch("selected", "0").GetBool()
+			clicked = ui.Comp_buttonMenu(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttrEdit("label", "").GetString(), "", enable, selected) > 0
 			if clicked {
 				sel := w.findAttr("selected")
 				_, val, editable := sel.GetDirectLink()
@@ -799,10 +800,10 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 			}
 
 		case 3:
-			labels := w.GetAttrStringEdit("label", "")
+			labels := w.GetAttrEdit("label", "").GetString()
 			butts := strings.Split(labels, ";")
 
-			selected := w.GetAttrIntCombo("selected", "0", labels)
+			selected := w.GetAttrCombo("selected", "0", labels).GetInt()
 			ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 			{
 				for i := range butts {
@@ -828,36 +829,36 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 			}
 			ui.Div_end()
 		}
-		w.GetAttrBoolSwitch("clicked", "0")
+		w.GetAttrSwitch("clicked", "0").GetBool()
 		cl := w.findAttr("clicked")
 		cl.Gui_ReadOnly = true
 		cl.Value = OsTrnString(clicked, "1", "0")
 
 	case "text":
-		ui.Comp_text(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttrStringEdit("label", ""), w.GetAttrIntCombo("align", "0", "Left|Center|Right"))
+		ui.Comp_text(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttrEdit("label", "").GetString(), w.GetAttrCombo("align", "0", "Left|Center|Right").GetInt())
 
 	case "switch":
 		_, value, editable := w.GetAttrEdit("value", "").GetDirectLink()
-		enable := w.GetAttrBoolSwitch("enable", "1") && editable
-		ui.Comp_switch(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, false, w.GetAttrStringEdit("label", ""), "", enable)
+		enable := w.GetAttrSwitch("enable", "1").GetBool() && editable
+		ui.Comp_switch(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, false, w.GetAttrEdit("label", "").GetString(), "", enable)
 
 	case "checkbox":
 		_, value, editable := w.GetAttrEdit("value", "").GetDirectLink()
-		enable := w.GetAttrBoolSwitch("enable", "1") && editable
-		ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, false, w.GetAttrStringEdit("label", ""), "", enable)
+		enable := w.GetAttrSwitch("enable", "1").GetBool() && editable
+		ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, false, w.GetAttrEdit("label", "").GetString(), "", enable)
 
 	case "combo":
 		_, value, editable := w.GetAttrEdit("value", "").GetDirectLink()
-		enable := w.GetAttrBoolSwitch("enable", "1") && editable
-		ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, w.GetAttrStringEdit("options", "a;b"), "", enable, w.GetAttrBoolSwitch("search", "0"))
+		enable := w.GetAttrSwitch("enable", "1").GetBool() && editable
+		ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, w.GetAttrEdit("options", "a;b").GetString(), "", enable, w.GetAttrSwitch("search", "0").GetBool())
 
 	case "edit":
 		_, value, editable := w.GetAttrEdit("value", "").GetDirectLink()
-		enable := w.GetAttrBoolSwitch("enable", "1") && editable
-		ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, w.GetAttrIntEdit("precision", "2"), "", w.GetAttrStringEdit("ghost", ""), false, w.GetAttrBoolSwitch("tempToValue", "0"), enable)
+		enable := w.GetAttrSwitch("enable", "1").GetBool() && editable
+		ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, w.GetAttrEdit("precision", "2").GetInt(), "", w.GetAttrEdit("ghost", "").GetString(), false, w.GetAttrSwitch("tempToValue", "0").GetBool(), enable)
 
 	case "divider":
-		tp := w.GetAttrIntCombo("type", "0", "Column;Row")
+		tp := w.GetAttrCombo("type", "0", "Column;Row").GetInt()
 		switch tp {
 		case 0:
 			ui.Div_SpacerCol(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
@@ -867,87 +868,100 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 
 	case "color_palette":
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-
-		cd := w.GetAttrColor("cd_") //show param as color ...
-		if ui.comp_colorPalette(&cd) {
-			w.SetAttrColor("cd_", cd)
+		{
+			cd := w.GetAttrColor("cd_")
+			if ui.comp_colorPalette(&cd) {
+				w.SetAttrColor("cd_", cd)
+			}
 		}
 		ui.Div_end()
 
 	case "color_picker":
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-
-		cd := w.GetAttrColor("cd_") //show param as color ...
-		if ui.comp_colorPicker(&cd, w.Name) {
-			w.SetAttrColor("cd_", cd)
+		{
+			enable := w.GetAttrSwitch("enable", "1").GetBool()
+			cd := w.GetAttrColor("cd_")
+			if ui.comp_colorPicker(&cd, w.Name, enable) {
+				w.SetAttrColor("cd_", cd)
+			}
 		}
-
 		ui.Div_end()
 
 	case "calendar":
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-		value := int64(w.GetAttrIntEdit("value", "0")) //show param as calendar ...
-		page := int64(w.GetAttrIntEdit("page", "0"))   //show param as calendar ...
+		{
+			value := w.GetAttrDate("value", "0").GetInt64()
+			page := w.GetAttrDate("page", "0").GetInt64()
 
-		ui.Comp_Calendar(&value, &page)
+			ui.Comp_Calendar(&value, &page, 100, 100)
 
-		w.GetAttrEdit("value", "0").SetInt(int(value))
-		w.GetAttrEdit("page", "0").SetInt(int(page))
-
+			w.GetAttrDate("value", "0").SetInt(int(value))
+			w.GetAttrDate("page", "0").SetInt(int(page))
+		}
 		ui.Div_end()
 
 	case "date_picker":
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-		//ui.ColorPicker()
+		{
+			enable := w.GetAttrSwitch("enable", "1").GetBool()
+			value := w.GetAttrDate("value", "0").GetInt64()
+			show_time := w.GetAttrSwitch("show_time", "0").GetBool()
+			if ui.Comp_CalendarDataPicker(&value, show_time, w.Name, enable) {
+				w.GetAttrDate("value", "0").SetInt(int(value))
+			}
+		}
 		ui.Div_end()
 
 	case "map":
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
+		{
+			file := w.GetAttrEdit("file", "maps/osm").GetString()
+			url := w.GetAttrEdit("url", "https://tile.openstreetmap.org/{z}/{x}/{y}.png").GetString()
+			copyright := w.GetAttrEdit("copyright", "(c)OpenStreetMap contributors").GetString()
+			copyright_url := w.GetAttrEdit("copyright_url", "https://www.openstreetmap.org/copyright").GetString()
 
-		file := w.GetAttrStringEdit("file", "maps/osm")
-		url := w.GetAttrStringEdit("url", "https://tile.openstreetmap.org/{z}/{x}/{y}.png")
-		copyright := w.GetAttrStringEdit("copyright", "(c)OpenStreetMap contributors")
-		copyright_url := w.GetAttrStringEdit("copyright_url", "https://www.openstreetmap.org/copyright")
+			file = "disk/" + file
 
-		file = "disk/" + file
+			cam_lon := w.GetAttrEdit("lon", "14.4071117049").GetFloat()
+			cam_lat := w.GetAttrEdit("lat", "50.0852013259").GetFloat()
+			cam_zoom := w.GetAttrEdit("zoom", "5").GetFloat()
 
-		cam_lon := w.GetAttrFloatEdit("lon", "14.4071117049")
-		cam_lat := w.GetAttrFloatEdit("lat", "50.0852013259")
-		cam_zoom := w.GetAttrFloatEdit("zoom", "5")
+			err := ui.comp_map(app.mapp, &cam_lon, &cam_lat, &cam_zoom, file, url, copyright, copyright_url)
+			if err != nil {
+				w.errExe = err
+			}
 
-		err := ui.comp_map(app.mapp, &cam_lon, &cam_lat, &cam_zoom, file, url, copyright, copyright_url)
-		if err != nil {
-			w.errExe = err
+			//set back
+			w.GetAttrEdit("lon", "0").SetFloat(cam_lon)
+			w.GetAttrEdit("lat", "0").SetFloat(cam_lat)
+			w.GetAttrEdit("zoom", "5").SetInt(int(cam_zoom))
+
+			//app.mapp.comp_map(w, ui)
+			ui.Div_end()
 		}
-
-		//set back
-		w.GetAttrEdit("lon", "0").SetFloat(cam_lon)
-		w.GetAttrEdit("lat", "0").SetFloat(cam_lat)
-		w.GetAttrEdit("zoom", "5").SetInt(int(cam_zoom))
-
-		//app.mapp.comp_map(w, ui)
-		ui.Div_end()
-
 		div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, ".subs.")
-		div.touch_enabled = false
-		w.RenderLayout(ui, app)
+		{
+			div.touch_enabled = false
+			w.RenderLayout(ui, app)
+		}
 		ui.Div_end()
 
 	case "map_locators":
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
+		{
+			lonAttr, cam_lon := w.parent.findAttrFloat("lon")
+			latAttr, cam_lat := w.parent.findAttrFloat("lat")
+			zoomAttr, cam_zoom := w.parent.findAttrFloat("zoom")
+			if lonAttr == nil || latAttr == nil || zoomAttr == nil {
+				w.errExe = fmt.Errorf("parent widget is not 'Map' type")
+				return
+			}
+			items := w.GetAttrEdit("items", "[{\"lon\":14.4071117049, \"lat\":50.0852013259, \"label\":\"1\"}, {\"lon\":14, \"lat\":50, \"label\":\"2\"}]").GetString()
 
-		lonAttr, cam_lon := w.parent.findAttrFloat("lon")
-		latAttr, cam_lat := w.parent.findAttrFloat("lat")
-		zoomAttr, cam_zoom := w.parent.findAttrFloat("zoom")
-		if lonAttr == nil || latAttr == nil || zoomAttr == nil {
-			w.errExe = fmt.Errorf("parent widget is not 'Map' type")
-			return
-		}
-		items := w.GetAttrStringEdit("items", "[{\"lon\":14.4071117049, \"lat\":50.0852013259, \"label\":\"1\"}, {\"lon\":14, \"lat\":50, \"label\":\"2\"}]")
-
-		err := ui.comp_mapLocators(app.mapp, cam_lon, cam_lat, cam_zoom, items)
-		if err != nil {
-			w.findAttr("items").errExe = err
+			err := ui.comp_mapLocators(app.mapp, cam_lon, cam_lat, cam_zoom, items)
+			if err != nil {
+				w.findAttr("items").errExe = err
+			}
 		}
 		ui.Div_end()
 
@@ -1039,38 +1053,171 @@ func (w *SAWidget) NumNames(name string) int {
 
 }
 
-func _SAWidget_renderParamsValue(x, y, w, h int, attr *SAWidgetAttr, ui *Ui, enable bool) {
+func _SAWidget_renderParamsValue(x, y, w, h int, attr *SAWidgetAttr, ui *Ui, gui_type string) {
+
 	if attr.ShowExp {
-		ui.Comp_editbox(x, y, w, h, &attr.Value, 2, "", "", false, false, true)
+		switch gui_type {
+
+		case "xywh":
+			ui.Div_start(x, y, w, h)
+			{
+				prefix := attr.Name[:len(attr.Name)-1]
+				attrX := attr.widget.GetAttrEdit(prefix+"x", "0")
+				attrY := attr.widget.GetAttrEdit(prefix+"y", "0")
+				attrW := attr.widget.GetAttrEdit(prefix+"w", "1")
+				attrH := attr.widget.GetAttrEdit(prefix+"h", "1")
+
+				ui.Div_colMax(0, 100)
+				ui.Div_colMax(1, 100)
+				ui.Div_colMax(2, 100)
+				ui.Div_colMax(3, 100)
+
+				ui.Comp_editbox(0, 0, 1, 1, &attrX.Value, 2, "", "", false, false, true)
+				ui.Comp_editbox(1, 0, 1, 1, &attrY.Value, 2, "", "", false, false, true)
+				ui.Comp_editbox(2, 0, 1, 1, &attrW.Value, 2, "", "", false, false, true)
+				ui.Comp_editbox(3, 0, 1, 1, &attrH.Value, 2, "", "", false, false, true)
+			}
+			ui.Div_end()
+
+		case "rgba":
+			ui.Div_start(x, y, w, h)
+			{
+				prefix := attr.Name[:len(attr.Name)-1]
+				attrR := attr.widget.GetAttrEdit(prefix+"r", "0")
+				attrG := attr.widget.GetAttrEdit(prefix+"g", "0")
+				attrB := attr.widget.GetAttrEdit(prefix+"b", "0")
+				attrA := attr.widget.GetAttrEdit(prefix+"a", "255")
+
+				ui.Div_colMax(0, 100)
+				ui.Div_colMax(1, 100)
+				ui.Div_colMax(2, 100)
+				ui.Div_colMax(3, 100)
+
+				ui.Comp_editbox(0, 0, 1, 1, &attrR.Value, 2, "", "", false, false, true)
+				ui.Comp_editbox(1, 0, 1, 1, &attrG.Value, 2, "", "", false, false, true)
+				ui.Comp_editbox(2, 0, 1, 1, &attrB.Value, 2, "", "", false, false, true)
+				ui.Comp_editbox(3, 0, 1, 1, &attrA.Value, 2, "", "", false, false, true)
+			}
+			ui.Div_end()
+
+		default:
+			ui.Comp_editbox(x, y, w, h, &attr.Value, 2, "", "", false, false, true)
+		}
+
 	} else {
 		_, value, editable := attr.GetDirectLink()
 
-		switch attr.Gui_type {
+		switch gui_type {
 		case "checkbox":
-			ui.Comp_checkbox(x, y, w, h, value, false, "", "", editable && enable)
+			ui.Comp_checkbox(x, y, w, h, value, false, "", "", editable)
 
 		case "switch":
-			ui.Comp_switch(x, y, w, h, value, false, "", "", editable && enable)
+			ui.Comp_switch(x, y, w, h, value, false, "", "", editable)
+
+		case "date":
+			ui.Div_start(x, y, w, h)
+			value := attr.GetInt64()
+			if ui.Comp_CalendarDataPicker(&value, true, attr.Name, editable) {
+				attr.SetInt(int(value))
+			}
+			ui.Div_end()
 
 		case "combo":
-			ui.Comp_combo(x, y, w, h, value, attr.Gui_options, "", editable && enable, false)
+			ui.Comp_combo(x, y, w, h, value, attr.Gui_options, "", editable, false)
 
 		case "edit":
-			ui.Comp_editbox(x, y, w, h, value, 2, "", "", false, false, editable && enable)
+			ui.Comp_editbox(x, y, w, h, value, 2, "", "", false, false, editable)
+
+		case "xywh":
+			ui.Div_start(x, y, w, h)
+			{
+				prefix := attr.Name[:len(attr.Name)-1]
+				_, valueX, editableX := attr.widget.GetAttrEdit(prefix+"x", "0").GetDirectLink()
+				_, valueY, editableY := attr.widget.GetAttrEdit(prefix+"y", "0").GetDirectLink()
+				_, valueW, editableW := attr.widget.GetAttrEdit(prefix+"w", "1").GetDirectLink()
+				_, valueH, editableH := attr.widget.GetAttrEdit(prefix+"h", "1").GetDirectLink()
+
+				ui.Div_colMax(0, 100)
+				ui.Div_colMax(1, 100)
+				ui.Div_colMax(2, 100)
+				ui.Div_colMax(3, 100)
+
+				ui.Comp_editbox(0, 0, 1, 1, valueX, 2, "", "", false, false, editableX)
+				ui.Comp_editbox(1, 0, 1, 1, valueY, 2, "", "", false, false, editableY)
+				ui.Comp_editbox(2, 0, 1, 1, valueW, 2, "", "", false, false, editableW)
+				ui.Comp_editbox(3, 0, 1, 1, valueH, 2, "", "", false, false, editableH)
+			}
+			ui.Div_end()
+
+		case "rgba":
+			ui.Div_start(x, y, w, h)
+
+			prefix := attr.Name[:len(attr.Name)-1]
+			cd := attr.widget.GetAttrColor(prefix)
+			if ui.comp_colorPicker(&cd, attr.Name, editable) {
+				attr.widget.SetAttrColor("cd_", cd)
+			}
+
+			ui.Div_end()
 
 		default: //edit
-			ui.Comp_editbox(x, y, w, h, value, 2, "", "", false, false, editable && enable)
+			ui.Comp_editbox(x, y, w, h, value, 2, "", "", false, false, editable)
 		}
 	}
+}
+
+func (widget *SAWidget) IsAttrGroup(find *SAWidgetAttr) (string, bool, string) {
+
+	if len(find.Name) <= 2 {
+		return "", false, ""
+	}
+	prefix := find.Name[:len(find.Name)-1]
+
+	x := widget.findAttr(prefix + "x")
+	y := widget.findAttr(prefix + "y")
+	z := widget.findAttr(prefix + "z")
+	w := widget.findAttr(prefix + "w")
+	h := widget.findAttr(prefix + "h")
+	if x != nil && y != nil && w != nil && h != nil {
+		return "xywh", find == x, prefix
+	}
+
+	if x != nil && y != nil && z != nil {
+		return "xyz", find == x, prefix
+	}
+	if x != nil && y != nil {
+		return "xy", find == x, prefix
+	}
+
+	r := widget.findAttr(prefix + "r")
+	g := widget.findAttr(prefix + "g")
+	b := widget.findAttr(prefix + "b")
+	a := widget.findAttr(prefix + "a")
+	if r != nil && g != nil && b != nil && a != nil {
+		return "rgba", find == r, prefix
+	}
+
+	if len(find.Name) <= 4 {
+		return "", false, ""
+	}
+	prefix = find.Name[:len(find.Name)-3]
+
+	lon := widget.findAttr(prefix + "lon")
+	lat := widget.findAttr(prefix + "lat")
+	if lon != nil && lat != nil {
+		return "lonlat", find == lon, prefix
+	}
+
+	return "", false, "" //not found
 }
 
 func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 
 	ui.Div_colMax(0, 100)
 	if w.IsGuiLayout() {
-		ui.Div_row(4, 0.5) //spacer
+		ui.Div_row(2, 0.5) //spacer
 	} else {
-		ui.Div_row(3, 0.5) //spacer
+		ui.Div_row(1, 0.5) //spacer
 	}
 
 	y := 0
@@ -1105,63 +1252,6 @@ func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 	ui.Div_end()
 	y++
 
-	//visibility
-	var visible bool
-	ui.Div_start(0, y, 1, 1)
-	{
-		ui.Div_colMax(0, 2)
-		ui.Div_colMax(1, 100)
-
-		visible = w.GetGridShow() //create if not exist
-		show := w.findAttr("grid_show")
-
-		if ui.Comp_buttonMenu(0, 0, 1, 1, "Visibility", "", true, show.ShowExp) > 0 {
-			show.ShowExp = !show.ShowExp
-		}
-
-		_SAWidget_renderParamsValue(1, 0, 1, 1, show, ui, true)
-	}
-	ui.Div_end()
-	y++
-
-	//Grid
-	ui.Div_start(0, y, 1, 1)
-	{
-		ui.Div_colMax(0, 2)
-		ui.Div_colMax(1, 100)
-		ui.Div_colMax(2, 100)
-		ui.Div_colMax(3, 100)
-		ui.Div_colMax(4, 100)
-
-		//label
-		w.GetGrid() //create if not exist
-		xx := w.findAttr("grid_x")
-		yy := w.findAttr("grid_y")
-		ww := w.findAttr("grid_w")
-		hh := w.findAttr("grid_h")
-
-		if len(xx.depends) > 0 || len(yy.depends) > 0 || len(ww.depends) > 0 || len(hh.depends) > 0 {
-			ui.Div_start(0, 0, 1, 1)
-			ui.Paint_rect(0, 0, 1, 1, 0.03, SAApp_getYellow().SetAlpha(50), 0)
-			ui.Div_end()
-		}
-
-		if ui.Comp_buttonMenu(0, 0, 1, 1, "Grid", "", true, xx.ShowExp) > 0 {
-			xx.ShowExp = !xx.ShowExp
-			yy.ShowExp = !yy.ShowExp
-			ww.ShowExp = !ww.ShowExp
-			hh.ShowExp = !hh.ShowExp
-		}
-
-		//values
-		_SAWidget_renderParamsValue(1, 0, 1, 1, xx, ui, visible)
-		_SAWidget_renderParamsValue(2, 0, 1, 1, yy, ui, visible)
-		_SAWidget_renderParamsValue(3, 0, 1, 1, ww, ui, visible)
-		_SAWidget_renderParamsValue(4, 0, 1, 1, hh, ui, visible)
-	}
-	ui.Div_end()
-	y++
-
 	ui.Div_SpacerRow(0, y, 1, 1)
 	y++
 
@@ -1177,11 +1267,10 @@ func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 	}
 
 	for i, it := range w.Attrs {
-		if it.Name == "grid_x" || it.Name == "grid_y" || it.Name == "grid_w" || it.Name == "grid_h" || it.Name == "grid_show" {
-			continue
+		group, isGroupFirst, prefixName := w.IsAttrGroup(it)
+		if group != "" && !isGroupFirst {
+			continue //skip 2nd, 3rd in group
 		}
-
-		//name_width := ui.Paint_textWidth(name, -1, 0, "", true)
 
 		ui.Div_start(0, y, 1, 1)
 		{
@@ -1205,7 +1294,11 @@ func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 			ui.Div_end()
 
 			//name
-			if ui.Comp_buttonMenu(0, 0, 1, 1, it.Name, "", true, it.ShowExp) > 0 {
+			nm := it.Name
+			if prefixName != "" {
+				nm = prefixName[:len(prefixName)-1] + "[" + group + "]"
+			}
+			if ui.Comp_buttonMenu(0, 0, 1, 1, nm, "", true, it.ShowExp) > 0 {
 				it.ShowExp = !it.ShowExp
 			}
 
@@ -1219,7 +1312,12 @@ func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 				}
 				ui.Div_end()
 			}
-			_SAWidget_renderParamsValue(1, 0, 1, 1, it, ui, true)
+
+			gr := it.Gui_type
+			if group != "" && isGroupFirst {
+				gr = group
+			}
+			_SAWidget_renderParamsValue(1, 0, 1, 1, it, ui, gr)
 
 			//error
 			if it.errExe != nil {
