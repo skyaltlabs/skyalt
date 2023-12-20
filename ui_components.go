@@ -466,14 +466,12 @@ func (ui *Ui) Comp_text_s(style *UiComp, value string, icon string, selection bo
 }
 
 func (ui *Ui) Comp_editbox_desc(description string, description_alignH int, width float64, x, y, w, h int, valueIn interface{}, value_precision int, icon string, ghost string, highlight bool, tempToValue bool, enable bool) (string, bool, bool, bool, *UiLayoutDiv) {
-
 	ui.Div_start(x, y, w, h)
 
 	xx := 0
-
 	if width > 0 {
 		//1 row
-		ui.Div_col(0, width)
+		ui.Div_colMax(0, width)
 		ui.Div_colMax(1, 100)
 		ui.Comp_text(0, 0, 1, 1, description, description_alignH)
 		xx = 1
@@ -643,14 +641,12 @@ func (ui *Ui) Comp_slider(x, y, w, h int, value *float64, minValue float64, maxV
 }
 
 func (ui *Ui) Comp_slider_desc(description string, description_alignH int, width float64, x, y, w, h int, value *float64, minValue float64, maxValue float64, jumpValue float64) bool {
-
 	ui.Div_start(x, y, w, h)
 
 	xx := 0
-
 	if width > 0 {
 		//1 row
-		ui.Div_col(0, width)
+		ui.Div_colMax(0, width)
 		ui.Div_colMax(1, 100)
 		ui.Comp_text(0, 0, 1, 1, description, description_alignH)
 		xx = 1
@@ -749,10 +745,9 @@ func (ui *Ui) Comp_combo_desc(description string, description_alignH int, width 
 	ui.Div_start(x, y, w, h)
 
 	xx := 0
-
 	if width > 0 {
 		//1 row
-		ui.Div_col(0, width)
+		ui.Div_colMax(0, width)
 		ui.Div_colMax(1, 100)
 		ui.Comp_text(0, 0, 1, 1, description, description_alignH)
 		xx = 1
