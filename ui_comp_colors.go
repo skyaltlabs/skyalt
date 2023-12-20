@@ -22,14 +22,14 @@ import (
 	"strconv"
 )
 
-func (ui *Ui) comp_colorPicker(cd *OsCd, dialogName string) bool {
+func (ui *Ui) comp_colorPicker(cd *OsCd, dialogName string, enable bool) bool {
 	origCd := *cd
 	cd.A = 255
 
 	ui.Div_colMax(0, 100)
 	ui.Div_rowMax(0, 100)
 
-	if ui._colorButton(0, 0, 1, 1, "", "", *cd, 0) {
+	if ui._colorButton(0, 0, 1, 1, "", "", *cd, enable) {
 		ui.Dialog_open(dialogName, 1)
 	}
 
@@ -63,13 +63,13 @@ func (ui *Ui) comp_colorPalette(cd *OsCd) bool {
 		g := float64(cd.G)
 		b := float64(cd.B)
 
-		if ui.Comp_slider_desc(ui.trns.RED, 0, 3, 0, 0, 1, 1, &r, 0, 255, 1) {
+		if ui.Comp_slider_desc(ui.trns.RED, 0, 1.5, 0, 0, 1, 1, &r, 0, 255, 1) {
 			cd.R = uint8(r)
 		}
-		if ui.Comp_slider_desc(ui.trns.GREEN, 0, 3, 0, 1, 1, 1, &g, 0, 255, 1) {
+		if ui.Comp_slider_desc(ui.trns.GREEN, 0, 1.5, 0, 1, 1, 1, &g, 0, 255, 1) {
 			cd.G = uint8(g)
 		}
-		if ui.Comp_slider_desc(ui.trns.BLUE, 0, 3, 0, 2, 1, 1, &b, 0, 255, 1) {
+		if ui.Comp_slider_desc(ui.trns.BLUE, 0, 1.5, 0, 2, 1, 1, &b, 0, 255, 1) {
 			cd.B = uint8(b)
 		}
 	}
@@ -86,13 +86,13 @@ func (ui *Ui) comp_colorPalette(cd *OsCd) bool {
 		l := float64(hsl.L)
 		changed := false
 
-		if ui.Comp_slider_desc(ui.trns.HUE, 0, 3, 0, 0, 1, 1, &h, 0, 360, 1) {
+		if ui.Comp_slider_desc(ui.trns.HUE, 0, 2, 0, 0, 1, 1, &h, 0, 360, 1) {
 			changed = true
 		}
-		if ui.Comp_slider_desc(ui.trns.SATURATION, 0, 3, 0, 1, 1, 1, &s, 0, 1, 0.01) {
+		if ui.Comp_slider_desc(ui.trns.SATURATION, 0, 2, 0, 1, 1, 1, &s, 0, 1, 0.01) {
 			changed = true
 		}
-		if ui.Comp_slider_desc(ui.trns.LIGHTNESS, 0, 3, 0, 2, 1, 1, &l, 0, 1, 0.01) {
+		if ui.Comp_slider_desc(ui.trns.LIGHTNESS, 0, 2, 0, 2, 1, 1, &l, 0, 1, 0.01) {
 			changed = true
 		}
 		if changed {
@@ -110,13 +110,14 @@ func (ui *Ui) comp_colorPalette(cd *OsCd) bool {
 	ui.Div_start(0, 6, 2, 1)
 	{
 		for i := 0; i < 12; i++ {
-			ui.Div_colMax(i, 2)
+			ui.Div_col(i, 0.25)
+			ui.Div_colMax(i, 100)
 		}
 
 		//first 8
 		for i := 0; i < 8; i++ {
 			cdd := HSL{H: int(360 * float64(i) / 8), S: 0.7, L: 0.5}.HSLtoRGB()
-			if ui._colorButton(i, 0, 1, 1, "", "", cdd, 0) {
+			if ui._colorButton(i, 0, 1, 1, "", "", cdd, true) {
 				*cd = cdd
 			}
 		}
@@ -124,7 +125,7 @@ func (ui *Ui) comp_colorPalette(cd *OsCd) bool {
 		//other 4
 		for i := 0; i < 4; i++ {
 			cdd := HSL{H: 0, S: 0, L: float64(i) / 4}.HSLtoRGB()
-			if ui._colorButton(8+i, 0, 1, 1, "", "", cdd, 0) {
+			if ui._colorButton(8+i, 0, 1, 1, "", "", cdd, true) {
 				*cd = cdd
 			}
 		}
@@ -134,22 +135,14 @@ func (ui *Ui) comp_colorPalette(cd *OsCd) bool {
 	return !orig_cd.Cmp(*cd)
 }
 
-func (ui *Ui) _colorButton(x, y, w, h int, value string, tooltip string, cd OsCd, rowSize float64) bool {
+func (ui *Ui) _colorButton(x, y, w, h int, value string, tooltip string, cd OsCd, enable bool) bool {
 	var click bool
 
 	ui.Div_start(x, y, w, h)
-	{
-		ui.Paint_rect(0, 0, 1, 1, 0.06, cd, 0) //background
-
-		ui.Div_colMax(0, 100)
-		if rowSize > 0 {
-			ui.Div_row(0, float64(rowSize))
-		} else {
-			ui.Div_rowMax(0, 100)
-		}
-		click = ui.Comp_buttonText(0, 0, 1, 1, value, "", tooltip, true, false) > 0 //transparent, so background is seen
-	}
+	ui.Paint_rect(0, 0, 1, 1, 0.06, cd, 0) //background
 	ui.Div_end()
+
+	click = ui.Comp_buttonText(x, y, w, h, value, "", tooltip, enable, false) > 0 //transparent, so background is seen
 
 	return click
 }
