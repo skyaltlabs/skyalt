@@ -36,6 +36,7 @@ type UiTranslations struct {
 	COPYRIGHT string
 	WARRANTY  string
 
+	TIME      string
 	TIME_ZONE string
 
 	DATE_FORMAT      string

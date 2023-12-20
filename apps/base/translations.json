@@ -32,6 +32,9 @@
 "WARRANTY.en": "Copyright © 2023 - SkyAlt team", 
 "WARRANTY.cs": "Copyright © 2023 - SkyAlt team",
 
+"TIME.en": "Time", 
+"TIME.cs": "Čas",
+
 "TIME_ZONE.en": "Time zone", 
 "TIME_ZONE.cs": "Časové pásmo",
 
@@ -61,10 +64,17 @@
 
 "DPI.en": "Dots per inch(DPI)", 
 "DPI.cs": "Bodů na palec(DPI)",
+
+"THREADS.en": "Threads", 
+"THREADS.cs": "Vlákna",
+
 "SHOW_STATS.en": "Show statistics", 
 "SHOW_STATS.cs": "Zobrazovat statistiku",
 "SHOW_GRID.en": "Show grid", 
 "SHOW_GRID.cs": "Zobrazovat mřížku",
+
+"ONLINE.en": "Internet connection", 
+"ONLINE.cs": "Internetové připojení",
 
 "LANGUAGE.en": "Language", 
 "LANGUAGE.cs": "Jazyk",
@@ -139,5 +149,147 @@
 "SIZE.cs": "Velikost",
 
 "LOGS.en": "Logs",
-"LOGS.cs": "Logy"
+"LOGS.cs": "Logy",
+
+
+
+
+"RED.en": "Red", 
+"RED.cs": "Čeřvená",
+
+"GREEN.en": "Green", 
+"GREEN.cs": "Zelená",
+
+"BLUE.en": "Blue", 
+"BLUE.cs": "Modrá",
+
+"HUE.en": "Hue", 
+"HUE.cs": "Odstín",
+
+"SATURATION.en": "Saturation", 
+"SATURATION.cs": "Sytost",
+
+"LIGHTNESS.en": "Lightness", 
+"LIGHTNESS.cs": "Světlost",
+
+
+
+
+
+
+"YEAR.en": "Year", 
+"YEAR.cs": "Rok",
+"MONTH.en": "Month", 
+"MONTH.cs": "Měsíc",
+"WEEK.en": "Week", 
+"WEEK.cs": "Týden",
+"DAY.en": "Day", 
+"DAY.cs": "Den",
+"HOUR.en": "Hour", 
+"HOUR.cs": "Hodina",
+"MINUTE.en": "Minute", 
+"MINUTE.cs": "Minuta",
+"SECOND.en": "Second", 
+"SECOND.cs": "Sekunda",
+
+"JANUARY.en": "January",
+"JANUARY.cs": "Leden",
+"FEBRUARY.en": "February",
+"FEBRUARY.cs": "Únor",
+"MARCH.en": "March",
+"MARCH.cs": "Březen",
+"APRIL.en": "April",
+"APRIL.cs": "Duben",
+"MAY.en": "May",
+"MAY.cs": "Květen",
+"JUNE.en": "June",
+"JUNE.cs": "Červen",
+"JULY.en": "July",
+"JULY.cs": "Červenec",
+"AUGUST.en": "August",
+"AUGUST.cs": "Srpen",
+"SEPTEMBER.en": "September",
+"SEPTEMBER.cs": "Září",
+"OCTOBER.en": "October",
+"OCTOBER.cs": "Říjen",
+"NOVEMBER.en": "November",
+"NOVEMBER.cs": "Listopad",
+"DECEMBER.en": "December",
+"DECEMBER.cs": "Prosinec",
+
+"MON.en": "Mon",
+"MON.cs": "Po",
+"TUE.en": "Tue",
+"TUE.cs": "Út",
+"WED.en": "Wed",
+"WED.cs": "St",
+"THU.en": "Thu",
+"THU.cs": "Čt",
+"FRI.en": "Fri",
+"FRI.cs": "Pá",
+"SAT.en": "Sat",
+"SAT.cs": "So",
+"SUN.en": "Sun",
+"SUN.cs": "Ne",
+
+"MONDAY.en": "Monday",
+"MONDAY.cs": "Pondělí",
+"TUESDAY.en": "Tuesday",
+"TUESDAY.cs": "Úterý",
+"WEDNESDAY.en": "Wednesday",
+"WEDNESDAY.cs": "Středa",
+"THURSDAY.en": "Thursday",
+"THURSDAY.cs": "Čtvrtek",
+"FRIDAY.en": "Friday",
+"FRIDAY.cs": "Pátek",
+"SATURDAY.en": "Saturday",
+"SATURDAY.cs": "Sobota",
+"SUNDAY.en": "Sunday",
+"SUNDAY.cs": "Neděle",
+
+"NEW_EVENT.en": "New Event",
+"NEW_EVENT.cs": "Nová Událost",
+
+"OK.en": "OK",
+"OK.cs": "OK",
+
+"TODAY.en": "Today",
+"TODAY.cs": "Dnes",
+
+"BETWEEN.en": "Between",
+"BETWEEN.cs": "Mezi",
+
+"TITLE.en": "Title",
+"TITLE.cs": "Název",
+
+"DESCRIPTION.en": "Description",
+"DESCRIPTION.cs": "Popis",
+
+"FILE.en": "File",
+"FILE.cs": "Soubor",
+
+"ADD_EVENT.en": "Add event",
+"ADD_EVENT.cs": "Přidat událost",
+
+"CANCEL.en": "Cancel",
+"CANCEL.cs": "Zrušit",
+
+"BEGIN.en": "Begin",
+"BEGIN.cs": "Začátek",
+
+"FINISH.en": "Finish",
+"FINISH.cs": "Konec",
+
+"EMPTY.en": "Empty",
+"EMPTY.cs": "Prázdné",
+
+"EDIT.en": "Edit",
+"EDIT.cs": "Upravit",
+
+"DELETE.en": "Delete",
+"DELETE.cs": "Smazat",
+
+"COLOR.en": "Color",
+"COLOR.cs": "Barva"
+
 }
