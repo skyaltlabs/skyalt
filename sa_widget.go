@@ -835,7 +835,7 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 		cl.Value = OsTrnString(clicked, "1", "0")
 
 	case "text":
-		ui.Comp_text(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttrEdit("label", "").GetString(), w.GetAttrCombo("align", "0", "Left|Center|Right").GetInt())
+		ui.Comp_text(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttrEdit("label", "").GetString(), w.GetAttrCombo("align", "0", "Left;Center;Right").GetInt())
 
 	case "switch":
 		_, value, editable := w.GetAttrEdit("value", "").GetDirectLink()
@@ -850,7 +850,7 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 	case "combo":
 		_, value, editable := w.GetAttrEdit("value", "").GetDirectLink()
 		enable := w.GetAttrSwitch("enable", "1").GetBool() && editable
-		ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, w.GetAttrEdit("options", "a;b").GetString(), "", enable, w.GetAttrSwitch("search", "0").GetBool())
+		ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, w.GetAttrEdit("options", "a;b;c").GetString(), "", enable, w.GetAttrSwitch("search", "0").GetBool())
 
 	case "edit":
 		_, value, editable := w.GetAttrEdit("value", "").GetDirectLink()
@@ -1223,7 +1223,7 @@ func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 	y := 0
 
 	if w.IsGuiLayout() {
-		if ui.Comp_buttonLight(0, y, 1, 1, "Open", "", true) > 0 {
+		if ui.Comp_buttonLight(0, y, 1, 1, ui.trns.OPEN, "", true) > 0 {
 			app.act = w
 		}
 		y++
@@ -1236,7 +1236,7 @@ func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 		ui.Div_colMax(2, 2)
 
 		//Name
-		_, _, _, fnshd, _ := ui.Comp_editbox_desc("Name", 0, 2, 0, 0, 1, 1, &w.Name, 0, "", "Name", false, false, true)
+		_, _, _, fnshd, _ := ui.Comp_editbox_desc(ui.trns.NAME, 0, 2, 0, 0, 1, 1, &w.Name, 0, "", ui.trns.NAME, false, false, true)
 		if fnshd && w.parent != nil {
 			w.CheckUniqueName()
 		}
@@ -1245,7 +1245,7 @@ func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 		w.Exe = app.ComboListOfWidgets(1, 0, 1, 1, w.Exe, ui)
 
 		//delete
-		if ui.Comp_button(2, 0, 1, 1, "Delete", "", true) > 0 {
+		if ui.Comp_button(2, 0, 1, 1, ui.trns.REMOVE, "", true) > 0 {
 			w.Remove()
 		}
 	}
@@ -1340,7 +1340,7 @@ func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 //- práce s json? ...
 
 // resize widget ...
+// test history re-execute()? ...
+
 // execute in 2nd thread and copy back when done ...
 // change Node.Exe + Attr.Gui_type,.Gui_options ...
-// translations ...
-// test history re-execute()? ...

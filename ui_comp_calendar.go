@@ -321,7 +321,7 @@ func (ui *Ui) Comp_Calendar(value *int64, page *int64, maxColSize, maxRowSize fl
 func (ui *Ui) Comp_CalendarDataPicker(date_unix *int64, show_time bool, dialogName string, enable bool) bool {
 	ui.Div_colMax(0, 100)
 	if show_time {
-		ui.Div_col(1, 0.5) //space
+		ui.Div_col(1, 0.1) //space
 		ui.Div_colMax(2, 1.7)
 	}
 

@@ -86,15 +86,15 @@ func (app *SAApp) renderIDE(ui *Ui) {
 		lay.Rows = append(lay.Rows, InitSAWidgetColRow())
 	}
 
-	if ui.Comp_button(0, 0, 1, 1, "+", "Add Column/Row", true) > 0 {
+	if ui.Comp_button(0, 0, 1, 1, "+", ui.trns.ADD_COLUMNS_ROWS, true) > 0 {
 		ui.Dialog_open("add_col_row", 1)
 	}
 	if ui.Dialog_start("add_col_row") {
 		ui.Div_col(0, 4)
-		if ui.Comp_buttonMenu(0, 0, 1, 1, "Add new Column", "", true, false) > 0 {
+		if ui.Comp_buttonMenu(0, 0, 1, 1, ui.trns.ADD_NEW_COLUMN, "", true, false) > 0 {
 			lay.Cols = append(lay.Cols, InitSAWidgetColRow())
 		}
-		if ui.Comp_buttonMenu(0, 1, 1, 1, "Add new Row", "", true, false) > 0 {
+		if ui.Comp_buttonMenu(0, 1, 1, 1, ui.trns.ADD_NEW_ROW, "", true, false) > 0 {
 			lay.Rows = append(lay.Rows, InitSAWidgetColRow())
 
 		}
@@ -302,6 +302,7 @@ func (app *SAApp) History(ui *Ui) {
 
 }
 
+// translate? ... only on screen? ...
 var SAStandardPrimitives = []string{"button", "text", "checkbox", "switch", "edit", "divider", "combo", "color_palette", "color_picker", "calendar", "date_picker"}
 var SAStandardComponents = []string{"layout", "map", "map_locators"}
 
@@ -396,7 +397,7 @@ func _SAApp_drawColsRowsDialog(name string, items *[]SAWidgetColRow, i int, ui *
 			ui.Div_colMax(1, 100)
 			ui.Div_colMax(2, 100)
 
-			if ui.Comp_buttonLight(0, 0, 1, 1, "Add before", "", i > 0) > 0 {
+			if ui.Comp_buttonLight(0, 0, 1, 1, ui.trns.ADD_BEFORE, "", i > 0) > 0 {
 				*items = append(*items, SAWidgetColRow{})
 				copy((*items)[i+1:], (*items)[i:])
 				(*items)[i] = InitSAWidgetColRow()
@@ -406,7 +407,7 @@ func _SAApp_drawColsRowsDialog(name string, items *[]SAWidgetColRow, i int, ui *
 
 			ui.Comp_text(1, 0, 1, 1, strconv.Itoa(i), 1) //description
 
-			if ui.Comp_buttonLight(2, 0, 1, 1, "Add after", "", true) > 0 {
+			if ui.Comp_buttonLight(2, 0, 1, 1, ui.trns.ADD_AFTER, "", true) > 0 {
 				*items = append(*items, SAWidgetColRow{})
 				copy((*items)[i+2:], (*items)[i+1:])
 				(*items)[i+1] = InitSAWidgetColRow()
@@ -416,15 +417,15 @@ func _SAApp_drawColsRowsDialog(name string, items *[]SAWidgetColRow, i int, ui *
 		}
 		ui.Div_end()
 
-		_, _, _, fnshd1, _ := ui.Comp_editbox_desc("Min", 0, 2, 0, 1, 1, 1, &(*items)[i].Min, 1, "", "", false, false, true)
-		_, _, _, fnshd2, _ := ui.Comp_editbox_desc("Max", 0, 2, 0, 2, 1, 1, &(*items)[i].Max, 1, "", "", false, false, true)
+		_, _, _, fnshd1, _ := ui.Comp_editbox_desc(ui.trns.MIN, 0, 2, 0, 1, 1, 1, &(*items)[i].Min, 1, "", "", false, false, true)
+		_, _, _, fnshd2, _ := ui.Comp_editbox_desc(ui.trns.MAX, 0, 2, 0, 2, 1, 1, &(*items)[i].Max, 1, "", "", false, false, true)
 
 		ui.Div_start(0, 3, 1, 1)
 		{
 			ui.Div_colMax(0, 100)
 			ui.Div_colMax(1, 100)
 
-			_, _, _, fnshd3, _ := ui.Comp_editbox_desc("Resize", 0, 2, 0, 0, 1, 1, &(*items)[i].ResizeName, 1, "", "Name", false, false, true)
+			_, _, _, fnshd3, _ := ui.Comp_editbox_desc(ui.trns.RESIZE, 0, 2, 0, 0, 1, 1, &(*items)[i].ResizeName, 1, "", "Name", false, false, true)
 			ui.Comp_text(1, 0, 1, 1, strconv.FormatFloat((*items)[i].Resize, 'f', 2, 64), 0)
 
 			if fnshd1 || fnshd2 || fnshd3 {
@@ -435,7 +436,7 @@ func _SAApp_drawColsRowsDialog(name string, items *[]SAWidgetColRow, i int, ui *
 		ui.Div_end()
 
 		//remove
-		if ui.Comp_button(0, 5, 1, 1, "Remove", "", len(*items) > 1) > 0 {
+		if ui.Comp_button(0, 5, 1, 1, ui.trns.REMOVE, "", len(*items) > 1) > 0 {
 			*items = append((*items)[:i], (*items)[i+1:]...)
 			ui.Dialog_close()
 			changed = true
@@ -479,11 +480,11 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 	ui.Comp_text(2, 0, 1, 1, "Press Alt-key to select widgets", 1)
 
 	//short cuts
-	if ui.Comp_buttonLight(3, 0, 1, 1, "←", "Back", app.canHistoryBack()) > 0 {
+	if ui.Comp_buttonLight(3, 0, 1, 1, "←", ui.trns.BACKWARD, app.canHistoryBack()) > 0 {
 		app.stepHistoryBack()
 
 	}
-	if ui.Comp_buttonLight(4, 0, 1, 1, "→", "Forward", app.canHistoryForward()) > 0 {
+	if ui.Comp_buttonLight(4, 0, 1, 1, "→", ui.trns.FORWARD, app.canHistoryForward()) > 0 {
 		app.stepHistoryForward()
 	}
 

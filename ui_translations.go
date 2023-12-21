@@ -153,6 +153,18 @@ type UiTranslations struct {
 	DELETE string
 
 	COLOR string
+
+	OPEN             string
+	ADD_COLUMNS_ROWS string
+	ADD_NEW_COLUMN   string
+	ADD_NEW_ROW      string
+	ADD_BEFORE       string
+	ADD_AFTER        string
+	MIN              string
+	MAX              string
+	RESIZE           string
+	BACKWARD         string
+	FORWARD          string
 }
 
 func UiTranslations_fromJson(js []byte, langs []string) ([]byte, error) {

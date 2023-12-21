@@ -290,6 +290,38 @@
 "DELETE.cs": "Smazat",
 
 "COLOR.en": "Color",
-"COLOR.cs": "Barva"
+"COLOR.cs": "Barva",
 
+"OPEN.en": "Open",
+"OPEN.cs": "Otevřít",
+
+"ADD_COLUMNS_ROWS.en": "Add columns/rows",
+"ADD_COLUMNS_ROWS.cs": "Přidat sloupce/řádky",
+
+"ADD_NEW_COLUMN.en": "Create column",
+"ADD_NEW_COLUMN.cs": "Vytvořit sloupec",
+
+"ADD_NEW_ROW.en": "Create row",
+"ADD_NEW_ROW.cs": "Vytvořit řádek",
+
+"ADD_BEFORE.en": "Add before",
+"ADD_BEFORE.cs": "Přidat před",
+
+"ADD_AFTER.en": "Add after",
+"ADD_AFTER.cs": "Přidat za",
+
+"MIN.en": "Min",
+"MIN.cs": "Min",
+
+"MAX.en": "Max",
+"MAX.cs": "Max",
+
+"RESIZE.en": "Resize",
+"RESIZE.cs": "Změnit velikost",
+
+"BACKWARD.en": "Backward",
+"BACKWARD.cs": "Zpět",
+
+"FORWARD.en": "Forward",
+"FORWARD.cs": "Vpřed"
 }
