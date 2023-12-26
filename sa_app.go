@@ -116,6 +116,11 @@ func (app *SAApp) renderIDE(ui *Ui) {
 		ui.Dialog_end()
 	}
 
+	//size
+	appDiv := ui.Div_start(1, 1, 1, 1)
+	gridMax := appDiv.GetGridMax(OsV2{1, 1})
+	ui.Div_end()
+
 	//cols header
 	ui.Div_start(1, 0, 1, 1)
 	{
@@ -132,6 +137,10 @@ func (app *SAApp) renderIDE(ui *Ui) {
 					lay.Cols[i].Resize = v
 				}
 			}
+		}
+		//add fake
+		for i := len(lay.Cols); i < gridMax.X; i++ {
+			ui.Div_col(i, 1)
 		}
 
 		for i := range lay.Cols {
@@ -176,6 +185,10 @@ func (app *SAApp) renderIDE(ui *Ui) {
 				}
 			}
 		}
+		//add fake
+		for i := len(lay.Rows); i < gridMax.Y; i++ {
+			ui.Div_col(i, 1)
+		}
 
 		for i := range lay.Rows {
 
@@ -202,10 +215,14 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	ui.Div_end()
 
 	//app
-	appDiv := ui.Div_start(1, 1, 1, 1)
+	appDiv = ui.Div_start(1, 1, 1, 1)
 	{
-		ui.GetCall().call.data.scrollH.attach = &colDiv.data.scrollH
-		ui.GetCall().call.data.scrollV.attach = &rowDiv.data.scrollV
+		if colDiv != nil {
+			ui.GetCall().call.data.scrollH.attach = &colDiv.data.scrollH
+		}
+		if rowDiv != nil {
+			ui.GetCall().call.data.scrollV.attach = &rowDiv.data.scrollV
+		}
 
 		app.act.RenderLayout(ui, app)
 	}
@@ -213,7 +230,6 @@ func (app *SAApp) renderIDE(ui *Ui) {
 
 	touch := &ui.buff.win.io.touch
 	keys := &ui.buff.win.io.keys
-
 	//add node
 	if (!ui.touch.IsAnyActive() || ui.touch.canvas == appDiv) && app.canvas.startClick == nil && !keys.alt {
 		touchPos := ui.win.io.touch.pos
@@ -244,6 +260,9 @@ func (app *SAApp) renderIDE(ui *Ui) {
 
 		var found *SANode
 		for _, w := range app.act.Subs {
+			if !w.CanBeRenderOnCanvas() {
+				continue
+			}
 			if w.GetGridShow() && w.GetGrid().Inside(grid.Start) {
 				found = w
 				break
@@ -255,8 +274,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 				foundStart := appDiv.crop.Start.Add(appDiv.data.Convert(ui.win.Cell(), found.GetGrid()).Start)
 				app.canvas.startClick = found
 				app.canvas.startClickRel = touch.pos.Sub(foundStart)
-				app.act.DeselectAll()
-				found.Selected = true
+				found.SelectOnlyThis()
 			}
 
 			if touch.end && touch.numClicks > 1 && found.IsGuiLayout() {
@@ -384,8 +402,7 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 				if keys.enter || ui.Comp_buttonMenu(0, y, 1, 1, fn, "", true, false) > 0 {
 					//add new node
 					nw := app.act.AddNode(app.canvas.addGrid, app.canvas.addPos, fn)
-					app.act.DeselectAll()
-					nw.Selected = true
+					nw.SelectOnlyThis()
 
 					ui.Dialog_close()
 					break
