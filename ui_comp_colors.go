@@ -165,7 +165,7 @@ func (ui *Ui) _colorPickerHueRainbow(cd *OsCd) bool {
 	//selected position
 	cdd := cd.RGBtoHSL()
 	p := float64(cdd.H) / 360
-	ui.Paint_line(0, 0, 1, 1, 0, p, 0, p, 1, InitOsCd32(0, 0, 0, 256), 0.06)
+	ui.Paint_line(0, 0, 1, 1, 0, p, 0, p, 1, InitOsCd32(0, 0, 0, 255), 0.06)
 
 	//picker
 	changed := false
