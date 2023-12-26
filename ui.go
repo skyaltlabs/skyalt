@@ -283,8 +283,6 @@ func (ui *Ui) RenderTile(win *Win) {
 
 func (ui *Ui) StartRender() {
 
-	ui.UpdateTile(ui.buff.win)
-
 	winRect, _ := ui.win.GetScreenCoord()
 	ui.GetBaseDialog().base.canvas = winRect
 	ui.GetBaseDialog().base.crop = winRect

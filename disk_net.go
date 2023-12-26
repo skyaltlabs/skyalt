@@ -120,7 +120,7 @@ func (net *DiskNet) Loop() {
 				net.num_jobs_errors++
 			}
 		} else {
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(20 * time.Millisecond)
 		}
 	}
 }

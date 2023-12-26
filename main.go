@@ -82,6 +82,10 @@ func main() {
 			return
 		}
 
+		if ui.UpdateTile(ui.buff.win) {
+			redraw = true
+		}
+
 		if redraw {
 			win.StartRender(OsCd{220, 220, 220, 255})
 
@@ -93,7 +97,7 @@ func main() {
 
 			win.EndRender(true)
 		} else {
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(20 * time.Millisecond)
 		}
 
 		disk.Tick()
