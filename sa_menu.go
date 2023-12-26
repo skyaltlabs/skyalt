@@ -139,7 +139,7 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 	}
 
 	if ui.Dialog_start("settings") {
-		ui.Div_colMax(1, 12)
+		ui.Div_colMax(1, 8)
 		ui.Div_colMax(2, 1)
 
 		y := 0
@@ -215,6 +215,9 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 		ui.Comp_switch(1, y, 1, 1, &ini.Stats, false, ui.trns.SHOW_STATS, "", true)
 		y++
 
+		ui.Comp_switch(1, y, 1, 1, &ini.Grid, false, ui.trns.SHOW_GRID, "", true)
+		y++
+
 		ui.Comp_switch(1, y, 1, 1, &ini.Offline, true, ui.trns.ONLINE, "", true)
 		y++
 
@@ -239,7 +242,7 @@ func (base *SABase) drawLauncher(app *SAApp, ui *Ui, icon_rad float64) {
 
 	//Menu
 	{
-		if ui.Comp_buttonIcon(0, 0, 1, 1, "file:apps/base/resources/logo_small.png", 0, "", true) > 0 {
+		if ui.Comp_buttonIcon(0, 0, 1, 1, "file:apps/base/resources/logo_small.png", 0, "", CdPalette_B, true) > 0 {
 			ui.Dialog_open("menu", 1)
 		}
 		if ui.Dialog_start("menu") {
