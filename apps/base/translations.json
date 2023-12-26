@@ -303,6 +303,9 @@
 "OPEN.en": "Open",
 "OPEN.cs": "Otevřít",
 
+"GOTO.en": "Goto",
+"GOTO.cs": "Přejít",
+
 "ADD_COLUMNS_ROWS.en": "Add columns/rows",
 "ADD_COLUMNS_ROWS.cs": "Přidat sloupce/řádky",
 

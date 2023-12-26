@@ -158,6 +158,7 @@ type UiTranslations struct {
 	COLOR string
 
 	OPEN             string
+	GOTO             string
 	ADD_COLUMNS_ROWS string
 	ADD_NEW_COLUMN   string
 	ADD_NEW_ROW      string
