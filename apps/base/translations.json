@@ -24,6 +24,14 @@
 "SEARCH.en": "Search", 
 "SEARCH.cs": "Hledat",
 
+"COPY.en": "Copy", 
+"COPY.cs": "Kopírovat",
+
+"CUT.en": "Cut", 
+"CUT.cs": "Výjmout",
+
+"PASTE.en": "Paste", 
+"PASTE.cs": "Vložit",
 
 
 "COPYRIGHT.en": "This program comes with absolutely no warranty.", 

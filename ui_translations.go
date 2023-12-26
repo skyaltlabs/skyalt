@@ -32,6 +32,9 @@ type UiTranslations struct {
 	ABOUT           string
 	QUIT            string
 	SEARCH          string
+	COPY            string
+	CUT             string
+	PASTE           string
 
 	COPYRIGHT string
 	WARRANTY  string
