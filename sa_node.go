@@ -1307,7 +1307,7 @@ func (w *SANode) RenderParams(app *SAApp) {
 
 		ui.Div_start(0, y, 1, 1)
 		{
-			ui.Div_colMax(0, 3)
+			ui.Div_colMax(1, 3)
 			ui.Div_colMax(2, 100)
 
 			//highlight because it has expression
@@ -1316,6 +1316,12 @@ func (w *SANode) RenderParams(app *SAApp) {
 			}
 
 			x := 0
+
+			if ui.Comp_buttonIcon(x, 0, 1, 1, "file:apps/base/resources/copy.png", 0.3, ui.trns.COPY, CdPalette_B, true) > 0 {
+				keys := &ui.buff.win.io.keys
+				keys.clipboard = w.Name + "." + it.Name
+			}
+			x++
 
 			//name: drag & drop
 			ui.Div_start(x, 0, 1, 1)
@@ -1339,12 +1345,6 @@ func (w *SANode) RenderParams(app *SAApp) {
 				}
 				x++
 			}
-
-			if ui.Comp_buttonIcon(x, 0, 1, 1, "file:apps/base/resources/copy.png", 0.3, ui.trns.COPY, CdPalette_B, true) > 0 {
-				keys := &ui.buff.win.io.keys
-				keys.clipboard = w.Name + "." + it.Name
-			}
-			x++
 
 			//value - error/title
 			if it.errExp != nil {
