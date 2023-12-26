@@ -42,6 +42,7 @@ func (gr *SAGraph) drawCreateNode(ui *Ui) {
 	if ui.win.io.keys.tab && lvBaseDiv.IsOver(ui) {
 		gr.app.canvas.addGrid = InitOsV4(0, 0, 1, 1)
 		gr.app.canvas.addPos = gr.app.act.pixelsToNode(ui.buff.win.io.touch.pos, ui, lvBaseDiv)
+		gr.app.canvas.addnode_search = ""
 		ui.Dialog_open("nodes_list", 2)
 	}
 }

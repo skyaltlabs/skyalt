@@ -30,6 +30,8 @@ type SACanvas struct {
 	startClickRel OsV2
 
 	resize *SANode
+
+	addnode_search string
 }
 
 type SAApp struct {
@@ -228,6 +230,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 				if appDiv.IsTouchEnd(ui) {
 					app.canvas.addGrid = grid
 					app.canvas.addPos = OsV2f{}
+					app.canvas.addnode_search = ""
 					ui.Dialog_open("nodes_list", 2)
 				}
 			}
@@ -370,16 +373,14 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 		ui.Div_colMax(0, 5)
 
 		y := 0
-		var search string
-		ui.Comp_editbox(0, 0, 1, 1, &search, 0, "", ui.trns.SAVE, search != "", true, true)
+		ui.Comp_editbox(0, 0, 1, 1, &app.canvas.addnode_search, 0, "", ui.trns.SEARCH, app.canvas.addnode_search != "", true, true)
 		y++
 
 		keys := &ui.buff.win.io.keys
 
 		fns := app.getListOfNodes()
 		for _, fn := range fns {
-			if search == "" || strings.Contains(fn, search) {
-
+			if app.canvas.addnode_search == "" || strings.Contains(fn, app.canvas.addnode_search) {
 				if keys.enter || ui.Comp_buttonMenu(0, y, 1, 1, fn, "", true, false) > 0 {
 					//add new node
 					nw := app.act.AddNode(app.canvas.addGrid, app.canvas.addPos, fn)
