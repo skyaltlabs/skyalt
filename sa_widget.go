@@ -117,9 +117,14 @@ func InitSAWidgetColRow() SAWidgetColRow {
 type SAWidget struct {
 	parent *SAWidget
 
-	Name     string
-	Selected bool
-	Exe      string
+	Pos                 OsV2f
+	pos_start           OsV2f
+	Cam_x, Cam_y, Cam_z float64 `json:",omitempty"`
+
+	Name           string
+	Exe            string
+	Selected       bool
+	selected_cover bool
 
 	Attrs []*SAWidgetAttr `json:",omitempty"`
 
@@ -128,22 +133,25 @@ type SAWidget struct {
 	Rows []SAWidgetColRow `json:",omitempty"`
 	Subs []*SAWidget      `json:",omitempty"`
 
+	//Bypass bool
+
 	running bool
 	done    bool
 	errExe  error
 }
 
-func NewSAWidget(parent *SAWidget, name string, exe string, coord OsV4) *SAWidget {
+func NewSAWidget(parent *SAWidget, name string, exe string, grid OsV4, pos OsV2f) *SAWidget {
 	w := &SAWidget{}
 	w.parent = parent
 	w.Name = name
 	w.Exe = exe
-	w.SetGrid(coord)
+	w.SetGrid(grid)
+	w.Pos = pos
 	return w
 }
 
 func NewSAWidgetRoot(path string) (*SAWidget, error) {
-	w := NewSAWidget(nil, "root", "layout", OsV4{})
+	w := NewSAWidget(nil, "root", "layout", OsV4{}, OsV2f{})
 	w.Exe = "layout"
 
 	//load
@@ -246,6 +254,10 @@ func (w *SAWidget) HasExeError() bool {
 		}
 	}
 	return false
+}
+
+func (w *SAWidget) HasError() bool {
+	return w.HasExeError() || w.HasExpError()
 }
 
 func (w *SAWidget) UpdateExpresions(app *SAApp) {
@@ -452,7 +464,7 @@ func (w *SAWidget) ExecuteSubs(server *SANodeServer, max_threads int) {
 
 						//maximum concurent threads
 						if numActiveThreads.Load() >= int64(max_threads) {
-							time.Sleep(10 * time.Millisecond)
+							time.Sleep(20 * time.Millisecond)
 						}
 
 						//run it
@@ -549,7 +561,6 @@ func (w *SAWidget) FindNode(name string) *SAWidget {
 
 func (w *SAWidget) UpdateParents(parent *SAWidget) {
 	w.parent = parent
-
 	for _, v := range w.Attrs {
 		v.widget = w
 	}
@@ -566,7 +577,7 @@ func (w *SAWidget) Copy() (*SAWidget, error) {
 		return nil, err
 	}
 
-	dst := NewSAWidget(nil, "", "", OsV4{})
+	dst := NewSAWidget(nil, "", "", OsV4{}, OsV2f{})
 	err = json.Unmarshal(js, dst)
 	if err != nil {
 		return nil, err
@@ -606,7 +617,6 @@ func (w *SAWidget) RemoveSelectedNodes() {
 }
 
 func (w *SAWidget) FindSelected() *SAWidget {
-
 	for _, it := range w.Subs {
 		if it.Selected {
 			return it
@@ -651,8 +661,8 @@ func (w *SAWidget) CheckUniqueName() {
 	}
 }
 
-func (w *SAWidget) AddWidget(coord OsV4, exe string) *SAWidget {
-	nw := NewSAWidget(w, exe, exe, coord)
+func (w *SAWidget) AddWidget(grid OsV4, pos OsV2f, exe string) *SAWidget {
+	nw := NewSAWidget(w, exe, exe, grid, pos)
 	w.Subs = append(w.Subs, nw)
 	nw.CheckUniqueName()
 	return nw
@@ -755,7 +765,7 @@ func (w *SAWidget) SetGridStart(v OsV2) {
 }
 func (w *SAWidget) SetGridSize(v OsV2) {
 	w.GetAttrEdit("grid_w", "1").SetInt(v.X)
-	w.GetAttrEdit("grid_h", "1").SetInt(v.X)
+	w.GetAttrEdit("grid_h", "1").SetInt(v.Y)
 }
 func (w *SAWidget) SetGrid(coord OsV4) {
 	w.SetGridStart(coord.Start)
@@ -1001,8 +1011,29 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 				ui.Div_end()
 
 				//resizer
-				s := ui.CellWidth(0.2)
-				ui.buff.AddRect(InitOsV4Mid(div.crop.End(), OsV2{s, s}), cd, 0)
+				s := ui.CellWidth(0.3)
+				rs := InitOsV4Mid(div.crop.End(), OsV2{s, s})
+				ui.buff.AddRect(rs, cd, 0)
+
+				//musím stisknout alt-key + ignorovat select + highlight when over ... ................
+				touch := &ui.buff.win.io.touch
+				if touch.start && rs.Inside(touch.pos) {
+					app.canvas.resizeWidget = w
+				}
+
+				if app.canvas.resizeWidget != nil {
+					pos := ui.GetCall().call.GetCloseCell(touch.pos)
+					fmt.Println(pos.Start)
+
+					grid := app.canvas.resizeWidget.GetGrid()
+					grid.Size.X = OsMax(0, pos.Start.X-grid.Start.X) + 1
+					grid.Size.Y = OsMax(0, pos.Start.Y-grid.Start.Y) + 1
+
+					app.canvas.resizeWidget.SetGrid(grid)
+				}
+				if touch.end {
+					app.canvas.resizeWidget = nil
+				}
 			}
 		}
 		//when editbox with expression is active - match colors between access(text) and widgets(coords) ...
@@ -1211,7 +1242,9 @@ func (widget *SAWidget) IsAttrGroup(find *SAWidgetAttr) (string, bool, string) {
 	return "", false, "" //not found
 }
 
-func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
+func (w *SAWidget) RenderParams(app *SAApp) {
+
+	ui := app.base.ui
 
 	ui.Div_colMax(0, 100)
 	if w.IsGuiLayout() {
@@ -1232,7 +1265,7 @@ func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 	ui.Div_start(0, y, 1, 1)
 	{
 		ui.Div_colMax(0, 100)
-		ui.Div_colMax(1, 2)
+		ui.Div_colMax(1, 3)
 		ui.Div_colMax(2, 2)
 
 		//Name
@@ -1275,15 +1308,17 @@ func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 		ui.Div_start(0, y, 1, 1)
 		{
 			ui.Div_colMax(0, 3)
-			ui.Div_colMax(1, 100)
+			ui.Div_colMax(2, 100)
 
 			//highlight because it has expression
 			if len(it.depends) > 0 {
 				ui.Paint_rect(0, 0, 1, 1, 0.03, SAApp_getYellow().SetAlpha(50), 0)
 			}
 
+			x := 0
+
 			//name: drag & drop
-			ui.Div_start(0, 0, 1, 1)
+			ui.Div_start(x, 0, 1, 1)
 			{
 				ui.Div_drag("attr", i)
 				src, pos, done := ui.Div_drop("attr", true, false, false)
@@ -1294,17 +1329,26 @@ func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 			ui.Div_end()
 
 			//name
-			nm := it.Name
-			if prefixName != "" {
-				nm = prefixName[:len(prefixName)-1] + "[" + group + "]"
-			}
-			if ui.Comp_buttonMenu(0, 0, 1, 1, nm, "", true, it.ShowExp) > 0 {
-				it.ShowExp = !it.ShowExp
+			{
+				nm := it.Name
+				if prefixName != "" {
+					nm = prefixName[:len(prefixName)-1] + "[" + group + "]"
+				}
+				if ui.Comp_buttonMenu(x, 0, 1, 1, nm, "", true, it.ShowExp) > 0 {
+					it.ShowExp = !it.ShowExp
+				}
+				x++
 			}
 
-			//value
+			if ui.Comp_buttonIcon(x, 0, 1, 1, "file:apps/base/resources/copy.png", 0.3, ui.trns.COPY, CdPalette_B, true) > 0 {
+				keys := &ui.buff.win.io.keys
+				keys.clipboard = w.Name + "." + it.Name
+			}
+			x++
+
+			//value - error/title
 			if it.errExp != nil {
-				ui.Div_start(1, 0, 1, 1)
+				ui.Div_start(x, 0, 1, 1)
 				{
 					ui.Paint_tooltip(0, 0, 1, 1, it.errExp.Error())
 					pl := ui.buff.win.io.GetPalette()
@@ -1317,17 +1361,19 @@ func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 			if group != "" && isGroupFirst {
 				gr = group
 			}
-			_SAWidget_renderParamsValue(1, 0, 1, 1, it, ui, gr)
+			_SAWidget_renderParamsValue(x, 0, 1, 1, it, ui, gr)
+			x++
 
 			//error
 			if it.errExe != nil {
-				ui.Div_start(2, 0, 1, 1)
+				ui.Div_start(x, 0, 1, 1)
 				{
 					ui.Paint_tooltip(0, 0, 1, 1, it.errExe.Error())
 					pl := ui.buff.win.io.GetPalette()
 					ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0) //red rect
 				}
 				ui.Div_end()
+				x++
 			}
 
 		}
@@ -1336,11 +1382,13 @@ func (w *SAWidget) RenderParams(app *SAApp, ui *Ui) {
 	}
 }
 
+// node copy/paste ...
+// node Context menu? ...
+// resize widget ...
+// cleaning: rename files(Widget -> Node) ...
+
 // expression language ... => show num rows after SELECT COUNT(*) FROM ...
 //- práce s json? ...
 
-// resize widget ...
-// test history re-execute()? ...
-
-// execute in 2nd thread and copy back when done ...
+// execute in 2nd thread and copy back when done ... + some cache, less computing ...
 // change Node.Exe + Attr.Gui_type,.Gui_options ...

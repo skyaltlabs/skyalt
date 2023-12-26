@@ -51,13 +51,12 @@ func NewSABase(ui *Ui) (*SABase, error) {
 			}
 		}
 		for _, a := range base.Apps {
-			a.base = base
-			a.mapp = NewUiLayoutMap()
+			a.init(base)
 		}
 	}
 
 	var err error
-	base.server, err = NewSANodeServer("programs", 4567)
+	base.server, err = NewSANodeServer("nodes", 4567)
 	if err != nil {
 		return nil, fmt.Errorf("NewNodeServer() failed: %w", err)
 	}
@@ -223,12 +222,22 @@ func (base *SABase) drawFrame(ui *Ui) {
 
 	if app.IDE {
 		ui.Div_start(2, 0, 1, 1)
+		{
+			ui.Div_colMax(0, 100)
+			ui.Div_rowResize(0, "node", 5, false)
+			ui.Div_rowMax(1, 100)
 
-		sel := app.act.FindSelected()
-		if sel != nil {
-			sel.RenderParams(app, ui)
+			sel := app.act.FindSelected()
+			if sel != nil {
+				ui.Div_start(0, 0, 1, 1)
+				sel.RenderParams(app)
+				ui.Div_end()
+			}
+
+			ui.Div_start(0, 1, 1, 1)
+			app.graph.drawGraph(ui)
+			ui.Div_end()
 		}
-
 		ui.Div_end()
 	}
 

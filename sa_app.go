@@ -22,6 +22,16 @@ import (
 	"strings"
 )
 
+type SACanvas struct {
+	addWidgetGrid OsV4
+	addWidgetPos  OsV2f
+
+	startClickWidget *SAWidget
+	startClickRel    OsV2
+
+	resizeWidget *SAWidget
+}
+
 type SAApp struct {
 	base *SABase
 
@@ -38,10 +48,8 @@ type SAApp struct {
 	saveIt bool
 	exeIt  bool
 
-	addWidgetCoord OsV4
-
-	startClickWidget *SAWidget
-	startClickRel    OsV2
+	graph  *SAGraph
+	canvas SACanvas
 
 	ops   *VmOps
 	apis  *VmApis
@@ -50,15 +58,20 @@ type SAApp struct {
 	mapp *UiLayoutMap
 }
 
+func (a *SAApp) init(base *SABase) {
+	a.base = base
+	a.mapp = NewUiLayoutMap()
+	a.graph = NewSAGraph(a)
+}
+
 func NewSAApp(name string, base *SABase) *SAApp {
-	var app SAApp
-	app.base = base
+	app := &SAApp{}
 	app.Name = name
 	app.IDE = true
 
-	app.mapp = NewUiLayoutMap()
+	app.init(base)
 
-	return &app
+	return app
 }
 func (app *SAApp) Destroy() {
 	app.mapp.Destroy()
@@ -200,7 +213,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	keys := &ui.buff.win.io.keys
 
 	//add widget
-	if (!ui.touch.IsAnyActive() || ui.touch.canvas == appDiv) && app.startClickWidget == nil && !keys.alt {
+	if (!ui.touch.IsAnyActive() || ui.touch.canvas == appDiv) && app.canvas.startClickWidget == nil && !keys.alt {
 		touchPos := ui.win.io.touch.pos
 		if appDiv.IsOver(ui) { // appDiv.crop.Inside(touchPos)
 			grid := appDiv.GetCloseCell(touchPos)
@@ -213,7 +226,8 @@ func (app *SAApp) renderIDE(ui *Ui) {
 				ui.buff.AddText("+", rect, ui.win.fonts.Get(SKYALT_FONT_PATH), SAApp_getYellow(), ui.win.io.GetDPI()/8, OsV2{1, 1}, nil, true)
 
 				if appDiv.IsTouchEnd(ui) {
-					app.addWidgetCoord = grid
+					app.canvas.addWidgetGrid = grid
+					app.canvas.addWidgetPos = OsV2f{}
 					ui.Dialog_open("nodes_list", 2)
 				}
 			}
@@ -236,8 +250,8 @@ func (app *SAApp) renderIDE(ui *Ui) {
 		if found != nil && keys.alt {
 			if touch.start {
 				foundStart := appDiv.crop.Start.Add(appDiv.data.Convert(ui.win.Cell(), found.GetGrid()).Start)
-				app.startClickWidget = found
-				app.startClickRel = touch.pos.Sub(foundStart)
+				app.canvas.startClickWidget = found
+				app.canvas.startClickRel = touch.pos.Sub(foundStart)
 				app.act.DeselectAll()
 				found.Selected = true
 			}
@@ -247,19 +261,19 @@ func (app *SAApp) renderIDE(ui *Ui) {
 			}
 		}
 
-		if app.startClickWidget != nil {
+		if app.canvas.startClickWidget != nil {
 			//move
-			gridMove := appDiv.GetCloseCell(touch.pos.Sub(app.startClickRel).Add(OsV2{ui.CellWidth(0.5), ui.CellWidth(0.5)}))
+			gridMove := appDiv.GetCloseCell(touch.pos.Sub(app.canvas.startClickRel).Add(OsV2{ui.CellWidth(0.5), ui.CellWidth(0.5)}))
 			//gridMove := appDiv.GetCloseCell(touch.pos)
-			app.startClickWidget.SetGridStart(gridMove.Start)
+			app.canvas.startClickWidget.SetGridStart(gridMove.Start)
 		}
 		//}
 	}
 	if touch.end {
-		if appDiv.IsOver(ui) && keys.alt && app.startClickWidget == nil { //click outside widgets
+		if appDiv.IsOver(ui) && keys.alt && app.canvas.startClickWidget == nil { //click outside widgets
 			app.act.DeselectAll()
 		}
-		app.startClickWidget = nil
+		app.canvas.startClickWidget = nil
 	}
 
 	//shortcuts
@@ -368,7 +382,7 @@ func (app *SAApp) drawCreateWidget(ui *Ui) {
 
 				if keys.enter || ui.Comp_buttonMenu(0, y, 1, 1, fn, "", true, false) > 0 {
 					//add new Widget
-					nw := app.act.AddWidget(app.addWidgetCoord, fn)
+					nw := app.act.AddWidget(app.canvas.addWidgetGrid, app.canvas.addWidgetPos, fn)
 					app.act.DeselectAll()
 					nw.Selected = true
 
@@ -451,29 +465,35 @@ func _SAApp_drawColsRowsDialog(name string, items *[]SAWidgetColRow, i int, ui *
 func (app *SAApp) RenderHeader(ui *Ui) {
 	ui.Div_colMax(1, 100)
 	ui.Div_colMax(2, 6)
-	ui.Div_colMax(5, 2)
+	//ui.Div_colMax(5, 2)
 
 	//level up
-	if ui.Comp_buttonIcon(0, 0, 1, 1, "file:apps/base/resources/levelup.png", 0.3, "One level up", app.act.parent != nil) > 0 {
+	if ui.Comp_buttonIcon(0, 0, 1, 1, "file:apps/base/resources/levelup.png", 0.3, "One level up", CdPalette_P, app.act.parent != nil) > 0 {
 		app.act = app.act.parent
+	}
+	keys := &ui.buff.win.io.keys
+	if strings.EqualFold(keys.text, "u") {
+		if app.act.parent != nil {
+			app.act = app.act.parent
+		}
 	}
 
 	//list
 	{
 		var listPathes string
-		var listWidges []*SAWidget
-		app.root.buildSubsList(&listPathes, &listWidges)
+		var listWidgets []*SAWidget
+		app.root.buildSubsList(&listPathes, &listWidgets)
 		if len(listPathes) >= 1 {
 			listPathes = listPathes[:len(listPathes)-1] //cut last ';'
 		}
 		combo := 0
-		for i, n := range listWidges {
+		for i, n := range listWidgets {
 			if app.act == n {
 				combo = i
 			}
 		}
 		if ui.Comp_combo(1, 0, 1, 1, &combo, listPathes, "", true, true) {
-			app.act = listWidges[combo]
+			app.act = listWidgets[combo]
 		}
 	}
 
@@ -489,7 +509,7 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 	}
 
 	//list of widgets(if hidden, it can be selected)
-	{
+	/*{
 		val := 0
 		options := ""
 		for i, w := range app.act.Subs {
@@ -504,7 +524,7 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 			app.act.DeselectAll()
 			app.act.Subs[val].Selected = true
 		}
-	}
+	}*/
 }
 
 func (app *SAApp) cmpAndAddHistory() bool {
@@ -536,12 +556,14 @@ func (app *SAApp) addHistory() {
 	app.history_pos++
 
 	app.saveIt = true
-	app.exeIt = true
+	app.exeIt = true //udpate change
 }
 
 func (app *SAApp) recoverHistory() {
 	app.root, _ = app.history[app.history_pos].Copy()
 	app.act = app.root.FindMirror(app.history[app.history_pos], app.history_act[app.history_pos])
+
+	app.exeIt = true //update expressions into 'oldValue'
 }
 
 func (app *SAApp) canHistoryBack() bool {
