@@ -145,8 +145,11 @@ func NewSANode(parent *SANode, name string, exe string, grid OsV4, pos OsV2f) *S
 	w.parent = parent
 	w.Name = name
 	w.Exe = exe
-	w.SetGrid(grid)
 	w.Pos = pos
+
+	if w.CanBeRenderOnCanvas() {
+		w.SetGrid(grid)
+	}
 	return w
 }
 
@@ -608,6 +611,11 @@ func (w *SANode) DeselectAll() {
 	}
 }
 
+func (w *SANode) SelectOnlyThis() {
+	w.parent.DeselectAll()
+	w.Selected = true
+}
+
 func (w *SANode) RemoveSelectedNodes() {
 	for i := len(w.Subs) - 1; i >= 0; i-- {
 		if w.Subs[i].Selected {
@@ -776,9 +784,13 @@ func (w *SANode) GetGridShow() bool {
 	return w.GetAttrSwitch("grid_show", "1").GetBool()
 }
 
+func (w *SANode) CanBeRenderOnCanvas() bool {
+	return (SAApp_IsStdPrimitive(w.Exe) || SAApp_IsStdComponent(w.Exe))
+}
+
 func (w *SANode) Render(ui *Ui, app *SAApp) {
 
-	if !(SAApp_IsStdPrimitive(w.Exe) || SAApp_IsStdComponent(w.Exe)) {
+	if !w.CanBeRenderOnCanvas() {
 		return
 	}
 
@@ -1368,6 +1380,29 @@ func (w *SANode) RenderParams(app *SAApp) {
 			_SANode_renderParamsValue(x, 0, 1, 1, it, ui, gr)
 			x++
 
+			if len(it.depends) == 1 {
+				if ui.Comp_buttonLight(x, 0, 1, 1, ui.trns.GOTO, "", true) > 0 {
+					it.depends[0].node.SelectOnlyThis()
+				}
+				x++
+			} else if len(it.depends) > 1 {
+				nm := "goto_" + it.Name
+				if ui.Comp_buttonLight(x, 0, 1, 1, ui.trns.GOTO, "", true) > 0 {
+					ui.Dialog_open(nm, 1)
+				}
+				if ui.Dialog_start(nm) {
+					ui.Div_colMax(0, 5)
+					for i, dp := range it.depends {
+						if ui.Comp_buttonMenu(0, i, 1, 1, dp.node.Name+"."+dp.Name, "", true, false) > 0 {
+							dp.node.SelectOnlyThis()
+						}
+					}
+					ui.Dialog_end()
+				}
+
+				x++
+			}
+
 			//error
 			if it.errExe != nil {
 				ui.Div_start(x, 0, 1, 1)
@@ -1379,7 +1414,6 @@ func (w *SANode) RenderParams(app *SAApp) {
 				ui.Div_end()
 				x++
 			}
-
 		}
 		ui.Div_end()
 		y++
