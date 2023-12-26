@@ -194,12 +194,14 @@ func (ui *Ui) Comp_button(x, y, w, h int, label string, tooltip string, enable b
 	return 0
 }
 
-func (ui *Ui) Comp_buttonIcon(x, y, w, h int, icon string, icon_margin float64, tooltip string, enable bool) int {
+func (ui *Ui) Comp_buttonIcon(x, y, w, h int, icon string, icon_margin float64, tooltip string, cd uint8, enable bool) int {
 	ui.Div_start(x, y, w, h)
 
 	style := ui._buttonBasicStyle(enable, tooltip)
 	style.image_alignH = 1
 	style.image_margin = icon_margin
+	style.cd = cd
+
 	click, rclick := ui.Comp_button_s(&style, "", icon, "", 0, false)
 
 	ui.Div_end()
@@ -437,6 +439,7 @@ func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, alignH int, selectio
 	style.cd = CdPalette_B
 	style.label_alignV = 1
 	style.label_alignH = uint8(alignH)
+	style.label_formating = true
 
 	ui.Comp_text_s(&style, label, "", selection)
 
