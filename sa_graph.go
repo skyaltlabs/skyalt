@@ -26,7 +26,7 @@ type SAGraph struct {
 	node_select        bool
 	cam_start          OsV2f
 	touch_start        OsV2
-	node_move_selected *SAWidget
+	node_move_selected *SANode
 }
 
 func NewSAGraph(app *SAApp) *SAGraph {
@@ -40,8 +40,8 @@ func (gr *SAGraph) drawCreateNode(ui *Ui) {
 	lvBaseDiv := ui.GetCall().call
 
 	if ui.win.io.keys.tab && lvBaseDiv.IsOver(ui) {
-		gr.app.canvas.addWidgetGrid = InitOsV4(0, 0, 1, 1)
-		gr.app.canvas.addWidgetPos = gr.app.act.pixelsToNode(ui.buff.win.io.touch.pos, ui, lvBaseDiv)
+		gr.app.canvas.addGrid = InitOsV4(0, 0, 1, 1)
+		gr.app.canvas.addPos = gr.app.act.pixelsToNode(ui.buff.win.io.touch.pos, ui, lvBaseDiv)
 		ui.Dialog_open("nodes_list", 2)
 	}
 }
@@ -64,7 +64,7 @@ func _SAGraph_drawConnection(start OsV2, end OsV2, active bool, ui *Ui) {
 func (gr *SAGraph) reorder(onlySelected bool, ui *Ui) {
 
 	//create list
-	var nodes []*SAWidget
+	var nodes []*SANode
 	for _, n := range gr.app.act.Subs {
 		if onlySelected && !n.Selected {
 			continue //skip
@@ -149,22 +149,22 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 	for _, node := range gr.app.act.Subs {
 		for _, in := range node.Attrs {
 			for _, out := range in.depends {
-				coordOut, selCoordOut := out.widget.nodeToPixelsCoord(ui)
-				coordIn, selCoordIn := in.widget.nodeToPixelsCoord(ui)
+				coordOut, selCoordOut := out.node.nodeToPixelsCoord(ui)
+				coordIn, selCoordIn := in.node.nodeToPixelsCoord(ui)
 
-				if out.widget.Selected {
+				if out.node.Selected {
 					coordOut = selCoordOut
 				}
-				if in.widget.Selected {
+				if in.node.Selected {
 					coordIn = selCoordIn
 				}
-				_SAGraph_drawConnection(OsV2{coordOut.Middle().X, coordOut.End().Y}, OsV2{coordIn.Middle().X, coordIn.Start.Y}, node.Selected || out.widget.Selected, ui)
+				_SAGraph_drawConnection(OsV2{coordOut.Middle().X, coordOut.End().Y}, OsV2{coordIn.Middle().X, coordIn.Start.Y}, node.Selected || out.node.Selected, ui)
 			}
 		}
 	}
 
 	//draw node bodies
-	var touchInsideNode *SAWidget
+	var touchInsideNode *SANode
 	for _, n := range gr.app.act.Subs {
 		inside := n.drawNode(gr.node_select, gr.app)
 		if inside {

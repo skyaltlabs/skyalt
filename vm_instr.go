@@ -47,7 +47,7 @@ type VmInstr struct {
 
 	prms []VmInstrPrm
 
-	attr *SAWidgetAttr
+	attr *SANodeAttr
 	temp *Rec
 
 	next *VmInstr

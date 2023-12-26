@@ -21,7 +21,7 @@ func Node_connectionCd(ui *Ui) OsCd {
 	return pl.GetGrey(0.2)
 }
 
-func (node *SAWidget) KeyProgessSelection(keys *WinKeys) bool {
+func (node *SANode) KeyProgessSelection(keys *WinKeys) bool {
 
 	if keys.shift {
 		if node.selected_cover {
@@ -38,7 +38,7 @@ func (node *SAWidget) KeyProgessSelection(keys *WinKeys) bool {
 	return node.selected_cover
 }
 
-func (w *SAWidget) pixelsToNode(touchPos OsV2, ui *Ui, lvDiv *UiLayoutDiv) OsV2f {
+func (w *SANode) pixelsToNode(touchPos OsV2, ui *Ui, lvDiv *UiLayoutDiv) OsV2f {
 
 	cell := ui.win.Cell()
 
@@ -54,7 +54,7 @@ func (w *SAWidget) pixelsToNode(touchPos OsV2, ui *Ui, lvDiv *UiLayoutDiv) OsV2f
 	return r
 }
 
-func (w *SAWidget) nodeToPixels(p OsV2f, ui *Ui) OsV2 {
+func (w *SANode) nodeToPixels(p OsV2f, ui *Ui) OsV2 {
 
 	lv := ui.GetCall()
 	cell := ui.win.Cell()
@@ -69,11 +69,11 @@ func (w *SAWidget) nodeToPixels(p OsV2f, ui *Ui) OsV2 {
 	return r.Add(lv.call.canvas.Start).Add(lv.call.canvas.Size.MulV(0.5))
 }
 
-func (w *SAWidget) cellZoom(ui *Ui) int {
+func (w *SANode) cellZoom(ui *Ui) int {
 	return int(float32(ui.win.Cell()) * float32(w.Cam_z) * 1)
 }
 
-func (node *SAWidget) nodeToPixelsCoord(ui *Ui) (OsV4, OsV4) {
+func (node *SANode) nodeToPixelsCoord(ui *Ui) (OsV4, OsV4) {
 
 	coord := node.parent.nodeToPixels(node.Pos, ui) //.parent, because it has Cam
 
@@ -86,7 +86,7 @@ func (node *SAWidget) nodeToPixelsCoord(ui *Ui) (OsV4, OsV4) {
 	return cq, cq.AddSpace(int(-0.15 * float64(cellr)))
 }
 
-func (node *SAWidget) drawNode(someNodeIsDraged bool, app *SAApp) bool {
+func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 
 	ui := app.base.ui
 

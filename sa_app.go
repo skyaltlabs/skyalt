@@ -23,13 +23,13 @@ import (
 )
 
 type SACanvas struct {
-	addWidgetGrid OsV4
-	addWidgetPos  OsV2f
+	addGrid OsV4
+	addPos  OsV2f
 
-	startClickWidget *SAWidget
-	startClickRel    OsV2
+	startClick    *SANode
+	startClickRel OsV2
 
-	resizeWidget *SAWidget
+	resize *SANode
 }
 
 type SAApp struct {
@@ -38,11 +38,11 @@ type SAApp struct {
 	Name string
 	IDE  bool
 
-	root *SAWidget
-	act  *SAWidget
+	root *SANode
+	act  *SANode
 
-	history_act []*SAWidget //JSONs
-	history     []*SAWidget //JSONs
+	history_act []*SANode //JSONs
+	history     []*SANode //JSONs
 	history_pos int
 
 	saveIt bool
@@ -93,10 +93,10 @@ func (app *SAApp) renderIDE(ui *Ui) {
 
 	//at least one
 	if len(lay.Cols) == 0 {
-		lay.Cols = append(lay.Cols, InitSAWidgetColRow())
+		lay.Cols = append(lay.Cols, InitSANodeColRow())
 	}
 	if len(lay.Rows) == 0 {
-		lay.Rows = append(lay.Rows, InitSAWidgetColRow())
+		lay.Rows = append(lay.Rows, InitSANodeColRow())
 	}
 
 	if ui.Comp_button(0, 0, 1, 1, "+", ui.trns.ADD_COLUMNS_ROWS, true) > 0 {
@@ -105,10 +105,10 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	if ui.Dialog_start("add_col_row") {
 		ui.Div_col(0, 4)
 		if ui.Comp_buttonMenu(0, 0, 1, 1, ui.trns.ADD_NEW_COLUMN, "", true, false) > 0 {
-			lay.Cols = append(lay.Cols, InitSAWidgetColRow())
+			lay.Cols = append(lay.Cols, InitSANodeColRow())
 		}
 		if ui.Comp_buttonMenu(0, 1, 1, 1, ui.trns.ADD_NEW_ROW, "", true, false) > 0 {
-			lay.Rows = append(lay.Rows, InitSAWidgetColRow())
+			lay.Rows = append(lay.Rows, InitSANodeColRow())
 
 		}
 		ui.Dialog_end()
@@ -212,13 +212,13 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	touch := &ui.buff.win.io.touch
 	keys := &ui.buff.win.io.keys
 
-	//add widget
-	if (!ui.touch.IsAnyActive() || ui.touch.canvas == appDiv) && app.canvas.startClickWidget == nil && !keys.alt {
+	//add node
+	if (!ui.touch.IsAnyActive() || ui.touch.canvas == appDiv) && app.canvas.startClick == nil && !keys.alt {
 		touchPos := ui.win.io.touch.pos
 		if appDiv.IsOver(ui) { // appDiv.crop.Inside(touchPos)
 			grid := appDiv.GetCloseCell(touchPos)
 
-			if appDiv.FindFromGridPos(grid.Start) == nil { //no widget under touch
+			if appDiv.FindFromGridPos(grid.Start) == nil { //no node under touch
 				rect := appDiv.data.Convert(ui.win.Cell(), grid)
 
 				rect.Start = rect.Start.Add(appDiv.canvas.Start)
@@ -226,20 +226,20 @@ func (app *SAApp) renderIDE(ui *Ui) {
 				ui.buff.AddText("+", rect, ui.win.fonts.Get(SKYALT_FONT_PATH), SAApp_getYellow(), ui.win.io.GetDPI()/8, OsV2{1, 1}, nil, true)
 
 				if appDiv.IsTouchEnd(ui) {
-					app.canvas.addWidgetGrid = grid
-					app.canvas.addWidgetPos = OsV2f{}
+					app.canvas.addGrid = grid
+					app.canvas.addPos = OsV2f{}
 					ui.Dialog_open("nodes_list", 2)
 				}
 			}
 		}
 	}
-	app.drawCreateWidget(ui)
+	app.drawCreateNode(ui)
 
-	//select/move widget
+	//select/move node
 	if appDiv.IsOver(ui) {
 		grid := appDiv.GetCloseCell(touch.pos)
 
-		var found *SAWidget
+		var found *SANode
 		for _, w := range app.act.Subs {
 			if w.GetGridShow() && w.GetGrid().Inside(grid.Start) {
 				found = w
@@ -250,7 +250,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 		if found != nil && keys.alt {
 			if touch.start {
 				foundStart := appDiv.crop.Start.Add(appDiv.data.Convert(ui.win.Cell(), found.GetGrid()).Start)
-				app.canvas.startClickWidget = found
+				app.canvas.startClick = found
 				app.canvas.startClickRel = touch.pos.Sub(foundStart)
 				app.act.DeselectAll()
 				found.Selected = true
@@ -261,19 +261,19 @@ func (app *SAApp) renderIDE(ui *Ui) {
 			}
 		}
 
-		if app.canvas.startClickWidget != nil {
+		if app.canvas.startClick != nil {
 			//move
 			gridMove := appDiv.GetCloseCell(touch.pos.Sub(app.canvas.startClickRel).Add(OsV2{ui.CellWidth(0.5), ui.CellWidth(0.5)}))
 			//gridMove := appDiv.GetCloseCell(touch.pos)
-			app.canvas.startClickWidget.SetGridStart(gridMove.Start)
+			app.canvas.startClick.SetGridStart(gridMove.Start)
 		}
 		//}
 	}
 	if touch.end {
-		if appDiv.IsOver(ui) && keys.alt && app.canvas.startClickWidget == nil { //click outside widgets
+		if appDiv.IsOver(ui) && keys.alt && app.canvas.startClick == nil { //click outside nodes
 			app.act.DeselectAll()
 		}
-		app.canvas.startClickWidget = nil
+		app.canvas.startClick = nil
 	}
 
 	//shortcuts
@@ -337,15 +337,15 @@ func SAApp_IsStdComponent(name string) bool {
 	return false
 }
 
-func (app *SAApp) getListOfWidgets() []string {
+func (app *SAApp) getListOfNodes() []string {
 	fns := SAStandardPrimitives
 	fns = append(fns, SAStandardComponents...)
 	fns = append(fns, app.base.server.nodes...) //from /nodes dir
 	return fns
 }
 
-func (app *SAApp) ComboListOfWidgets(x, y, w, h int, act string, ui *Ui) string {
-	fns := app.getListOfWidgets()
+func (app *SAApp) ComboListOfNodes(x, y, w, h int, act string, ui *Ui) string {
+	fns := app.getListOfNodes()
 	i := 0
 	found_i := 0
 	options := ""
@@ -364,7 +364,7 @@ func (app *SAApp) ComboListOfWidgets(x, y, w, h int, act string, ui *Ui) string 
 	return act
 }
 
-func (app *SAApp) drawCreateWidget(ui *Ui) {
+func (app *SAApp) drawCreateNode(ui *Ui) {
 
 	if ui.Dialog_start("nodes_list") {
 		ui.Div_colMax(0, 5)
@@ -376,13 +376,13 @@ func (app *SAApp) drawCreateWidget(ui *Ui) {
 
 		keys := &ui.buff.win.io.keys
 
-		fns := app.getListOfWidgets()
+		fns := app.getListOfNodes()
 		for _, fn := range fns {
 			if search == "" || strings.Contains(fn, search) {
 
 				if keys.enter || ui.Comp_buttonMenu(0, y, 1, 1, fn, "", true, false) > 0 {
-					//add new Widget
-					nw := app.act.AddWidget(app.canvas.addWidgetGrid, app.canvas.addWidgetPos, fn)
+					//add new node
+					nw := app.act.AddNode(app.canvas.addGrid, app.canvas.addPos, fn)
 					app.act.DeselectAll()
 					nw.Selected = true
 
@@ -397,7 +397,7 @@ func (app *SAApp) drawCreateWidget(ui *Ui) {
 	}
 }
 
-func _SAApp_drawColsRowsDialog(name string, items *[]SAWidgetColRow, i int, ui *Ui) bool {
+func _SAApp_drawColsRowsDialog(name string, items *[]SANodeColRow, i int, ui *Ui) bool {
 
 	changed := false
 	if ui.Dialog_start(name) {
@@ -412,9 +412,9 @@ func _SAApp_drawColsRowsDialog(name string, items *[]SAWidgetColRow, i int, ui *
 			ui.Div_colMax(2, 100)
 
 			if ui.Comp_buttonLight(0, 0, 1, 1, ui.trns.ADD_BEFORE, "", i > 0) > 0 {
-				*items = append(*items, SAWidgetColRow{})
+				*items = append(*items, SANodeColRow{})
 				copy((*items)[i+1:], (*items)[i:])
-				(*items)[i] = InitSAWidgetColRow()
+				(*items)[i] = InitSANodeColRow()
 				ui.Dialog_close()
 				changed = true
 			}
@@ -422,9 +422,9 @@ func _SAApp_drawColsRowsDialog(name string, items *[]SAWidgetColRow, i int, ui *
 			ui.Comp_text(1, 0, 1, 1, strconv.Itoa(i), 1) //description
 
 			if ui.Comp_buttonLight(2, 0, 1, 1, ui.trns.ADD_AFTER, "", true) > 0 {
-				*items = append(*items, SAWidgetColRow{})
+				*items = append(*items, SANodeColRow{})
 				copy((*items)[i+2:], (*items)[i+1:])
-				(*items)[i+1] = InitSAWidgetColRow()
+				(*items)[i+1] = InitSANodeColRow()
 				ui.Dialog_close()
 				changed = true
 			}
@@ -481,23 +481,23 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 	//list
 	{
 		var listPathes string
-		var listWidgets []*SAWidget
-		app.root.buildSubsList(&listPathes, &listWidgets)
+		var listNodes []*SANode
+		app.root.buildSubsList(&listPathes, &listNodes)
 		if len(listPathes) >= 1 {
 			listPathes = listPathes[:len(listPathes)-1] //cut last ';'
 		}
 		combo := 0
-		for i, n := range listWidgets {
+		for i, n := range listNodes {
 			if app.act == n {
 				combo = i
 			}
 		}
 		if ui.Comp_combo(1, 0, 1, 1, &combo, listPathes, "", true, true) {
-			app.act = listWidgets[combo]
+			app.act = listNodes[combo]
 		}
 	}
 
-	ui.Comp_text(2, 0, 1, 1, "Press Alt-key to select widgets", 1)
+	ui.Comp_text(2, 0, 1, 1, "Press Alt-key to select nodes", 1)
 
 	//short cuts
 	if ui.Comp_buttonLight(3, 0, 1, 1, "←", ui.trns.BACKWARD, app.canHistoryBack()) > 0 {
@@ -508,7 +508,7 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 		app.stepHistoryForward()
 	}
 
-	//list of widgets(if hidden, it can be selected)
+	//list of nodes(if hidden, it can be selected)
 	/*{
 		val := 0
 		options := ""

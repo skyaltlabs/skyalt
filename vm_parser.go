@@ -26,8 +26,8 @@ func VmColor_api() OsCd     { return OsCd{150, 80, 200, 255} }
 func VmColor_apiDraw() OsCd { return OsCd{100, 40, 30, 255} }
 
 type VmLine struct {
-	widget *SAWidget
-	line   string
+	node *SANode
+	line string
 
 	lexer *VmLexer
 
@@ -35,14 +35,14 @@ type VmLine struct {
 	apis  *VmApis
 	prior int
 
-	depends []*SAWidgetAttr
+	depends []*SANodeAttr
 
 	errs []string
 }
 
-func InitVmLine(ln string, ops *VmOps, apis *VmApis, prior int, widget *SAWidget) (*VmLine, error) {
+func InitVmLine(ln string, ops *VmOps, apis *VmApis, prior int, node *SANode) (*VmLine, error) {
 	var line VmLine
-	line.widget = widget
+	line.node = node
 	line.line = ln
 	line.ops = ops
 	line.apis = apis
@@ -243,29 +243,29 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 	}
 
 	//Access:
-	//attr		//same widget
+	//attr		//same node
 	//.attr		//parent
-	//widget.attr
+	//node.attr
 	if lexer.subs[0].tp == VmLexerWord {
 
 		instr := NewVmInstr(VmBasic_Access)
 
 		if len(lexer.subs) == 1 {
-			//attribute from same widget
-			line.addAccess(line.widget, lexer.subs[0].GetString(line.line), instr, lexer)
+			//attribute from same node
+			line.addAccess(line.node, lexer.subs[0].GetString(line.line), instr, lexer)
 		} else if len(lexer.subs) >= 2 && lexer.subs[1].tp == VmLexerDot {
 			if len(lexer.subs) >= 3 && lexer.subs[2].tp == VmLexerWord {
 				if len(lexer.subs) == 3 {
-					//widget.attribute
-					widgetName := lexer.subs[0].GetString(line.line)
-					ww := line.widget.parent.FindNode(widgetName)
+					//node.attribute
+					nodeName := lexer.subs[0].GetString(line.line)
+					ww := line.node.parent.FindNode(nodeName)
 					if ww != nil {
 						line.addAccess(ww, lexer.subs[2].GetString(line.line), instr, lexer)
 					} else {
-						line.addError(lexer, fmt.Sprintf("Widget(%s) not found", widgetName))
+						line.addError(lexer, fmt.Sprintf("Node(%s) not found", nodeName))
 					}
 				} else {
-					line.addError(lexer, "Access must be in form of <widget>.<attribute> or .<attribute>")
+					line.addError(lexer, "Access must be in form of <node>.<attribute> or .<attribute>")
 				}
 			} else {
 				line.addError(lexer, "Missing attribute")
@@ -281,10 +281,10 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 
 		if len(lexer.subs) >= 2 && lexer.subs[1].tp == VmLexerWord {
 			if len(lexer.subs) == 2 {
-				//attribute from parent widget
-				line.addAccess(line.widget.parent, lexer.subs[1].GetString(line.line), instr, lexer)
+				//attribute from parent node
+				line.addAccess(line.node.parent, lexer.subs[1].GetString(line.line), instr, lexer)
 			} else {
-				line.addError(lexer, "Access must be in form of <widget>.<attribute> or .<attribute>")
+				line.addError(lexer, "Access must be in form of <node>.<attribute> or .<attribute>")
 			}
 		} else {
 			line.addError(lexer, "Missing attribute")
@@ -296,9 +296,9 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 	return nil
 }
 
-func (line *VmLine) addAccess(widget *SAWidget, attrName string, instr *VmInstr, lexer *VmLexer) {
+func (line *VmLine) addAccess(node *SANode, attrName string, instr *VmInstr, lexer *VmLexer) {
 
-	vv := widget.findAttr(attrName)
+	vv := node.findAttr(attrName)
 	if vv != nil {
 		instr.attr = vv
 		line.depends = append(line.depends, vv) //add

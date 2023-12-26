@@ -177,7 +177,7 @@ func (base *SABase) drawFrame(ui *Ui) {
 
 	app := base.Apps[base.Selected]
 	if app.root == nil {
-		app.root, _ = NewSAWidgetRoot("apps/" + app.Name + "/app.json") //err ...
+		app.root, _ = NewSANodeRoot("apps/" + app.Name + "/app.json") //err ...
 	}
 	if app.act == nil {
 		app.act = app.root

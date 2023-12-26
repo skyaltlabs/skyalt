@@ -28,8 +28,8 @@ import (
 	"time"
 )
 
-type SAWidgetAttr struct {
-	widget *SAWidget
+type SANodeAttr struct {
+	node *SANode
 
 	Name    string
 	Value   string `json:",omitempty"`
@@ -37,7 +37,7 @@ type SAWidgetAttr struct {
 
 	oldValue     string
 	instr        *VmInstr
-	depends      []*SAWidgetAttr
+	depends      []*SANodeAttr
 	isDirectLink bool
 	errExp       error
 	errExe       error
@@ -47,7 +47,7 @@ type SAWidgetAttr struct {
 	Gui_ReadOnly bool   `json:",omitempty"` //output
 }
 
-func (attr *SAWidgetAttr) GetDirectLink() (*SAWidgetAttr, *string, bool) {
+func (attr *SANodeAttr) GetDirectLink() (*SANodeAttr, *string, bool) {
 
 	for attr.isDirectLink {
 		return attr.depends[0].GetDirectLink() //go to source
@@ -59,63 +59,63 @@ func (attr *SAWidgetAttr) GetDirectLink() (*SAWidgetAttr, *string, bool) {
 
 	return attr, &attr.Value, true //this
 }
-func (attr *SAWidgetAttr) SetString(value string) {
+func (attr *SANodeAttr) SetString(value string) {
 	_, val, editable := attr.GetDirectLink()
 	if editable {
 		*val = value
 	}
 }
-func (attr *SAWidgetAttr) SetInt(value int) {
+func (attr *SANodeAttr) SetInt(value int) {
 	_, val, editable := attr.GetDirectLink()
 	if editable {
 		*val = strconv.Itoa(value)
 	}
 }
-func (attr *SAWidgetAttr) SetFloat(value float64) {
+func (attr *SANodeAttr) SetFloat(value float64) {
 	_, val, editable := attr.GetDirectLink()
 	if editable {
 		*val = strconv.FormatFloat(value, 'f', -1, 64)
 	}
 }
 
-func (attr *SAWidgetAttr) GetString() string {
+func (attr *SANodeAttr) GetString() string {
 	_, val, _ := attr.GetDirectLink()
 	return *val
 }
-func (attr *SAWidgetAttr) GetInt() int {
+func (attr *SANodeAttr) GetInt() int {
 	v, _ := strconv.Atoi(attr.GetString())
 	return v
 }
-func (attr *SAWidgetAttr) GetInt64() int64 {
+func (attr *SANodeAttr) GetInt64() int64 {
 	v, _ := strconv.Atoi(attr.GetString())
 	return int64(v)
 }
-func (attr *SAWidgetAttr) GetFloat() float64 {
+func (attr *SANodeAttr) GetFloat() float64 {
 	v, _ := strconv.ParseFloat(attr.GetString(), 64)
 	return v
 }
-func (attr *SAWidgetAttr) GetBool() bool {
+func (attr *SANodeAttr) GetBool() bool {
 	return attr.GetInt() != 0
 }
-func (attr *SAWidgetAttr) GetByte() byte {
+func (attr *SANodeAttr) GetByte() byte {
 	return byte(attr.GetInt())
 }
 
-type SAWidgetColRow struct {
+type SANodeColRow struct {
 	Min, Max, Resize float64 `json:",omitempty"`
 	ResizeName       string  `json:",omitempty"`
 }
 
-func (a *SAWidgetColRow) Cmp(b *SAWidgetColRow) bool {
+func (a *SANodeColRow) Cmp(b *SANodeColRow) bool {
 	return a.Min == b.Min && a.Max == b.Max && a.Resize == b.Resize && a.ResizeName == b.ResizeName
 }
 
-func InitSAWidgetColRow() SAWidgetColRow {
-	return SAWidgetColRow{Min: 1, Max: 1, Resize: 1}
+func InitSANodeColRow() SANodeColRow {
+	return SANodeColRow{Min: 1, Max: 1, Resize: 1}
 }
 
-type SAWidget struct {
-	parent *SAWidget
+type SANode struct {
+	parent *SANode
 
 	Pos                 OsV2f
 	pos_start           OsV2f
@@ -126,12 +126,12 @@ type SAWidget struct {
 	Selected       bool
 	selected_cover bool
 
-	Attrs []*SAWidgetAttr `json:",omitempty"`
+	Attrs []*SANodeAttr `json:",omitempty"`
 
 	//sub-layout
-	Cols []SAWidgetColRow `json:",omitempty"`
-	Rows []SAWidgetColRow `json:",omitempty"`
-	Subs []*SAWidget      `json:",omitempty"`
+	Cols []SANodeColRow `json:",omitempty"`
+	Rows []SANodeColRow `json:",omitempty"`
+	Subs []*SANode      `json:",omitempty"`
 
 	//Bypass bool
 
@@ -140,8 +140,8 @@ type SAWidget struct {
 	errExe  error
 }
 
-func NewSAWidget(parent *SAWidget, name string, exe string, grid OsV4, pos OsV2f) *SAWidget {
-	w := &SAWidget{}
+func NewSANode(parent *SANode, name string, exe string, grid OsV4, pos OsV2f) *SANode {
+	w := &SANode{}
 	w.parent = parent
 	w.Name = name
 	w.Exe = exe
@@ -150,8 +150,8 @@ func NewSAWidget(parent *SAWidget, name string, exe string, grid OsV4, pos OsV2f
 	return w
 }
 
-func NewSAWidgetRoot(path string) (*SAWidget, error) {
-	w := NewSAWidget(nil, "root", "layout", OsV4{}, OsV2f{})
+func NewSANodeRoot(path string) (*SANode, error) {
+	w := NewSANode(nil, "root", "layout", OsV4{}, OsV2f{})
 	w.Exe = "layout"
 
 	//load
@@ -169,7 +169,7 @@ func NewSAWidgetRoot(path string) (*SAWidget, error) {
 	return w, nil
 }
 
-func (w *SAWidget) Save(path string) error {
+func (w *SANode) Save(path string) error {
 	if path == "" {
 		return nil
 	}
@@ -187,7 +187,7 @@ func (w *SAWidget) Save(path string) error {
 	return nil
 }
 
-func (a *SAWidget) Cmp(b *SAWidget) bool {
+func (a *SANode) Cmp(b *SANode) bool {
 	if a.Name != b.Name || a.Exe != b.Exe || a.Selected != b.Selected {
 		return false
 	}
@@ -232,7 +232,7 @@ func (a *SAWidget) Cmp(b *SAWidget) bool {
 	return true
 }
 
-func (w *SAWidget) HasExpError() bool {
+func (w *SANode) HasExpError() bool {
 
 	for _, it := range w.Attrs {
 		if it.errExp != nil {
@@ -242,7 +242,7 @@ func (w *SAWidget) HasExpError() bool {
 	return false
 }
 
-func (w *SAWidget) HasExeError() bool {
+func (w *SANode) HasExeError() bool {
 
 	if w.errExe != nil {
 		return true
@@ -256,11 +256,11 @@ func (w *SAWidget) HasExeError() bool {
 	return false
 }
 
-func (w *SAWidget) HasError() bool {
+func (w *SANode) HasError() bool {
 	return w.HasExeError() || w.HasExpError()
 }
 
-func (w *SAWidget) UpdateExpresions(app *SAApp) {
+func (w *SANode) UpdateExpresions(app *SAApp) {
 
 	for _, it := range w.Attrs {
 		it.instr = nil
@@ -296,25 +296,25 @@ func (w *SAWidget) UpdateExpresions(app *SAApp) {
 	}
 }
 
-func (w *SAWidget) checkForLoopInner(find *SAWidget) {
+func (w *SANode) checkForLoopInner(find *SANode) {
 
 	for _, v := range w.Attrs {
 		for _, dep := range v.depends {
-			if dep.widget == w {
+			if dep.node == w {
 				continue //skip self-depends
 			}
 
-			if dep.widget == find {
+			if dep.node == find {
 				v.errExp = fmt.Errorf("Loop")
 				continue //avoid infinite recursion
 			}
 
-			dep.widget.checkForLoopInner(find)
+			dep.node.checkForLoopInner(find)
 		}
 	}
 }
 
-func (w *SAWidget) CheckForLoops() {
+func (w *SANode) CheckForLoops() {
 
 	w.checkForLoopInner(w)
 
@@ -323,11 +323,11 @@ func (w *SAWidget) CheckForLoops() {
 	}
 }
 
-func (w *SAWidget) areAttrsErrorFree() bool {
+func (w *SANode) areAttrsErrorFree() bool {
 
 	for _, v := range w.Attrs {
 		for _, dep := range v.depends {
-			if dep.widget.HasExpError() {
+			if dep.node.HasExpError() {
 				v.errExp = fmt.Errorf("incomming error")
 				return false
 			}
@@ -337,14 +337,14 @@ func (w *SAWidget) areAttrsErrorFree() bool {
 	return true
 }
 
-func (w *SAWidget) areAttrsReadyToRun() bool {
+func (w *SANode) areAttrsReadyToRun() bool {
 	for _, v := range w.Attrs {
 		for _, dep := range v.depends {
-			if dep.widget == w {
+			if dep.node == w {
 				continue //skip self-depends
 			}
 
-			if dep.widget.running || !dep.widget.done {
+			if dep.node.running || !dep.node.done {
 				return false //still running
 			}
 		}
@@ -352,7 +352,7 @@ func (w *SAWidget) areAttrsReadyToRun() bool {
 	return true
 }
 
-func (w *SAWidget) areAttrsChangedAndUpdate() bool {
+func (w *SANode) areAttrsChangedAndUpdate() bool {
 
 	changed := false
 
@@ -386,7 +386,7 @@ func (w *SAWidget) areAttrsChangedAndUpdate() bool {
 	return changed
 }
 
-func (w *SAWidget) IsReadyToBeExe() bool {
+func (w *SANode) IsReadyToBeExe() bool {
 
 	if w.done || w.running {
 		return false
@@ -407,7 +407,7 @@ func (w *SAWidget) IsReadyToBeExe() bool {
 	return false
 }
 
-func (w *SAWidget) ResetExecute() {
+func (w *SANode) ResetExecute() {
 	w.done = false
 	w.running = false
 
@@ -416,23 +416,23 @@ func (w *SAWidget) ResetExecute() {
 	}
 }
 
-func (w *SAWidget) buildList(list *[]*SAWidget) {
+func (w *SANode) buildList(list *[]*SANode) {
 	*list = append(*list, w)
 	for _, it := range w.Subs {
 		it.buildList(list)
 	}
 }
 
-func (w *SAWidget) IsGuiLayout() bool {
+func (w *SANode) IsGuiLayout() bool {
 	return w.Exe == "layout" || !w.IsGui() //every exe is layout
 }
-func (w *SAWidget) IsGui() bool {
+func (w *SANode) IsGui() bool {
 	if w.Exe == "" {
 		return true
 	}
 	return SAApp_IsStdPrimitive(w.Exe)
 }
-func (w *SAWidget) IsExe() bool {
+func (w *SANode) IsExe() bool {
 	if w.Exe == "" {
 		return false
 	}
@@ -445,8 +445,8 @@ func (w *SAWidget) IsExe() bool {
 	return true
 }
 
-func (w *SAWidget) ExecuteSubs(server *SANodeServer, max_threads int) {
-	var list []*SAWidget
+func (w *SANode) ExecuteSubs(server *SANodeServer, max_threads int) {
+	var list []*SANode
 	w.buildList(&list)
 
 	//multi-thread executing
@@ -470,7 +470,7 @@ func (w *SAWidget) ExecuteSubs(server *SANodeServer, max_threads int) {
 						//run it
 						it.running = true
 						wg.Add(1)
-						go func(ww *SAWidget) {
+						go func(ww *SANode) {
 							numActiveThreads.Add(1)
 							ww.execute(server)
 							wg.Done()
@@ -486,7 +486,7 @@ func (w *SAWidget) ExecuteSubs(server *SANodeServer, max_threads int) {
 	}
 }
 
-func (w *SAWidget) execute(server *SANodeServer) {
+func (w *SANode) execute(server *SANodeServer) {
 
 	fmt.Println("execute:", w.Name)
 
@@ -550,7 +550,7 @@ func (w *SAWidget) execute(server *SANodeServer) {
 	w.running = false
 }
 
-func (w *SAWidget) FindNode(name string) *SAWidget {
+func (w *SANode) FindNode(name string) *SANode {
 	for _, it := range w.Subs {
 		if it.Name == name {
 			return it
@@ -559,10 +559,10 @@ func (w *SAWidget) FindNode(name string) *SAWidget {
 	return nil
 }
 
-func (w *SAWidget) UpdateParents(parent *SAWidget) {
+func (w *SANode) UpdateParents(parent *SANode) {
 	w.parent = parent
 	for _, v := range w.Attrs {
-		v.widget = w
+		v.node = w
 	}
 
 	for _, it := range w.Subs {
@@ -570,14 +570,14 @@ func (w *SAWidget) UpdateParents(parent *SAWidget) {
 	}
 }
 
-func (w *SAWidget) Copy() (*SAWidget, error) {
+func (w *SANode) Copy() (*SANode, error) {
 
 	js, err := json.Marshal(w)
 	if err != nil {
 		return nil, err
 	}
 
-	dst := NewSAWidget(nil, "", "", OsV4{}, OsV2f{})
+	dst := NewSANode(nil, "", "", OsV4{}, OsV2f{})
 	err = json.Unmarshal(js, dst)
 	if err != nil {
 		return nil, err
@@ -588,7 +588,7 @@ func (w *SAWidget) Copy() (*SAWidget, error) {
 	return dst, nil
 }
 
-func (a *SAWidget) FindMirror(b *SAWidget, b_act *SAWidget) *SAWidget {
+func (a *SANode) FindMirror(b *SANode, b_act *SANode) *SANode {
 
 	if b == b_act {
 		return a
@@ -602,13 +602,13 @@ func (a *SAWidget) FindMirror(b *SAWidget, b_act *SAWidget) *SAWidget {
 	return nil
 }
 
-func (w *SAWidget) DeselectAll() {
+func (w *SANode) DeselectAll() {
 	for _, n := range w.Subs {
 		n.Selected = false
 	}
 }
 
-func (w *SAWidget) RemoveSelectedNodes() {
+func (w *SANode) RemoveSelectedNodes() {
 	for i := len(w.Subs) - 1; i >= 0; i-- {
 		if w.Subs[i].Selected {
 			w.Subs = append(w.Subs[:i], w.Subs[i+1:]...)
@@ -616,7 +616,7 @@ func (w *SAWidget) RemoveSelectedNodes() {
 	}
 }
 
-func (w *SAWidget) FindSelected() *SAWidget {
+func (w *SANode) FindSelected() *SANode {
 	for _, it := range w.Subs {
 		if it.Selected {
 			return it
@@ -625,7 +625,7 @@ func (w *SAWidget) FindSelected() *SAWidget {
 	return nil
 }
 
-func (w *SAWidget) buildSubsList(listPathes *string, listNodes *[]*SAWidget) {
+func (w *SANode) buildSubsList(listPathes *string, listNodes *[]*SANode) {
 	nm := w.getPath()
 	if len(nm) > 2 {
 		nm = nm[:len(nm)-1] //cut last ';'
@@ -641,7 +641,7 @@ func (w *SAWidget) buildSubsList(listPathes *string, listNodes *[]*SAWidget) {
 	}
 }
 
-func (w *SAWidget) getPath() string {
+func (w *SANode) getPath() string {
 
 	var path string
 
@@ -654,21 +654,21 @@ func (w *SAWidget) getPath() string {
 	return path
 }
 
-func (w *SAWidget) CheckUniqueName() {
+func (w *SANode) CheckUniqueName() {
 	w.Name = strings.ReplaceAll(w.Name, ".", "") //remove all '.'
 	for w.parent.NumNames(w.Name) >= 2 {
 		w.Name += "1"
 	}
 }
 
-func (w *SAWidget) AddWidget(grid OsV4, pos OsV2f, exe string) *SAWidget {
-	nw := NewSAWidget(w, exe, exe, grid, pos)
+func (w *SANode) AddNode(grid OsV4, pos OsV2f, exe string) *SANode {
+	nw := NewSANode(w, exe, exe, grid, pos)
 	w.Subs = append(w.Subs, nw)
 	nw.CheckUniqueName()
 	return nw
 }
 
-func (w *SAWidget) Remove() bool {
+func (w *SANode) Remove() bool {
 
 	if w.parent != nil {
 		for i, it := range w.parent.Subs {
@@ -681,7 +681,7 @@ func (w *SAWidget) Remove() bool {
 	return false
 }
 
-func (w *SAWidget) findAttr(name string) *SAWidgetAttr {
+func (w *SANode) findAttr(name string) *SANodeAttr {
 	for _, it := range w.Attrs {
 		if it.Name == name {
 			return it
@@ -689,20 +689,20 @@ func (w *SAWidget) findAttr(name string) *SAWidgetAttr {
 	}
 	return nil
 }
-func (w *SAWidget) _getAttr(defValue SAWidgetAttr) *SAWidgetAttr {
+func (w *SANode) _getAttr(defValue SANodeAttr) *SANodeAttr {
 
 	v := w.findAttr(defValue.Name)
 	if v == nil {
-		v = &SAWidgetAttr{}
+		v = &SANodeAttr{}
 		*v = defValue
-		v.widget = w
+		v.node = w
 		w.Attrs = append(w.Attrs, v)
 	}
 
 	return v
 }
 
-func (w *SAWidget) findAttrFloat(name string) (*SAWidgetAttr, float64) {
+func (w *SANode) findAttrFloat(name string) (*SANodeAttr, float64) {
 	for _, it := range w.Attrs {
 		if it.Name == name {
 			vv, _ := strconv.ParseFloat(it.Value, 64)
@@ -712,31 +712,31 @@ func (w *SAWidget) findAttrFloat(name string) (*SAWidgetAttr, float64) {
 	return nil, 0
 }
 
-func (w *SAWidget) GetAttr(name string, value string, gui_type string, gui_options string, gui_readOnly bool) *SAWidgetAttr {
-	return w._getAttr(SAWidgetAttr{Name: name, Value: value, Gui_type: gui_type, Gui_options: gui_options, Gui_ReadOnly: gui_readOnly})
+func (w *SANode) GetAttr(name string, value string, gui_type string, gui_options string, gui_readOnly bool) *SANodeAttr {
+	return w._getAttr(SANodeAttr{Name: name, Value: value, Gui_type: gui_type, Gui_options: gui_options, Gui_ReadOnly: gui_readOnly})
 }
 
-func (w *SAWidget) GetAttrEdit(name string, defValue string) *SAWidgetAttr {
-	return w._getAttr(SAWidgetAttr{Name: name, Value: defValue, Gui_type: "edit"})
+func (w *SANode) GetAttrEdit(name string, defValue string) *SANodeAttr {
+	return w._getAttr(SANodeAttr{Name: name, Value: defValue, Gui_type: "edit"})
 }
 
-func (w *SAWidget) GetAttrCombo(name string, defValue string, defOptions string) *SAWidgetAttr {
-	return w._getAttr(SAWidgetAttr{Name: name, Value: defValue, Gui_type: "combo", Gui_options: defOptions})
+func (w *SANode) GetAttrCombo(name string, defValue string, defOptions string) *SANodeAttr {
+	return w._getAttr(SANodeAttr{Name: name, Value: defValue, Gui_type: "combo", Gui_options: defOptions})
 }
 
-func (w *SAWidget) GetAttrCheckbox(name string, defValue string) *SAWidgetAttr {
-	return w._getAttr(SAWidgetAttr{Name: name, Value: defValue, Gui_type: "checkbox"})
+func (w *SANode) GetAttrCheckbox(name string, defValue string) *SANodeAttr {
+	return w._getAttr(SANodeAttr{Name: name, Value: defValue, Gui_type: "checkbox"})
 }
 
-func (w *SAWidget) GetAttrSwitch(name string, defValue string) *SAWidgetAttr {
-	return w._getAttr(SAWidgetAttr{Name: name, Value: defValue, Gui_type: "switch"})
+func (w *SANode) GetAttrSwitch(name string, defValue string) *SANodeAttr {
+	return w._getAttr(SANodeAttr{Name: name, Value: defValue, Gui_type: "switch"})
 }
 
-func (w *SAWidget) GetAttrDate(name string, defValue string) *SAWidgetAttr {
-	return w._getAttr(SAWidgetAttr{Name: name, Value: defValue, Gui_type: "date"})
+func (w *SANode) GetAttrDate(name string, defValue string) *SANodeAttr {
+	return w._getAttr(SANodeAttr{Name: name, Value: defValue, Gui_type: "date"})
 }
 
-func (w *SAWidget) GetAttrColor(prefix_name string) OsCd {
+func (w *SANode) GetAttrColor(prefix_name string) OsCd {
 	var cd OsCd
 	cd.R = w.GetAttrEdit(prefix_name+"r", "0").GetByte()
 	cd.G = w.GetAttrEdit(prefix_name+"g", "0").GetByte()
@@ -744,14 +744,14 @@ func (w *SAWidget) GetAttrColor(prefix_name string) OsCd {
 	cd.A = w.GetAttrEdit(prefix_name+"a", "255").GetByte()
 	return cd
 }
-func (w *SAWidget) SetAttrColor(prefix_name string, cd OsCd) {
+func (w *SANode) SetAttrColor(prefix_name string, cd OsCd) {
 	w.GetAttrEdit(prefix_name+"r", "0").SetInt(int(cd.R))
 	w.GetAttrEdit(prefix_name+"g", "0").SetInt(int(cd.G))
 	w.GetAttrEdit(prefix_name+"b", "0").SetInt(int(cd.B))
 	w.GetAttrEdit(prefix_name+"a", "255").SetInt(int(cd.A))
 }
 
-func (w *SAWidget) GetGrid() OsV4 {
+func (w *SANode) GetGrid() OsV4 {
 	var v OsV4
 	v.Start.X = w.GetAttrEdit("grid_x", "0").GetInt()
 	v.Start.Y = w.GetAttrEdit("grid_y", "0").GetInt()
@@ -759,24 +759,24 @@ func (w *SAWidget) GetGrid() OsV4 {
 	v.Size.Y = w.GetAttrEdit("grid_h", "1").GetInt()
 	return v
 }
-func (w *SAWidget) SetGridStart(v OsV2) {
+func (w *SANode) SetGridStart(v OsV2) {
 	w.GetAttrEdit("grid_x", "0").SetInt(v.X)
 	w.GetAttrEdit("grid_y", "0").SetInt(v.Y)
 }
-func (w *SAWidget) SetGridSize(v OsV2) {
+func (w *SANode) SetGridSize(v OsV2) {
 	w.GetAttrEdit("grid_w", "1").SetInt(v.X)
 	w.GetAttrEdit("grid_h", "1").SetInt(v.Y)
 }
-func (w *SAWidget) SetGrid(coord OsV4) {
+func (w *SANode) SetGrid(coord OsV4) {
 	w.SetGridStart(coord.Start)
 	w.SetGridSize(coord.Size)
 }
 
-func (w *SAWidget) GetGridShow() bool {
+func (w *SANode) GetGridShow() bool {
 	return w.GetAttrSwitch("grid_show", "1").GetBool()
 }
 
-func (w *SAWidget) Render(ui *Ui, app *SAApp) {
+func (w *SANode) Render(ui *Ui, app *SAApp) {
 
 	if !w.GetGridShow() {
 		return
@@ -963,7 +963,7 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 			latAttr, cam_lat := w.parent.findAttrFloat("lat")
 			zoomAttr, cam_zoom := w.parent.findAttrFloat("zoom")
 			if lonAttr == nil || latAttr == nil || zoomAttr == nil {
-				w.errExe = fmt.Errorf("parent widget is not 'Map' type")
+				w.errExe = fmt.Errorf("parent node is not 'Map' type")
 				return
 			}
 			items := w.GetAttrEdit("items", "[{\"lon\":14.4071117049, \"lat\":50.0852013259, \"label\":\"1\"}, {\"lon\":14, \"lat\":50, \"label\":\"2\"}]").GetString()
@@ -1018,29 +1018,29 @@ func (w *SAWidget) Render(ui *Ui, app *SAApp) {
 				//musím stisknout alt-key + ignorovat select + highlight when over ... ................
 				touch := &ui.buff.win.io.touch
 				if touch.start && rs.Inside(touch.pos) {
-					app.canvas.resizeWidget = w
+					app.canvas.resize = w
 				}
 
-				if app.canvas.resizeWidget != nil {
+				if app.canvas.resize != nil {
 					pos := ui.GetCall().call.GetCloseCell(touch.pos)
 					fmt.Println(pos.Start)
 
-					grid := app.canvas.resizeWidget.GetGrid()
+					grid := app.canvas.resize.GetGrid()
 					grid.Size.X = OsMax(0, pos.Start.X-grid.Start.X) + 1
 					grid.Size.Y = OsMax(0, pos.Start.Y-grid.Start.Y) + 1
 
-					app.canvas.resizeWidget.SetGrid(grid)
+					app.canvas.resize.SetGrid(grid)
 				}
 				if touch.end {
-					app.canvas.resizeWidget = nil
+					app.canvas.resize = nil
 				}
 			}
 		}
-		//when editbox with expression is active - match colors between access(text) and widgets(coords) ...
+		//when editbox with expression is active - match colors between access(text) and nodes(coords) ...
 	}
 }
 
-func (w *SAWidget) RenderLayout(ui *Ui, app *SAApp) {
+func (w *SANode) RenderLayout(ui *Ui, app *SAApp) {
 
 	//columns
 	for i, c := range w.Cols {
@@ -1072,7 +1072,7 @@ func (w *SAWidget) RenderLayout(ui *Ui, app *SAApp) {
 	}
 }
 
-func (w *SAWidget) NumNames(name string) int {
+func (w *SANode) NumNames(name string) int {
 
 	n := 0
 	for _, it := range w.Subs {
@@ -1084,7 +1084,7 @@ func (w *SAWidget) NumNames(name string) int {
 
 }
 
-func _SAWidget_renderParamsValue(x, y, w, h int, attr *SAWidgetAttr, ui *Ui, gui_type string) {
+func _SANode_renderParamsValue(x, y, w, h int, attr *SANodeAttr, ui *Ui, gui_type string) {
 
 	if attr.ShowExp {
 		switch gui_type {
@@ -1093,10 +1093,10 @@ func _SAWidget_renderParamsValue(x, y, w, h int, attr *SAWidgetAttr, ui *Ui, gui
 			ui.Div_start(x, y, w, h)
 			{
 				prefix := attr.Name[:len(attr.Name)-1]
-				attrX := attr.widget.GetAttrEdit(prefix+"x", "0")
-				attrY := attr.widget.GetAttrEdit(prefix+"y", "0")
-				attrW := attr.widget.GetAttrEdit(prefix+"w", "1")
-				attrH := attr.widget.GetAttrEdit(prefix+"h", "1")
+				attrX := attr.node.GetAttrEdit(prefix+"x", "0")
+				attrY := attr.node.GetAttrEdit(prefix+"y", "0")
+				attrW := attr.node.GetAttrEdit(prefix+"w", "1")
+				attrH := attr.node.GetAttrEdit(prefix+"h", "1")
 
 				ui.Div_colMax(0, 100)
 				ui.Div_colMax(1, 100)
@@ -1114,10 +1114,10 @@ func _SAWidget_renderParamsValue(x, y, w, h int, attr *SAWidgetAttr, ui *Ui, gui
 			ui.Div_start(x, y, w, h)
 			{
 				prefix := attr.Name[:len(attr.Name)-1]
-				attrR := attr.widget.GetAttrEdit(prefix+"r", "0")
-				attrG := attr.widget.GetAttrEdit(prefix+"g", "0")
-				attrB := attr.widget.GetAttrEdit(prefix+"b", "0")
-				attrA := attr.widget.GetAttrEdit(prefix+"a", "255")
+				attrR := attr.node.GetAttrEdit(prefix+"r", "0")
+				attrG := attr.node.GetAttrEdit(prefix+"g", "0")
+				attrB := attr.node.GetAttrEdit(prefix+"b", "0")
+				attrA := attr.node.GetAttrEdit(prefix+"a", "255")
 
 				ui.Div_colMax(0, 100)
 				ui.Div_colMax(1, 100)
@@ -1163,10 +1163,10 @@ func _SAWidget_renderParamsValue(x, y, w, h int, attr *SAWidgetAttr, ui *Ui, gui
 			ui.Div_start(x, y, w, h)
 			{
 				prefix := attr.Name[:len(attr.Name)-1]
-				_, valueX, editableX := attr.widget.GetAttrEdit(prefix+"x", "0").GetDirectLink()
-				_, valueY, editableY := attr.widget.GetAttrEdit(prefix+"y", "0").GetDirectLink()
-				_, valueW, editableW := attr.widget.GetAttrEdit(prefix+"w", "1").GetDirectLink()
-				_, valueH, editableH := attr.widget.GetAttrEdit(prefix+"h", "1").GetDirectLink()
+				_, valueX, editableX := attr.node.GetAttrEdit(prefix+"x", "0").GetDirectLink()
+				_, valueY, editableY := attr.node.GetAttrEdit(prefix+"y", "0").GetDirectLink()
+				_, valueW, editableW := attr.node.GetAttrEdit(prefix+"w", "1").GetDirectLink()
+				_, valueH, editableH := attr.node.GetAttrEdit(prefix+"h", "1").GetDirectLink()
 
 				ui.Div_colMax(0, 100)
 				ui.Div_colMax(1, 100)
@@ -1184,9 +1184,9 @@ func _SAWidget_renderParamsValue(x, y, w, h int, attr *SAWidgetAttr, ui *Ui, gui
 			ui.Div_start(x, y, w, h)
 
 			prefix := attr.Name[:len(attr.Name)-1]
-			cd := attr.widget.GetAttrColor(prefix)
+			cd := attr.node.GetAttrColor(prefix)
 			if ui.comp_colorPicker(&cd, attr.Name, editable) {
-				attr.widget.SetAttrColor("cd_", cd)
+				attr.node.SetAttrColor("cd_", cd)
 			}
 
 			ui.Div_end()
@@ -1197,18 +1197,18 @@ func _SAWidget_renderParamsValue(x, y, w, h int, attr *SAWidgetAttr, ui *Ui, gui
 	}
 }
 
-func (widget *SAWidget) IsAttrGroup(find *SAWidgetAttr) (string, bool, string) {
+func (node *SANode) IsAttrGroup(find *SANodeAttr) (string, bool, string) {
 
 	if len(find.Name) <= 2 {
 		return "", false, ""
 	}
 	prefix := find.Name[:len(find.Name)-1]
 
-	x := widget.findAttr(prefix + "x")
-	y := widget.findAttr(prefix + "y")
-	z := widget.findAttr(prefix + "z")
-	w := widget.findAttr(prefix + "w")
-	h := widget.findAttr(prefix + "h")
+	x := node.findAttr(prefix + "x")
+	y := node.findAttr(prefix + "y")
+	z := node.findAttr(prefix + "z")
+	w := node.findAttr(prefix + "w")
+	h := node.findAttr(prefix + "h")
 	if x != nil && y != nil && w != nil && h != nil {
 		return "xywh", find == x, prefix
 	}
@@ -1220,10 +1220,10 @@ func (widget *SAWidget) IsAttrGroup(find *SAWidgetAttr) (string, bool, string) {
 		return "xy", find == x, prefix
 	}
 
-	r := widget.findAttr(prefix + "r")
-	g := widget.findAttr(prefix + "g")
-	b := widget.findAttr(prefix + "b")
-	a := widget.findAttr(prefix + "a")
+	r := node.findAttr(prefix + "r")
+	g := node.findAttr(prefix + "g")
+	b := node.findAttr(prefix + "b")
+	a := node.findAttr(prefix + "a")
 	if r != nil && g != nil && b != nil && a != nil {
 		return "rgba", find == r, prefix
 	}
@@ -1233,8 +1233,8 @@ func (widget *SAWidget) IsAttrGroup(find *SAWidgetAttr) (string, bool, string) {
 	}
 	prefix = find.Name[:len(find.Name)-3]
 
-	lon := widget.findAttr(prefix + "lon")
-	lat := widget.findAttr(prefix + "lat")
+	lon := node.findAttr(prefix + "lon")
+	lat := node.findAttr(prefix + "lat")
 	if lon != nil && lat != nil {
 		return "lonlat", find == lon, prefix
 	}
@@ -1242,7 +1242,7 @@ func (widget *SAWidget) IsAttrGroup(find *SAWidgetAttr) (string, bool, string) {
 	return "", false, "" //not found
 }
 
-func (w *SAWidget) RenderParams(app *SAApp) {
+func (w *SANode) RenderParams(app *SAApp) {
 
 	ui := app.base.ui
 
@@ -1275,7 +1275,7 @@ func (w *SAWidget) RenderParams(app *SAApp) {
 		}
 
 		//type
-		w.Exe = app.ComboListOfWidgets(1, 0, 1, 1, w.Exe, ui)
+		w.Exe = app.ComboListOfNodes(1, 0, 1, 1, w.Exe, ui)
 
 		//delete
 		if ui.Comp_button(2, 0, 1, 1, ui.trns.REMOVE, "", true) > 0 {
@@ -1361,7 +1361,7 @@ func (w *SAWidget) RenderParams(app *SAApp) {
 			if group != "" && isGroupFirst {
 				gr = group
 			}
-			_SAWidget_renderParamsValue(x, 0, 1, 1, it, ui, gr)
+			_SANode_renderParamsValue(x, 0, 1, 1, it, ui, gr)
 			x++
 
 			//error
@@ -1384,8 +1384,6 @@ func (w *SAWidget) RenderParams(app *SAApp) {
 
 // node copy/paste ...
 // node Context menu? ...
-// resize widget ...
-// cleaning: rename files(Widget -> Node) ...
 
 // expression language ... => show num rows after SELECT COUNT(*) FROM ...
 //- práce s json? ...
