@@ -778,6 +778,10 @@ func (w *SANode) GetGridShow() bool {
 
 func (w *SANode) Render(ui *Ui, app *SAApp) {
 
+	if !(SAApp_IsStdPrimitive(w.Exe) || SAApp_IsStdComponent(w.Exe)) {
+		return
+	}
+
 	if !w.GetGridShow() {
 		return
 	}
