@@ -23,9 +23,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 	"sync/atomic"
-	"time"
 )
 
 type SANodeAttr struct {
@@ -35,7 +33,7 @@ type SANodeAttr struct {
 	Value   string `json:",omitempty"`
 	ShowExp bool
 
-	oldValue     string
+	finalValue   string
 	instr        *VmInstr
 	depends      []*SANodeAttr
 	isDirectLink bool
@@ -45,41 +43,50 @@ type SANodeAttr struct {
 	Gui_type     string `json:",omitempty"`
 	Gui_options  string `json:",omitempty"`
 	Gui_ReadOnly bool   `json:",omitempty"` //output
+
 }
 
-func (attr *SANodeAttr) GetDirectLink() (*SANodeAttr, *string, bool) {
+func (attr *SANodeAttr) getDirectLink_inner(orig *SANodeAttr) (*string, bool) {
 
-	for attr.isDirectLink {
-		return attr.depends[0].GetDirectLink() //go to source
+	if attr.isDirectLink {
+		if attr.depends[0] == orig {
+			fmt.Println("Warning: infinite loop")
+			return &attr.Value, true //avoid infinite loop
+		}
+		return attr.depends[0].getDirectLink_inner(orig) //go to source
 	}
 
 	if len(attr.depends) > 0 {
-		return attr, &attr.oldValue, false //expression. oldValue = result
+		return &attr.finalValue, false //expression. oldValue = result
 	}
 
-	return attr, &attr.Value, true //this
+	return &attr.Value, true //this
+}
+
+func (attr *SANodeAttr) GetDirectLink() (*string, bool) {
+	return attr.getDirectLink_inner(attr)
 }
 func (attr *SANodeAttr) SetString(value string) {
-	_, val, editable := attr.GetDirectLink()
+	val, editable := attr.GetDirectLink()
 	if editable {
 		*val = value
 	}
 }
 func (attr *SANodeAttr) SetInt(value int) {
-	_, val, editable := attr.GetDirectLink()
+	val, editable := attr.GetDirectLink()
 	if editable {
 		*val = strconv.Itoa(value)
 	}
 }
 func (attr *SANodeAttr) SetFloat(value float64) {
-	_, val, editable := attr.GetDirectLink()
+	val, editable := attr.GetDirectLink()
 	if editable {
 		*val = strconv.FormatFloat(value, 'f', -1, 64)
 	}
 }
 
 func (attr *SANodeAttr) GetString() string {
-	_, val, _ := attr.GetDirectLink()
+	val, _ := attr.GetDirectLink()
 	return *val
 }
 func (attr *SANodeAttr) GetInt() int {
@@ -101,6 +108,41 @@ func (attr *SANodeAttr) GetByte() byte {
 	return byte(attr.GetInt())
 }
 
+func (attr *SANodeAttr) CheckForLoopAttr(find *SANodeAttr) {
+	for _, dep := range attr.depends {
+		if dep == find {
+			dep.errExp = fmt.Errorf("Loop")
+			continue //avoid infinite recursion
+		}
+		dep.CheckForLoopAttr(find)
+	}
+
+}
+
+func (attr *SANodeAttr) ExecuteExpression() {
+	if attr.errExp != nil {
+		return
+	}
+
+	for _, dep := range attr.depends {
+		if dep.node == attr.node {
+			dep.ExecuteExpression() //self
+		}
+	}
+
+	var val string
+	if attr.instr != nil && !attr.isDirectLink {
+		st := InitVmST()
+		rec := attr.instr.Exe(nil, &st)
+		val = rec.GetString()
+	} else {
+		value, _ := attr.GetDirectLink()
+		val = *value
+	}
+
+	attr.finalValue = val
+}
+
 type SANodeColRow struct {
 	Min, Max, Resize float64 `json:",omitempty"`
 	ResizeName       string  `json:",omitempty"`
@@ -113,6 +155,12 @@ func (a *SANodeColRow) Cmp(b *SANodeColRow) bool {
 func InitSANodeColRow() SANodeColRow {
 	return SANodeColRow{Min: 1, Max: 1, Resize: 1}
 }
+
+const (
+	SANode_STATE_WAITING = 0
+	SANode_STATE_RUNNING = 1
+	SANode_STATE_DONE    = 2
+)
 
 type SANode struct {
 	parent *SANode
@@ -133,11 +181,13 @@ type SANode struct {
 	Rows []SANodeColRow `json:",omitempty"`
 	Subs []*SANode      `json:",omitempty"`
 
-	//Bypass bool
+	state atomic.Uint32 //0=waiting, 1=running, 2=done
 
-	running bool
-	done    bool
-	errExe  error
+	errExe        error
+	progress      float64
+	progress_desc string
+
+	conn *SANodeConn //.Destroy() ......
 }
 
 func NewSANode(parent *SANode, name string, exe string, grid OsV4, pos OsV2f) *SANode {
@@ -263,7 +313,20 @@ func (w *SANode) HasError() bool {
 	return w.HasExeError() || w.HasExpError()
 }
 
-func (w *SANode) UpdateExpresions(app *SAApp) {
+func (w *SANode) PrepareExe() {
+	w.state.Store(SANode_STATE_WAITING)
+
+	for _, v := range w.Attrs {
+		v.errExe = nil
+		v.errExp = nil
+	}
+
+	for _, it := range w.Subs {
+		it.PrepareExe()
+	}
+}
+
+func (w *SANode) ParseExpresions(app *SAApp) {
 
 	for _, it := range w.Attrs {
 		it.instr = nil
@@ -272,7 +335,7 @@ func (w *SANode) UpdateExpresions(app *SAApp) {
 		it.errExp = nil
 
 		var found bool
-		for found {
+		for found { //loop!
 			it.Value, found = strings.CutPrefix(it.Value, " ")
 		}
 
@@ -281,11 +344,12 @@ func (w *SANode) UpdateExpresions(app *SAApp) {
 			ln, err := InitVmLine(val, app.ops, app.apis, app.prior, w)
 			if err == nil {
 				it.instr = ln.Parse()
-				if it.instr != nil {
-					it.depends = ln.depends
-					it.isDirectLink = it.instr.IsDirectLink()
-				}
-				if len(ln.errs) > 0 {
+				if len(ln.errs) == 0 {
+					if it.instr != nil {
+						it.depends = ln.depends
+						it.isDirectLink = it.instr.IsDirectLink()
+					}
+				} else {
 					it.errExp = errors.New(ln.errs[0])
 				}
 			} else {
@@ -295,15 +359,15 @@ func (w *SANode) UpdateExpresions(app *SAApp) {
 	}
 
 	for _, it := range w.Subs {
-		it.UpdateExpresions(app)
+		it.ParseExpresions(app)
 	}
 }
 
-func (w *SANode) checkForLoopInner(find *SANode) {
-
+func (w *SANode) checkForLoopNode(find *SANode) {
 	for _, v := range w.Attrs {
 		for _, dep := range v.depends {
 			if dep.node == w {
+				dep.CheckForLoopAttr(v)
 				continue //skip self-depends
 			}
 
@@ -312,111 +376,62 @@ func (w *SANode) checkForLoopInner(find *SANode) {
 				continue //avoid infinite recursion
 			}
 
-			dep.node.checkForLoopInner(find)
+			dep.node.checkForLoopNode(find)
 		}
 	}
 }
 
 func (w *SANode) CheckForLoops() {
 
-	w.checkForLoopInner(w)
+	w.checkForLoopNode(w)
 
 	for _, it := range w.Subs {
 		it.CheckForLoops()
 	}
 }
 
-func (w *SANode) areAttrsErrorFree() bool {
+func (w *SANode) IsReadyToBeExe() bool {
 
+	//areAttrsErrorFree
+	for _, v := range w.Attrs {
+		if v.errExp != nil {
+			w.state.Store(SANode_STATE_DONE)
+			return false
+		}
+	}
+
+	//areDependsErrorFree
 	for _, v := range w.Attrs {
 		for _, dep := range v.depends {
 			if dep.node.HasExpError() {
-				v.errExp = fmt.Errorf("incomming error")
-				return false
+				w.state.Store(SANode_STATE_DONE)
+				return false //has error
 			}
 		}
 	}
 
-	return true
-}
-
-func (w *SANode) areAttrsReadyToRun() bool {
+	//areDependsReadyToRun
 	for _, v := range w.Attrs {
 		for _, dep := range v.depends {
 			if dep.node == w {
 				continue //skip self-depends
 			}
 
-			if dep.node.running || !dep.node.done {
+			if dep.node.state.Load() != SANode_STATE_DONE {
 				return false //still running
 			}
 		}
 	}
+
+	//execute expression
+	for _, v := range w.Attrs {
+		if v.errExp != nil {
+			continue
+		}
+		v.ExecuteExpression()
+	}
+
 	return true
-}
-
-func (w *SANode) areAttrsChangedAndUpdate() bool {
-
-	changed := false
-
-	for i := 0; i < 2; i++ { //run 2x, because attributes can depend in same node - dirty hack, need to find better solution ...
-
-		for _, it := range w.Attrs {
-
-			if it.errExp != nil {
-				return true
-			}
-
-			var val string
-			if it.instr != nil && !it.isDirectLink {
-				st := InitVmST()
-				rec := it.instr.Exe(nil, &st)
-				val = rec.GetString()
-			} else {
-				_, value, _ := it.GetDirectLink()
-				val = *value
-			}
-
-			if val != it.oldValue {
-				changed = true
-			}
-			it.oldValue = val
-
-		}
-
-	}
-
-	return changed
-}
-
-func (w *SANode) IsReadyToBeExe() bool {
-
-	if w.done || w.running {
-		return false
-	}
-
-	if w.areAttrsErrorFree() {
-		if w.areAttrsReadyToRun() {
-			changed := w.areAttrsChangedAndUpdate()
-			if !changed {
-				w.done = true
-			}
-			return changed
-		}
-	} else {
-		w.done = true
-	}
-
-	return false
-}
-
-func (w *SANode) ResetExecute() {
-	w.done = false
-	w.running = false
-
-	for _, it := range w.Subs {
-		it.ResetExecute()
-	}
 }
 
 func (w *SANode) buildList(list *[]*SANode) {
@@ -448,109 +463,72 @@ func (w *SANode) IsExe() bool {
 	return true
 }
 
-func (w *SANode) ExecuteSubs(server *SANodeServer, max_threads int) {
-	var list []*SANode
-	w.buildList(&list)
-
-	//multi-thread executing
-	var numActiveThreads atomic.Int64
-	var wg sync.WaitGroup
-	run := true
-	for run && server.IsRunning() {
-		run = false
-		for _, it := range list {
-
-			if !it.done {
-				run = true
-				if it.IsReadyToBeExe() {
-					if it.IsExe() {
-
-						//maximum concurent threads
-						if numActiveThreads.Load() >= int64(max_threads) {
-							time.Sleep(20 * time.Millisecond)
-						}
-
-						//run it
-						it.running = true
-						wg.Add(1)
-						go func(ww *SANode) {
-							numActiveThreads.Add(1)
-							ww.execute(server)
-							wg.Done()
-							numActiveThreads.Add(-1)
-						}(it)
-					} else {
-						it.done = true
-						it.running = false
-					}
-				}
-			}
-		}
-	}
-}
-
-func (w *SANode) execute(server *SANodeServer) {
+func (w *SANode) execute() bool {
 
 	fmt.Println("execute:", w.Name)
 
-	nc := server.Start(w.Exe)
-	if nc != nil {
-		//add/update
-		for _, v := range nc.Attrs {
-			v.Error = ""
+	w.errExe = nil
+	w.progress = 0
+	w.progress_desc = ""
 
-			a := w.GetAttr(v.Name, v.Value, v.Gui_type, v.Gui_options, v.Gui_ReadOnly)
+	if w.conn == nil {
+		w.errExe = fmt.Errorf("can't find node exe(%s)", w.Exe)
+		return false
+	}
+
+	//add/update attributes
+	for _, v := range w.conn.Attrs { //w.conn can be =nil by 1st thread  ........
+		v.Error = ""
+
+		a := w.GetAttr(v.Name, v.Value, v.Gui_type, v.Gui_options, v.Gui_ReadOnly)
+		a.Gui_type = v.Gui_type
+		a.Gui_options = v.Gui_options
+		a.Gui_ReadOnly = v.Gui_ReadOnly
+		a.errExe = nil
+	}
+
+	//set/remove attributes
+	for i := len(w.Attrs) - 1; i >= 0; i-- {
+		src := w.Attrs[i]
+		//if strings.HasPrefix(src.Name, "grid_") {
+		//	continue
+		//}
+		dst := w.conn.FindAttr(src.Name)
+		if dst != nil {
+			dst.Value = src.finalValue
+		} else {
+			w.Attrs = append(w.Attrs[:i], w.Attrs[i+1:]...) //remove
+		}
+	}
+
+	//execute
+	ok := w.conn.Run(w)
+
+	//copy back
+	for _, v := range w.conn.Attrs {
+		a := w.GetAttr(v.Name, v.Value, v.Gui_type, v.Gui_options, v.Gui_ReadOnly)
+		if v.Gui_ReadOnly {
+			a.Value = v.Value
 			a.Gui_type = v.Gui_type
 			a.Gui_options = v.Gui_options
 			a.Gui_ReadOnly = v.Gui_ReadOnly
-			a.errExe = nil
 		}
-
-		//set/remove
-		for i := len(w.Attrs) - 1; i >= 0; i-- {
-			src := w.Attrs[i]
-			if strings.HasPrefix(src.Name, "grid_") {
-				continue
-			}
-			dst := nc.FindAttr(src.Name)
-			if dst != nil {
-				dst.Value = src.oldValue
-			} else {
-				w.Attrs = append(w.Attrs[:i], w.Attrs[i+1:]...) //remove
-			}
+		a.errExe = nil
+		if v.Error != "" {
+			a.errExe = errors.New(v.Error)
 		}
-
-		//execute
-		nc.Start()
-
-		//copy back
-		for _, v := range nc.Attrs {
-			a := w.GetAttr(v.Name, v.Value, v.Gui_type, v.Gui_options, v.Gui_ReadOnly)
-			if v.Gui_ReadOnly {
-				a.Value = v.Value
-				a.Gui_type = v.Gui_type
-				a.Gui_options = v.Gui_options
-				a.Gui_ReadOnly = v.Gui_ReadOnly
-			}
-			a.errExe = nil
-			if v.Error != "" {
-				a.errExe = errors.New(v.Error)
-			}
-		}
-
-		if nc.progress.Error != "" {
-			w.errExe = errors.New(nc.progress.Error)
-		}
-	} else {
-		w.errExe = fmt.Errorf("can't find node exe(%s)", w.Exe)
 	}
+
+	//if nc.progress.Error != "" {
+	//	w.errExe = errors.New(nc.progress.Error)
+	//}
 
 	//if w.HasExeError() {
 	//	fmt.Printf("Node(%s) has error(%v)\n", w.Name, w.errExe)
 	//}
 
-	w.done = true
-	w.running = false
+	fmt.Println(w.Name, "done")
+	return ok
 }
 
 func (w *SANode) FindNode(name string) *SANode {
@@ -819,7 +797,7 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 			clicked = ui.Comp_buttonMenu(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttrEdit("label", "").GetString(), "", enable, selected) > 0
 			if clicked {
 				sel := w.findAttr("selected")
-				_, val, editable := sel.GetDirectLink()
+				val, editable := sel.GetDirectLink()
 				if editable {
 					*val = OsTrnString(selected, "0", "1")
 				}
@@ -842,7 +820,7 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 					clicked = ui.Comp_buttonText(i*2+0, 0, 1, 1, it, "", "", enable, selected == i) > 0
 					if clicked {
 						sel := w.findAttr("selected")
-						_, val, editable := sel.GetDirectLink()
+						val, editable := sel.GetDirectLink()
 						if editable {
 							*val = strconv.Itoa(i)
 						}
@@ -864,22 +842,22 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 		ui.Comp_text(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttrEdit("label", "").GetString(), w.GetAttrCombo("align", "0", "Left;Center;Right").GetInt())
 
 	case "switch":
-		_, value, editable := w.GetAttrEdit("value", "").GetDirectLink()
+		value, editable := w.GetAttrEdit("value", "").GetDirectLink()
 		enable := w.GetAttrSwitch("enable", "1").GetBool() && editable
 		ui.Comp_switch(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, false, w.GetAttrEdit("label", "").GetString(), "", enable)
 
 	case "checkbox":
-		_, value, editable := w.GetAttrEdit("value", "").GetDirectLink()
+		value, editable := w.GetAttrEdit("value", "").GetDirectLink()
 		enable := w.GetAttrSwitch("enable", "1").GetBool() && editable
 		ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, false, w.GetAttrEdit("label", "").GetString(), "", enable)
 
 	case "combo":
-		_, value, editable := w.GetAttrEdit("value", "").GetDirectLink()
+		value, editable := w.GetAttrEdit("value", "").GetDirectLink()
 		enable := w.GetAttrSwitch("enable", "1").GetBool() && editable
 		ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, w.GetAttrEdit("options", "a;b;c").GetString(), "", enable, w.GetAttrSwitch("search", "0").GetBool())
 
 	case "edit":
-		_, value, editable := w.GetAttrEdit("value", "").GetDirectLink()
+		value, editable := w.GetAttrEdit("value", "").GetDirectLink()
 		enable := w.GetAttrSwitch("enable", "1").GetBool() && editable
 		ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, w.GetAttrEdit("precision", "2").GetInt(), "", w.GetAttrEdit("ghost", "").GetString(), false, w.GetAttrSwitch("tempToValue", "0").GetBool(), enable)
 
@@ -1152,7 +1130,7 @@ func _SANode_renderParamsValue(x, y, w, h int, attr *SANodeAttr, ui *Ui, gui_typ
 		}
 
 	} else {
-		_, value, editable := attr.GetDirectLink()
+		value, editable := attr.GetDirectLink()
 
 		switch gui_type {
 		case "checkbox":
@@ -1179,10 +1157,10 @@ func _SANode_renderParamsValue(x, y, w, h int, attr *SANodeAttr, ui *Ui, gui_typ
 			ui.Div_start(x, y, w, h)
 			{
 				prefix := attr.Name[:len(attr.Name)-1]
-				_, valueX, editableX := attr.node.GetAttrEdit(prefix+"x", "0").GetDirectLink()
-				_, valueY, editableY := attr.node.GetAttrEdit(prefix+"y", "0").GetDirectLink()
-				_, valueW, editableW := attr.node.GetAttrEdit(prefix+"w", "1").GetDirectLink()
-				_, valueH, editableH := attr.node.GetAttrEdit(prefix+"h", "1").GetDirectLink()
+				valueX, editableX := attr.node.GetAttrEdit(prefix+"x", "0").GetDirectLink()
+				valueY, editableY := attr.node.GetAttrEdit(prefix+"y", "0").GetDirectLink()
+				valueW, editableW := attr.node.GetAttrEdit(prefix+"w", "1").GetDirectLink()
+				valueH, editableH := attr.node.GetAttrEdit(prefix+"h", "1").GetDirectLink()
 
 				ui.Div_colMax(0, 100)
 				ui.Div_colMax(1, 100)
@@ -1288,6 +1266,9 @@ func (w *SANode) RenderParams(app *SAApp) {
 		_, _, _, fnshd, _ := ui.Comp_editbox_desc(ui.trns.NAME, 0, 2, 0, 0, 1, 1, &w.Name, 0, "", ui.trns.NAME, false, false, true)
 		if fnshd && w.parent != nil {
 			w.CheckUniqueName()
+
+			//rename in expression ...
+
 		}
 
 		//type
@@ -1425,6 +1406,3 @@ func (w *SANode) RenderParams(app *SAApp) {
 
 // expression language ... => show num rows after SELECT COUNT(*) FROM ...
 //- práce s json? ...
-
-// execute in 2nd thread and copy back when done ... + some cache, less computing ...
-// change Node.Exe + Attr.Gui_type,.Gui_options ...

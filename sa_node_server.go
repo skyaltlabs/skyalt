@@ -18,12 +18,12 @@ package main
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net"
 	"os/exec"
 	"strconv"
-	"sync/atomic"
 )
 
 type SkyAltServerAttr struct {
@@ -36,15 +36,15 @@ type SkyAltServerAttr struct {
 	Error        string
 }
 
-type ServerNodeProgress struct {
+/*type ServerNodeProgress struct {
 	Proc        float64
 	Description string
 	Error       string
-}
+}*/
 
 type SANodeConn struct {
-	Attrs    []*SkyAltServerAttr
-	progress ServerNodeProgress
+	Attrs []*SkyAltServerAttr
+	//progress ServerNodeProgress
 
 	cmd  *exec.Cmd
 	conn net.Conn
@@ -149,13 +149,13 @@ func (conn *SANodeConn) recvAttrs(numAttrs int) bool {
 	return true
 }
 
-func (conn *SANodeConn) Start() bool {
+func (conn *SANodeConn) Run(node *SANode) bool {
 
 	//attributes
 	conn.sendAttrs()
 
 	//reset
-	conn.progress = ServerNodeProgress{}
+	//conn.progress = ServerNodeProgress{}
 
 	for {
 		name, num, ok := conn.recvPairNumber()
@@ -172,21 +172,25 @@ func (conn *SANodeConn) Start() bool {
 				}
 				switch name {
 				case "proc":
-					conn.progress.Proc, _ = strconv.ParseFloat(value, 64)
+					node.progress, _ = strconv.ParseFloat(value, 64)
 				case "desc":
-					conn.progress.Description = value
+					node.progress_desc = value
 				case "error":
-					conn.progress.Error = value
+					if value != "" {
+						node.errExe = errors.New(value)
+					} else {
+						node.errExe = nil
+					}
 				default:
 					fmt.Printf("Warning: Unknown name(%s)\n", name)
 				}
 			}
 
-			if conn.progress.Error != "" {
+			if node.errExe != nil {
 				return false
 			}
 
-			if conn.progress.Proc > 1.9 {
+			if node.progress > 1.9 {
 				return true //ok!
 			}
 
@@ -305,8 +309,6 @@ type SANodeServer struct {
 
 	nodes_dir string
 	nodes     []string
-
-	interrupt atomic.Bool
 }
 
 func NewSANodeServer(nodes_dir string, port int) (*SANodeServer, error) {
@@ -330,11 +332,11 @@ func NewSANodeServer(nodes_dir string, port int) (*SANodeServer, error) {
 
 func (server *SANodeServer) Destroy() {
 	server.srv.Close()
+	server.srv = nil
 }
 
-func (server *SANodeServer) IsRunning() bool {
-	return !server.interrupt.Load()
-}
+//func (server *SANodeServer) Interrupt() {
+//}
 
 func (server *SANodeServer) Start(path string) *SANodeConn {
 

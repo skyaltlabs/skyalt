@@ -58,6 +58,8 @@ type SAApp struct {
 	prior int
 
 	mapp *UiLayoutMap
+
+	exe *SANodeExe
 }
 
 func (a *SAApp) init(base *SABase) {
@@ -612,22 +614,35 @@ func (app *SAApp) stepHistoryForward() bool {
 }
 
 func (app *SAApp) Execute(numThreads int) {
-	if !app.exeIt {
-		return
+
+	//v GUI potřebuji permanentně vypnout execution ........................
+
+	//bypass - execute expressions, but not /nodes ........
+
+	if app.exeIt {
+		if app.exe != nil {
+			app.exe.Stop()
+			app.exe = nil
+		}
+
+		app.ops = NewVmOps()
+		app.apis = NewVmApis()
+		app.prior = 100
+
+		app.root.PrepareExe() //.state = 1 aka running
+
+		app.root.ParseExpresions(app)
+		app.root.CheckForLoops()
+
+		app.exe = NewSANodeExe(app.root, OsMax(numThreads, 1)) //run
+		app.exeIt = false
 	}
 
-	app.ops = NewVmOps()
-	app.apis = NewVmApis()
-	app.prior = 100
-
-	app.root.UpdateExpresions(app)
-
-	app.root.CheckForLoops()
-
-	app.root.ResetExecute()
-	app.root.ExecuteSubs(app.base.server, OsMax(numThreads, 1))
-
-	app.exeIt = false
+	if app.exe != nil {
+		if !app.exe.Tick(app.base.server) {
+			app.exe = nil //done
+		}
+	}
 }
 
 func SAApp_getYellow() OsCd {

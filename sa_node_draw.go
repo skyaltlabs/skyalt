@@ -16,6 +16,8 @@ limitations under the License.
 
 package main
 
+import "fmt"
+
 func Node_connectionCd(ui *Ui) OsCd {
 	pl := ui.buff.win.io.GetPalette()
 	return pl.GetGrey(0.2)
@@ -109,21 +111,34 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 
 	//back
 	{
-		backCd := pl.GetGrey(1)
-		if node.HasError() {
-			backCd = pl.E
+		if node.state.Load() == SANode_STATE_DONE {
+			backCd := pl.GetGrey(1)
+			if node.HasError() {
+				backCd = pl.E
+			}
+			ui.buff.AddRectRound(coord, ui.CellWidth(roundc), backCd, 0)
+		} else {
+			cq := coord
+			cq.Size.X = int(float64(cq.Size.X) * OsClampFloat(node.progress, 0, 1))
+			ui.buff.AddRectRound(cq, ui.CellWidth(roundc), pl.S, 0)
 		}
 
 		//shadow
 		shadowCd := pl.GetGrey(0.4)
-		ui.buff.AddRectRound(coord, ui.CellWidth(roundc), backCd, 0)
 		ui.buff.AddRectRound(coord, ui.CellWidth(roundc), shadowCd, ui.CellWidth(0.03)) //smooth
 	}
 
 	ui.Div_startCoord(0, 0, 1, 1, coord, node.Name)
 	{
 		ui.Div_colMax(0, 100)
-		ui.Comp_textSelect(0, 0, 1, 1, "##"+node.Name, 1, false)
+
+		nm := "##" + node.Name
+		if node.state.Load() != SANode_STATE_DONE {
+			nm += fmt.Sprintf("(%.0f%%)", node.progress*100)
+
+			ui.Paint_tooltip(0, 0, 1, 1, node.progress_desc)
+		}
+		ui.Comp_textSelect(0, 0, 1, 1, nm, 1, false)
 
 		/*
 			//menu ......
