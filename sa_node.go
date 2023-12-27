@@ -143,6 +143,10 @@ func (attr *SANodeAttr) ExecuteExpression() {
 	attr.finalValue = val
 }
 
+func (a *SANodeAttr) Cmp(b *SANodeAttr) bool {
+	return a.Name == b.Name && a.Value == b.Value && a.Gui_type == b.Gui_type && a.Gui_options == b.Gui_options && a.Gui_ReadOnly == b.Gui_ReadOnly
+}
+
 type SANodeColRow struct {
 	Min, Max, Resize float64 `json:",omitempty"`
 	ResizeName       string  `json:",omitempty"`
@@ -187,7 +191,8 @@ type SANode struct {
 	progress      float64
 	progress_desc string
 
-	conn *SANodeConn //.Destroy() ......
+	conn       *SANodeConn //.Destroy() ......
+	exeTimeSec float64
 }
 
 func NewSANode(parent *SANode, name string, exe string, grid OsV4, pos OsV2f) *SANode {
@@ -241,7 +246,7 @@ func (w *SANode) Save(path string) error {
 }
 
 func (a *SANode) Cmp(b *SANode) bool {
-	if a.Name != b.Name || a.Exe != b.Exe || a.Selected != b.Selected {
+	if a.Name != b.Name || a.Exe != b.Exe /*|| a.Selected != b.Selected*/ {
 		return false
 	}
 
@@ -260,7 +265,7 @@ func (a *SANode) Cmp(b *SANode) bool {
 
 	for i, itA := range a.Attrs {
 		itB := b.Attrs[i]
-		if itA.Name != itB.Name || itA.Value != itB.Value || itA.Gui_type != itB.Gui_type || itA.Gui_options != itB.Gui_options || itA.Gui_ReadOnly != itB.Gui_ReadOnly {
+		if !itA.Cmp(itB) {
 			return false
 		}
 	}
@@ -465,6 +470,8 @@ func (w *SANode) IsExe() bool {
 
 func (w *SANode) execute() bool {
 
+	st := OsTime()
+
 	fmt.Println("execute:", w.Name)
 
 	w.errExe = nil
@@ -526,6 +533,8 @@ func (w *SANode) execute() bool {
 	//if w.HasExeError() {
 	//	fmt.Printf("Node(%s) has error(%v)\n", w.Name, w.errExe)
 	//}
+
+	w.exeTimeSec = OsTime() - st
 
 	fmt.Println(w.Name, "done")
 	return ok
