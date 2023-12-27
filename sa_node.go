@@ -1087,7 +1087,7 @@ func (w *SANode) NumNames(name string) int {
 
 }
 
-func _SANode_renderParamsValue(x, y, w, h int, attr *SANodeAttr, ui *Ui, gui_type string) {
+func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui, gui_type string) {
 
 	if attr.ShowExp {
 		switch gui_type {
@@ -1245,7 +1245,7 @@ func (node *SANode) IsAttrGroup(find *SANodeAttr) (string, bool, string) {
 	return "", false, "" //not found
 }
 
-func (w *SANode) RenderParams(app *SAApp) {
+func (w *SANode) RenderAttrs(app *SAApp) {
 
 	ui := app.base.ui
 
@@ -1367,7 +1367,7 @@ func (w *SANode) RenderParams(app *SAApp) {
 			if group != "" && isGroupFirst {
 				gr = group
 			}
-			_SANode_renderParamsValue(x, 0, 1, 1, it, ui, gr)
+			_SANode_renderAttrValue(x, 0, 1, 1, it, ui, gr)
 			x++
 
 			if len(it.depends) == 1 {

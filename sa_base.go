@@ -230,7 +230,7 @@ func (base *SABase) drawFrame(ui *Ui) {
 			sel := app.act.FindSelected()
 			if sel != nil {
 				ui.Div_start(0, 0, 1, 1)
-				sel.RenderParams(app)
+				sel.RenderAttrs(app)
 				ui.Div_end()
 			}
 
