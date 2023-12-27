@@ -59,7 +59,8 @@ type SAApp struct {
 
 	mapp *UiLayoutMap
 
-	exe *SANodeExe
+	EnableExecution bool
+	exe             *SANodeExe
 }
 
 func (a *SAApp) init(base *SABase) {
@@ -72,6 +73,7 @@ func NewSAApp(name string, base *SABase) *SAApp {
 	app := &SAApp{}
 	app.Name = name
 	app.IDE = true
+	app.EnableExecution = true
 
 	app.init(base)
 
@@ -413,6 +415,10 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 			}
 		}
 
+		if ui.win.io.keys.tab {
+			ui.Dialog_close()
+		}
+
 		ui.Dialog_end()
 	}
 }
@@ -615,8 +621,6 @@ func (app *SAApp) stepHistoryForward() bool {
 
 func (app *SAApp) Execute(numThreads int) {
 
-	//v GUI potřebuji permanentně vypnout execution ........................
-
 	//bypass - execute expressions, but not /nodes ........
 
 	if app.exeIt {
@@ -639,7 +643,7 @@ func (app *SAApp) Execute(numThreads int) {
 	}
 
 	if app.exe != nil {
-		if !app.exe.Tick(app.base.server) {
+		if !app.exe.Tick(app) {
 			app.exe = nil //done
 		}
 	}

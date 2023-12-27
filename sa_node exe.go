@@ -38,6 +38,22 @@ func NewSANodeExe(root *SANode, max_threads int) *SANodeExe {
 	return exe
 }
 
+func (exe *SANodeExe) GetStatDone() float64 {
+
+	done := 0.0
+	sum := 0.0
+	for _, n := range exe.list {
+		sum += n.exeTimeSec
+		if n.state.Load() != SANode_STATE_DONE {
+			done += n.exeTimeSec * n.progress
+		} else {
+			done += n.exeTimeSec
+		}
+	}
+
+	return OsTrnFloat(sum > 0, done/sum, 0)
+}
+
 func (exe *SANodeExe) Stop() {
 
 	//close connections
@@ -51,7 +67,7 @@ func (exe *SANodeExe) Stop() {
 	exe.wg.Wait()
 }
 
-func (exe *SANodeExe) Tick(server *SANodeServer) bool {
+func (exe *SANodeExe) Tick(app *SAApp) bool {
 
 	active := false
 
@@ -61,14 +77,14 @@ func (exe *SANodeExe) Tick(server *SANodeServer) bool {
 			active = true
 
 			if it.IsReadyToBeExe() {
-				if it.IsExe() {
+				if it.IsExe() && (!app.IDE || app.EnableExecution) { //ignore in releaseMode
 					//maximum concurent threads
 					if exe.numActiveThreads.Load() >= int64(exe.max_threads) {
 						return true
 					}
 
 					if it.conn == nil {
-						it.conn = server.Start(it.Exe)
+						it.conn = app.base.server.Start(it.Exe)
 					}
 
 					//run it
