@@ -833,6 +833,10 @@ func (win *Win) DrawRect_border(start OsV2, end OsV2, depth int, cd OsCd, thick 
 }
 
 func (win *Win) DrawRectRound(coord OsV4, rad int, depth int, cd OsCd, thick int) {
+
+	rad = OsMin(rad, coord.Size.X/2)
+	rad = OsMin(rad, coord.Size.Y/2)
+
 	gl.Color4ub(cd.R, cd.G, cd.B, cd.A)
 
 	piQ := math.Pi / 2
