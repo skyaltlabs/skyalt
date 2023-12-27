@@ -56,9 +56,8 @@ func (w *SANode) pixelsToNode(touchPos OsV2, ui *Ui, lvDiv *UiLayoutDiv) OsV2f {
 	return r
 }
 
-func (w *SANode) nodeToPixels(p OsV2f, ui *Ui) OsV2 {
+func (w *SANode) nodeToPixels(p OsV2f, canvas OsV4, ui *Ui) OsV2 {
 
-	lv := ui.GetCall()
 	cell := ui.win.Cell()
 
 	p.X -= float32(w.Cam_x)
@@ -68,16 +67,16 @@ func (w *SANode) nodeToPixels(p OsV2f, ui *Ui) OsV2 {
 	r.X = int(p.X * float32(cell) * float32(w.Cam_z))
 	r.Y = int(p.Y * float32(cell) * float32(w.Cam_z))
 
-	return r.Add(lv.call.canvas.Start).Add(lv.call.canvas.Size.MulV(0.5))
+	return r.Add(canvas.Start).Add(canvas.Size.MulV(0.5))
 }
 
 func (w *SANode) cellZoom(ui *Ui) int {
 	return int(float32(ui.win.Cell()) * float32(w.Cam_z) * 1)
 }
 
-func (node *SANode) nodeToPixelsCoord(ui *Ui) (OsV4, OsV4) {
+func (node *SANode) nodeToPixelsCoord(canvas OsV4, ui *Ui) (OsV4, OsV4) {
 
-	coord := node.parent.nodeToPixels(node.Pos, ui) //.parent, because it has Cam
+	coord := node.parent.nodeToPixels(node.Pos, canvas, ui) //.parent, because it has Cam
 
 	w := 5
 	h := 1
@@ -96,7 +95,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 	touch := &ui.buff.win.io.touch
 	pl := ui.buff.win.io.GetPalette()
 
-	coord, selCoord := node.nodeToPixelsCoord(ui)
+	coord, selCoord := node.nodeToPixelsCoord(lv.call.canvas, ui)
 
 	roundc := 0.3
 
