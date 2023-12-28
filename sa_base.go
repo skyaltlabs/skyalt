@@ -81,7 +81,7 @@ func (base *SABase) Save() {
 	//apps
 	for _, a := range base.Apps {
 		if a.root != nil && a.saveIt {
-			a.root.Save(a.GetPath())
+			a.root.Save(a.GetJsonPath())
 		}
 	}
 
