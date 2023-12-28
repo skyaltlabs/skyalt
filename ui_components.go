@@ -741,7 +741,7 @@ func (ui *Ui) Comp_slider_s(style *UiComp, value *float64, minValue float64, max
 		}
 	}
 
-	return active, (active && old_value != *value), end
+	return active, (old_value != *value), end
 }
 
 func (ui *Ui) Comp_combo_desc(description string, description_alignH int, width float64, x, y, w, h int, value interface{}, optionsIn string, tooltip string, enable bool, search bool) bool {
