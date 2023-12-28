@@ -349,7 +349,7 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 		path := "file:apps/base/resources/"
 
 		y := 0
-		if ui.Comp_buttonIcon(0, y, 1, 1, path+OsTrnString(gr.app.EnableExecution, "pause.png", "play.png"), 0.2, "Enable nodes execution", uint8(OsTrn(gr.app.EnableExecution, int(CdPalette_B), int(CdPalette_E))), true) > 0 {
+		if ui.Comp_buttonIcon(0, y, 1, 1, path+OsTrnString(gr.app.EnableExecution, "pause.png", "play.png"), 0.25, "Enable nodes execution", uint8(OsTrn(gr.app.EnableExecution, int(CdPalette_B), int(CdPalette_E))), true) > 0 {
 			gr.app.EnableExecution = !gr.app.EnableExecution
 			if gr.app.EnableExecution {
 				gr.app.exeIt = true
