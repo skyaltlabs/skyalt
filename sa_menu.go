@@ -241,7 +241,7 @@ func (base *SABase) drawLauncher(app *SAApp, ui *Ui, icon_rad float64) {
 
 	//Menu
 	{
-		if ui.Comp_buttonIcon(0, 0, 1, 1, "file:apps/base/resources/logo_small.png", 0, "", CdPalette_B, true) > 0 {
+		if ui.Comp_buttonIcon(0, 0, 1, 1, "file:apps/base/resources/logo_small.png", 0, "", CdPalette_B, true, false) > 0 {
 			ui.Dialog_open("menu", 1)
 		}
 		if ui.Dialog_start("menu") {
@@ -286,8 +286,8 @@ func (base *SABase) drawLauncher(app *SAApp, ui *Ui, icon_rad float64) {
 				if base.Selected == i {
 					ui.Div_colMax(0, 100)
 					ui.Div_row(0, 0.1) //spacer
-					ui.Div_row(1, icon_rad+1-0.1-0.1-0.8)
-					ui.Div_row(2, 0.8) //IDE
+					ui.Div_rowMax(1, 100)
+					ui.Div_row(2, 0.7) //IDE
 					ui.Div_row(3, 0.1) //spacer
 				} else {
 					ui.Div_colMax(0, 100)
@@ -301,17 +301,22 @@ func (base *SABase) drawLauncher(app *SAApp, ui *Ui, icon_rad float64) {
 					Div_DropMoveElement(&base.Apps, &base.Apps, src, dst, pos)
 				}
 
+				buttY := 0
 				if base.Selected == i {
 					ui.Div_SpacerRow(0, 0, 1, 1)
-					click = ui.Comp_buttonText(0, 1, 1, 1, nm, "", "", true, base.Selected == i)
+
+					buttY = 1
 
 					//IDE
 					if ui.Comp_buttonText(0, 2, 1, 1, "IDE", "", "", true, app.IDE) > 0 {
 						app.IDE = !app.IDE
 					}
 					ui.Div_SpacerRow(0, 3, 1, 1)
+				}
+				if app.iconPath != "" {
+					click = ui.Comp_buttonIcon(0, buttY, 1, 1, app.iconPath, 0.4, nm, CdPalette_P, true, base.Selected == i)
 				} else {
-					click = ui.Comp_buttonText(0, 0, 1, 1, nm, "", "", true, base.Selected == i)
+					click = ui.Comp_buttonText(0, buttY, 1, 1, nm, "", "", true, base.Selected == i)
 				}
 			}
 			ui.Div_end()

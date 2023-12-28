@@ -1323,7 +1323,7 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 
 			x := 0
 
-			if ui.Comp_buttonIcon(x, 0, 1, 1, "file:apps/base/resources/copy.png", 0.3, ui.trns.COPY, CdPalette_B, true) > 0 {
+			if ui.Comp_buttonIcon(x, 0, 1, 1, "file:apps/base/resources/copy.png", 0.3, ui.trns.COPY, CdPalette_B, true, false) > 0 {
 				keys := &ui.buff.win.io.keys
 				keys.clipboard = w.Name + "." + it.Name
 			}

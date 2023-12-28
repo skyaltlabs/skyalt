@@ -61,12 +61,19 @@ type SAApp struct {
 
 	EnableExecution bool
 	exe             *SANodeExe
+
+	iconPath string
 }
 
 func (a *SAApp) init(base *SABase) {
 	a.base = base
 	a.mapp = NewUiLayoutMap()
 	a.graph = NewSAGraph(a)
+
+	ic := "apps/" + a.Name + "/icon.png"
+	if OsFileExists(ic) {
+		a.iconPath = "file:" + ic
+	}
 }
 
 func NewSAApp(name string, base *SABase) *SAApp {
@@ -335,7 +342,7 @@ func (app *SAApp) History(ui *Ui) {
 		app.stepHistoryForward()
 	}
 
-	if touch.end || keys.hasChanged {
+	if touch.end || keys.hasChanged { //scroll wheel? .......
 		app.cmpAndAddHistory()
 	}
 
@@ -363,6 +370,9 @@ func SAApp_IsStdComponent(name string) bool {
 }
 
 func (app *SAApp) getListOfNodes() []string {
+
+	//translate ........
+
 	fns := SAStandardPrimitives
 	fns = append(fns, SAStandardComponents...)
 	fns = append(fns, app.base.server.nodes...) //from /nodes dir
@@ -385,6 +395,7 @@ func (app *SAApp) ComboListOfNodes(x, y, w, h int, act string, ui *Ui) string {
 
 	if ui.Comp_combo(x, y, w, h, &found_i, options, "", true, true) {
 		act = fns[found_i]
+		//musím vzít z original names .....................
 	}
 	return act
 }
@@ -494,7 +505,7 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 	//ui.Div_colMax(5, 2)
 
 	//level up
-	if ui.Comp_buttonIcon(0, 0, 1, 1, "file:apps/base/resources/levelup.png", 0.3, "One level up", CdPalette_P, app.act.parent != nil) > 0 {
+	if ui.Comp_buttonIcon(0, 0, 1, 1, "file:apps/base/resources/levelup.png", 0.3, "One level up", CdPalette_P, app.act.parent != nil, false) > 0 {
 		app.act = app.act.parent
 	}
 	keys := &ui.buff.win.io.keys

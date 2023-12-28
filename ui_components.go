@@ -194,7 +194,7 @@ func (ui *Ui) Comp_button(x, y, w, h int, label string, tooltip string, enable b
 	return 0
 }
 
-func (ui *Ui) Comp_buttonIcon(x, y, w, h int, icon string, icon_margin float64, tooltip string, cd uint8, enable bool) int {
+func (ui *Ui) Comp_buttonIcon(x, y, w, h int, icon string, icon_margin float64, tooltip string, cd uint8, enable bool, selected bool) int {
 	ui.Div_start(x, y, w, h)
 
 	style := ui._buttonBasicStyle(enable, tooltip)
@@ -202,7 +202,7 @@ func (ui *Ui) Comp_buttonIcon(x, y, w, h int, icon string, icon_margin float64, 
 	style.image_margin = icon_margin
 	style.cd = cd
 
-	click, rclick := ui.Comp_button_s(&style, "", icon, "", 0, false)
+	click, rclick := ui.Comp_button_s(&style, "", icon, "", OsTrnFloat(selected, 1, 0), false)
 
 	ui.Div_end()
 	if rclick > 0 {
