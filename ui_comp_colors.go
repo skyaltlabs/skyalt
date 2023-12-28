@@ -86,7 +86,7 @@ func (ui *Ui) comp_colorPalette(cd *OsCd) bool {
 		l := float64(hsl.L)
 		changed := false
 
-		if ui.Comp_slider_desc(ui.trns.HUE, 0, 2, 0, 0, 1, 1, &h, 0, 360, 1) {
+		if ui.Comp_slider_desc(ui.trns.HUE, 0, 2, 0, 0, 1, 1, &h, 0, 359, 1) {
 			changed = true
 		}
 		if ui.Comp_slider_desc(ui.trns.SATURATION, 0, 2, 0, 1, 1, 1, &s, 0, 1, 0.01) {
