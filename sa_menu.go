@@ -238,7 +238,6 @@ func (base *SABase) drawLauncher(app *SAApp, ui *Ui, icon_rad float64) {
 	//ui.Div_row(0, 1)
 	ui.Div_row(1, 0.1) //spacer
 	ui.Div_rowMax(2, 100)
-	ui.Div_row(4, 0.1) //spacer
 
 	//Menu
 	{
@@ -259,9 +258,16 @@ func (base *SABase) drawLauncher(app *SAApp, ui *Ui, icon_rad float64) {
 	{
 		ui.Div_start(0, 2, 1, 1)
 
+		ui.DivInfo_set(SA_DIV_SET_scrollVnarrow, 1, 0)
+		ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
+
 		ui.Div_colMax(0, 100)
-		for i := 0; i < len(base.Apps); i++ {
+		for i := 0; i < len(base.Apps)+1; i++ { //+1 = "+"
 			ui.Div_row(i, icon_rad)
+		}
+
+		if base.Selected >= 0 {
+			ui.Div_row(base.Selected, icon_rad+1)
 		}
 
 		y := 0
@@ -272,19 +278,44 @@ func (base *SABase) drawLauncher(app *SAApp, ui *Ui, icon_rad float64) {
 				nm = nm[:3]
 			}
 
+			var click int
+
 			//drag & drop(under button)
 			ui.Div_start(0, y, 1, 1)
 			{
+				if base.Selected == i {
+					ui.Div_colMax(0, 100)
+					ui.Div_row(0, 0.1) //spacer
+					ui.Div_row(1, icon_rad+1-0.1-0.1-0.8)
+					ui.Div_row(2, 0.8) //IDE
+					ui.Div_row(3, 0.1) //spacer
+				} else {
+					ui.Div_colMax(0, 100)
+					ui.Div_rowMax(0, 100)
+				}
+
 				dst := i
 				ui.Div_drag("app", dst)
 				src, pos, done := ui.Div_drop("app", true, false, false)
 				if done {
 					Div_DropMoveElement(&base.Apps, &base.Apps, src, dst, pos)
 				}
+
+				if base.Selected == i {
+					ui.Div_SpacerRow(0, 0, 1, 1)
+					click = ui.Comp_buttonText(0, 1, 1, 1, nm, "", "", true, base.Selected == i)
+
+					//IDE
+					if ui.Comp_buttonText(0, 2, 1, 1, "IDE", "", "", true, app.IDE) > 0 {
+						app.IDE = !app.IDE
+					}
+					ui.Div_SpacerRow(0, 3, 1, 1)
+				} else {
+					click = ui.Comp_buttonText(0, 0, 1, 1, nm, "", "", true, base.Selected == i)
+				}
 			}
 			ui.Div_end()
 
-			click := ui.Comp_buttonText(0, y, 1, 1, nm, "", "", true, base.Selected == i)
 			if click == 1 {
 				base.Selected = i
 			}
@@ -310,40 +341,29 @@ func (base *SABase) drawLauncher(app *SAApp, ui *Ui, icon_rad float64) {
 
 				ui.Dialog_end()
 			}
-
 			y++
 		}
+
+		//+
+		{
+			if ui.Comp_buttonLight(0, y, 1, 1, "+", ui.trns.CREATE_APP, true) > 0 {
+				ui.Dialog_open("new_app", 1)
+			}
+			if ui.Dialog_start("new_app") {
+				ui.Div_colMax(0, 10)
+
+				ui.Comp_editbox(0, 0, 1, 1, &base.NewAppName, 0, "", "", false, false, true)
+
+				if ui.Comp_button(0, 1, 1, 1, ui.trns.CREATE_APP, "", true) > 0 {
+					OsFolderCreate("apps/" + base.NewAppName)
+					base.Refresh()
+					ui.Dialog_close()
+				}
+
+				ui.Dialog_end()
+			}
+		}
+
 		ui.Div_end()
 	}
-
-	//+
-	{
-		if ui.Comp_buttonText(0, 3, 1, 1, "+", "", ui.trns.CREATE_APP, true, false) > 0 {
-			ui.Dialog_open("new_app", 1)
-		}
-		if ui.Dialog_start("new_app") {
-			ui.Div_colMax(0, 10)
-
-			ui.Comp_editbox(0, 0, 1, 1, &base.NewAppName, 0, "", "", false, false, true)
-
-			if ui.Comp_button(0, 1, 1, 1, ui.trns.CREATE_APP, "", true) > 0 {
-				OsFolderCreate("apps/" + base.NewAppName)
-				base.Refresh()
-				ui.Dialog_close()
-			}
-
-			ui.Dialog_end()
-		}
-	}
-
-	ui.Div_SpacerRow(0, 4, 1, 1)
-
-	//IDE
-	{
-		if ui.Comp_buttonText(0, 5, 1, 1, "IDE", "", "", true, app.IDE) > 0 {
-			app.IDE = !app.IDE
-		}
-		//shortcut? ...
-	}
-
 }
