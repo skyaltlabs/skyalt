@@ -70,6 +70,7 @@ type UiTranslations struct {
 	VACUUM      string
 	CREATE_FILE string
 	CHANGE_APP  string
+	CONFIRM     string
 
 	SETUP_DB string
 
