@@ -70,7 +70,7 @@ func (a *SAApp) init(base *SABase) {
 	a.mapp = NewUiLayoutMap()
 	a.graph = NewSAGraph(a)
 
-	ic := "apps/" + a.Name + "/icon.png"
+	ic := a.GetFolderPath() + "icon.png"
 	if OsFileExists(ic) {
 		a.iconPath = "file:" + ic
 	}
@@ -90,8 +90,16 @@ func (app *SAApp) Destroy() {
 	app.mapp.Destroy()
 }
 
-func (app *SAApp) GetPath() string {
-	return "apps/" + app.Name + "/app.json"
+func SAApp_GetNewFolderPath(name string) string {
+	return "apps/" + name + "/"
+}
+
+func (app *SAApp) GetFolderPath() string {
+	return SAApp_GetNewFolderPath(app.Name)
+}
+
+func (app *SAApp) GetJsonPath() string {
+	return app.GetFolderPath() + "app.json"
 }
 
 func (app *SAApp) renderIDE(ui *Ui) {
