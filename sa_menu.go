@@ -328,25 +328,56 @@ func (base *SABase) drawLauncher(app *SAApp, ui *Ui, icon_rad float64) {
 			if click == 2 {
 				ui.Dialog_open(appUid, 1)
 			}
+
+			renameDialog := appUid + "_rename"
+			deleteDialog := appUid + "_delete"
 			if ui.Dialog_start(appUid) {
 				ui.Div_colMax(0, 5)
 				ui.Div_row(1, 0.1)
 
 				if ui.Comp_buttonMenu(0, 0, 1, 1, ui.trns.RENAME, "", true, false) > 0 {
-					ui.Dialog_open(appUid+"_rename", 1)
-					//dialog(new_name + button) ...
+					ui.Dialog_close()
+					ui.Dialog_open(renameDialog, 1)
 				}
 
 				ui.Div_SpacerRow(0, 1, 1, 1)
 
 				if ui.Comp_buttonMenu(0, 2, 1, 1, ui.trns.REMOVE, "", true, false) > 0 {
-					ui.Dialog_open(appUid+"_delete", 1)
-					//dialog confirm ...
+					ui.Dialog_close()
+					ui.Dialog_open(deleteDialog, 1)
 				}
 
 				ui.Dialog_end()
 			}
 			y++
+
+			if ui.Dialog_start(renameDialog) {
+				ui.Div_colMax(0, 5)
+
+				ui.Comp_editbox(0, 0, 1, 1, &base.NewAppName, 0, "", "", false, true, true)
+				if ui.Comp_button(0, 1, 1, 1, ui.trns.RENAME, "", base.NewAppName != "") > 0 {
+					if OsFileRename(app.GetFolderPath(), SAApp_GetNewFolderPath(base.NewAppName)) == nil {
+						app.Name = base.NewAppName
+						ui.Dialog_close()
+					}
+				}
+				ui.Dialog_end()
+			}
+			if ui.Dialog_start(deleteDialog) {
+				ui.Div_colMax(0, 4)
+				ui.Div_colMax(1, 2)
+
+				ui.Comp_text(0, 0, 1, 1, ui.trns.DELETE+" "+app.Name+"?", 1)
+				if ui.Comp_button(1, 0, 1, 1, ui.trns.CONFIRM+"", "", base.NewAppName != "") > 0 {
+					if OsFolderRemove(app.GetFolderPath()) == nil {
+						app.Destroy()
+						base.Apps = append(base.Apps[:i], base.Apps[i+1:]...) //remove
+						ui.Dialog_close()
+					}
+				}
+
+				ui.Dialog_end()
+			}
 		}
 
 		//+
