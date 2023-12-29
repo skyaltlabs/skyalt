@@ -337,6 +337,7 @@ func (base *SABase) drawLauncher(app *SAApp, ui *Ui, icon_rad float64) {
 
 				if ui.Comp_buttonMenu(0, 0, 1, 1, ui.trns.RENAME, "", true, false) > 0 {
 					ui.Dialog_close()
+					base.NewAppName = app.Name
 					ui.Dialog_open(renameDialog, 1)
 				}
 
