@@ -26,127 +26,6 @@ import (
 	"sync/atomic"
 )
 
-type SANodeAttr struct {
-	node *SANode
-
-	Name    string
-	Value   string `json:",omitempty"`
-	ShowExp bool
-
-	finalValue   string
-	instr        *VmInstr
-	depends      []*SANodeAttr
-	isDirectLink bool
-	errExp       error
-	errExe       error
-
-	Gui_type     string `json:",omitempty"`
-	Gui_options  string `json:",omitempty"`
-	Gui_ReadOnly bool   `json:",omitempty"` //output
-
-}
-
-func (attr *SANodeAttr) getDirectLink_inner(orig *SANodeAttr) (*string, bool) {
-
-	if attr.isDirectLink {
-		if attr.depends[0] == orig {
-			fmt.Println("Warning: infinite loop")
-			return &attr.Value, true //avoid infinite loop
-		}
-		return attr.depends[0].getDirectLink_inner(orig) //go to source
-	}
-
-	if len(attr.depends) > 0 {
-		return &attr.finalValue, false //expression. oldValue = result
-	}
-
-	return &attr.Value, true //this
-}
-
-func (attr *SANodeAttr) GetDirectLink() (*string, bool) {
-	return attr.getDirectLink_inner(attr)
-}
-func (attr *SANodeAttr) SetString(value string) {
-	val, editable := attr.GetDirectLink()
-	if editable {
-		*val = value
-	}
-}
-func (attr *SANodeAttr) SetInt(value int) {
-	val, editable := attr.GetDirectLink()
-	if editable {
-		*val = strconv.Itoa(value)
-	}
-}
-func (attr *SANodeAttr) SetFloat(value float64) {
-	val, editable := attr.GetDirectLink()
-	if editable {
-		*val = strconv.FormatFloat(value, 'f', -1, 64)
-	}
-}
-
-func (attr *SANodeAttr) GetString() string {
-	val, _ := attr.GetDirectLink()
-	return *val
-}
-func (attr *SANodeAttr) GetInt() int {
-	v, _ := strconv.Atoi(attr.GetString())
-	return v
-}
-func (attr *SANodeAttr) GetInt64() int64 {
-	v, _ := strconv.Atoi(attr.GetString())
-	return int64(v)
-}
-func (attr *SANodeAttr) GetFloat() float64 {
-	v, _ := strconv.ParseFloat(attr.GetString(), 64)
-	return v
-}
-func (attr *SANodeAttr) GetBool() bool {
-	return attr.GetInt() != 0
-}
-func (attr *SANodeAttr) GetByte() byte {
-	return byte(attr.GetInt())
-}
-
-func (attr *SANodeAttr) CheckForLoopAttr(find *SANodeAttr) {
-	for _, dep := range attr.depends {
-		if dep == find {
-			dep.errExp = fmt.Errorf("Loop")
-			continue //avoid infinite recursion
-		}
-		dep.CheckForLoopAttr(find)
-	}
-
-}
-
-func (attr *SANodeAttr) ExecuteExpression() {
-	if attr.errExp != nil {
-		return
-	}
-
-	for _, dep := range attr.depends {
-		if dep.node == attr.node {
-			dep.ExecuteExpression() //self
-		}
-	}
-
-	var val string
-	if attr.instr != nil && !attr.isDirectLink {
-		st := InitVmST()
-		rec := attr.instr.Exe(nil, &st)
-		val = rec.GetString()
-	} else {
-		value, _ := attr.GetDirectLink()
-		val = *value
-	}
-
-	attr.finalValue = val
-}
-
-func (a *SANodeAttr) Cmp(b *SANodeAttr) bool {
-	return a.Name == b.Name && a.Value == b.Value && a.Gui_type == b.Gui_type && a.Gui_options == b.Gui_options && a.Gui_ReadOnly == b.Gui_ReadOnly
-}
-
 type SANodeColRow struct {
 	Min, Max, Resize float64 `json:",omitempty"`
 	ResizeName       string  `json:",omitempty"`
@@ -191,7 +70,7 @@ type SANode struct {
 	progress      float64
 	progress_desc string
 
-	conn       *SANodeConn //.Destroy() ......
+	//conn       *SANodeConn //.Destroy() ......
 	exeTimeSec float64
 }
 
@@ -468,7 +347,7 @@ func (w *SANode) IsExe() bool {
 	return true
 }
 
-func (w *SANode) execute() bool {
+func (w *SANode) Execute(app *SAApp) bool {
 
 	st := OsTime()
 
@@ -478,13 +357,17 @@ func (w *SANode) execute() bool {
 	w.progress = 0
 	w.progress_desc = ""
 
-	if w.conn == nil {
-		w.errExe = fmt.Errorf("can't find node exe(%s)", w.Exe)
+	conn := app.base.server.Start(w.Exe)
+	if conn == nil {
+		w.errExe = fmt.Errorf("can't find node program(%s)", w.Exe)
 		return false
 	}
 
+	conn.Lock()
+	defer conn.Unlock()
+
 	//add/update attributes
-	for _, v := range w.conn.Attrs { //w.conn can be =nil by 1st thread  ........
+	for _, v := range conn.Attrs { //w.conn can be =nil by 1st thread  ........
 		v.Error = ""
 
 		a := w.GetAttr(v.Name, v.Value, v.Gui_type, v.Gui_options, v.Gui_ReadOnly)
@@ -500,7 +383,7 @@ func (w *SANode) execute() bool {
 		//if strings.HasPrefix(src.Name, "grid_") {
 		//	continue
 		//}
-		dst := w.conn.FindAttr(src.Name)
+		dst := conn.FindAttr(src.Name)
 		if dst != nil {
 			dst.Value = src.finalValue
 		} else {
@@ -509,10 +392,10 @@ func (w *SANode) execute() bool {
 	}
 
 	//execute
-	ok := w.conn.Run(w)
+	ok := conn.Run(w)
 
 	//copy back
-	for _, v := range w.conn.Attrs {
+	for _, v := range conn.Attrs {
 		a := w.GetAttr(v.Name, v.Value, v.Gui_type, v.Gui_options, v.Gui_ReadOnly)
 		if v.Gui_ReadOnly {
 			a.Value = v.Value

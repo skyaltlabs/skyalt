@@ -22,6 +22,7 @@ import (
 )
 
 type SANodeExe struct {
+	app  *SAApp
 	list []*SANode
 
 	max_threads      int
@@ -29,11 +30,12 @@ type SANodeExe struct {
 	wg               sync.WaitGroup
 }
 
-func NewSANodeExe(root *SANode, max_threads int) *SANodeExe {
+func NewSANodeExe(app *SAApp, max_threads int) *SANodeExe {
 	exe := &SANodeExe{}
+	exe.app = app
 	exe.max_threads = max_threads
 
-	root.buildList(&exe.list)
+	app.root.buildList(&exe.list)
 
 	return exe
 }
@@ -56,13 +58,7 @@ func (exe *SANodeExe) GetStatDone() float64 {
 
 func (exe *SANodeExe) Stop() {
 
-	//close connections
-	for _, it := range exe.list {
-		if it.conn != nil {
-			it.conn.Destroy()
-			it.conn = nil
-		}
-	}
+	exe.app.base.server.Interrupt() //close connections
 
 	exe.wg.Wait()
 }
@@ -83,16 +79,12 @@ func (exe *SANodeExe) Tick(app *SAApp) bool {
 						return true
 					}
 
-					if it.conn == nil {
-						it.conn = app.base.server.Start(it.Exe)
-					}
-
 					//run it
 					it.state.Store(SANode_STATE_RUNNING)
 					exe.wg.Add(1)
 					go func(ww *SANode) {
 						exe.numActiveThreads.Add(1)
-						ww.execute()
+						ww.Execute(app)
 						exe.wg.Done()
 						exe.numActiveThreads.Add(-1)
 

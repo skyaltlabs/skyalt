@@ -657,7 +657,7 @@ func (app *SAApp) Execute(numThreads int) {
 		app.root.ParseExpresions(app)
 		app.root.CheckForLoops()
 
-		app.exe = NewSANodeExe(app.root, OsMax(numThreads, 1)) //run
+		app.exe = NewSANodeExe(app, OsMax(numThreads, 1)) //run
 		app.exeIt = false
 	}
 

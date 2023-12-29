@@ -24,6 +24,7 @@ import (
 	"net"
 	"os/exec"
 	"strconv"
+	"sync"
 )
 
 type SkyAltServerAttr struct {
@@ -36,22 +37,25 @@ type SkyAltServerAttr struct {
 	Error        string
 }
 
-/*type ServerNodeProgress struct {
-	Proc        float64
-	Description string
-	Error       string
-}*/
-
 type SANodeConn struct {
+	path  string
 	Attrs []*SkyAltServerAttr
-	//progress ServerNodeProgress
 
 	cmd  *exec.Cmd
 	conn net.Conn
+
+	lock sync.Mutex
 }
 
 func (conn *SANodeConn) Destroy() {
 	conn.conn.Close()
+}
+
+func (conn *SANodeConn) Lock() {
+	conn.lock.Lock()
+}
+func (conn *SANodeConn) Unlock() {
+	conn.lock.Unlock()
 }
 
 func (conn *SANodeConn) FindAttr(name string) *SkyAltServerAttr {
@@ -334,6 +338,8 @@ type SANodeServer struct {
 
 	nodes_dir string
 	nodes     []string
+
+	connections []*SANodeConn
 }
 
 func NewSANodeServer(nodes_dir string, port int) (*SANodeServer, error) {
@@ -360,11 +366,23 @@ func (server *SANodeServer) Destroy() {
 	server.srv = nil
 }
 
-//func (server *SANodeServer) Interrupt() {
-//}
+func (server *SANodeServer) Interrupt() {
+	for _, it := range server.connections {
+		it.Destroy()
+	}
+	server.connections = nil
+}
 
 func (server *SANodeServer) Start(path string) *SANodeConn {
 
+	//find
+	for _, it := range server.connections {
+		if it.path == path {
+			return it
+		}
+	}
+
+	//run
 	uid := strconv.Itoa(rand.Int())
 
 	cmd := exec.Command("./"+server.nodes_dir+"/"+path+"/main", uid, strconv.Itoa(server.port))
@@ -376,7 +394,7 @@ func (server *SANodeServer) Start(path string) *SANodeConn {
 		return nil
 	}
 
-	conn := SANodeConn{conn: c, cmd: cmd}
+	conn := &SANodeConn{path: path, conn: c, cmd: cmd}
 
 	//UID
 	name, value, ok := conn.recvPair()
@@ -409,5 +427,7 @@ func (server *SANodeServer) Start(path string) *SANodeConn {
 	//cmd.Wait()
 	//cmd.Cancel()
 
-	return &conn
+	server.connections = append(server.connections, conn)
+
+	return conn
 }
