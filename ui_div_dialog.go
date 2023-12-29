@@ -90,6 +90,7 @@ func (ui *Ui) Dialog_open(name string, tp uint8) bool {
 	//add
 	ui.AddDialog(name, src_coordMoveCut, ui.win)
 	ui.touch.Reset()
+	ui.drag.group = ""
 	ui.win.io.ResetTouchAndKeys()
 	ui.edit.setFirstEditbox = true
 
