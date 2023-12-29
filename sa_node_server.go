@@ -362,6 +362,13 @@ func NewSANodeServer(nodes_dir string, port int) (*SANodeServer, error) {
 }
 
 func (server *SANodeServer) Destroy() {
+	//close connections
+	for _, it := range server.connections {
+		it.Destroy()
+	}
+	server.connections = nil
+
+	//close server
 	server.srv.Close()
 	server.srv = nil
 }

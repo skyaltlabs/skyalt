@@ -69,9 +69,7 @@ type SANode struct {
 	errExe        error
 	progress      float64
 	progress_desc string
-
-	//conn       *SANodeConn //.Destroy() ......
-	exeTimeSec float64
+	exeTimeSec    float64
 }
 
 func NewSANode(parent *SANode, name string, exe string, grid OsV4, pos OsV2f) *SANode {
@@ -367,7 +365,7 @@ func (w *SANode) Execute(app *SAApp) bool {
 	defer conn.Unlock()
 
 	//add/update attributes
-	for _, v := range conn.Attrs { //w.conn can be =nil by 1st thread  ........
+	for _, v := range conn.Attrs {
 		v.Error = ""
 
 		a := w.GetAttr(v.Name, v.Value, v.Gui_type, v.Gui_options, v.Gui_ReadOnly)
@@ -901,7 +899,7 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 				rs := InitOsV4Mid(div.crop.End(), OsV2{s, s})
 				ui.buff.AddRect(rs, cd, 0)
 
-				//musím stisknout alt-key + ignorovat select + highlight when over ... ................
+				//musím stisknout alt-key + ignorovat select + highlight when over ... ...............
 				touch := &ui.buff.win.io.touch
 				if touch.start && rs.Inside(touch.pos) {
 					app.canvas.resize = w
