@@ -206,13 +206,38 @@ func (conn *SANodeConn) Run(node *SANode) bool {
 	}
 }
 
+func (conn *SANodeConn) _read(buff []byte) error {
+	p := 0
+	for p < len(buff) {
+		n, err := conn.conn.Read(buff[p:])
+		if err != nil {
+			return err
+		}
+		p += n
+	}
+
+	return nil
+}
+func (conn *SANodeConn) _write(buff []byte) error {
+	p := 0
+	for p < len(buff) {
+		n, err := conn.conn.Write(buff[p:])
+		if err != nil {
+			return err
+		}
+		p += n
+	}
+
+	return nil
+}
+
 func (conn *SANodeConn) recvPair() (string, string, bool) {
 
 	var err error
 
 	//size
 	var t [8]byte
-	_, err = conn.conn.Read(t[:]) //n? ...
+	err = conn._read(t[:])
 	if err != nil {
 		fmt.Printf("Read() failed: %v\n", err)
 		return "", "", false
@@ -221,14 +246,14 @@ func (conn *SANodeConn) recvPair() (string, string, bool) {
 
 	//data
 	name := make([]byte, sz)
-	_, err = conn.conn.Read(name) //n? ...
+	err = conn._read(name)
 	if err != nil {
 		fmt.Printf("Read() failed: %v\n", err)
 		return "", "", false
 	}
 
 	//size
-	_, err = conn.conn.Read(t[:]) //n? ...
+	err = conn._read(t[:])
 	if err != nil {
 		fmt.Printf("Read() failed: %v\n", err)
 		return "", "", false
@@ -237,7 +262,7 @@ func (conn *SANodeConn) recvPair() (string, string, bool) {
 
 	//data
 	value := make([]byte, sz)
-	_, err = conn.conn.Read(value) //n? ...
+	err = conn._read(value)
 	if err != nil {
 		fmt.Printf("Read() failed: %v\n", err)
 		return "", "", false
@@ -268,14 +293,14 @@ func (conn *SANodeConn) sendPair(name, value string) bool {
 	//size
 	var t [8]byte
 	binary.LittleEndian.PutUint64(t[:], uint64(len(name)))
-	_, err = conn.conn.Write(t[:]) //n? ...
+	err = conn._write(t[:])
 	if err != nil {
 		fmt.Printf("Write() failed: %v\n", err)
 		return false
 	}
 
 	//data
-	_, err = conn.conn.Write([]byte(name)) //n? ...
+	err = conn._write([]byte(name))
 	if err != nil {
 		fmt.Printf("Write() failed: %v\n", err)
 		return false
@@ -283,14 +308,14 @@ func (conn *SANodeConn) sendPair(name, value string) bool {
 
 	//size
 	binary.LittleEndian.PutUint64(t[:], uint64(len(value)))
-	_, err = conn.conn.Write(t[:]) //n? ...
+	err = conn._write(t[:])
 	if err != nil {
 		fmt.Printf("Write() failed: %v\n", err)
 		return false
 	}
 
 	//data
-	_, err = conn.conn.Write([]byte(value)) //n? ...
+	err = conn._write([]byte(value))
 	if err != nil {
 		fmt.Printf("Write() failed: %v\n", err)
 		return false
