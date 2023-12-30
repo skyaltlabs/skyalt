@@ -636,11 +636,11 @@ func (ui *Ui) Comp_slider(x, y, w, h int, value *float64, minValue float64, maxV
 	ui.Div_start(x, y, w, h)
 
 	styleSlider := UiComp{enable: true, label_formating: true, cd: CdPalette_P}
-	active, changed, _ := ui.Comp_slider_s(&styleSlider, value, minValue, maxValue, jumpValue, "", 0)
+	active, changed, end := ui.Comp_slider_s(&styleSlider, value, minValue, maxValue, jumpValue, "", 0)
 
 	ui.Div_end()
 
-	return active && changed //change can be true alone, because of jumpValue "align", no click neede
+	return (active || end) && changed //change can be true alone, because of jumpValue "align", no click neede
 }
 
 func (ui *Ui) Comp_slider_desc(description string, description_alignH int, width float64, x, y, w, h int, value *float64, minValue float64, maxValue float64, jumpValue float64) bool {
@@ -698,6 +698,7 @@ func (ui *Ui) Comp_slider_s(style *UiComp, value *float64, minValue float64, max
 			s := maxValue - minValue
 			*value += s / 10 * float64(ui.buff.win.io.touch.wheel)
 			ui.buff.win.io.touch.wheel = 0 //bug: If slider has canvas which can scroll under, it will scroll and slider is ignored ...
+			end = true
 		}
 
 		if len(style.tooltip) > 0 {
@@ -741,7 +742,7 @@ func (ui *Ui) Comp_slider_s(style *UiComp, value *float64, minValue float64, max
 		}
 	}
 
-	return active, (old_value != *value), end
+	return active, (old_value != *value), (ui.buff.win.io.touch.wheel != 0 || end)
 }
 
 func (ui *Ui) Comp_combo_desc(description string, description_alignH int, width float64, x, y, w, h int, value interface{}, optionsIn string, tooltip string, enable bool, search bool) bool {

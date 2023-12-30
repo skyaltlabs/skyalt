@@ -122,6 +122,8 @@ type WinIO struct {
 	touch WinTouch
 	keys  WinKeys
 	ini   WinIni
+
+	wheel_last_sec float64 //not reset
 }
 
 func NewWinIO() (*WinIO, error) {

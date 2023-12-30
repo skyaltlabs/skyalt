@@ -350,8 +350,9 @@ func (app *SAApp) History(ui *Ui) {
 		app.stepHistoryForward()
 	}
 
-	if touch.end || keys.hasChanged { //scroll wheel? ... touch.wheel_last_sec ........
+	if touch.end || keys.hasChanged || (ui.buff.win.io.wheel_last_sec > 0 && OsTime()-ui.buff.win.io.wheel_last_sec > 1) {
 		app.cmpAndAddHistory()
+		ui.buff.win.io.wheel_last_sec = 0
 	}
 
 }
