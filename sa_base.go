@@ -241,7 +241,5 @@ func (base *SABase) drawFrame(ui *Ui) {
 		ui.Div_end()
 	}
 
-	//if app.IDE {
 	app.History(ui)
-	//}
 }
