@@ -38,8 +38,6 @@ func InitVmST() VmST {
 
 type VmInstrPrm struct {
 	instr *VmInstr
-
-	lineX OsV2
 }
 
 type VmInstr struct {
@@ -51,15 +49,41 @@ type VmInstr struct {
 	temp *Rec
 
 	next *VmInstr
+
+	posA OsV2
+	posB OsV2
 }
 
-func NewVmInstr(exe VmInstr_callbackExecute) *VmInstr {
+func NewVmInstr(exe VmInstr_callbackExecute, lexerA *VmLexer, lexerB *VmLexer) *VmInstr {
 	var instr VmInstr
 
 	instr.fn = exe
 	instr.temp = NewRec()
 
+	if lexerA != nil {
+		instr.posA = OsV2{lexerA.start, lexerA.end}
+	}
+	if lexerB != nil {
+		instr.posB = OsV2{lexerB.start, lexerB.end}
+	}
+
 	return &instr
+}
+
+func (instr *VmInstr) RenameAccessNode(line string, oldName, newName string) string {
+	if VmCallback_Cmp(instr.fn, VmBasic_Access) {
+		if line[instr.posA.X:instr.posA.Y] == oldName {
+			line = line[:instr.posA.X] + newName + line[instr.posA.Y:]
+		}
+	}
+
+	for _, prm := range instr.prms {
+		if prm.instr != nil {
+			line = prm.instr.RenameAccessNode(line, oldName, newName)
+		}
+	}
+
+	return line
 }
 
 func (instr *VmInstr) IsRunning(st *VmST) bool {
@@ -77,7 +101,6 @@ func (instr *VmInstr) NumPrms() int {
 func (instr *VmInstr) AddPropInstr(add *VmInstr) int {
 	var t VmInstrPrm
 	t.instr = add
-	t.lineX = OsV2{-1, -1}
 
 	instr.prms = append(instr.prms, t)
 

@@ -234,9 +234,8 @@ func (w *SANode) ParseExpresions(app *SAApp) {
 			it.Value, found = strings.CutPrefix(it.Value, " ")
 		}
 
-		val, found := strings.CutPrefix(it.Value, "=")
-		if found {
-			ln, err := InitVmLine(val, app.ops, app.apis, app.prior, w)
+		if strings.HasPrefix(it.Value, "=") {
+			ln, err := InitVmLine(it.Value, 1, app.ops, app.apis, app.prior, w)
 			if err == nil {
 				it.instr = ln.Parse()
 				if len(ln.errs) == 0 {
@@ -1139,6 +1138,16 @@ func (node *SANode) IsAttrGroup(find *SANodeAttr) (string, bool, string) {
 	return "", false, "" //not found
 }
 
+func (w *SANode) RenameExpressionAccess(oldName string, newName string) {
+	for _, it := range w.Subs {
+		for _, attr := range it.Attrs {
+			if attr.instr != nil {
+				attr.Value = attr.instr.RenameAccessNode(attr.Value, oldName, newName)
+			}
+		}
+	}
+}
+
 func (w *SANode) RenderAttrs(app *SAApp) {
 
 	ui := app.base.ui
@@ -1166,16 +1175,21 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 		ui.Div_colMax(2, 2)
 
 		//Name
+		oldName := w.Name
 		_, _, _, fnshd, _ := ui.Comp_editbox_desc(ui.trns.NAME, 0, 2, 0, 0, 1, 1, &w.Name, 0, "", ui.trns.NAME, false, false, true)
 		if fnshd && w.parent != nil {
 			w.CheckUniqueName()
 
-			//rename in expression ...
-
+			//rename access in other nodes expressions
+			if w.parent != nil {
+				w.parent.RenameExpressionAccess(oldName, w.Name)
+			}
 		}
 
 		//type
 		w.Exe = app.ComboListOfNodes(1, 0, 1, 1, w.Exe, ui)
+
+		//context with duplicate/delete ...
 
 		//delete
 		if ui.Comp_button(2, 0, 1, 1, ui.trns.REMOVE, "", true) > 0 {
@@ -1305,7 +1319,3 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 }
 
 // node copy/paste ...
-// node Context menu? ...
-
-// expression language ... => show num rows after SELECT COUNT(*) FROM ...
-//- práce s json? ...
