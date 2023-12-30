@@ -43,9 +43,10 @@ type SAApp struct {
 	root *SANode
 	act  *SANode
 
-	history_act []*SANode //JSONs
-	history     []*SANode //JSONs
-	history_pos int
+	history_act       []*SANode //JSONs
+	history           []*SANode //JSONs
+	history_pos       int
+	history_divScroll *UiLayoutDiv
 
 	saveIt bool
 	exeIt  bool
@@ -326,13 +327,13 @@ func (app *SAApp) renderIDE(ui *Ui) {
 		}
 
 	}
-
 }
 
 func (app *SAApp) History(ui *Ui) {
+
 	//init history
 	if len(app.history) == 0 {
-		app.addHistory(true)
+		app.addHistory(true, false)
 		app.history_pos = 0
 		app.saveIt = false
 	}
@@ -340,7 +341,6 @@ func (app *SAApp) History(ui *Ui) {
 	lv := ui.GetCall()
 	touch := &ui.buff.win.io.touch
 	keys := &ui.buff.win.io.keys
-	//over := lv.call.data.over
 
 	if lv.call.IsOver(ui) && ui.win.io.keys.backward {
 		app.stepHistoryBack()
@@ -350,9 +350,8 @@ func (app *SAApp) History(ui *Ui) {
 		app.stepHistoryForward()
 	}
 
-	if touch.end || keys.hasChanged || (ui.buff.win.io.wheel_last_sec > 0 && OsTime()-ui.buff.win.io.wheel_last_sec > 1) {
+	if touch.end || keys.hasChanged || app.base.ui.touch.scrollWheel != nil {
 		app.cmpAndAddHistory()
-		ui.buff.win.io.wheel_last_sec = 0
 	}
 
 }
@@ -578,26 +577,35 @@ func (app *SAApp) cmpAndAddHistory() {
 		historyDiff := false
 		exeDiff := !app.root.Cmp(app.history[app.history_pos], &historyDiff)
 		if exeDiff || historyDiff {
-			app.addHistory(exeDiff)
+
+			rewrite := (app.history_divScroll != nil && app.history_divScroll == app.base.ui.touch.scrollWheel)
+
+			app.addHistory(exeDiff, rewrite)
+
+			app.history_divScroll = app.base.ui.touch.scrollWheel
 		}
 	}
 }
 
-func (app *SAApp) addHistory(exeIt bool) {
+func (app *SAApp) addHistory(exeIt bool, rewriteLast bool) {
 	//cut newer history
 	if app.history_pos+1 < len(app.history) {
 		app.history = app.history[:app.history_pos+1]
 		app.history_act = app.history_act[:app.history_pos+1]
 	}
 
-	//add history
 	root, _ := app.root.Copy() //err ...
 	act := root.FindMirror(app.root, app.act)
 
-	app.history = append(app.history, root)
-	app.history_act = append(app.history_act, act)
-	app.history_pos++
-
+	if rewriteLast {
+		app.history[app.history_pos] = root
+		app.history_act[app.history_pos] = act
+	} else {
+		//add history
+		app.history = append(app.history, root)
+		app.history_act = append(app.history_act, act)
+		app.history_pos++
+	}
 	app.saveIt = true
 	app.exeIt = exeIt //udpate change
 }
