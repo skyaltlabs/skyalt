@@ -154,6 +154,9 @@ func (a OsV2f) MulV(t float32) OsV2f {
 func (a OsV2f) toV2() OsV2 {
 	return OsV2{int(a.X), int(a.Y)}
 }
+func (a OsV2f) Cmp(b OsV2f) bool {
+	return a.X == b.X && a.Y == b.Y
+}
 
 type OsV2 struct {
 	X int
