@@ -142,46 +142,6 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 			ui.Paint_tooltip(0, 0, 1, 1, node.progress_desc)
 		}
 		ui.Comp_textSelect(0, 0, 1, 1, nm, 1, false)
-
-		/*
-			//menu ......
-			nm := fmt.Sprintf("node_menu_%s", node.Name)
-			if ui.Comp_buttonIcon(1, 0, 1, 1, "file:apps/base/resources/context.png", 0.3, "", true) > 0 {
-				ui.Dialog_open(nm, 1)
-			}
-			if ui.Dialog_start(nm) {
-				ui.Div_colMax(0, 7)
-				ui.Div_row(1, 0.1) //spacer
-
-				y := 0
-				ui.Comp_switch(0, y, 1, 1, &node.ShowHidden, false, "Show hidden attributes", "", true)
-				y++
-
-				ui.Div_SpacerRow(0, y, 1, 1)
-				y++
-
-				if ui.Comp_buttonMenu(0, y, 1, 1, "Duplicate", "", true, false) > 0 {
-					n, _ := node.Copy()
-					if n != nil {
-						n.Pos.X += 2
-						n.Pos.Y += 2
-						node.parent.AddNodePtr(n)
-						view.DeselectAll()
-						n.Selected = true
-					}
-					ui.Dialog_close()
-				}
-				y++
-				if ui.Comp_buttonMenu(0, y, 1, 1, "Delete", "", true, false) > 0 {
-					node.parent.RemoveNode(node.Id)
-					ui.Dialog_close()
-				}
-				y++
-
-				//add comment / duplicate ...
-				ui.Dialog_end()
-			}
-		*/
 	}
 
 	selectRad := ui.CellWidth(roundc * 1.3)
