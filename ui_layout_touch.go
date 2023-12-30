@@ -22,6 +22,8 @@ type UiLayoutTouch struct {
 	scrollH *UiLayoutDiv
 	resize  *UiLayoutDiv
 
+	scrollWheel *UiLayoutDiv
+
 	ticks int64
 }
 
