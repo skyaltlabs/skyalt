@@ -127,6 +127,8 @@ func (a *SANode) Cmp(b *SANode) bool {
 		return false
 	}
 
+	//if a.Pos.Cmp(b.Pos)	//change history, but no need to recompute .........
+
 	if len(a.Attrs) != len(b.Attrs) {
 		return false
 	}
@@ -324,14 +326,18 @@ func (w *SANode) buildList(list *[]*SANode) {
 }
 
 func (w *SANode) IsGuiLayout() bool {
-	return w.Exe == "layout" || !w.IsGui() //every exe is layout
+	return w.Exe == "layout" || !w.IsGuiPrimitive() //every exe is layout
 }
-func (w *SANode) IsGui() bool {
+func (w *SANode) IsGuiPrimitive() bool {
 	if w.Exe == "" {
 		return true
 	}
 	return SAApp_IsStdPrimitive(w.Exe)
 }
+func (w *SANode) CanBeRenderOnCanvas() bool {
+	return (SAApp_IsStdPrimitive(w.Exe) || SAApp_IsStdComponent(w.Exe))
+}
+
 func (w *SANode) IsExe() bool {
 	if w.Exe == "" {
 		return false
@@ -650,10 +656,6 @@ func (w *SANode) SetGrid(coord OsV4) {
 
 func (w *SANode) GetGridShow() bool {
 	return w.GetAttrSwitch("grid_show", "1").GetBool()
-}
-
-func (w *SANode) CanBeRenderOnCanvas() bool {
-	return (SAApp_IsStdPrimitive(w.Exe) || SAApp_IsStdComponent(w.Exe))
 }
 
 func (w *SANode) Render(ui *Ui, app *SAApp) {

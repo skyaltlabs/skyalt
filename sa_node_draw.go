@@ -124,6 +124,10 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 
 		//shadow
 		shadowCd := pl.GetGrey(0.4)
+		if node.CanBeRenderOnCanvas() {
+			shadowCd = pl.P //InitOsCd32(50, 50, 180, 255)
+			shadowCd.A = 200
+		}
 		ui.buff.AddRectRound(coord, ui.CellWidth(roundc), shadowCd, ui.CellWidth(0.03)) //smooth
 	}
 
