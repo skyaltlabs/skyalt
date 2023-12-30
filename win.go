@@ -401,7 +401,7 @@ func (win *Win) Event() (bool, bool, error) {
 				}
 			} else {
 				io.touch.wheel = -int(val.Y) // divide by -WHEEL_DELTA
-				io.wheel_last_sec = OsTime()
+				io.touch.wheel_last_sec = OsTime()
 			}
 			return true, true, nil
 
