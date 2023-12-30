@@ -168,14 +168,14 @@ func (lexer *VmLexer) IsSyntaxKeyword(line string) bool {
 	return strings.EqualFold(str, "return")
 }
 
-func ParseLine(line string, ops *VmOps) (*VmLexer, error) {
+func ParseLine(line string, skipN int, ops *VmOps) (*VmLexer, error) {
 
 	lexer := NewVmLexer(VmLexerBracket, 0, len(line))
 	if lexer.end == 0 {
 		return lexer, nil
 	}
 
-	skipN := 0
+	//skipN := 0
 	for i, ch := range line {
 
 		if skipN > 0 {
