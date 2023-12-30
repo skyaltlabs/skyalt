@@ -636,11 +636,11 @@ func (ui *Ui) Comp_slider(x, y, w, h int, value *float64, minValue float64, maxV
 	ui.Div_start(x, y, w, h)
 
 	styleSlider := UiComp{enable: true, label_formating: true, cd: CdPalette_P}
-	_, changed, _ := ui.Comp_slider_s(&styleSlider, value, minValue, maxValue, jumpValue, "", 0)
+	active, changed, _ := ui.Comp_slider_s(&styleSlider, value, minValue, maxValue, jumpValue, "", 0)
 
 	ui.Div_end()
 
-	return changed
+	return active && changed //change can be true alone, because of jumpValue "align", no click neede
 }
 
 func (ui *Ui) Comp_slider_desc(description string, description_alignH int, width float64, x, y, w, h int, value *float64, minValue float64, maxValue float64, jumpValue float64) bool {
