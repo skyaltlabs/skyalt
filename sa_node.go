@@ -122,20 +122,31 @@ func (w *SANode) Save(path string) error {
 	return nil
 }
 
-func (a *SANode) Cmp(b *SANode) bool {
-	if a.Name != b.Name || a.Exe != b.Exe /*|| a.Selected != b.Selected*/ {
+func (a *SANode) Cmp(b *SANode, historyDiff *bool) bool {
+	if a.Name != b.Name || a.Exe != b.Exe {
 		return false
 	}
 
-	//if a.Pos.Cmp(b.Pos)	//change history, but no need to recompute .........
-
-	if len(a.Attrs) != len(b.Attrs) {
-		return false
+	if a.Selected != b.Selected {
+		*historyDiff = true //no return!
 	}
+
+	if !a.Pos.Cmp(b.Pos) {
+		*historyDiff = true //no return!
+	}
+
+	if a.Cam_x != b.Cam_x || a.Cam_y != b.Cam_y || a.Cam_z != b.Cam_z {
+		*historyDiff = true //no return!
+	}
+
 	if len(a.Cols) != len(b.Cols) {
-		return false
+		*historyDiff = true //no return!
 	}
 	if len(a.Rows) != len(b.Rows) {
+		*historyDiff = true //no return!
+	}
+
+	if len(a.Attrs) != len(b.Attrs) {
 		return false
 	}
 	if len(a.Subs) != len(b.Subs) {
@@ -151,17 +162,17 @@ func (a *SANode) Cmp(b *SANode) bool {
 
 	for i, itA := range a.Cols {
 		if !itA.Cmp(&b.Cols[i]) {
-			return false
+			*historyDiff = true //no return!
 		}
 	}
 	for i, itA := range a.Rows {
 		if !itA.Cmp(&b.Rows[i]) {
-			return false
+			*historyDiff = true //no return!
 		}
 	}
 
 	for i, itA := range a.Subs {
-		if !itA.Cmp(b.Subs[i]) {
+		if !itA.Cmp(b.Subs[i], historyDiff) {
 			return false
 		}
 	}

@@ -332,7 +332,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 func (app *SAApp) History(ui *Ui) {
 	//init history
 	if len(app.history) == 0 {
-		app.addHistory()
+		app.addHistory(true)
 		app.history_pos = 0
 		app.saveIt = false
 	}
@@ -350,7 +350,7 @@ func (app *SAApp) History(ui *Ui) {
 		app.stepHistoryForward()
 	}
 
-	if touch.end || keys.hasChanged { //scroll wheel? .......
+	if touch.end || keys.hasChanged { //scroll wheel? ... touch.wheel_last_sec ........
 		app.cmpAndAddHistory()
 	}
 
@@ -572,20 +572,17 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 	}*/
 }
 
-func (app *SAApp) cmpAndAddHistory() bool {
-	if len(app.history) > 0 {
-		if app.act == app.root.FindMirror(app.history[app.history_pos], app.history_act[app.history_pos]) {
-			if app.root.Cmp(app.history[app.history_pos]) {
-				return false //same
-			}
+func (app *SAApp) cmpAndAddHistory() {
+	if len(app.history) > 0 && app.act == app.root.FindMirror(app.history[app.history_pos], app.history_act[app.history_pos]) {
+		historyDiff := false
+		exeDiff := !app.root.Cmp(app.history[app.history_pos], &historyDiff)
+		if exeDiff || historyDiff {
+			app.addHistory(exeDiff)
 		}
 	}
-
-	app.addHistory()
-	return true
 }
 
-func (app *SAApp) addHistory() {
+func (app *SAApp) addHistory(exeIt bool) {
 	//cut newer history
 	if app.history_pos+1 < len(app.history) {
 		app.history = app.history[:app.history_pos+1]
@@ -601,7 +598,7 @@ func (app *SAApp) addHistory() {
 	app.history_pos++
 
 	app.saveIt = true
-	app.exeIt = true //udpate change
+	app.exeIt = exeIt //udpate change
 }
 
 func (app *SAApp) recoverHistory() {
