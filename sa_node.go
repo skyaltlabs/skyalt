@@ -52,10 +52,11 @@ type SANode struct {
 	pos_start           OsV2f
 	Cam_x, Cam_y, Cam_z float64 `json:",omitempty"`
 
-	Name           string
-	Exe            string
-	Selected       bool
-	selected_cover bool
+	Name            string
+	Exe             string
+	Selected        bool
+	selected_cover  bool
+	selected_canvas OsV4
 
 	Attrs []*SANodeAttr `json:",omitempty"`
 
@@ -903,32 +904,23 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 
 				//resizer
 				s := ui.CellWidth(0.3)
-				rs := InitOsV4Mid(div.crop.End(), OsV2{s, s})
-				ui.buff.AddRect(rs, cd, 0)
-
-				//musím stisknout alt-key + ignorovat select + highlight when over ... ...............
-				touch := &ui.buff.win.io.touch
-				if touch.start && rs.Inside(touch.pos) {
-					app.canvas.resize = w
+				en := InitOsV4Mid(div.canvas.End(), OsV2{s, s})
+				if en.Inside(ui.buff.win.io.touch.pos) && ui.buff.win.io.keys.alt {
+					pl := ui.buff.win.io.GetPalette()
+					cd = pl.P
 				}
+				ui.buff.AddRect(en, cd, 0)
 
-				if app.canvas.resize != nil {
-					pos := ui.GetCall().call.GetCloseCell(touch.pos)
-					fmt.Println(pos.Start)
-
-					grid := app.canvas.resize.GetGrid()
-					grid.Size.X = OsMax(0, pos.Start.X-grid.Start.X) + 1
-					grid.Size.Y = OsMax(0, pos.Start.Y-grid.Start.Y) + 1
-
-					app.canvas.resize.SetGrid(grid)
-				}
-				if touch.end {
-					app.canvas.resize = nil
-				}
+				w.selected_canvas = div.canvas //copy coord size
 			}
 		}
 		//when editbox with expression is active - match colors between access(text) and nodes(coords) ...
 	}
+}
+
+func (w *SANode) GetResizerCoord(ui *Ui) OsV4 {
+	s := ui.CellWidth(0.3)
+	return InitOsV4Mid(w.selected_canvas.End(), OsV2{s, s})
 }
 
 func (w *SANode) RenderLayout(ui *Ui, app *SAApp) {

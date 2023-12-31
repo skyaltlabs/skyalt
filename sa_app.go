@@ -275,47 +275,76 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	}
 	app.drawCreateNode(ui)
 
-	//select/move node
+	//select/move/resize node
 	if appDiv.IsOver(ui) {
 		grid := appDiv.GetCloseCell(touch.pos)
 
-		var found *SANode
+		//find resizer
 		for _, w := range app.act.Subs {
 			if !w.CanBeRenderOnCanvas() {
 				continue
 			}
-			if w.GetGridShow() && w.GetGrid().Inside(grid.Start) {
-				found = w
-				break
+			if w.Selected && w.GetResizerCoord(ui).Inside(touch.pos) {
+				//resize start
+				if touch.start && keys.alt {
+					app.canvas.resize = w
+					break
+				}
 			}
 		}
 
-		if found != nil && keys.alt {
-			if touch.start {
-				foundStart := appDiv.crop.Start.Add(appDiv.data.Convert(ui.win.Cell(), found.GetGrid()).Start)
-				app.canvas.startClick = found
-				app.canvas.startClickRel = touch.pos.Sub(foundStart)
-				found.SelectOnlyThis()
-			}
+		//find select/move node
+		if app.canvas.resize == nil {
+			for _, w := range app.act.Subs {
+				if !w.CanBeRenderOnCanvas() {
+					continue
+				}
+				if w.GetGridShow() && w.GetGrid().Inside(grid.Start) {
 
-			if touch.end && touch.numClicks > 1 && found.IsGuiLayout() {
-				app.act = found //goto layout
+					//select start(go to inside)
+					if keys.alt {
+						if touch.start {
+							wStart := appDiv.crop.Start.Add(appDiv.data.Convert(ui.win.Cell(), w.GetGrid()).Start)
+							app.canvas.startClick = w
+							app.canvas.startClickRel = touch.pos.Sub(wStart)
+							w.SelectOnlyThis()
+						}
+
+						if touch.end && touch.numClicks > 1 && w.IsGuiLayout() {
+							app.act = w //goto layout
+						}
+					}
+
+					break
+				}
 			}
 		}
 
+		//move
 		if app.canvas.startClick != nil {
-			//move
 			gridMove := appDiv.GetCloseCell(touch.pos.Sub(app.canvas.startClickRel).Add(OsV2{ui.CellWidth(0.5), ui.CellWidth(0.5)}))
 			//gridMove := appDiv.GetCloseCell(touch.pos)
 			app.canvas.startClick.SetGridStart(gridMove.Start)
 		}
-		//}
+
+		//resize
+		if app.canvas.resize != nil {
+			pos := appDiv.GetCloseCell(touch.pos)
+
+			grid := app.canvas.resize.GetGrid()
+			grid.Size.X = OsMax(0, pos.Start.X-grid.Start.X) + 1
+			grid.Size.Y = OsMax(0, pos.Start.Y-grid.Start.Y) + 1
+
+			app.canvas.resize.SetGrid(grid)
+		}
+
 	}
 	if touch.end {
-		if appDiv.IsOver(ui) && keys.alt && app.canvas.startClick == nil { //click outside nodes
+		if appDiv.IsOver(ui) && keys.alt && app.canvas.startClick == nil && app.canvas.resize == nil { //click outside nodes
 			app.act.DeselectAll()
 		}
 		app.canvas.startClick = nil
+		app.canvas.resize = nil
 	}
 
 	//shortcuts
@@ -404,7 +433,7 @@ func (app *SAApp) ComboListOfNodes(x, y, w, h int, act string, ui *Ui) string {
 
 	if ui.Comp_combo(x, y, w, h, &found_i, options, "", true, true) {
 		act = fns[found_i]
-		//musím vzít z original names .....................
+		//musím vzít z original names .....
 	}
 	return act
 }
