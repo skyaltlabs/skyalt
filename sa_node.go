@@ -229,12 +229,7 @@ func (w *SANode) ParseExpresions(app *SAApp) {
 		it.isDirectLink = false
 		it.errExp = nil
 
-		var found bool
-		for found { //loop!
-			it.Value, found = strings.CutPrefix(it.Value, " ")
-		}
-
-		if strings.HasPrefix(it.Value, "=") {
+		if it.IsExpression() {
 			ln, err := InitVmLine(it.Value, 1, app.ops, app.apis, app.prior, w)
 			if err == nil {
 				it.instr = ln.Parse()
@@ -1254,6 +1249,8 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 				if prefixName != "" {
 					nm = prefixName[:len(prefixName)-1] + "[" + group + "]"
 				}
+
+				//switch: value or expression
 				if ui.Comp_buttonMenu(x, 0, 1, 1, nm, "", true, it.ShowExp) > 0 {
 					it.ShowExp = !it.ShowExp
 				}
