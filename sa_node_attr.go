@@ -19,6 +19,7 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 type SANodeAttr struct {
@@ -39,6 +40,15 @@ type SANodeAttr struct {
 	Gui_options  string `json:",omitempty"`
 	Gui_ReadOnly bool   `json:",omitempty"` //output
 
+}
+
+func (attr *SANodeAttr) IsExpression() bool {
+	var found bool
+	for found { //loop!
+		attr.Value, found = strings.CutPrefix(attr.Value, " ")
+	}
+
+	return strings.HasPrefix(attr.Value, "=")
 }
 
 func (attr *SANodeAttr) getDirectLink_inner(orig *SANodeAttr) (*string, bool) {
