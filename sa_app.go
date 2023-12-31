@@ -682,8 +682,6 @@ func (app *SAApp) stepHistoryForward() bool {
 
 func (app *SAApp) Execute(numThreads int) {
 
-	//bypass - execute expressions, but not /nodes ........
-
 	if app.exeIt {
 		if app.exe != nil {
 			app.exe.Stop()
@@ -694,7 +692,7 @@ func (app *SAApp) Execute(numThreads int) {
 		app.apis = NewVmApis()
 		app.prior = 100
 
-		app.root.PrepareExe() //.state = 1 aka running
+		app.root.PrepareExe() //.state = WAITING(to be executed)
 
 		app.root.ParseExpresions(app)
 		app.root.CheckForLoops()

@@ -65,6 +65,7 @@ type UiTranslations struct {
 
 	NAME        string
 	REMOVE      string
+	BYPASS      string
 	RENAME      string
 	DUPLICATE   string
 	VACUUM      string

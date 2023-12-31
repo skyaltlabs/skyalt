@@ -52,9 +52,11 @@ type SANode struct {
 	pos_start           OsV2f
 	Cam_x, Cam_y, Cam_z float64 `json:",omitempty"`
 
-	Name            string
-	Exe             string
-	Selected        bool
+	Name     string
+	Exe      string
+	Bypass   bool
+	Selected bool
+
 	selected_cover  bool
 	selected_canvas OsV4
 
@@ -124,7 +126,7 @@ func (w *SANode) Save(path string) error {
 }
 
 func (a *SANode) Cmp(b *SANode, historyDiff *bool) bool {
-	if a.Name != b.Name || a.Exe != b.Exe {
+	if a.Name != b.Name || a.Exe != b.Exe || a.Bypass != b.Bypass {
 		return false
 	}
 
@@ -1159,7 +1161,8 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 	{
 		ui.Div_colMax(0, 100)
 		ui.Div_colMax(1, 3)
-		ui.Div_colMax(2, 2)
+		ui.Div_colMax(2, 3)
+		ui.Div_colMax(3, 2)
 
 		//Name
 		oldName := w.Name
@@ -1178,8 +1181,11 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 
 		//context with duplicate/delete ...
 
+		//bypass
+		ui.Comp_switch(2, 0, 1, 1, &w.Bypass, false, ui.trns.BYPASS, "", true)
+
 		//delete
-		if ui.Comp_button(2, 0, 1, 1, ui.trns.REMOVE, "", true) > 0 {
+		if ui.Comp_button(3, 0, 1, 1, ui.trns.REMOVE, "", true) > 0 {
 			w.Remove()
 		}
 	}
