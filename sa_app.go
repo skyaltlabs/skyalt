@@ -43,10 +43,11 @@ type SAApp struct {
 	root *SANode
 	act  *SANode
 
-	history_act       []*SANode //JSONs
-	history           []*SANode //JSONs
-	history_pos       int
-	history_divScroll *UiLayoutDiv
+	history_act           []*SANode //JSONs
+	history               []*SANode //JSONs
+	history_pos           int
+	history_divScroll     *UiLayoutDiv
+	history_divSroll_time float64
 
 	saveIt bool
 	exeIt  bool
@@ -579,10 +580,16 @@ func (app *SAApp) cmpAndAddHistory() {
 		if exeDiff || historyDiff {
 
 			rewrite := (app.history_divScroll != nil && app.history_divScroll == app.base.ui.touch.scrollWheel)
+			if OsTime()-app.history_divSroll_time > 1 {
+				rewrite = false
+			}
 
 			app.addHistory(exeDiff, rewrite)
 
 			app.history_divScroll = app.base.ui.touch.scrollWheel
+			if app.base.ui.touch.scrollWheel != nil {
+				app.history_divSroll_time = OsTime()
+			}
 		}
 	}
 }
