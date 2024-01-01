@@ -96,6 +96,9 @@
 "REMOVE.en": "Remove",
 "REMOVE.cs": "Odstranit",
 
+"BYPASS.en": "Bypass",
+"BYPASS.cs": "Bypass",
+
 "RENAME.en": "Rename",
 "RENAME.cs": "Přejmenovat",
 
@@ -110,6 +113,9 @@
 
 "CHANGE_APP.en": "Change App",
 "CHANGE_APP.cs": "Změnit Aplikaci",
+
+"CONFIRM.en": "Confirm",
+"CONFIRM.cs": "Potvrdit",
 
 "SETUP_DB.en": "Setup database",
 "SETUP_DB.cs": "Přednastavit databázi",
@@ -261,6 +267,9 @@
 "OK.en": "OK",
 "OK.cs": "OK",
 
+"EDIT.en": "Edit",
+"EDIT.cs": "Upravit",
+
 "TODAY.en": "Today",
 "TODAY.cs": "Dnes",
 
@@ -291,14 +300,8 @@
 "EMPTY.en": "Empty",
 "EMPTY.cs": "Prázdné",
 
-"EDIT.en": "Edit",
-"EDIT.cs": "Upravit",
-
 "DELETE.en": "Delete",
 "DELETE.cs": "Smazat",
-
-"COLOR.en": "Color",
-"COLOR.cs": "Barva",
 
 "OPEN.en": "Open",
 "OPEN.cs": "Otevřít",
@@ -334,5 +337,48 @@
 "BACKWARD.cs": "Zpět",
 
 "FORWARD.en": "Forward",
-"FORWARD.cs": "Vpřed"
+"FORWARD.cs": "Vpřed",
+
+"BUTTON.en": "Button",
+"BUTTON.cs": "Tlačítko",
+
+"TEXT.en": "Text",
+"TEXT.cs": "Text",
+
+"CHECKBOX.en": "Checkbox",
+"CHECKBOX.cs": "Zaškrtávátko",
+
+"SWITCH.en": "Switch",
+"SWITCH.cs": "Přepínač",
+
+"EDITBOX.en": "Edit",
+"EDITBOX.cs": "Upravit",
+
+"DIVIDER.en": "Divider",
+"DIVIDER.cs": "Dělitel",
+
+"COMBO.en": "Combo-box",
+"COMBO.cs": "Combo-box",
+
+"COLOR_PALETTE.en": "Color palette",
+"COLOR_PALETTE.cs": "Barevná paleta",
+
+"COLOR.en": "Color",
+"COLOR.cs": "Barva",
+
+"CALENDAR.en": "Calendar",
+"CALENDAR.cs": "Kalendář",
+
+"DATE.en": "Date",
+"DATE.cs": "Datum",
+
+"LAYOUT.en": "Layout",
+"LAYOUT.cs": "Layout",
+
+"MAP.en": "Map",
+"MAP.cs": "Mapa",
+
+"MAP_LOCATORS.en": "Mapa-locators",
+"MAP_LOCATORS.cs": "Mapa-lokátory"
+
 }
