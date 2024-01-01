@@ -38,8 +38,8 @@ type SkyAltServerAttr struct {
 }
 
 type SANodeConn struct {
-	path  string
-	Attrs []*SkyAltServerAttr
+	program string
+	Attrs   []*SkyAltServerAttr
 
 	cmd  *exec.Cmd
 	conn net.Conn
@@ -380,11 +380,11 @@ func (server *SANodeServer) Interrupt() {
 	server.connections = nil
 }
 
-func (server *SANodeServer) Start(path string) *SANodeConn {
+func (server *SANodeServer) Start(program string) *SANodeConn {
 
 	//find
 	for _, it := range server.connections {
-		if it.path == path {
+		if it.program == program {
 			return it
 		}
 	}
@@ -392,16 +392,22 @@ func (server *SANodeServer) Start(path string) *SANodeConn {
 	//run
 	uid := strconv.Itoa(rand.Int())
 
-	cmd := exec.Command("./"+server.nodes_dir+"/"+path+"/main", uid, strconv.Itoa(server.port))
-	cmd.Start()
-
-	c, err := server.srv.Accept()
-	if err != nil {
-		fmt.Printf("Accept() failed: %v\n", err)
+	exePath := server.nodes_dir + "/" + program + "/main"
+	if !OsFileExists(exePath) {
+		fmt.Printf("Program(%s) not exist\n", exePath)
 		return nil
 	}
 
-	conn := &SANodeConn{path: path, conn: c, cmd: cmd}
+	cmd := exec.Command("./"+exePath, uid, strconv.Itoa(server.port))
+	cmd.Start()
+
+	c, err := server.srv.Accept() //multi-threading .....
+	if err != nil {
+		fmt.Printf("Accept() from program(%s) failed: %v\n", exePath, err)
+		return nil
+	}
+
+	conn := &SANodeConn{program: program, conn: c, cmd: cmd}
 
 	//UID
 	name, value, ok := conn.recvPair()
