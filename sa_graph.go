@@ -201,6 +201,11 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 		keyAllow = (over && ui.edit.uid == nil)
 		if keyAllow {
 
+			//bypass
+			if keys.text == "b" {
+				gr.app.act.BypassReverseSelectedNodes()
+			}
+
 			//delete
 			if keys.delete {
 				gr.app.act.RemoveSelectedNodes()

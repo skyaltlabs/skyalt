@@ -348,14 +348,18 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	}
 
 	//shortcuts
-	if ui.edit.uid == nil {
+	if ui.edit.uid == nil && appDiv.IsOver(ui) {
 		keys := &ui.buff.win.io.keys
 
-		//delete
-		if appDiv.IsOver(ui) && keys.delete {
-			app.act.RemoveSelectedNodes()
+		//bypass
+		if keys.text == "b" {
+			app.act.BypassReverseSelectedNodes()
 		}
 
+		//delete
+		if keys.delete {
+			app.act.RemoveSelectedNodes()
+		}
 	}
 }
 
@@ -386,13 +390,12 @@ func (app *SAApp) History(ui *Ui) {
 
 }
 
-// translate? ... only on screen? ...
-var SAStandardPrimitives = []string{"button", "text", "checkbox", "switch", "edit", "divider", "combo", "color_palette", "color_picker", "calendar", "date_picker"}
+var SAStandardPrimitives = []string{"button", "text", "checkbox", "switch", "editbox", "divider", "combo", "color_palette", "color", "calendar", "date"}
 var SAStandardComponents = []string{"layout", "map", "map_locators"}
 
 func SAApp_IsStdPrimitive(name string) bool {
 	for _, fn := range SAStandardPrimitives {
-		if fn == name {
+		if strings.EqualFold(fn, name) {
 			return true
 		}
 	}
@@ -400,7 +403,7 @@ func SAApp_IsStdPrimitive(name string) bool {
 }
 func SAApp_IsStdComponent(name string) bool {
 	for _, fn := range SAStandardComponents {
-		if fn == name {
+		if strings.EqualFold(fn, name) {
 			return true
 		}
 	}
@@ -408,17 +411,29 @@ func SAApp_IsStdComponent(name string) bool {
 }
 
 func (app *SAApp) getListOfNodes() []string {
-
-	//translate ........
-
 	fns := SAStandardPrimitives
 	fns = append(fns, SAStandardComponents...)
 	fns = append(fns, app.base.server.nodes...) //from /nodes dir
 	return fns
 }
 
+func (app *SAApp) getListOfNodesTranslated() []string {
+
+	fnsOrig := app.getListOfNodes()
+
+	var fnsTrns []string
+	for _, nm := range fnsOrig {
+		val := app.base.ui.trns.Find(nm)
+		if val == "" {
+			val = nm
+		}
+		fnsTrns = append(fnsTrns, val)
+	}
+	return fnsTrns
+}
+
 func (app *SAApp) ComboListOfNodes(x, y, w, h int, act string, ui *Ui) string {
-	fns := app.getListOfNodes()
+	fns := app.getListOfNodesTranslated()
 	i := 0
 	found_i := 0
 	options := ""
@@ -432,8 +447,8 @@ func (app *SAApp) ComboListOfNodes(x, y, w, h int, act string, ui *Ui) string {
 	options, _ = strings.CutSuffix(options, ";")
 
 	if ui.Comp_combo(x, y, w, h, &found_i, options, "", true, true) {
+		fns = app.getListOfNodes()
 		act = fns[found_i]
-		//musím vzít z original names .....
 	}
 	return act
 }
@@ -449,7 +464,7 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 
 		keys := &ui.buff.win.io.keys
 
-		fns := app.getListOfNodes()
+		fns := app.getListOfNodesTranslated()
 		for _, fn := range fns {
 			if app.canvas.addnode_search == "" || strings.Contains(fn, app.canvas.addnode_search) {
 				if keys.enter || ui.Comp_buttonMenu(0, y, 1, 1, fn, "", true, false) > 0 {

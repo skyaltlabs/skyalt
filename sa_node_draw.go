@@ -112,9 +112,19 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 	{
 		if node.state.Load() == SANode_STATE_DONE {
 			backCd := pl.GetGrey(1)
+
+			if node.CanBeRenderOnCanvas() {
+				backCd = pl.P //InitOsCd32(50, 50, 180, 255)
+				backCd.A = 150
+			}
+
 			if node.HasError() {
 				backCd = pl.E
 			}
+			if node.Bypass {
+				backCd.A = 20
+			}
+
 			ui.buff.AddRectRound(coord, ui.CellWidth(roundc), backCd, 0)
 		} else {
 			cq := coord
@@ -124,9 +134,8 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 
 		//shadow
 		shadowCd := pl.GetGrey(0.4)
-		if node.CanBeRenderOnCanvas() {
-			shadowCd = pl.P //InitOsCd32(50, 50, 180, 255)
-			shadowCd.A = 200
+		if node.Bypass {
+			shadowCd.A = 20
 		}
 		ui.buff.AddRectRound(coord, ui.CellWidth(roundc), shadowCd, ui.CellWidth(0.03)) //smooth
 	}

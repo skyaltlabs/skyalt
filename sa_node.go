@@ -334,7 +334,7 @@ func (w *SANode) buildList(list *[]*SANode) {
 }
 
 func (w *SANode) IsGuiLayout() bool {
-	return w.Exe == "layout" || !w.IsGuiPrimitive() //every exe is layout
+	return strings.EqualFold(w.Exe, "layout") || !w.IsGuiPrimitive() //every exe is layout
 }
 func (w *SANode) IsGuiPrimitive() bool {
 	if w.Exe == "" {
@@ -498,6 +498,14 @@ func (w *SANode) SelectOnlyThis() {
 	w.Selected = true
 }
 
+func (w *SANode) BypassReverseSelectedNodes() {
+	for _, n := range w.Subs {
+		if n.Selected {
+			n.Bypass = !n.Bypass
+		}
+	}
+}
+
 func (w *SANode) RemoveSelectedNodes() {
 	for i := len(w.Subs) - 1; i >= 0; i-- {
 		if w.Subs[i].Selected {
@@ -607,7 +615,7 @@ func (w *SANode) GetAttr(name string, value string, gui_type string, gui_options
 }
 
 func (w *SANode) GetAttrEdit(name string, defValue string) *SANodeAttr {
-	return w._getAttr(SANodeAttr{Name: name, Value: defValue, Gui_type: "edit"})
+	return w._getAttr(SANodeAttr{Name: name, Value: defValue, Gui_type: "editbox"})
 }
 
 func (w *SANode) GetAttrCombo(name string, defValue string, defOptions string) *SANodeAttr {
@@ -680,7 +688,7 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 	grid.Size.X = OsMax(grid.Size.X, 1)
 	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
-	switch w.Exe {
+	switch strings.ToLower(w.Exe) {
 
 	case "button":
 		enable := w.GetAttrSwitch("enable", "1").GetBool()
@@ -756,7 +764,7 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 		enable := w.GetAttrSwitch("enable", "1").GetBool() && editable
 		ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, w.GetAttrEdit("options", "a;b;c").GetString(), "", enable, w.GetAttrSwitch("search", "0").GetBool())
 
-	case "edit":
+	case "editbox":
 		value, editable := w.GetAttrEdit("value", "").GetDirectLink()
 		enable := w.GetAttrSwitch("enable", "1").GetBool() && editable
 		ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, w.GetAttrEdit("precision", "2").GetInt(), "", w.GetAttrEdit("ghost", "").GetString(), false, w.GetAttrSwitch("tempToValue", "0").GetBool(), enable)
@@ -780,7 +788,7 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 		}
 		ui.Div_end()
 
-	case "color_picker":
+	case "color":
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
 		{
 			enable := w.GetAttrSwitch("enable", "1").GetBool()
@@ -804,7 +812,7 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 		}
 		ui.Div_end()
 
-	case "date_picker":
+	case "date":
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
 		{
 			enable := w.GetAttrSwitch("enable", "1").GetBool()
@@ -972,7 +980,7 @@ func (w *SANode) NumNames(name string) int {
 func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui, gui_type string) {
 
 	if attr.ShowExp {
-		switch gui_type {
+		switch strings.ToLower(gui_type) {
 
 		case "xywh":
 			ui.Div_start(x, y, w, h)
@@ -1023,7 +1031,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui, gui_type 
 	} else {
 		value, editable := attr.GetDirectLink()
 
-		switch gui_type {
+		switch strings.ToLower(gui_type) {
 		case "checkbox":
 			ui.Comp_checkbox(x, y, w, h, value, false, "", "", editable)
 
@@ -1041,7 +1049,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui, gui_type 
 		case "combo":
 			ui.Comp_combo(x, y, w, h, value, attr.Gui_options, "", editable, false)
 
-		case "edit":
+		case "editbox":
 			ui.Comp_editbox(x, y, w, h, value, 2, "", "", false, false, editable)
 
 		case "xywh":
@@ -1179,7 +1187,7 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 		//type
 		w.Exe = app.ComboListOfNodes(1, 0, 1, 1, w.Exe, ui)
 
-		//context with duplicate/delete ...
+		//context with duplicate(rename! + edit expressions to keep links between new nodes) / delete ...
 
 		//bypass
 		ui.Comp_switch(2, 0, 1, 1, &w.Bypass, false, ui.trns.BYPASS, "", true)
