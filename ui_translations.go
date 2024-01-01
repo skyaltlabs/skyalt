@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 )
 
@@ -143,6 +144,7 @@ type UiTranslations struct {
 	OK        string
 	TODAY     string
 	BETWEEN   string
+	EDIT      string
 
 	TITLE       string
 	DESCRIPTION string
@@ -154,10 +156,7 @@ type UiTranslations struct {
 	FINISH string
 
 	EMPTY  string
-	EDIT   string
 	DELETE string
-
-	COLOR string
 
 	OPEN             string
 	GOTO             string
@@ -171,6 +170,31 @@ type UiTranslations struct {
 	RESIZE           string
 	BACKWARD         string
 	FORWARD          string
+
+	BUTTON        string
+	TEXT          string
+	CHECKBOX      string
+	SWITCH        string
+	EDITBOX       string
+	DIVIDER       string
+	COMBO         string
+	COLOR_PALETTE string
+	COLOR         string
+	CALENDAR      string
+	DATE          string
+
+	LAYOUT       string
+	MAP          string
+	MAP_LOCATORS string
+}
+
+func (trns *UiTranslations) Find(name string) string {
+	r := reflect.ValueOf(trns)
+	f := reflect.Indirect(r).FieldByName(strings.ToUpper(name))
+	if f.IsValid() {
+		return f.String()
+	}
+	return ""
 }
 
 func UiTranslations_fromJson(js []byte, langs []string) ([]byte, error) {
