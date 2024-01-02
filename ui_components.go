@@ -499,13 +499,21 @@ func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, value_precision 
 	value := ""
 	switch v := valueIn.(type) {
 	case *float32:
-		value = strconv.FormatFloat(float64(*v), 'f', value_precision, 64)
+		if v != nil {
+			value = strconv.FormatFloat(float64(*v), 'f', value_precision, 64)
+		}
 	case *float64:
-		value = strconv.FormatFloat(*v, 'f', value_precision, 64)
+		if v != nil {
+			value = strconv.FormatFloat(*v, 'f', value_precision, 64)
+		}
 	case *int:
-		value = strconv.Itoa(*v)
+		if v != nil {
+			value = strconv.Itoa(*v)
+		}
 	case *string:
-		value = *v
+		if v != nil {
+			value = *v
+		}
 		//int8/16/32, uint8, byte, etc ...
 	}
 
@@ -520,15 +528,23 @@ func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, value_precision 
 	if finished || tempToValue {
 		switch v := valueIn.(type) {
 		case *float32:
-			vv, _ := strconv.ParseFloat(editedValue, 64)
-			*v = float32(vv)
+			if v != nil {
+				vv, _ := strconv.ParseFloat(editedValue, 64)
+				*v = float32(vv)
+			}
 		case *float64:
-			*v, _ = strconv.ParseFloat(editedValue, 64)
+			if v != nil {
+				*v, _ = strconv.ParseFloat(editedValue, 64)
+			}
 		case *int:
-			*v, _ = strconv.Atoi(editedValue)
+			if v != nil {
+				*v, _ = strconv.Atoi(editedValue)
+			}
 		case *string:
-			*v = editedValue
-			//int8/16/32, uint8, byte, etc ...
+			if v != nil {
+				*v = editedValue
+				//int8/16/32, uint8, byte, etc ...
+			}
 		}
 	}
 
@@ -779,13 +795,21 @@ func (ui *Ui) Comp_combo(x, y, w, h int, valueIn interface{}, optionsIn string, 
 	var value int
 	switch v := valueIn.(type) {
 	case *float32:
-		value = int(*v)
+		if v != nil {
+			value = int(*v)
+		}
 	case *float64:
-		value = int(*v)
+		if v != nil {
+			value = int(*v)
+		}
 	case *int:
-		value = *v
+		if v != nil {
+			value = *v
+		}
 	case *string:
-		value, _ = strconv.Atoi(*v)
+		if v != nil {
+			value, _ = strconv.Atoi(*v)
+		}
 		//int8/16/32, uint8, byte, etc ...
 	}
 
@@ -800,13 +824,21 @@ func (ui *Ui) Comp_combo(x, y, w, h int, valueIn interface{}, optionsIn string, 
 	if changed {
 		switch v := valueIn.(type) {
 		case *float32:
-			*v = float32(ret)
+			if v != nil {
+				*v = float32(ret)
+			}
 		case *float64:
-			*v = float64(ret)
+			if v != nil {
+				*v = float64(ret)
+			}
 		case *int:
-			*v = ret
+			if v != nil {
+				*v = ret
+			}
 		case *string:
-			*v = strconv.Itoa(ret)
+			if v != nil {
+				*v = strconv.Itoa(ret)
+			}
 			//int8/16/32, uint8, byte, etc ...
 		}
 	}
@@ -900,16 +932,26 @@ func (ui *Ui) Comp_checkbox(x, y, w, h int, valueIn interface{}, reverseValue bo
 	var value float64
 	switch v := valueIn.(type) {
 	case *bool:
-		value = OsTrnFloat(*v, 1, 0)
+		if v != nil {
+			value = OsTrnFloat(*v, 1, 0)
+		}
 	case *float32:
-		value = float64(*v)
+		if v != nil {
+			value = float64(*v)
+		}
 	case *float64:
-		value = float64(*v)
+		if v != nil {
+			value = float64(*v)
+		}
 	case *int:
-		value = float64(*v)
+		if v != nil {
+			value = float64(*v)
+		}
 	case *string:
-		vv, _ := strconv.Atoi(*v)
-		value = float64(vv)
+		if v != nil {
+			vv, _ := strconv.Atoi(*v)
+			value = float64(vv)
+		}
 		//int8/16/32, uint8, byte, etc ...
 	}
 
@@ -924,15 +966,25 @@ func (ui *Ui) Comp_checkbox(x, y, w, h int, valueIn interface{}, reverseValue bo
 	if changed {
 		switch v := valueIn.(type) {
 		case *bool:
-			*v = ret != 0
+			if v != nil {
+				*v = ret != 0
+			}
 		case *float32:
-			*v = float32(ret)
+			if v != nil {
+				*v = float32(ret)
+			}
 		case *float64:
-			*v = float64(ret)
+			if v != nil {
+				*v = float64(ret)
+			}
 		case *int:
-			*v = int(ret)
+			if v != nil {
+				*v = int(ret)
+			}
 		case *string:
-			*v = strconv.FormatFloat(ret, 'f', -1, 64)
+			if v != nil {
+				*v = strconv.FormatFloat(ret, 'f', -1, 64)
+			}
 			//int8/16/32, uint8, byte, etc ...
 		}
 	}
@@ -1012,16 +1064,26 @@ func (ui *Ui) Comp_switch(x, y, w, h int, valueIn interface{}, reverseValue bool
 	var value bool
 	switch v := valueIn.(type) {
 	case *bool:
-		value = *v
+		if v != nil {
+			value = *v
+		}
 	case *float32:
-		value = *v != 0
+		if v != nil {
+			value = *v != 0
+		}
 	case *float64:
-		value = *v != 0
+		if v != nil {
+			value = *v != 0
+		}
 	case *int:
-		value = *v != 0
+		if v != nil {
+			value = *v != 0
+		}
 	case *string:
-		vv, _ := strconv.Atoi(*v)
-		value = vv != 0
+		if v != nil {
+			vv, _ := strconv.Atoi(*v)
+			value = vv != 0
+		}
 		//int8/16/32, uint8, byte, etc ...
 	}
 
@@ -1039,18 +1101,27 @@ func (ui *Ui) Comp_switch(x, y, w, h int, valueIn interface{}, reverseValue bool
 	if changed {
 		switch v := valueIn.(type) {
 		case *bool:
-			*v = ret
+			if v != nil {
+				*v = ret
+			}
 		case *float32:
-			*v = float32(OsTrn(ret, 1, 0))
+			if v != nil {
+				*v = float32(OsTrn(ret, 1, 0))
+			}
 		case *float64:
-			*v = float64(OsTrn(ret, 1, 0))
+			if v != nil {
+				*v = float64(OsTrn(ret, 1, 0))
+			}
 		case *int:
-			*v = OsTrn(ret, 1, 0)
+			if v != nil {
+				*v = OsTrn(ret, 1, 0)
+			}
 		case *string:
-			*v = strconv.Itoa(OsTrn(ret, 1, 0))
+			if v != nil {
+				*v = strconv.Itoa(OsTrn(ret, 1, 0))
+			}
 			//int8/16/32, uint8, byte, etc ...
 		}
-
 	}
 
 	ui.Div_end()
