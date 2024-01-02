@@ -30,7 +30,7 @@ func VmApi_If(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 func VmApi_Not(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 
 	o := instr.ExePrm(rec, st, 0)
-	instr.temp.SetBool(!o.Is())
+	instr.temp.value.SetBool(!o.Is())
 	return instr.temp
 }
 
@@ -39,7 +39,7 @@ func VmApi_Min(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	a := instr.ExePrmNumber(rec, st, 0)
 	b := instr.ExePrmNumber(rec, st, 1)
 
-	instr.temp.SetNumber(OsMinFloat(a, b))
+	instr.temp.value.SetNumber(OsMinFloat(a, b))
 	return instr.temp
 }
 func VmApi_Max(instr *VmInstr, rec *Rec, st *VmST) *Rec {
@@ -47,7 +47,7 @@ func VmApi_Max(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	a := instr.ExePrmNumber(rec, st, 0)
 	b := instr.ExePrmNumber(rec, st, 1)
 
-	instr.temp.SetNumber(OsMaxFloat(a, b))
+	instr.temp.value.SetNumber(OsMaxFloat(a, b))
 	return instr.temp
 }
 
@@ -57,7 +57,7 @@ func VmApi_Clamp(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	mi := instr.ExePrmNumber(rec, st, 1)
 	mx := instr.ExePrmNumber(rec, st, 2)
 
-	instr.temp.SetNumber(OsClampFloat(v, mi, mx))
+	instr.temp.value.SetNumber(OsClampFloat(v, mi, mx))
 	return instr.temp
 }
 
@@ -66,11 +66,11 @@ func VmApi_Sqrt(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	if v >= 0 {
 		v = math.Sqrt(v)
 	} else {
-		instr.temp.SetNumber(0)
+		instr.temp.value.SetNumber(0)
 		v = 0
 		fmt.Println("Sqrl from zero") //err ...
 	}
-	instr.temp.SetNumber(v)
+	instr.temp.value.SetNumber(v)
 	return instr.temp
 }
 
@@ -78,50 +78,50 @@ func VmApi_Pow(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	v := instr.ExePrmNumber(rec, st, 0)
 	exp := instr.ExePrmNumber(rec, st, 1)
 
-	instr.temp.SetNumber(math.Pow(v, exp))
+	instr.temp.value.SetNumber(math.Pow(v, exp))
 	return instr.temp
 }
 
 func VmApi_Pi(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 
-	instr.temp.SetNumber(math.Pi)
+	instr.temp.value.SetNumber(math.Pi)
 	return instr.temp
 }
 func VmApi_Sin(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	v := instr.ExePrmNumber(rec, st, 0)
 
-	instr.temp.SetNumber(math.Sin(v))
+	instr.temp.value.SetNumber(math.Sin(v))
 	return instr.temp
 }
 func VmApi_Cos(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	v := instr.ExePrmNumber(rec, st, 0)
 
-	instr.temp.SetNumber(math.Cos(v))
+	instr.temp.value.SetNumber(math.Cos(v))
 	return instr.temp
 }
 
 func VmApi_Tan(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	v := instr.ExePrmNumber(rec, st, 0)
 
-	instr.temp.SetNumber(math.Tan(v))
+	instr.temp.value.SetNumber(math.Tan(v))
 	return instr.temp
 }
 func VmApi_ATan(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	v := instr.ExePrmNumber(rec, st, 0)
 
-	instr.temp.SetNumber(math.Atan(v))
+	instr.temp.value.SetNumber(math.Atan(v))
 	return instr.temp
 }
 func VmApi_Log(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	v := instr.ExePrmNumber(rec, st, 0)
 
-	instr.temp.SetNumber(math.Log(v))
+	instr.temp.value.SetNumber(math.Log(v))
 	return instr.temp
 }
 func VmApi_Exp(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	v := instr.ExePrmNumber(rec, st, 0)
 
-	instr.temp.SetNumber(math.Exp(v))
+	instr.temp.value.SetNumber(math.Exp(v))
 	return instr.temp
 }
 

@@ -26,7 +26,7 @@ func VmOp_And(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	if is {
 		is = instr.ExePrm(rec, st, 1).Is()
 	}
-	instr.temp.SetBool(is)
+	instr.temp.value.SetBool(is)
 	return instr.temp
 }
 
@@ -35,7 +35,7 @@ func VmOp_Or(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	if !is {
 		is = instr.ExePrm(rec, st, 1).Is()
 	}
-	instr.temp.SetBool(is)
+	instr.temp.value.SetBool(is)
 	return instr.temp
 }
 
@@ -44,7 +44,7 @@ func VmOp_CmpEq(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	right := instr.ExePrm(rec, st, 1)
 	left := instr.ExePrm(rec, st, 0)
 
-	instr.temp.SetBool(left.Cmp(right) == 0)
+	instr.temp.value.SetBool(left.Cmp(right) == 0)
 	return instr.temp
 }
 
@@ -53,7 +53,7 @@ func VmOp_CmpNeq(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	right := instr.ExePrm(rec, st, 1)
 	left := instr.ExePrm(rec, st, 0)
 
-	instr.temp.SetBool(left.Cmp(right) != 0)
+	instr.temp.value.SetBool(left.Cmp(right) != 0)
 	return instr.temp
 }
 
@@ -62,7 +62,7 @@ func VmOp_CmpL(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	right := instr.ExePrm(rec, st, 1)
 	left := instr.ExePrm(rec, st, 0)
 
-	instr.temp.SetBool(left.Cmp(right) < 0)
+	instr.temp.value.SetBool(left.Cmp(right) < 0)
 	return instr.temp
 }
 func VmOp_CmpH(instr *VmInstr, rec *Rec, st *VmST) *Rec {
@@ -70,7 +70,7 @@ func VmOp_CmpH(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	right := instr.ExePrm(rec, st, 1)
 	left := instr.ExePrm(rec, st, 0)
 
-	instr.temp.SetBool(left.Cmp(right) > 0)
+	instr.temp.value.SetBool(left.Cmp(right) > 0)
 	return instr.temp
 }
 
@@ -79,7 +79,7 @@ func VmOp_CmpEqL(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	right := instr.ExePrm(rec, st, 1)
 	left := instr.ExePrm(rec, st, 0)
 
-	instr.temp.SetBool(left.Cmp(right) <= 0)
+	instr.temp.value.SetBool(left.Cmp(right) <= 0)
 	return instr.temp
 }
 func VmOp_CmpEqH(instr *VmInstr, rec *Rec, st *VmST) *Rec {
@@ -87,7 +87,7 @@ func VmOp_CmpEqH(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	right := instr.ExePrm(rec, st, 1)
 	left := instr.ExePrm(rec, st, 0)
 
-	instr.temp.SetBool(left.Cmp(right) >= 0)
+	instr.temp.value.SetBool(left.Cmp(right) >= 0)
 	return instr.temp
 }
 
@@ -96,7 +96,7 @@ func VmOp_Mul(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	right := instr.ExePrm(rec, st, 1)
 	left := instr.ExePrm(rec, st, 0)
 
-	instr.temp.SetNumber(left.GetNumber() * right.GetNumber())
+	instr.temp.value.SetNumber(left.value.Number() * right.value.Number())
 	return instr.temp
 }
 
@@ -105,11 +105,11 @@ func VmOp_Div(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	right := instr.ExePrm(rec, st, 1)
 	left := instr.ExePrm(rec, st, 0)
 
-	rV := right.GetNumber()
+	rV := right.value.Number()
 	if rV != 0 {
-		instr.temp.SetNumber(left.GetNumber() / rV)
+		instr.temp.value.SetNumber(left.value.Number() / rV)
 	} else {
-		instr.temp.SetNumber(0)
+		instr.temp.value.SetNumber(0)
 		fmt.Println("Division by zero") //err ...
 	}
 
@@ -121,11 +121,11 @@ func VmOp_Mod(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	right := instr.ExePrm(rec, st, 1)
 	left := instr.ExePrm(rec, st, 0)
 
-	rV := int(right.GetInt())
+	rV := int(right.value.Number())
 	if rV != 0 {
-		instr.temp.SetInt(left.GetInt() % rV)
+		instr.temp.value.SetInt(int(left.value.Number()) % rV)
 	} else {
-		instr.temp.SetNumber(0)
+		instr.temp.value.SetNumber(0)
 		fmt.Println("Modulo by zero") //err ...
 	}
 
@@ -137,7 +137,7 @@ func VmOp_AddNumbers(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	right := instr.ExePrm(rec, st, 1)
 	left := instr.ExePrm(rec, st, 0)
 
-	instr.temp.SetNumber(left.GetNumber() + right.GetNumber())
+	instr.temp.value.SetNumber(left.value.Number() + right.value.Number())
 	return instr.temp
 }
 
@@ -146,7 +146,7 @@ func VmOp_Sub(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	right := instr.ExePrm(rec, st, 1)
 	left := instr.ExePrm(rec, st, 0)
 
-	instr.temp.SetNumber(left.GetNumber() - right.GetNumber())
+	instr.temp.value.SetNumber(left.value.Number() - right.value.Number())
 	return instr.temp
 }
 
@@ -155,7 +155,7 @@ func VmOp_AddTexts(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	right := instr.ExePrm(rec, st, 1)
 	left := instr.ExePrm(rec, st, 0)
 
-	instr.temp.SetString(left.GetString() + right.GetString())
+	instr.temp.value.SetString(left.value.String() + right.value.String())
 	return instr.temp
 }
 

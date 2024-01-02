@@ -127,21 +127,18 @@ func (instr *VmInstr) ExePrm(rec *Rec, st *VmST, prm_i int) *Rec {
 	return instr.prms[prm_i].instr.Exe(rec, st)
 }
 
-func (instr *VmInstr) ExePrmNumber(rec *Rec, st *VmST, prm_i int) float64 {
-
-	rec = instr.ExePrm(rec, st, prm_i)
-	return rec.GetNumber()
-}
-func (instr *VmInstr) ExePrmInt(rec *Rec, st *VmST, prm_i int) int {
-
-	rec = instr.ExePrm(rec, st, prm_i)
-	return rec.GetInt()
-}
-
 func (instr *VmInstr) ExePrmString(rec *Rec, st *VmST, prm_i int) string {
 
 	rec = instr.ExePrm(rec, st, prm_i)
-	return rec.GetString()
+	return rec.value.String()
+}
+func (instr *VmInstr) ExePrmNumber(rec *Rec, st *VmST, prm_i int) float64 {
+
+	rec = instr.ExePrm(rec, st, prm_i)
+	return rec.value.Number()
+}
+func (instr *VmInstr) ExePrmInt(rec *Rec, st *VmST, prm_i int) int {
+	return int(instr.ExePrmNumber(rec, st, prm_i))
 }
 
 func VmBasic_Constant(instr *VmInstr, rec *Rec, st *VmST) *Rec {

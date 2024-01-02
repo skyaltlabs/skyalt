@@ -135,7 +135,7 @@ func (line *VmLine) getConstant(lexer *VmLexer) (bool, *VmInstr) {
 			line.addError(lexer, "Converting string . number failed")
 			return true, nil
 		}
-		instr.temp.SetNumber(value)
+		instr.temp.value.SetNumber(value)
 		return true, instr
 
 	} else if lexer.IsQuote('"', line.line) {
@@ -143,7 +143,7 @@ func (line *VmLine) getConstant(lexer *VmLexer) (bool, *VmInstr) {
 		ch := line.line[lexer.start]
 		if ch == '"' {
 			instr := NewVmInstr(VmBasic_Constant, lexer, nil)
-			instr.temp.SetString(lexer.GetStringReplaceDivs(line.line))
+			instr.temp.value.SetString(lexer.GetStringReplaceDivs(line.line))
 			return true, instr
 		}
 

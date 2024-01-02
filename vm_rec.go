@@ -16,133 +16,26 @@ limitations under the License.
 
 package main
 
-import (
-	"fmt"
-	"reflect"
-	"strconv"
-	"strings"
-)
-
 type Rec struct {
-	value interface{}
+	value SAValue
 }
 
 func NewRec() *Rec {
 	var rec Rec
-	rec.value = ""
+	rec.value = InitSAValue()
 	return &rec
 }
 
 func (rec *Rec) Is() bool {
-
 	if rec == nil {
 		return false
 	}
-
-	switch val := rec.value.(type) {
-	case float64:
-		return val != 0
-	case string:
-		return len(val) > 0
-	}
-
-	return false
-}
-
-func (rec *Rec) IsNumber() bool {
-	switch rec.value.(type) {
-	case float64:
-		return true
-	}
-	return false
-}
-
-func (rec *Rec) IsText() bool {
-	switch rec.value.(type) {
-	case string:
-		return true
-	}
-	return false
-}
-
-func (rec *Rec) SetNumber(value float64) {
-	rec.value = value
-}
-func (rec *Rec) SetInt(value int) {
-	rec.SetNumber(float64(value))
-}
-func (rec *Rec) SetBool(value bool) {
-	rec.SetNumber(OsTrnFloat(value, 1, 0))
-}
-func (rec *Rec) SetString(value string) {
-	rec.value = value
-}
-
-func (rec *Rec) GetNumber() float64 {
-
-	switch val := rec.value.(type) {
-	case float64:
-		return val
-	case string:
-		v := float64(0)
-		if len(val) != 0 {
-			var err error
-			v, err = strconv.ParseFloat(val, 64)
-			if err != nil {
-				//fmt.Println("ERROR: Converting string . float")
-				return 0
-			}
-		}
-		return v
-	}
-
-	return 0
-}
-func (rec *Rec) GetInt() int {
-	return int(rec.GetNumber())
-}
-func (rec *Rec) GetBool() bool {
-	return rec.GetNumber() != 0
-}
-func (rec *Rec) GetString() string {
-
-	switch val := rec.value.(type) {
-	case float64:
-		if val == float64(int(val)) {
-			return fmt.Sprintf("%d", int(val))
-		}
-		return strconv.FormatFloat(val, 'f', -1, 64)
-	case string:
-		return string(val)
-	}
-
-	return ""
+	return rec.value.Is()
 }
 
 func (A *Rec) Cmp(B *Rec) int {
 	if A != nil && B != nil {
-		if reflect.TypeOf(A.value) == reflect.TypeOf(B.value) {
-			switch val := A.value.(type) {
-			case float64:
-				ta := val
-				tb := B.GetNumber()
-				return OsTrn(ta > tb, 1, 0) - OsTrn(ta < tb, 1, 0)
-			case string:
-				return strings.Compare(val, B.GetString())
-			}
-		} else {
-			if A.IsNumber() || B.IsNumber() {
-				ta := A.GetNumber()
-				tb := B.GetNumber()
-				return OsTrn(ta > tb, 1, 0) - OsTrn(ta < tb, 1, 0)
-			}
-
-			if A.IsText() && B.IsText() {
-				return strings.Compare(A.GetString(), B.GetString())
-			}
-
-			return OsTrn(!A.Is() && !B.Is(), 0, 1) // both null = 0
-		}
+		return A.value.Cmp(&B.value)
 	}
 
 	return 1 // different
