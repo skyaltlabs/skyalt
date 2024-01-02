@@ -54,8 +54,8 @@ type SANode struct {
 
 	Name     string
 	Exe      string
-	Bypass   bool
-	Selected bool
+	Bypass   bool `json:",omitempty"`
+	Selected bool `json:",omitempty"`
 
 	selected_cover  bool
 	selected_canvas OsV4
@@ -105,6 +105,10 @@ func NewSANodeRoot(path string) (*SANode, error) {
 	}
 
 	return w, nil
+}
+
+func (w *SANode) SetError(err string) {
+	w.errExe = errors.New(err)
 }
 
 func (w *SANode) Save(path string) error {
@@ -361,7 +365,31 @@ func (w *SANode) IsExe() bool {
 
 func (w *SANode) Execute(app *SAApp) bool {
 
+	ok := true
 	st := OsTime()
+
+	switch w.Exe {
+	case "sqlite_select":
+		w.Sqlite_select()
+		//...
+	case "sqlite_update":
+		//...
+	case "sqlite_delete":
+		//...
+	case "sqlite_execute":
+		//...
+
+	default:
+		ok = w.executeProgram(app)
+	}
+
+	w.exeTimeSec = OsTime() - st
+
+	fmt.Println(w.Name, "done")
+	return ok
+}
+
+func (w *SANode) executeProgram(app *SAApp) bool {
 
 	fmt.Println("execute:", w.Name)
 
@@ -382,10 +410,9 @@ func (w *SANode) Execute(app *SAApp) bool {
 	for _, v := range conn.Attrs {
 		v.Error = ""
 
-		a := w.GetAttr(v.Name, v.Value, v.Gui_type, v.Gui_options, v.Gui_ReadOnly)
+		a := w.GetAttr(v.Name, v.Value, v.Gui_type, v.Gui_options)
 		a.Gui_type = v.Gui_type
 		a.Gui_options = v.Gui_options
-		a.Gui_ReadOnly = v.Gui_ReadOnly
 		a.errExe = nil
 	}
 
@@ -397,7 +424,7 @@ func (w *SANode) Execute(app *SAApp) bool {
 		//}
 		dst := conn.FindAttr(src.Name)
 		if dst != nil {
-			dst.Value = src.finalValue
+			dst.Value = src.finalValue.String()
 		} else {
 			w.Attrs = append(w.Attrs[:i], w.Attrs[i+1:]...) //remove
 		}
@@ -408,12 +435,11 @@ func (w *SANode) Execute(app *SAApp) bool {
 
 	//copy back
 	for _, v := range conn.Attrs {
-		a := w.GetAttr(v.Name, v.Value, v.Gui_type, v.Gui_options, v.Gui_ReadOnly)
+		a := w.GetAttr(v.Name, v.Value, v.Gui_type, v.Gui_options)
 		if v.Gui_ReadOnly {
 			a.Value = v.Value
 			a.Gui_type = v.Gui_type
 			a.Gui_options = v.Gui_options
-			a.Gui_ReadOnly = v.Gui_ReadOnly
 		}
 		a.errExe = nil
 		if v.Error != "" {
@@ -428,8 +454,6 @@ func (w *SANode) Execute(app *SAApp) bool {
 	//if w.HasExeError() {
 	//	fmt.Printf("Node(%s) has error(%v)\n", w.Name, w.errExe)
 	//}
-
-	w.exeTimeSec = OsTime() - st
 
 	fmt.Println(w.Name, "done")
 	return ok
@@ -610,8 +634,8 @@ func (w *SANode) findAttrFloat(name string) (*SANodeAttr, float64) {
 	return nil, 0
 }
 
-func (w *SANode) GetAttr(name string, value string, gui_type string, gui_options string, gui_readOnly bool) *SANodeAttr {
-	return w._getAttr(SANodeAttr{Name: name, Value: value, Gui_type: gui_type, Gui_options: gui_options, Gui_ReadOnly: gui_readOnly})
+func (w *SANode) GetAttr(name string, value string, gui_type string, gui_options string) *SANodeAttr {
+	return w._getAttr(SANodeAttr{Name: name, Value: value, Gui_type: gui_type, Gui_options: gui_options})
 }
 
 func (w *SANode) GetAttrEdit(name string, defValue string) *SANodeAttr {
@@ -634,6 +658,10 @@ func (w *SANode) GetAttrDate(name string, defValue string) *SANodeAttr {
 	return w._getAttr(SANodeAttr{Name: name, Value: defValue, Gui_type: "date"})
 }
 
+func (w *SANode) GetAttrTable(name string) *SANodeAttr {
+	return w._getAttr(SANodeAttr{Name: name, Value: "", Gui_type: "table"})
+}
+
 func (w *SANode) GetAttrColor(prefix_name string) OsCd {
 	var cd OsCd
 	cd.R = w.GetAttrEdit(prefix_name+"r", "0").GetByte()
@@ -643,10 +671,10 @@ func (w *SANode) GetAttrColor(prefix_name string) OsCd {
 	return cd
 }
 func (w *SANode) SetAttrColor(prefix_name string, cd OsCd) {
-	w.GetAttrEdit(prefix_name+"r", "0").SetInt(int(cd.R))
-	w.GetAttrEdit(prefix_name+"g", "0").SetInt(int(cd.G))
-	w.GetAttrEdit(prefix_name+"b", "0").SetInt(int(cd.B))
-	w.GetAttrEdit(prefix_name+"a", "255").SetInt(int(cd.A))
+	w.GetAttrEdit(prefix_name+"r", "0").SetUserInt(int(cd.R))
+	w.GetAttrEdit(prefix_name+"g", "0").SetUserInt(int(cd.G))
+	w.GetAttrEdit(prefix_name+"b", "0").SetUserInt(int(cd.B))
+	w.GetAttrEdit(prefix_name+"a", "255").SetUserInt(int(cd.A))
 }
 
 func (w *SANode) GetGrid() OsV4 {
@@ -658,12 +686,12 @@ func (w *SANode) GetGrid() OsV4 {
 	return v
 }
 func (w *SANode) SetGridStart(v OsV2) {
-	w.GetAttrEdit("grid_x", "0").SetInt(v.X)
-	w.GetAttrEdit("grid_y", "0").SetInt(v.Y)
+	w.GetAttrEdit("grid_x", "0").SetUserInt(v.X)
+	w.GetAttrEdit("grid_y", "0").SetUserInt(v.Y)
 }
 func (w *SANode) SetGridSize(v OsV2) {
-	w.GetAttrEdit("grid_w", "1").SetInt(v.X)
-	w.GetAttrEdit("grid_h", "1").SetInt(v.Y)
+	w.GetAttrEdit("grid_w", "1").SetUserInt(v.X)
+	w.GetAttrEdit("grid_h", "1").SetUserInt(v.Y)
 }
 func (w *SANode) SetGrid(coord OsV4) {
 	w.SetGridStart(coord.Start)
@@ -705,10 +733,7 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 			clicked = ui.Comp_buttonMenu(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttrEdit("label", "").GetString(), "", enable, selected) > 0
 			if clicked {
 				sel := w.findAttr("selected")
-				val, editable := sel.GetDirectLink()
-				if editable {
-					*val = OsTrnString(selected, "0", "1")
-				}
+				sel.SetUserBool(selected)
 			}
 
 		case 3:
@@ -728,10 +753,7 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 					clicked = ui.Comp_buttonText(i*2+0, 0, 1, 1, it, "", "", enable, selected == i) > 0
 					if clicked {
 						sel := w.findAttr("selected")
-						val, editable := sel.GetDirectLink()
-						if editable {
-							*val = strconv.Itoa(i)
-						}
+						sel.SetUserInt(i)
 					}
 					if i+1 < len(butts) {
 						ui.Div_SpacerCol(i*2+1, 0, 1, 1)
@@ -743,31 +765,50 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 		}
 		w.GetAttrSwitch("clicked", "0").GetBool()
 		cl := w.findAttr("clicked")
-		cl.Gui_ReadOnly = true
 		cl.Value = OsTrnString(clicked, "1", "0")
 
 	case "text":
 		ui.Comp_text(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttrEdit("label", "").GetString(), w.GetAttrCombo("align", "0", "Left;Center;Right").GetInt())
 
 	case "switch":
-		value, editable := w.GetAttrEdit("value", "").GetDirectLink()
+		a, editable := w.GetAttrEdit("value", "").GetDirectLink()
+		value := a.finalValue.String()
+		valuePtr := &value
+		if editable {
+			valuePtr = &a.Value
+		}
 		enable := w.GetAttrSwitch("enable", "1").GetBool() && editable
-		ui.Comp_switch(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, false, w.GetAttrEdit("label", "").GetString(), "", enable)
+		ui.Comp_switch(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, valuePtr, false, w.GetAttrEdit("label", "").GetString(), "", enable)
 
 	case "checkbox":
-		value, editable := w.GetAttrEdit("value", "").GetDirectLink()
+		a, editable := w.GetAttrEdit("value", "").GetDirectLink()
+		value := a.finalValue.String()
+		valuePtr := &value
+		if editable {
+			valuePtr = &a.Value
+		}
 		enable := w.GetAttrSwitch("enable", "1").GetBool() && editable
-		ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, false, w.GetAttrEdit("label", "").GetString(), "", enable)
+		ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, valuePtr, false, w.GetAttrEdit("label", "").GetString(), "", enable)
 
 	case "combo":
-		value, editable := w.GetAttrEdit("value", "").GetDirectLink()
+		a, editable := w.GetAttrEdit("value", "").GetDirectLink()
+		value := a.finalValue.String()
+		valuePtr := &value
+		if editable {
+			valuePtr = &a.Value
+		}
 		enable := w.GetAttrSwitch("enable", "1").GetBool() && editable
-		ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, w.GetAttrEdit("options", "a;b;c").GetString(), "", enable, w.GetAttrSwitch("search", "0").GetBool())
+		ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, valuePtr, w.GetAttrEdit("options", "a;b;c").GetString(), "", enable, w.GetAttrSwitch("search", "0").GetBool())
 
 	case "editbox":
-		value, editable := w.GetAttrEdit("value", "").GetDirectLink()
+		a, editable := w.GetAttrEdit("value", "").GetDirectLink()
+		value := a.finalValue.String()
+		valuePtr := &value
+		if editable {
+			valuePtr = &a.Value
+		}
 		enable := w.GetAttrSwitch("enable", "1").GetBool() && editable
-		ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, value, w.GetAttrEdit("precision", "2").GetInt(), "", w.GetAttrEdit("ghost", "").GetString(), false, w.GetAttrSwitch("tempToValue", "0").GetBool(), enable)
+		ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, valuePtr, w.GetAttrEdit("precision", "2").GetInt(), "", w.GetAttrEdit("ghost", "").GetString(), false, w.GetAttrSwitch("tempToValue", "0").GetBool(), enable)
 
 	case "divider":
 		tp := w.GetAttrCombo("type", "0", "Column;Row").GetInt()
@@ -807,8 +848,8 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 
 			ui.Comp_Calendar(&value, &page, 100, 100)
 
-			w.GetAttrDate("value", "0").SetInt(int(value))
-			w.GetAttrDate("page", "0").SetInt(int(page))
+			w.GetAttrDate("value", "0").SetUserInt(int(value))
+			w.GetAttrDate("page", "0").SetUserInt(int(page))
 		}
 		ui.Div_end()
 
@@ -819,7 +860,7 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 			value := w.GetAttrDate("value", "0").GetInt64()
 			show_time := w.GetAttrSwitch("show_time", "0").GetBool()
 			if ui.Comp_CalendarDataPicker(&value, show_time, w.Name, enable) {
-				w.GetAttrDate("value", "0").SetInt(int(value))
+				w.GetAttrDate("value", "0").SetUserInt(int(value))
 			}
 		}
 		ui.Div_end()
@@ -846,7 +887,7 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 			//set back
 			w.GetAttrEdit("lon", "0").SetFloat(cam_lon)
 			w.GetAttrEdit("lat", "0").SetFloat(cam_lat)
-			w.GetAttrEdit("zoom", "5").SetInt(int(cam_zoom))
+			w.GetAttrEdit("zoom", "5").SetUserInt(int(cam_zoom))
 
 			//app.mapp.comp_map(w, ui)
 			ui.Div_end()
@@ -1029,47 +1070,79 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui, gui_type 
 		}
 
 	} else {
-		value, editable := attr.GetDirectLink()
+
+		a, editable := attr.GetDirectLink()
+		value := a.finalValue.String()
+		valuePtr := &value
+		if editable {
+			valuePtr = &a.Value
+		}
 
 		switch strings.ToLower(gui_type) {
+
+		case "table":
+			tb := a.finalValue.Table()
+			ui.Comp_button(x, y, w, h, fmt.Sprintf("Table(%dcols x %drow)", len(tb.names), tb.NumRows()), "", true)
+
 		case "checkbox":
-			ui.Comp_checkbox(x, y, w, h, value, false, "", "", editable)
+			ui.Comp_checkbox(x, y, w, h, valuePtr, false, "", "", editable)
 
 		case "switch":
-			ui.Comp_switch(x, y, w, h, value, false, "", "", editable)
+			ui.Comp_switch(x, y, w, h, valuePtr, false, "", "", editable)
 
 		case "date":
 			ui.Div_start(x, y, w, h)
-			value := attr.GetInt64()
-			if ui.Comp_CalendarDataPicker(&value, true, attr.Name, editable) {
-				attr.SetInt(int(value))
+			val := attr.GetInt64()
+			if ui.Comp_CalendarDataPicker(&val, true, attr.Name, editable) {
+				attr.SetUserInt(int(val))
 			}
 			ui.Div_end()
 
 		case "combo":
-			ui.Comp_combo(x, y, w, h, value, attr.Gui_options, "", editable, false)
+			ui.Comp_combo(x, y, w, h, valuePtr, attr.Gui_options, "", editable, false)
 
 		case "editbox":
-			ui.Comp_editbox(x, y, w, h, value, 2, "", "", false, false, editable)
+			ui.Comp_editbox(x, y, w, h, valuePtr, 2, "", "", false, false, editable)
 
 		case "xywh":
 			ui.Div_start(x, y, w, h)
 			{
 				prefix := attr.Name[:len(attr.Name)-1]
-				valueX, editableX := attr.node.GetAttrEdit(prefix+"x", "0").GetDirectLink()
-				valueY, editableY := attr.node.GetAttrEdit(prefix+"y", "0").GetDirectLink()
-				valueW, editableW := attr.node.GetAttrEdit(prefix+"w", "1").GetDirectLink()
-				valueH, editableH := attr.node.GetAttrEdit(prefix+"h", "1").GetDirectLink()
+				valueX, eX := attr.node.GetAttrEdit(prefix+"x", "0").GetDirectLink()
+				valueY, eY := attr.node.GetAttrEdit(prefix+"y", "0").GetDirectLink()
+				valueW, eW := attr.node.GetAttrEdit(prefix+"w", "1").GetDirectLink()
+				valueH, eH := attr.node.GetAttrEdit(prefix+"h", "1").GetDirectLink()
 
 				ui.Div_colMax(0, 100)
 				ui.Div_colMax(1, 100)
 				ui.Div_colMax(2, 100)
 				ui.Div_colMax(3, 100)
 
-				ui.Comp_editbox(0, 0, 1, 1, valueX, 2, "", "", false, false, editableX)
-				ui.Comp_editbox(1, 0, 1, 1, valueY, 2, "", "", false, false, editableY)
-				ui.Comp_editbox(2, 0, 1, 1, valueW, 2, "", "", false, false, editableW)
-				ui.Comp_editbox(3, 0, 1, 1, valueH, 2, "", "", false, false, editableH)
+				vx := valueX.finalValue.String()
+				vxPtr := &vx
+				if eX {
+					vxPtr = &valueX.Value
+				}
+				vy := valueY.finalValue.String()
+				vyPtr := &vy
+				if eY {
+					vyPtr = &valueY.Value
+				}
+				vw := valueW.finalValue.String()
+				vwPtr := &vw
+				if eW {
+					vwPtr = &valueW.Value
+				}
+				vh := valueH.finalValue.String()
+				vhPtr := &vh
+				if eH {
+					vhPtr = &valueH.Value
+				}
+
+				ui.Comp_editbox(0, 0, 1, 1, vxPtr, 2, "", "", false, false, eX)
+				ui.Comp_editbox(1, 0, 1, 1, vyPtr, 2, "", "", false, false, eY)
+				ui.Comp_editbox(2, 0, 1, 1, vwPtr, 2, "", "", false, false, eW)
+				ui.Comp_editbox(3, 0, 1, 1, vhPtr, 2, "", "", false, false, eH)
 			}
 			ui.Div_end()
 
@@ -1085,7 +1158,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui, gui_type 
 			ui.Div_end()
 
 		default: //edit
-			ui.Comp_editbox(x, y, w, h, value, 2, "", "", false, false, editable)
+			ui.Comp_editbox(x, y, w, h, valuePtr, 2, "", "", false, false, editable)
 		}
 	}
 }

@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -29,17 +30,19 @@ type SANodeAttr struct {
 	Value   string `json:",omitempty"`
 	ShowExp bool
 
-	finalValue   string
+	finalValue   SAValue
 	instr        *VmInstr
 	depends      []*SANodeAttr
 	isDirectLink bool
 	errExp       error
 	errExe       error
 
-	Gui_type     string `json:",omitempty"`
-	Gui_options  string `json:",omitempty"`
-	Gui_ReadOnly bool   `json:",omitempty"` //output
+	Gui_type    string `json:",omitempty"`
+	Gui_options string `json:",omitempty"`
+}
 
+func (attr *SANodeAttr) SetErrorExe(err string) {
+	attr.errExe = errors.New(err)
 }
 
 func (attr *SANodeAttr) IsExpression() bool {
@@ -51,60 +54,74 @@ func (attr *SANodeAttr) IsExpression() bool {
 	return strings.HasPrefix(attr.Value, "=")
 }
 
-func (attr *SANodeAttr) getDirectLink_inner(orig *SANodeAttr) (*string, bool) {
+func (attr *SANodeAttr) getDirectLink_inner(orig *SANodeAttr) (*SANodeAttr, bool) {
 
 	if attr.isDirectLink {
 		if attr.depends[0] == orig {
 			fmt.Println("Warning: infinite loop")
-			return &attr.Value, true //avoid infinite loop
+			return attr, false //avoid infinite loop
 		}
 		return attr.depends[0].getDirectLink_inner(orig) //go to source
 	}
 
-	if len(attr.depends) > 0 {
-		return &attr.finalValue, false //expression. oldValue = result
+	return attr, (attr.instr != nil)
+	/*if attr.instr != nil || attr.Gui_type == "table" {
+		return nil, &attr.finalValue //expression. finalValue = result
 	}
 
-	return &attr.Value, true //this
+	return &attr.Value, nil //this*/
 }
 
-func (attr *SANodeAttr) GetDirectLink() (*string, bool) {
+func (attr *SANodeAttr) GetDirectLink() (*SANodeAttr, bool) {
 	return attr.getDirectLink_inner(attr)
 }
-func (attr *SANodeAttr) SetString(value string) {
-	val, editable := attr.GetDirectLink()
+func (attr *SANodeAttr) SetUserString(value string) {
+	a, editable := attr.GetDirectLink()
 	if editable {
-		*val = value
+		a.Value = value
 	}
 }
-func (attr *SANodeAttr) SetInt(value int) {
-	val, editable := attr.GetDirectLink()
+func (attr *SANodeAttr) SetUserInt(value int) {
+	a, editable := attr.GetDirectLink()
 	if editable {
-		*val = strconv.Itoa(value)
+		a.Value = strconv.Itoa(value)
 	}
+}
+func (attr *SANodeAttr) SetUserBool(value bool) {
+	attr.SetUserInt(OsTrn(value, 1, 0))
 }
 func (attr *SANodeAttr) SetFloat(value float64) {
-	val, editable := attr.GetDirectLink()
+	a, editable := attr.GetDirectLink()
 	if editable {
-		*val = strconv.FormatFloat(value, 'f', -1, 64)
+		a.Value = strconv.FormatFloat(value, 'f', -1, 64)
 	}
 }
 
 func (attr *SANodeAttr) GetString() string {
-	val, _ := attr.GetDirectLink()
-	return *val
+	a, _ := attr.GetDirectLink()
+	return a.finalValue.String()
+	/*if attrVal != nil {
+		return attrVal.String()
+	}
+	return *val*/
 }
 func (attr *SANodeAttr) GetInt() int {
-	v, _ := strconv.Atoi(attr.GetString())
-	return v
+	a, _ := attr.GetDirectLink()
+	return int(a.finalValue.Number())
+	//v, _ := strconv.Atoi(attr.GetString())
+	//return v
 }
 func (attr *SANodeAttr) GetInt64() int64 {
-	v, _ := strconv.Atoi(attr.GetString())
-	return int64(v)
+	a, _ := attr.GetDirectLink()
+	return int64(a.finalValue.Number())
+	//v, _ := strconv.Atoi(attr.GetString())
+	//return int64(v)
 }
 func (attr *SANodeAttr) GetFloat() float64 {
-	v, _ := strconv.ParseFloat(attr.GetString(), 64)
-	return v
+	a, _ := attr.GetDirectLink()
+	return a.finalValue.Number()
+	//v, _ := strconv.ParseFloat(attr.GetString(), 64)
+	//return v
 }
 func (attr *SANodeAttr) GetBool() bool {
 	return attr.GetInt() != 0
@@ -135,19 +152,16 @@ func (attr *SANodeAttr) ExecuteExpression() {
 		}
 	}
 
-	var val string
-	if attr.instr != nil && !attr.isDirectLink {
+	if attr.instr != nil /*&& !attr.isDirectLink*/ {
 		st := InitVmST()
 		rec := attr.instr.Exe(nil, &st)
-		val = rec.GetString()
+		attr.finalValue = rec.value
 	} else {
-		value, _ := attr.GetDirectLink()
-		val = *value
+		//vvalalue, _ := attr.GetDirectLink()
+		attr.finalValue.SetString(attr.Value)
 	}
-
-	attr.finalValue = val
 }
 
 func (a *SANodeAttr) Cmp(b *SANodeAttr) bool {
-	return a.Name == b.Name && a.Value == b.Value && a.Gui_type == b.Gui_type && a.Gui_options == b.Gui_options && a.Gui_ReadOnly == b.Gui_ReadOnly
+	return a.Name == b.Name && a.Value == b.Value && a.Gui_type == b.Gui_type && a.Gui_options == b.Gui_options
 }
