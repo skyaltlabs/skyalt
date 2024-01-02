@@ -392,6 +392,7 @@ func (app *SAApp) History(ui *Ui) {
 
 var SAStandardPrimitives = []string{"button", "text", "checkbox", "switch", "editbox", "divider", "combo", "color_palette", "color", "calendar", "date"}
 var SAStandardComponents = []string{"layout", "map", "map_locators"}
+var SAStandardModifiers = []string{"sqlite_select", "sqlite_insert", "sqlite_update", "sqlite_delete", "sqlite_execute"}
 
 func SAApp_IsStdPrimitive(name string) bool {
 	for _, fn := range SAStandardPrimitives {
@@ -413,6 +414,7 @@ func SAApp_IsStdComponent(name string) bool {
 func (app *SAApp) getListOfNodes() []string {
 	fns := SAStandardPrimitives
 	fns = append(fns, SAStandardComponents...)
+	fns = append(fns, SAStandardModifiers...)
 	fns = append(fns, app.base.server.nodes...) //from /nodes dir
 	return fns
 }
@@ -464,7 +466,9 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 
 		keys := &ui.buff.win.io.keys
 
-		fns := app.getListOfNodesTranslated()
+		app.canvas.addnode_search = strings.ToLower(app.canvas.addnode_search)
+
+		fns := app.getListOfNodes()
 		for _, fn := range fns {
 			if app.canvas.addnode_search == "" || strings.Contains(fn, app.canvas.addnode_search) {
 				if keys.enter || ui.Comp_buttonMenu(0, y, 1, 1, fn, "", true, false) > 0 {
