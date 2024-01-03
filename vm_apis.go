@@ -132,8 +132,6 @@ type VmApi struct {
 	prms int
 
 	fn VmInstr_callbackExecute
-
-	params []string
 }
 
 type VmApis struct {
@@ -158,24 +156,29 @@ func (apis *VmApis) _Add(item VmApi) {
 func NewVmApis() *VmApis {
 	var apis VmApis
 
-	apis._Add(VmApi{0, "if", 3, VmApi_If, nil})
+	apis._Add(VmApi{0, "if", 3, VmApi_If})
+	apis._Add(VmApi{0, "not", 1, VmApi_Not})
 
-	apis._Add(VmApi{0, "not", 1, VmApi_Not, nil})
+	apis._Add(VmApi{0, "bool2", 1, VmApi_GuiBool2})
+	apis._Add(VmApi{0, "bool", 1, VmApi_GuiBool})
+	apis._Add(VmApi{0, "combo", 2, VmApi_GuiCombo})
+	apis._Add(VmApi{0, "date", 1, VmApi_GuiDate})
+	apis._Add(VmApi{0, "color", 1, VmApi_GuiColor})
 
-	apis._Add(VmApi{0, "min", 2, VmApi_Min, nil})
-	apis._Add(VmApi{0, "max", 2, VmApi_Max, nil})
-	apis._Add(VmApi{0, "clamp", 3, VmApi_Clamp, nil})
+	apis._Add(VmApi{0, "min", 2, VmApi_Min})
+	apis._Add(VmApi{0, "max", 2, VmApi_Max})
+	apis._Add(VmApi{0, "clamp", 3, VmApi_Clamp})
 
-	apis._Add(VmApi{0, "sqrt", 1, VmApi_Sqrt, nil})
-	apis._Add(VmApi{0, "pow", 2, VmApi_Pow, nil})
+	apis._Add(VmApi{0, "sqrt", 1, VmApi_Sqrt})
+	apis._Add(VmApi{0, "pow", 2, VmApi_Pow})
 
-	apis._Add(VmApi{0, "pi", 0, VmApi_Pi, nil})
-	apis._Add(VmApi{0, "sin", 1, VmApi_Sin, nil})
-	apis._Add(VmApi{0, "cos", 1, VmApi_Cos, nil})
-	apis._Add(VmApi{0, "tan", 1, VmApi_Tan, nil})
-	apis._Add(VmApi{0, "atan", 1, VmApi_ATan, nil})
-	apis._Add(VmApi{0, "log", 1, VmApi_Log, nil})
-	apis._Add(VmApi{0, "exp", 1, VmApi_Exp, nil})
+	apis._Add(VmApi{0, "pi", 0, VmApi_Pi})
+	apis._Add(VmApi{0, "sin", 1, VmApi_Sin})
+	apis._Add(VmApi{0, "cos", 1, VmApi_Cos})
+	apis._Add(VmApi{0, "tan", 1, VmApi_Tan})
+	apis._Add(VmApi{0, "atan", 1, VmApi_ATan})
+	apis._Add(VmApi{0, "log", 1, VmApi_Log})
+	apis._Add(VmApi{0, "exp", 1, VmApi_Exp})
 
 	return &apis
 }
