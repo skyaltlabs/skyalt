@@ -7,13 +7,15 @@ import (
 )
 
 const (
-	VmLexerBracket = 0
-	VmLexerWord    = 1
-	VmLexerOp      = 2
-	VmLexerNumber  = 3
-	VmLexerQuote   = 4
-	VmLexerDot     = 5
-	VmLexerComma   = 6
+	VmLexerBracketRound  = 0
+	VmLexerBracketSquare = 1
+	VmLexerBracketCurly  = 2
+	VmLexerWord          = 3
+	VmLexerOp            = 4
+	VmLexerNumber        = 5
+	VmLexerQuote         = 6
+	VmLexerDot           = 7
+	VmLexerComma         = 8
 )
 
 // use for root and brackets
@@ -112,7 +114,7 @@ func (lexer *VmLexer) Extract(st, en int) *VmLexer {
 	}
 
 	var ret VmLexer
-	ret.tp = VmLexerBracket
+	ret.tp = VmLexerBracketRound
 	ret.parent = lexer
 
 	if st >= len(lexer.subs) {
@@ -170,7 +172,7 @@ func (lexer *VmLexer) IsSyntaxKeyword(line string) bool {
 
 func ParseLine(line string, skipN int, ops *VmOps) (*VmLexer, error) {
 
-	lexer := NewVmLexer(VmLexerBracket, 0, len(line))
+	lexer := NewVmLexer(VmLexerBracketRound, 0, len(line))
 	if lexer.end == 0 {
 		return lexer, nil
 	}
@@ -207,11 +209,24 @@ func ParseLine(line string, skipN int, ops *VmOps) (*VmLexer, error) {
 			}
 		} else if ch == '(' {
 			//bracket(open)
-			lex := NewVmLexer(VmLexerBracket, i, -1)
+			lex := NewVmLexer(VmLexerBracketRound, i, -1)
 			lex.parent = lexer
 			lexer.subs = append(lexer.subs, lex)
 			lexer = lex //go deeper
-		} else if ch == ')' {
+		} else if ch == '[' {
+			//bracket(open)
+			lex := NewVmLexer(VmLexerBracketSquare, i, -1)
+			lex.parent = lexer
+			lexer.subs = append(lexer.subs, lex)
+			lexer = lex //go deeper
+		} else if ch == '{' {
+			//bracket(open)
+			lex := NewVmLexer(VmLexerBracketCurly, i, -1)
+			lex.parent = lexer
+			lexer.subs = append(lexer.subs, lex)
+			lexer = lex //go deeper
+
+		} else if ch == ')' || ch == ']' || ch == '}' {
 			//bracket(close)
 			lexer.end = i + 1
 			lexer = lexer.parent //go back

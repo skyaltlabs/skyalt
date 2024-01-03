@@ -18,6 +18,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 )
 
 type VmInstr_callbackExecute func(self *VmInstr, rec *Rec, st *VmST) *Rec
@@ -41,7 +42,8 @@ type VmInstrPrm struct {
 }
 
 type VmInstr struct {
-	fn VmInstr_callbackExecute
+	parent *VmInstr
+	fn     VmInstr_callbackExecute
 
 	prms []VmInstrPrm
 
@@ -50,30 +52,25 @@ type VmInstr struct {
 
 	next *VmInstr
 
-	posA OsV2
-	posB OsV2
+	pos OsV2
 }
 
-func NewVmInstr(exe VmInstr_callbackExecute, lexerA *VmLexer, lexerB *VmLexer) *VmInstr {
+func NewVmInstr(exe VmInstr_callbackExecute, lexer *VmLexer) *VmInstr {
 	var instr VmInstr
 
 	instr.fn = exe
 	instr.temp = NewRec()
 
-	if lexerA != nil {
-		instr.posA = OsV2{lexerA.start, lexerA.end}
-	}
-	if lexerB != nil {
-		instr.posB = OsV2{lexerB.start, lexerB.end}
-	}
+	instr.pos = OsV2{lexer.start, lexer.end}
 
 	return &instr
 }
 
 func (instr *VmInstr) RenameAccessNode(line string, oldName, newName string) string {
 	if VmCallback_Cmp(instr.fn, VmBasic_Access) {
-		if line[instr.posA.X:instr.posA.Y] == oldName {
-			line = line[:instr.posA.X] + newName + line[instr.posA.Y:]
+		spl := strings.Split(line[instr.pos.X:instr.pos.Y], ".")
+		if len(spl) > 0 && spl[0] == oldName {
+			line = line[:instr.pos.X] + newName + line[instr.pos.X+len(spl[0]):]
 		}
 	}
 
@@ -90,8 +87,45 @@ func (instr *VmInstr) IsRunning(st *VmST) bool {
 	return st.running
 }
 
-func (instr *VmInstr) IsDirectLink() bool {
-	return VmCallback_Cmp(instr.fn, VmBasic_Access)
+func (instr *VmInstr) LineReplace(line *string, value string) {
+	*line = (*line)[:instr.pos.X] + value + (*line)[instr.pos.Y:]
+}
+func (instr *VmInstr) LineExtract(line string, value string) string {
+	return line[instr.pos.X:instr.pos.Y]
+}
+
+func (instr *VmInstr) GetConst() *VmInstr {
+
+	if VmCallback_Cmp(instr.fn, VmBasic_Constant) { //const(!)
+		return instr
+	}
+
+	if VmCallback_Cmp(instr.fn, VmApi_GuiBool) ||
+		VmCallback_Cmp(instr.fn, VmApi_GuiBool2) ||
+		VmCallback_Cmp(instr.fn, VmApi_GuiCombo) ||
+		VmCallback_Cmp(instr.fn, VmApi_GuiDate) ||
+		VmCallback_Cmp(instr.fn, VmApi_GuiColor) {
+		return instr.prms[0].instr.GetConst()
+	}
+
+	return nil
+}
+
+func (instr *VmInstr) GetDirectDirectAccess() *VmInstr {
+
+	if VmCallback_Cmp(instr.fn, VmBasic_Access) { //access(!)
+		return instr
+	}
+
+	if VmCallback_Cmp(instr.fn, VmApi_GuiBool) ||
+		VmCallback_Cmp(instr.fn, VmApi_GuiBool2) ||
+		VmCallback_Cmp(instr.fn, VmApi_GuiCombo) ||
+		VmCallback_Cmp(instr.fn, VmApi_GuiDate) ||
+		VmCallback_Cmp(instr.fn, VmApi_GuiColor) {
+		return instr.prms[0].instr.GetDirectDirectAccess()
+	}
+
+	return nil
 }
 
 func (instr *VmInstr) NumPrms() int {
@@ -99,6 +133,9 @@ func (instr *VmInstr) NumPrms() int {
 }
 
 func (instr *VmInstr) AddPropInstr(add *VmInstr) int {
+
+	add.parent = instr
+
 	var t VmInstrPrm
 	t.instr = add
 
@@ -150,5 +187,58 @@ func VmBasic_Bracket(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 
 func VmBasic_Access(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 	instr.temp.value = instr.attr.finalValue
+	return instr.temp
+}
+
+func VmApi_GuiBool(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+	return instr.ExePrm(rec, st, 0)
+}
+func VmApi_GuiBool2(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+	return instr.ExePrm(rec, st, 0)
+}
+
+func VmApi_GuiCombo(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+	ret := instr.ExePrm(rec, st, 0)
+	instr.temp = instr.ExePrm(rec, st, 1) //save options into temp
+	return ret
+}
+func VmApi_GuiDate(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+	return instr.ExePrm(rec, st, 0)
+}
+
+func VmApi_GuiColor(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+	return VmBasic_ConstArray(instr, rec, st)
+}
+
+func VmBasic_ConstArray(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+	var arr SAValueArray
+	arr.Resize(len(instr.prms))
+	for i := range instr.prms {
+		arr.Get(i).value = instr.ExePrm(rec, st, i).value.value
+	}
+	instr.temp.value.SetArray(&arr)
+	return instr.temp
+}
+
+func VmBasic_ConstTable(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+	tb := NewSAValueTable(nil)
+	c := 0
+	r := 0
+	for i := range instr.prms {
+		v := instr.ExePrm(rec, st, i).value
+		if i == 0 {
+			tb = NewSAValueTable(strings.Split(v.String(), ";"))
+		} else {
+			tb.Get(c, r).value = v.value
+
+			c++
+			if c >= len(tb.names) {
+				c = 0
+				r++
+			}
+		}
+	}
+
+	instr.temp.value.SetTable(tb)
 	return instr.temp
 }

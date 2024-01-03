@@ -129,7 +129,7 @@ func (line *VmLine) getConstant(lexer *VmLexer) (bool, *VmInstr) {
 	lexer = lexer.subs[0]
 
 	if lexer.tp == VmLexerNumber {
-		instr := NewVmInstr(VmBasic_Constant, lexer, nil)
+		instr := NewVmInstr(VmBasic_Constant, lexer)
 		value, err := strconv.ParseFloat(lexer.GetString(line.line), 64)
 		if err != nil {
 			line.addError(lexer, "Converting string . number failed")
@@ -142,11 +142,25 @@ func (line *VmLine) getConstant(lexer *VmLexer) (bool, *VmInstr) {
 		line.addSyntax_text(lexer, VmColor_text())
 		ch := line.line[lexer.start]
 		if ch == '"' {
-			instr := NewVmInstr(VmBasic_Constant, lexer, nil)
+			instr := NewVmInstr(VmBasic_Constant, lexer)
 			instr.temp.value.SetString(lexer.GetStringReplaceDivs(line.line))
 			return true, instr
 		}
 
+	}
+
+	// array
+	if lexer.tp == VmLexerBracketSquare {
+		instr := NewVmInstr(VmBasic_ConstArray, lexer)
+		line.setParams(lexer, instr)
+		return true, instr
+	}
+
+	// table
+	if lexer.tp == VmLexerBracketCurly {
+		instr := NewVmInstr(VmBasic_ConstTable, lexer)
+		line.setParams(lexer, instr)
+		return true, instr
 	}
 
 	return false, nil
@@ -168,7 +182,7 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 			return nil
 		}
 
-		op := NewVmInstr(opp.fn, lexer, nil)
+		op := NewVmInstr(opp.fn, lexer)
 
 		// right
 		rightLex := lexer.Extract(op_i+1, -1)
@@ -193,8 +207,8 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 	}
 
 	// brackets
-	if len(lexer.subs) == 1 && lexer.subs[0].tp == VmLexerBracket {
-		instr := NewVmInstr(VmBasic_Bracket, lexer.subs[0], nil)
+	if len(lexer.subs) == 1 && lexer.subs[0].tp == VmLexerBracketRound {
+		instr := NewVmInstr(VmBasic_Bracket, lexer.subs[0])
 		instr.AddPropInstr(line.getExp(lexer.subs[0]))
 		return instr
 	}
@@ -202,7 +216,7 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 	// api()
 	if len(lexer.subs) >= 2 &&
 		lexer.subs[0].tp == VmLexerWord &&
-		lexer.subs[1].tp == VmLexerBracket {
+		lexer.subs[1].tp == VmLexerBracketRound {
 
 		firstLex := lexer.subs[0]
 
@@ -220,7 +234,7 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 				line.addSyntax_text(firstLex, VmColor_apiDraw())
 			}
 
-			instr = NewVmInstr(api.fn, lexer.subs[0], lexer.subs[1])
+			instr = NewVmInstr(api.fn, lexer) //lexer.subs[0], lexer.subs[1])
 			prmsLex := lexer.subs[1]
 			line.setParams(prmsLex, instr)
 
@@ -248,11 +262,11 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 	//node.attr
 	if lexer.subs[0].tp == VmLexerWord {
 
-		var attrLex *VmLexer
-		if len(lexer.subs) >= 3 {
-			attrLex = lexer.subs[2]
-		}
-		instr := NewVmInstr(VmBasic_Access, lexer.subs[0], attrLex)
+		//var attrLex *VmLexer
+		//if len(lexer.subs) >= 3 {
+		//	attrLex = lexer.subs[2]
+		//}
+		instr := NewVmInstr(VmBasic_Access, lexer) //lexer.subs[0], attrLex)
 
 		if len(lexer.subs) == 1 {
 			//attribute from same node
@@ -281,11 +295,11 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 		return instr
 	} else if lexer.subs[0].tp == VmLexerDot {
 
-		var attrLex *VmLexer
-		if len(lexer.subs) >= 2 {
-			attrLex = lexer.subs[1]
-		}
-		instr := NewVmInstr(VmBasic_Access, nil, attrLex)
+		//var attrLex *VmLexer
+		//if len(lexer.subs) >= 2 {
+		//	attrLex = lexer.subs[1]
+		//}
+		instr := NewVmInstr(VmBasic_Access, lexer) //nil, attrLex)
 
 		if len(lexer.subs) >= 2 && lexer.subs[1].tp == VmLexerWord {
 			if len(lexer.subs) == 2 {
