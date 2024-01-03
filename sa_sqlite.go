@@ -24,9 +24,9 @@ import (
 
 func (node *SANode) Sqlite_select() bool {
 
-	fileAttr := node.GetAttrEdit("file", "")
-	queryAttr := node.GetAttrEdit("query", "")
-	resultAttr := node.GetAttrTable("result")
+	fileAttr := node.GetAttr("file", "")
+	queryAttr := node.GetAttr("query", "")
+	resultAttr := node.GetAttr("result", "{}")
 
 	file := fileAttr.GetString()
 	query := queryAttr.GetString()
@@ -94,7 +94,7 @@ func (node *SANode) Sqlite_select() bool {
 		node.SetError(fmt.Sprintf("Columns() failed: %v", err))
 		return false
 	}
-	tb := InitSAValueTable(columnNames)
+	tb := NewSAValueTable(columnNames)
 
 	for rows.Next() {
 		err := rows.Scan(scanArgs...)

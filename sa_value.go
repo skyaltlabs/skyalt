@@ -25,6 +25,68 @@ import (
 
 type SAValueArray struct {
 	items []SAValue
+
+	//depends      []*SANodeAttr
+	//isDirectLink bool
+}
+
+func (va *SAValueArray) GetV2() OsV2 {
+	v := OsV2{}
+	if len(va.items) >= 1 {
+		v.X = int(va.items[0].Number())
+	}
+	if len(va.items) >= 2 {
+		v.Y = int(va.items[1].Number())
+	}
+	return v
+}
+func (va *SAValueArray) GetV4() OsV4 {
+	v := OsV4{}
+	if len(va.items) >= 1 {
+		v.Start.X = int(va.items[0].Number())
+	}
+	if len(va.items) >= 2 {
+		v.Start.Y = int(va.items[1].Number())
+	}
+	if len(va.items) >= 3 {
+		v.Size.X = int(va.items[2].Number())
+	}
+	if len(va.items) >= 4 {
+		v.Size.Y = int(va.items[3].Number())
+	}
+	return v
+}
+
+func (va *SAValueArray) GetCd() OsCd {
+	v := OsCd{}
+	if len(va.items) >= 1 {
+		v.R = byte(va.items[0].Number())
+	}
+	if len(va.items) >= 2 {
+		v.G = byte(va.items[1].Number())
+	}
+	if len(va.items) >= 3 {
+		v.B = byte(va.items[2].Number())
+	}
+	if len(va.items) >= 4 {
+		v.A = byte(va.items[3].Number())
+	}
+	return v
+}
+
+func (va *SAValueArray) SetV4(v OsV4) {
+	va.Resize(4)
+	va.Get(0).SetInt(v.Start.X)
+	va.Get(1).SetInt(v.Start.Y)
+	va.Get(2).SetInt(v.Size.X)
+	va.Get(3).SetInt(v.Size.Y)
+}
+func (va *SAValueArray) SetCd(v OsCd) {
+	va.Resize(4)
+	va.Get(0).SetInt(int(v.R))
+	va.Get(1).SetInt(int(v.G))
+	va.Get(2).SetInt(int(v.B))
+	va.Get(3).SetInt(int(v.A))
 }
 
 func (va *SAValueArray) GetString() string {
@@ -67,14 +129,19 @@ func (va *SAValueArray) Resize(n int) {
 
 type SAValueTable struct {
 	names []string
-	items []SAValueArray
+	items []*SAValueArray
 }
 
-func InitSAValueTable(names []string) SAValueTable {
+func NewSAValueTable(names []string) *SAValueTable {
 	var vt SAValueTable
 	vt.names = names
-	vt.items = make([]SAValueArray, len(names))
-	return vt
+	vt.items = make([]*SAValueArray, len(names))
+
+	for i := range vt.items {
+		vt.items[i] = &SAValueArray{}
+	}
+
+	return &vt
 }
 
 func (vt *SAValueTable) NumRows() int {
@@ -143,10 +210,10 @@ func (v *SAValue) SetBlobCopy(val []byte) {
 	copy(vv, val)
 	v.value = v
 }
-func (v *SAValue) SetArray(val SAValueArray) {
+func (v *SAValue) SetArray(val *SAValueArray) {
 	v.value = val
 }
-func (v *SAValue) SetTable(val SAValueTable) {
+func (v *SAValue) SetTable(val *SAValueTable) {
 	v.value = val
 }
 
@@ -167,14 +234,14 @@ func (v *SAValue) String() string {
 	case []byte:
 		return string(vv) //?
 
-	case SAValueArray:
+	case *SAValueArray:
 		return vv.GetString()
 
-	case SAValueTable:
+	case *SAValueTable:
 		return vv.GetString()
 
 	default:
-		fmt.Println("Warning: Unknown SAValue conversion")
+		fmt.Println("Warning: Unknown SAValue conversion into String")
 	}
 	return ""
 }
@@ -189,7 +256,7 @@ func (v *SAValue) Number() float64 {
 		ret, _ := strconv.ParseFloat(string(vv), 64)
 		return ret
 	default:
-		fmt.Println("Warning: Unknown SAValue conversion")
+		fmt.Println("Warning: Unknown SAValue conversion into Number")
 	}
 	return 0
 }
@@ -203,17 +270,24 @@ func (v *SAValue) Blob() []byte {
 	case []byte:
 		return vv
 	default:
-		fmt.Println("Warning: Unknown SAValue conversion")
+		fmt.Println("Warning: Unknown SAValue conversion into Blob")
 	}
 	return nil
 }
 
-func (v *SAValue) Table() SAValueTable {
+func (v *SAValue) Array() *SAValueArray {
 	switch vv := v.value.(type) {
-	case SAValueTable:
+	case *SAValueArray:
 		return vv
 	}
-	return SAValueTable{}
+	return &SAValueArray{}
+}
+func (v *SAValue) Table() *SAValueTable {
+	switch vv := v.value.(type) {
+	case *SAValueTable:
+		return vv
+	}
+	return &SAValueTable{}
 }
 
 func (v *SAValue) Is() bool {

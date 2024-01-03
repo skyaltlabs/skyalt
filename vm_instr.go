@@ -88,6 +88,9 @@ func (instr *VmInstr) IsRunning(st *VmST) bool {
 }
 
 func (instr *VmInstr) LineReplace(line *string, value string) {
+	if instr == nil {
+		return
+	}
 	*line = (*line)[:instr.pos.X] + value + (*line)[instr.pos.Y:]
 }
 func (instr *VmInstr) LineExtract(line string, value string) string {

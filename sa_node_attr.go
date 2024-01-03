@@ -20,108 +20,102 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 )
 
 type SANodeAttr struct {
 	node *SANode
 
 	Name    string
-	Value   string `json:",omitempty"`
+	Value   string `json:",omitempty"` //every value is expression
 	ShowExp bool
 
-	finalValue   SAValue
-	instr        *VmInstr
-	depends      []*SANodeAttr
-	isDirectLink bool
-	errExp       error
-	errExe       error
+	finalValue SAValue
+	instr      *VmInstr
+	depends    []*SANodeAttr
 
-	Gui_type    string `json:",omitempty"`
-	Gui_options string `json:",omitempty"`
+	errExp error
+	errExe error
 }
 
 func (attr *SANodeAttr) SetErrorExe(err string) {
 	attr.errExe = errors.New(err)
 }
 
-func (attr *SANodeAttr) IsExpression() bool {
-	var found bool
-	for found { //loop!
-		attr.Value, found = strings.CutPrefix(attr.Value, " ")
-	}
+func (attr *SANodeAttr) getDirectLink_inner(orig *SANodeAttr) (*SANodeAttr, *VmInstr) {
 
-	return strings.HasPrefix(attr.Value, "=")
-}
-
-func (attr *SANodeAttr) getDirectLink_inner(orig *SANodeAttr) (*SANodeAttr, bool) {
-
-	if attr.isDirectLink {
-		if attr.depends[0] == orig {
-			fmt.Println("Warning: infinite loop")
-			return attr, false //avoid infinite loop
+	if attr.instr != nil {
+		link := attr.instr.GetDirectDirectAccess()
+		if link != nil && link.attr != nil {
+			if link.attr == orig {
+				fmt.Println("Warning: infinite loop")
+				return attr, nil //avoid infinite loop
+			}
+			return link.attr.getDirectLink_inner(orig) //go to source
 		}
-		return attr.depends[0].getDirectLink_inner(orig) //go to source
 	}
 
-	return attr, (attr.instr != nil)
-	/*if attr.instr != nil || attr.Gui_type == "table" {
-		return nil, &attr.finalValue //expression. finalValue = result
+	if attr.instr != nil {
+		return attr, attr.instr.GetConst()
 	}
 
-	return &attr.Value, nil //this*/
+	return attr, nil //err
 }
 
-func (attr *SANodeAttr) GetDirectLink() (*SANodeAttr, bool) {
+func (attr *SANodeAttr) GetDirectLink() (*SANodeAttr, *VmInstr) {
 	return attr.getDirectLink_inner(attr)
 }
-func (attr *SANodeAttr) SetUserString(value string) {
-	a, editable := attr.GetDirectLink()
-	if editable {
-		a.Value = value
+
+func (attr *SANodeAttr) GetArrayDirectLink(i int) (*SANodeAttr, *VmInstr) {
+
+	if attr.instr != nil && i < len(attr.instr.prms) {
+		prm := attr.instr.prms[i]
+		link := prm.instr.GetDirectDirectAccess()
+		if link != nil && link.attr != nil {
+			if link.attr == attr {
+				fmt.Println("Warning: infinite loop")
+				return attr, nil //avoid infinite loop
+			}
+			return link.attr.getDirectLink_inner(attr) //go to source
+		}
+
+		if prm.instr != nil {
+			return attr, prm.instr.GetConst()
+		}
+	}
+	return attr, nil //err
+}
+
+func (attr *SANodeAttr) SetExpString(value string) {
+	a, instr := attr.GetDirectLink()
+	if instr != nil { //editable
+		instr.LineReplace(&a.Value, value)
 	}
 }
-func (attr *SANodeAttr) SetUserInt(value int) {
-	a, editable := attr.GetDirectLink()
-	if editable {
-		a.Value = strconv.Itoa(value)
-	}
+func (attr *SANodeAttr) SetExpInt(value int) {
+	attr.SetExpString(strconv.Itoa(value))
 }
-func (attr *SANodeAttr) SetUserBool(value bool) {
-	attr.SetUserInt(OsTrn(value, 1, 0))
+func (attr *SANodeAttr) SetExpBool(value bool) {
+	attr.SetExpString(OsTrnString(value, "1", "0"))
 }
-func (attr *SANodeAttr) SetFloat(value float64) {
-	a, editable := attr.GetDirectLink()
-	if editable {
-		a.Value = strconv.FormatFloat(value, 'f', -1, 64)
-	}
+func (attr *SANodeAttr) SetExpFloat(value float64) {
+	attr.SetExpString(strconv.FormatFloat(value, 'f', -1, 64))
 }
 
 func (attr *SANodeAttr) GetString() string {
 	a, _ := attr.GetDirectLink()
 	return a.finalValue.String()
-	/*if attrVal != nil {
-		return attrVal.String()
-	}
-	return *val*/
 }
 func (attr *SANodeAttr) GetInt() int {
 	a, _ := attr.GetDirectLink()
 	return int(a.finalValue.Number())
-	//v, _ := strconv.Atoi(attr.GetString())
-	//return v
 }
 func (attr *SANodeAttr) GetInt64() int64 {
 	a, _ := attr.GetDirectLink()
 	return int64(a.finalValue.Number())
-	//v, _ := strconv.Atoi(attr.GetString())
-	//return int64(v)
 }
 func (attr *SANodeAttr) GetFloat() float64 {
 	a, _ := attr.GetDirectLink()
 	return a.finalValue.Number()
-	//v, _ := strconv.ParseFloat(attr.GetString(), 64)
-	//return v
 }
 func (attr *SANodeAttr) GetBool() bool {
 	return attr.GetInt() != 0
@@ -152,16 +146,22 @@ func (attr *SANodeAttr) ExecuteExpression() {
 		}
 	}
 
-	if attr.instr != nil /*&& !attr.isDirectLink*/ {
+	if attr.instr != nil {
 		st := InitVmST()
 		rec := attr.instr.Exe(nil, &st)
 		attr.finalValue = rec.value
 	} else {
-		//vvalalue, _ := attr.GetDirectLink()
 		attr.finalValue.SetString(attr.Value)
 	}
 }
 
 func (a *SANodeAttr) Cmp(b *SANodeAttr) bool {
-	return a.Name == b.Name && a.Value == b.Value && a.Gui_type == b.Gui_type && a.Gui_options == b.Gui_options
+	return a.Name == b.Name && a.Value == b.Value
+}
+
+func (a *SANodeAttr) GetCd() OsCd {
+	return a.finalValue.Array().GetCd()
+}
+func (a *SANodeAttr) SetCd(cd OsCd) {
+	a.finalValue.Array().SetCd(cd)
 }
