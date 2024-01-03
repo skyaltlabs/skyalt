@@ -40,7 +40,7 @@ type VmLine struct {
 	errs []string
 }
 
-func InitVmLine(ln string, startLinePos int, ops *VmOps, apis *VmApis, prior int, node *SANode) (*VmLine, error) {
+func InitVmLine(ln string, ops *VmOps, apis *VmApis, prior int, node *SANode) (*VmLine, error) {
 	var line VmLine
 	line.node = node
 	line.line = ln
@@ -49,7 +49,7 @@ func InitVmLine(ln string, startLinePos int, ops *VmOps, apis *VmApis, prior int
 	line.prior = prior
 
 	var err error
-	line.lexer, err = ParseLine(line.line, startLinePos, ops)
+	line.lexer, err = ParseLine(line.line, 0, ops)
 	if err != nil {
 		return &line, err
 	}
