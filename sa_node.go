@@ -619,34 +619,18 @@ func (w *SANode) SetGridStart(v OsV2) {
 	if attr == nil {
 		return
 	}
-	//y
-	a, instr := attr.GetDirectLinkPrm(1)
-	if instr != nil {
-		a.LineReplace(instr, strconv.Itoa(v.Y))
-	}
 
-	//x
-	a, instr = attr.GetDirectLinkPrm(0)
-	if instr != nil {
-		a.LineReplace(instr, strconv.Itoa(v.X))
-	}
+	attr.ReplaceArrayItemInt(1, v.Y) //y
+	attr.ReplaceArrayItemInt(0, v.X) //x
 }
 func (w *SANode) SetGridSize(v OsV2) {
 	attr := w.GetAttr("grid", "[0, 0, 1, 1]")
 	if attr == nil {
 		return
 	}
-	//h
-	a, instr := attr.GetDirectLinkPrm(3)
-	if instr != nil {
-		a.LineReplace(instr, strconv.Itoa(v.Y))
-	}
 
-	//w
-	a, instr = attr.GetDirectLinkPrm(2)
-	if instr != nil {
-		a.LineReplace(instr, strconv.Itoa(v.X))
-	}
+	attr.ReplaceArrayItemInt(3, v.Y) //h
+	attr.ReplaceArrayItemInt(2, v.X) //w
 }
 func (w *SANode) SetGrid(coord OsV4) {
 	w.SetGridStart(coord.Start)
@@ -782,7 +766,7 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 			cdAttr := w.GetAttr("cd", "color(0, 0, 0, 255)")
 			cd := cdAttr.GetCd()
 			if ui.comp_colorPalette(&cd) {
-				cdAttr.SetCd(cd)
+				cdAttr.ReplaceCd(cd)
 			}
 		}
 		ui.Div_end()
@@ -790,12 +774,11 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 	case "color":
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
 		{
-			//........
 			enable := w.GetAttr("enable", "bool(1)").GetBool()
 			cdAttr := w.GetAttr("cd", "color(0, 0, 0, 255)")
 			cd := cdAttr.GetCd()
 			if ui.comp_colorPicker(&cd, w.Name, enable) {
-				cdAttr.SetCd(cd)
+				cdAttr.ReplaceCd(cd)
 			}
 		}
 		ui.Div_end()
@@ -990,13 +973,11 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 
 		fn := attr.instr.fn
 
-		//if VmCallback_Cmp(fn, VmApi_GuiBool) {
-		//	attr.instr.prms[0].instr.GetDirectDirectAccess()
-		//}
-
 		//send data through link
 		a, instr := attr.GetDirectLink()
 		value := a.finalValue.String()
+
+		//fn := a.instr.fn
 
 		if VmCallback_Cmp(fn, VmApi_GuiBool) {
 			if ui.Comp_switch(x, y, w, h, &value, false, "", "", instr != nil) {
@@ -1021,11 +1002,9 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 		} else if VmCallback_Cmp(fn, VmApi_GuiColor) {
 			ui.Div_start(x, y, w, h)
 			{
-				cd := a.GetCd()
+				cd := attr.GetCd()
 				if ui.comp_colorPicker(&cd, attr.Name, true) {
-					if instr != nil {
-						a.LineReplace(instr, value)
-					}
+					attr.ReplaceCd(cd)
 				}
 			}
 			ui.Div_end()

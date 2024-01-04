@@ -224,3 +224,37 @@ func (a *SANodeAttr) LineReplace(instr *VmInstr, value string) {
 	a.ParseExpresion()
 	a.ExecuteExpression()
 }
+
+func (a *SANodeAttr) ReplaceArrayItem(prm_i int, value string) {
+	if a == nil {
+		return
+	}
+	a, instr := a.GetDirectLinkPrm(prm_i)
+	if instr != nil {
+		a.LineReplace(instr, value)
+	}
+}
+func (a *SANodeAttr) ReplaceArrayItemInt(prm_i int, value int) {
+	a.ReplaceArrayItem(prm_i, strconv.Itoa(value))
+}
+
+func (a *SANodeAttr) ReplaceCd(cd OsCd) {
+	if a == nil {
+		return
+	}
+
+	oldCd := a.GetCd()
+
+	if oldCd.A != cd.A {
+		a.ReplaceArrayItemInt(3, int(cd.A))
+	}
+	if oldCd.B != cd.B {
+		a.ReplaceArrayItemInt(2, int(cd.B))
+	}
+	if oldCd.G != cd.G {
+		a.ReplaceArrayItemInt(1, int(cd.G))
+	}
+	if oldCd.R != cd.R {
+		a.ReplaceArrayItemInt(0, int(cd.R))
+	}
+}
