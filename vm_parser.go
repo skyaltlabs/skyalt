@@ -239,7 +239,7 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 			line.setParams(prmsLex, instr)
 
 			if api.prms != instr.NumPrms() {
-				line.addError(lexer, "Need "+strconv.Itoa(api.prms)+" parameters")
+				line.addError(lexer, "Need exactly "+strconv.Itoa(api.prms)+" parameter(s)")
 			}
 
 			return instr

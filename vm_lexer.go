@@ -109,6 +109,10 @@ func (lexer *VmLexer) Find(tp int) int {
 }
 
 func (lexer *VmLexer) Extract(st, en int) *VmLexer {
+	if st == en {
+		return nil
+	}
+
 	if en < 0 {
 		en = len(lexer.subs)
 	}
