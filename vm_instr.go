@@ -109,7 +109,10 @@ func (instr *VmInstr) GetConst() *VmInstr {
 		VmCallback_Cmp(instr.fn, VmApi_GuiCombo) ||
 		VmCallback_Cmp(instr.fn, VmApi_GuiDate) ||
 		VmCallback_Cmp(instr.fn, VmApi_GuiColor) {
-		return instr.prms[0].instr.GetConst()
+
+		if len(instr.prms) >= 1 {
+			return instr.prms[0].instr.GetConst()
+		}
 	}
 
 	return nil
@@ -140,7 +143,10 @@ func (instr *VmInstr) GetDirectDirectAccess() (*VmInstr, *VmInstr) {
 		VmCallback_Cmp(instr.fn, VmApi_GuiCombo) ||
 		VmCallback_Cmp(instr.fn, VmApi_GuiDate) ||
 		VmCallback_Cmp(instr.fn, VmApi_GuiColor) {
-		return instr.prms[0].instr.GetDirectDirectAccess()
+
+		if len(instr.prms) >= 1 {
+			return instr.prms[0].instr.GetDirectDirectAccess()
+		}
 	}
 
 	return nil, nil
@@ -228,9 +234,6 @@ func VmApi_AccessArray(instr *VmInstr, st *VmST) SAValue {
 	index := instr.ExePrm(st, 1)
 
 	return *item.Array().Get(int(index.Number()))
-
-	//instr.attr_item = int(index.Number())
-	//return instr.temp
 }
 
 func VmBasic_ConstArray(instr *VmInstr, st *VmST) SAValue {
