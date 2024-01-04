@@ -649,7 +649,7 @@ func (app *SAApp) addHistory(exeIt bool, rewriteLast bool) {
 		app.history_act = app.history_act[:app.history_pos+1]
 	}
 
-	root, _ := app.root.Copy() //err ...
+	root, _ := app.root.Copy(app) //err ...
 	act := root.FindMirror(app.root, app.act)
 
 	if rewriteLast {
@@ -666,7 +666,7 @@ func (app *SAApp) addHistory(exeIt bool, rewriteLast bool) {
 }
 
 func (app *SAApp) recoverHistory() {
-	app.root, _ = app.history[app.history_pos].Copy()
+	app.root, _ = app.history[app.history_pos].Copy(app)
 	app.act = app.root.FindMirror(app.history[app.history_pos], app.history_act[app.history_pos])
 
 	app.exeIt = true //update expressions into 'oldValue'
@@ -713,7 +713,7 @@ func (app *SAApp) Execute(numThreads int) {
 
 		app.root.PrepareExe() //.state = WAITING(to be executed)
 
-		app.root.ParseExpresions(app)
+		app.root.ParseExpresions()
 		app.root.CheckForLoops()
 
 		app.exe = NewSANodeExe(app, OsMax(numThreads, 1)) //run

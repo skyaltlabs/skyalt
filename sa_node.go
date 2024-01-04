@@ -46,6 +46,7 @@ const (
 )
 
 type SANode struct {
+	app    *SAApp
 	parent *SANode
 
 	Pos                 OsV2f
@@ -75,9 +76,10 @@ type SANode struct {
 	exeTimeSec    float64
 }
 
-func NewSANode(parent *SANode, name string, exe string, grid OsV4, pos OsV2f) *SANode {
+func NewSANode(app *SAApp, parent *SANode, name string, exe string, grid OsV4, pos OsV2f) *SANode {
 	w := &SANode{}
 	w.parent = parent
+	w.app = app
 	w.Name = name
 	w.Exe = exe
 	w.Pos = pos
@@ -88,8 +90,8 @@ func NewSANode(parent *SANode, name string, exe string, grid OsV4, pos OsV2f) *S
 	return w
 }
 
-func NewSANodeRoot(path string) (*SANode, error) {
-	w := NewSANode(nil, "root", "layout", OsV4{}, OsV2f{})
+func NewSANodeRoot(path string, app *SAApp) (*SANode, error) {
+	w := NewSANode(app, nil, "root", "layout", OsV4{}, OsV2f{})
 	w.Exe = "layout"
 
 	//load
@@ -101,7 +103,7 @@ func NewSANodeRoot(path string) (*SANode, error) {
 				fmt.Printf("Unmarshal(%s) failed: %v\n", path, err)
 			}
 		}
-		w.UpdateParents(nil)
+		w.updateLinks(nil, app)
 	}
 
 	return w, nil
@@ -228,27 +230,14 @@ func (w *SANode) PrepareExe() {
 	}
 }
 
-func (w *SANode) ParseExpresions(app *SAApp) {
+func (w *SANode) ParseExpresions() {
 
 	for _, it := range w.Attrs {
-		it.instr = nil
-		it.depends = nil
-		it.errExp = nil
-
-		ln, err := InitVmLine(it.Value, app.ops, app.apis, app.prior, w)
-		if err == nil {
-			it.instr = ln.Parse()
-			it.depends = ln.depends
-			if len(ln.errs) > 0 {
-				it.errExp = errors.New(ln.errs[0])
-			}
-		} else {
-			it.errExp = err
-		}
+		it.ParseExpresion()
 	}
 
 	for _, it := range w.Subs {
-		it.ParseExpresions(app)
+		it.ParseExpresions()
 	}
 }
 
@@ -424,9 +413,7 @@ func (w *SANode) executeProgram(app *SAApp) bool {
 	//copy back
 	for _, v := range conn.Attrs {
 		a := w.GetAttr(v.Name, v.Value)
-		if v.Gui_ReadOnly {
-			a.Value = v.Value
-		}
+		a.Value = v.Value
 		a.errExe = nil
 		if v.Error != "" {
 			a.errExe = errors.New(v.Error)
@@ -446,31 +433,32 @@ func (w *SANode) FindNode(name string) *SANode {
 	return nil
 }
 
-func (w *SANode) UpdateParents(parent *SANode) {
+func (w *SANode) updateLinks(parent *SANode, app *SAApp) {
 	w.parent = parent
+	w.app = app
 	for _, v := range w.Attrs {
 		v.node = w
 	}
 
 	for _, it := range w.Subs {
-		it.UpdateParents(w)
+		it.updateLinks(w, app)
 	}
 }
 
-func (w *SANode) Copy() (*SANode, error) {
+func (w *SANode) Copy(app *SAApp) (*SANode, error) {
 
 	js, err := json.Marshal(w)
 	if err != nil {
 		return nil, err
 	}
 
-	dst := NewSANode(nil, "", "", OsV4{}, OsV2f{})
+	dst := NewSANode(app, nil, "", "", OsV4{}, OsV2f{})
 	err = json.Unmarshal(js, dst)
 	if err != nil {
 		return nil, err
 	}
 
-	dst.UpdateParents(nil)
+	dst.updateLinks(nil, app)
 
 	return dst, nil
 }
@@ -562,7 +550,7 @@ func (w *SANode) CheckUniqueName() {
 }
 
 func (w *SANode) AddNode(grid OsV4, pos OsV2f, exe string) *SANode {
-	nw := NewSANode(w, exe, exe, grid, pos)
+	nw := NewSANode(w.app, w, exe, exe, grid, pos)
 	w.Subs = append(w.Subs, nw)
 	nw.CheckUniqueName()
 	return nw
@@ -597,6 +585,9 @@ func (w *SANode) _getAttr(defValue SANodeAttr) *SANodeAttr {
 		*v = defValue
 		v.node = w
 		w.Attrs = append(w.Attrs, v)
+
+		v.ParseExpresion()
+		v.ExecuteExpression() //right now, so default value is in v.finalValue
 	}
 
 	return v
@@ -631,13 +622,13 @@ func (w *SANode) SetGridStart(v OsV2) {
 	//y
 	a, instr := attr.GetArrayDirectLink(1)
 	if instr != nil {
-		instr.LineReplace(&a.Value, strconv.Itoa(v.Y))
+		a.LineReplace(instr, strconv.Itoa(v.Y))
 	}
 
 	//x
 	a, instr = attr.GetArrayDirectLink(0)
 	if instr != nil {
-		instr.LineReplace(&a.Value, strconv.Itoa(v.X))
+		a.LineReplace(instr, strconv.Itoa(v.X))
 	}
 }
 func (w *SANode) SetGridSize(v OsV2) {
@@ -646,15 +637,15 @@ func (w *SANode) SetGridSize(v OsV2) {
 		return
 	}
 	//h
-	a, instr := attr.GetArrayDirectLink(2)
+	a, instr := attr.GetArrayDirectLink(3)
 	if instr != nil {
-		instr.LineReplace(&a.Value, strconv.Itoa(v.Y))
+		a.LineReplace(instr, strconv.Itoa(v.Y))
 	}
 
 	//w
-	a, instr = attr.GetArrayDirectLink(1)
+	a, instr = attr.GetArrayDirectLink(2)
 	if instr != nil {
-		instr.LineReplace(&a.Value, strconv.Itoa(v.X))
+		a.LineReplace(instr, strconv.Itoa(v.X))
 	}
 }
 func (w *SANode) SetGrid(coord OsV4) {
@@ -740,7 +731,7 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 		enable := w.GetAttr("enable", "bool(1)").GetBool() && instr != nil
 		if ui.Comp_switch(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, w.GetAttr("label", "").GetString(), "", enable) {
 			if instr != nil {
-				instr.LineReplace(&a.Value, value)
+				a.LineReplace(instr, value)
 			}
 		}
 
@@ -750,7 +741,7 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 		enable := w.GetAttr("enable", "bool(1)").GetBool() && instr != nil
 		if ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, w.GetAttr("label", "").GetString(), "", enable) {
 			if instr != nil {
-				instr.LineReplace(&a.Value, value)
+				a.LineReplace(instr, value)
 			}
 		}
 
@@ -760,7 +751,7 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 		enable := w.GetAttr("enable", "bool(1)").GetBool() && instr != nil
 		if ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, w.GetAttr("options", "\"a;b;c\")").GetString(), "", enable, w.GetAttr("search", "bool(0)").GetBool()) {
 			if instr != nil {
-				instr.LineReplace(&a.Value, value)
+				a.LineReplace(instr, value)
 			}
 		}
 
@@ -773,7 +764,7 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 		if fnshd || (tmpToValue && chngd) {
 			if instr != nil {
 				//number or text? ... cut quoetes from instr.Pos ...................
-				instr.LineReplace(&a.Value, value)
+				a.LineReplace(instr, value)
 			}
 		}
 
@@ -1010,29 +1001,29 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 
 		if VmCallback_Cmp(fn, VmApi_GuiBool) {
 			if ui.Comp_switch(x, y, w, h, &value, false, "", "", instr != nil) {
-				instr.LineReplace(&a.Value, value)
+				a.LineReplace(instr, value)
 			}
 		} else if VmCallback_Cmp(fn, VmApi_GuiBool2) {
 			if ui.Comp_checkbox(x, y, w, h, &value, false, "", "", instr != nil) {
-				instr.LineReplace(&a.Value, value)
+				a.LineReplace(instr, value)
 			}
 		} else if VmCallback_Cmp(fn, VmApi_GuiDate) {
 			ui.Div_start(x, y, w, h)
 			val := int64(a.finalValue.Number())
 			if ui.Comp_CalendarDataPicker(&val, true, attr.Name, instr != nil) {
-				instr.LineReplace(&a.Value, strconv.Itoa(int(val)))
+				a.LineReplace(instr, strconv.Itoa(int(val)))
 			}
 			ui.Div_end()
 		} else if VmCallback_Cmp(fn, VmApi_GuiCombo) {
 			options := instr.parent.temp.value.String() //instr is first parameter, GuiCombo() api is parent!
 			if ui.Comp_combo(x, y, w, h, &value, options, "", instr != nil, false) {
-				instr.LineReplace(&a.Value, value)
+				a.LineReplace(instr, value)
 			}
 		} else if VmCallback_Cmp(fn, VmBasic_Constant) {
 			_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, 2, "", "", false, false, instr != nil)
 			if fnshd {
 				//number or text? ... cut quoetes from instr.Pos ...................
-				instr.LineReplace(&a.Value, value)
+				a.LineReplace(instr, value)
 			}
 		} else if VmCallback_Cmp(fn, VmApi_GuiColor) {
 			ui.Div_start(x, y, w, h)
@@ -1040,7 +1031,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 				cd := a.GetCd()
 				if ui.comp_colorPicker(&cd, attr.Name, true) {
 					if instr != nil {
-						instr.LineReplace(&a.Value, value)
+						a.LineReplace(instr, value)
 					}
 				}
 			}
@@ -1060,7 +1051,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 					value = arr.Get(i).String()
 					_, _, _, fnshd, _ := ui.Comp_editbox(i, 0, 1, 1, &value, 2, "", "", false, false, instr != nil)
 					if fnshd {
-						instr.LineReplace(&a.Value, value)
+						a.LineReplace(instr, value)
 					}
 				}
 			}

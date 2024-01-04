@@ -88,7 +88,7 @@ func (attr *SANodeAttr) GetArrayDirectLink(i int) (*SANodeAttr, *VmInstr) {
 func (attr *SANodeAttr) SetExpString(value string) {
 	a, instr := attr.GetDirectLink()
 	if instr != nil { //editable
-		instr.LineReplace(&a.Value, value)
+		a.LineReplace(instr, value)
 	}
 }
 func (attr *SANodeAttr) SetExpInt(value int) {
@@ -135,6 +135,26 @@ func (attr *SANodeAttr) CheckForLoopAttr(find *SANodeAttr) {
 
 }
 
+func (attr *SANodeAttr) ParseExpresion() {
+
+	attr.instr = nil
+	attr.depends = nil
+	attr.errExp = nil
+
+	app := attr.node.app
+	ln, err := InitVmLine(attr.Value, app.ops, app.apis, app.prior, attr.node)
+	if err == nil {
+		attr.instr = ln.Parse()
+		attr.depends = ln.depends
+		if len(ln.errs) > 0 {
+			attr.errExp = errors.New(ln.errs[0])
+		}
+	} else {
+		attr.errExp = err
+	}
+
+}
+
 func (attr *SANodeAttr) ExecuteExpression() {
 	if attr.errExp != nil {
 		return
@@ -164,4 +184,11 @@ func (a *SANodeAttr) GetCd() OsCd {
 }
 func (a *SANodeAttr) SetCd(cd OsCd) {
 	a.finalValue.Array().SetCd(cd)
+}
+
+func (a *SANodeAttr) LineReplace(instr *VmInstr, value string) {
+
+	instr.LineReplace(&a.Value, value)
+	a.ParseExpresion()
+	a.ExecuteExpression()
 }

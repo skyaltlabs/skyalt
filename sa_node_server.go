@@ -30,11 +30,7 @@ import (
 type SkyAltServerAttr struct {
 	Name  string
 	Value string
-
-	Gui_type     string
-	Gui_options  string
-	Gui_ReadOnly bool //output
-	Error        string
+	Error string
 }
 
 type SANodeConn struct {
@@ -94,20 +90,7 @@ func (conn *SANodeConn) sendAttrs() bool {
 		if !conn.sendPair("value", attr.Value) {
 			return false
 		}
-		if !conn.sendPair("gui_type", attr.Gui_type) {
-			return false
-		}
-		if !conn.sendPair("gui_options", attr.Gui_options) {
-			return false
-		}
 		if !conn.sendPair("error", attr.Error) {
-			return false
-		}
-		ro := "0"
-		if attr.Gui_ReadOnly {
-			ro = "1"
-		}
-		if !conn.sendPair("gui_read_only", ro) {
 			return false
 		}
 	}
@@ -133,18 +116,8 @@ func (conn *SANodeConn) recvAttrs(numAttrs int) bool {
 			switch name {
 			case "value":
 				attr.Value = value
-			case "gui_type":
-				attr.Gui_type = value
-			case "gui_options":
-				attr.Gui_options = value
 			case "error":
 				attr.Error = value
-			case "gui_read_only":
-				val, err := strconv.Atoi(value)
-				if err != nil {
-					fmt.Printf("Warning: Atoi(%s) failed: %v\n", value, err)
-				}
-				attr.Gui_ReadOnly = (val != 0)
 			default:
 				fmt.Printf("Warning: Unknown name(%s)\n", name)
 			}
@@ -398,16 +371,21 @@ func (server *SANodeServer) Start(program string) *SANodeConn {
 		return nil
 	}
 
-	cmd := exec.Command("./"+exePath, uid, strconv.Itoa(server.port))
-	cmd.Start()
+	var conn *SANodeConn
 
-	c, err := server.srv.Accept() //multi-threading .....
-	if err != nil {
-		fmt.Printf("Accept() from program(%s) failed: %v\n", exePath, err)
-		return nil
+	//lock/unlock? .....
+	{
+		cmd := exec.Command("./"+exePath, uid, strconv.Itoa(server.port))
+		cmd.Start()
+
+		c, err := server.srv.Accept() //multi-threading ..... + co deadlock(no link) .....
+		if err != nil {
+			fmt.Printf("Accept() from program(%s) failed: %v\n", exePath, err)
+			return nil
+		}
+
+		conn = &SANodeConn{program: program, conn: c, cmd: cmd}
 	}
-
-	conn := &SANodeConn{program: program, conn: c, cmd: cmd}
 
 	//UID
 	name, value, ok := conn.recvPair()
