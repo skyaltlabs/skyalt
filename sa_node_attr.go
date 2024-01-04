@@ -170,8 +170,8 @@ func (attr *SANodeAttr) ExecuteExpression() {
 
 	if attr.instr != nil {
 		st := InitVmST()
-		rec := attr.instr.Exe(nil, &st)
-		attr.finalValue = rec.value
+		rec := attr.instr.Exe(&st)
+		attr.finalValue = rec
 	} else {
 		attr.finalValue.SetString(attr.Value)
 	}

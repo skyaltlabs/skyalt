@@ -21,141 +21,145 @@ import (
 	"strings"
 )
 
-func VmOp_And(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-	is := instr.ExePrm(rec, st, 0).Is()
+func VmOp_And(instr *VmInstr, st *VmST) SAValue {
+	l := instr.ExePrm(st, 0)
+	is := l.Is()
 	if is {
-		is = instr.ExePrm(rec, st, 1).Is()
+		r := instr.ExePrm(st, 1)
+		is = r.Is()
 	}
-	instr.temp.value.SetBool(is)
+	instr.temp.SetBool(is)
 	return instr.temp
 }
 
-func VmOp_Or(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-	is := instr.ExePrm(rec, st, 0).Is()
+func VmOp_Or(instr *VmInstr, st *VmST) SAValue {
+	l := instr.ExePrm(st, 0)
+	is := l.Is()
 	if !is {
-		is = instr.ExePrm(rec, st, 1).Is()
+		r := instr.ExePrm(st, 1)
+		is = r.Is()
 	}
-	instr.temp.value.SetBool(is)
+	instr.temp.SetBool(is)
 	return instr.temp
 }
 
-func VmOp_CmpEq(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+func VmOp_CmpEq(instr *VmInstr, st *VmST) SAValue {
 
-	right := instr.ExePrm(rec, st, 1)
-	left := instr.ExePrm(rec, st, 0)
+	right := instr.ExePrm(st, 1)
+	left := instr.ExePrm(st, 0)
 
-	instr.temp.value.SetBool(left.Cmp(right) == 0)
+	instr.temp.SetBool(left.Cmp(&right) == 0)
 	return instr.temp
 }
 
-func VmOp_CmpNeq(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+func VmOp_CmpNeq(instr *VmInstr, st *VmST) SAValue {
 
-	right := instr.ExePrm(rec, st, 1)
-	left := instr.ExePrm(rec, st, 0)
+	right := instr.ExePrm(st, 1)
+	left := instr.ExePrm(st, 0)
 
-	instr.temp.value.SetBool(left.Cmp(right) != 0)
+	instr.temp.SetBool(left.Cmp(&right) != 0)
 	return instr.temp
 }
 
-func VmOp_CmpL(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+func VmOp_CmpL(instr *VmInstr, st *VmST) SAValue {
 
-	right := instr.ExePrm(rec, st, 1)
-	left := instr.ExePrm(rec, st, 0)
+	right := instr.ExePrm(st, 1)
+	left := instr.ExePrm(st, 0)
 
-	instr.temp.value.SetBool(left.Cmp(right) < 0)
+	instr.temp.SetBool(left.Cmp(&right) < 0)
 	return instr.temp
 }
-func VmOp_CmpH(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+func VmOp_CmpH(instr *VmInstr, st *VmST) SAValue {
 
-	right := instr.ExePrm(rec, st, 1)
-	left := instr.ExePrm(rec, st, 0)
+	right := instr.ExePrm(st, 1)
+	left := instr.ExePrm(st, 0)
 
-	instr.temp.value.SetBool(left.Cmp(right) > 0)
-	return instr.temp
-}
-
-func VmOp_CmpEqL(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-
-	right := instr.ExePrm(rec, st, 1)
-	left := instr.ExePrm(rec, st, 0)
-
-	instr.temp.value.SetBool(left.Cmp(right) <= 0)
-	return instr.temp
-}
-func VmOp_CmpEqH(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-
-	right := instr.ExePrm(rec, st, 1)
-	left := instr.ExePrm(rec, st, 0)
-
-	instr.temp.value.SetBool(left.Cmp(right) >= 0)
+	instr.temp.SetBool(left.Cmp(&right) > 0)
 	return instr.temp
 }
 
-func VmOp_Mul(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+func VmOp_CmpEqL(instr *VmInstr, st *VmST) SAValue {
 
-	right := instr.ExePrm(rec, st, 1)
-	left := instr.ExePrm(rec, st, 0)
+	right := instr.ExePrm(st, 1)
+	left := instr.ExePrm(st, 0)
 
-	instr.temp.value.SetNumber(left.value.Number() * right.value.Number())
+	instr.temp.SetBool(left.Cmp(&right) <= 0)
+	return instr.temp
+}
+func VmOp_CmpEqH(instr *VmInstr, st *VmST) SAValue {
+
+	right := instr.ExePrm(st, 1)
+	left := instr.ExePrm(st, 0)
+
+	instr.temp.SetBool(left.Cmp(&right) >= 0)
 	return instr.temp
 }
 
-func VmOp_Div(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+func VmOp_Mul(instr *VmInstr, st *VmST) SAValue {
 
-	right := instr.ExePrm(rec, st, 1)
-	left := instr.ExePrm(rec, st, 0)
+	right := instr.ExePrm(st, 1)
+	left := instr.ExePrm(st, 0)
 
-	rV := right.value.Number()
+	instr.temp.SetNumber(left.Number() * right.Number())
+	return instr.temp
+}
+
+func VmOp_Div(instr *VmInstr, st *VmST) SAValue {
+
+	right := instr.ExePrm(st, 1)
+	left := instr.ExePrm(st, 0)
+
+	rV := right.Number()
 	if rV != 0 {
-		instr.temp.value.SetNumber(left.value.Number() / rV)
+		instr.temp.SetNumber(left.Number() / rV)
 	} else {
-		instr.temp.value.SetNumber(0)
+		instr.temp.SetNumber(0)
 		fmt.Println("Division by zero") //err ...
 	}
 
 	return instr.temp
 }
 
-func VmOp_Mod(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+func VmOp_Mod(instr *VmInstr, st *VmST) SAValue {
 
-	right := instr.ExePrm(rec, st, 1)
-	left := instr.ExePrm(rec, st, 0)
+	right := instr.ExePrm(st, 1)
+	left := instr.ExePrm(st, 0)
 
-	rV := int(right.value.Number())
+	rV := int(right.Number())
 	if rV != 0 {
-		instr.temp.value.SetInt(int(left.value.Number()) % rV)
+		instr.temp.SetInt(int(left.Number()) % rV)
 	} else {
-		instr.temp.value.SetNumber(0)
+		instr.temp.SetNumber(0)
 		fmt.Println("Modulo by zero") //err ...
 	}
 
 	return instr.temp
 }
 
-func VmOp_AddNumbers(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+func VmOp_AddNumbers(instr *VmInstr, st *VmST) SAValue {
 
-	right := instr.ExePrm(rec, st, 1)
-	left := instr.ExePrm(rec, st, 0)
+	right := instr.ExePrm(st, 1)
+	left := instr.ExePrm(st, 0)
 
-	instr.temp.value.SetNumber(left.value.Number() + right.value.Number())
+	instr.temp.SetNumber(left.Number() + right.Number())
 	return instr.temp
 }
 
-func VmOp_Sub(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+func VmOp_Sub(instr *VmInstr, st *VmST) SAValue {
 
-	right := instr.ExePrm(rec, st, 1)
-	left := instr.ExePrm(rec, st, 0)
+	right := instr.ExePrm(st, 1)
+	left := instr.ExePrm(st, 0)
 
-	instr.temp.value.SetNumber(left.value.Number() - right.value.Number())
+	instr.temp.SetNumber(left.Number() - right.Number())
 	return instr.temp
 }
 
-func VmOp_AddTexts(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+func VmOp_AddTexts(instr *VmInstr, st *VmST) SAValue {
 
-	right := instr.ExePrm(rec, st, 1)
-	left := instr.ExePrm(rec, st, 0)
+	right := instr.ExePrm(st, 1)
+	left := instr.ExePrm(st, 0)
 
-	instr.temp.value.SetString(left.value.String() + right.value.String())
+	instr.temp.SetString(left.String() + right.String())
 	return instr.temp
 }
 

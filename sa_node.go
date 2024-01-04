@@ -1014,7 +1014,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 			}
 			ui.Div_end()
 		} else if VmCallback_Cmp(fn, VmApi_GuiCombo) {
-			options := instr.parent.temp.value.String() //instr is first parameter, GuiCombo() api is parent!
+			options := instr.parent.temp.String() //instr is first parameter, GuiCombo() api is parent!
 			if ui.Comp_combo(x, y, w, h, &value, options, "", instr != nil, false) {
 				a.LineReplace(instr, value)
 			}

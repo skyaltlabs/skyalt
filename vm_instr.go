@@ -21,7 +21,7 @@ import (
 	"strings"
 )
 
-type VmInstr_callbackExecute func(self *VmInstr, rec *Rec, st *VmST) *Rec
+type VmInstr_callbackExecute func(instr *VmInstr, st *VmST) SAValue
 
 func VmCallback_Cmp(a VmInstr_callbackExecute, b VmInstr_callbackExecute) bool {
 	return fmt.Sprintf("%v", a) == fmt.Sprintf("%v", b)
@@ -48,7 +48,7 @@ type VmInstr struct {
 	prms []VmInstrPrm
 
 	attr *SANodeAttr
-	temp *Rec
+	temp SAValue
 
 	next *VmInstr
 
@@ -59,7 +59,7 @@ func NewVmInstr(exe VmInstr_callbackExecute, lexer *VmLexer) *VmInstr {
 	var instr VmInstr
 
 	instr.fn = exe
-	instr.temp = NewRec()
+	instr.temp = InitSAValue()
 
 	instr.pos = OsV2{lexer.start, lexer.end}
 
@@ -147,88 +147,90 @@ func (instr *VmInstr) AddPropInstr(add *VmInstr) int {
 	return instr.NumPrms() - 1
 }
 
-func (instr *VmInstr) Exe(rec *Rec, st *VmST) *Rec {
+func (instr *VmInstr) Exe(st *VmST) SAValue {
 
-	ret := rec
+	var ret SAValue
 
 	for instr != nil {
-		ret = instr.fn(instr, rec, st)
+		ret = instr.fn(instr, st)
 		instr = instr.next
 	}
 
-	if ret == nil {
-		fmt.Println("This should never happen")
-	}
-
 	return ret
 }
 
-func (instr *VmInstr) ExePrm(rec *Rec, st *VmST, prm_i int) *Rec {
-	return instr.prms[prm_i].instr.Exe(rec, st)
+func (instr *VmInstr) ExePrm(st *VmST, prm_i int) SAValue {
+	return instr.prms[prm_i].instr.Exe(st)
 }
 
-func (instr *VmInstr) ExePrmString(rec *Rec, st *VmST, prm_i int) string {
-
-	rec = instr.ExePrm(rec, st, prm_i)
-	return rec.value.String()
+func (instr *VmInstr) ExePrmString(st *VmST, prm_i int) string {
+	rec := instr.ExePrm(st, prm_i)
+	return rec.String()
 }
-func (instr *VmInstr) ExePrmNumber(rec *Rec, st *VmST, prm_i int) float64 {
+func (instr *VmInstr) ExePrmNumber(st *VmST, prm_i int) float64 {
 
-	rec = instr.ExePrm(rec, st, prm_i)
-	return rec.value.Number()
+	rec := instr.ExePrm(st, prm_i)
+	return rec.Number()
 }
-func (instr *VmInstr) ExePrmInt(rec *Rec, st *VmST, prm_i int) int {
-	return int(instr.ExePrmNumber(rec, st, prm_i))
+func (instr *VmInstr) ExePrmInt(st *VmST, prm_i int) int {
+	return int(instr.ExePrmNumber(st, prm_i))
 }
 
-func VmBasic_Constant(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+func VmBasic_Constant(instr *VmInstr, st *VmST) SAValue {
 	return instr.temp
 }
-func VmBasic_Bracket(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-	return instr.ExePrm(rec, st, 0)
+func VmBasic_Bracket(instr *VmInstr, st *VmST) SAValue {
+	return instr.ExePrm(st, 0)
 }
 
-func VmBasic_Access(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-	instr.temp.value = instr.attr.finalValue
+func VmBasic_Access(instr *VmInstr, st *VmST) SAValue {
+	instr.temp = instr.attr.finalValue
 	return instr.temp
 }
 
-func VmApi_GuiBool(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-	return instr.ExePrm(rec, st, 0)
+func VmApi_GuiBool(instr *VmInstr, st *VmST) SAValue {
+	return instr.ExePrm(st, 0)
 }
-func VmApi_GuiBool2(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-	return instr.ExePrm(rec, st, 0)
+func VmApi_GuiBool2(instr *VmInstr, st *VmST) SAValue {
+	return instr.ExePrm(st, 0)
 }
 
-func VmApi_GuiCombo(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-	ret := instr.ExePrm(rec, st, 0)
-	instr.temp = instr.ExePrm(rec, st, 1) //save options into temp
+func VmApi_GuiCombo(instr *VmInstr, st *VmST) SAValue {
+	ret := instr.ExePrm(st, 0)
+	instr.temp = instr.ExePrm(st, 1) //save options into temp
 	return ret
 }
-func VmApi_GuiDate(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-	return instr.ExePrm(rec, st, 0)
+func VmApi_GuiDate(instr *VmInstr, st *VmST) SAValue {
+	return instr.ExePrm(st, 0)
+}
+func VmApi_GuiColor(instr *VmInstr, st *VmST) SAValue {
+	return VmBasic_ConstArray(instr, st)
 }
 
-func VmApi_GuiColor(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-	return VmBasic_ConstArray(instr, rec, st)
-}
+/*func VmApi_GetArray(instr *VmInstr, st *VmST) SAValue{
 
-func VmBasic_ConstArray(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+	item := instr.ExePrm(st, 0)
+	index := instr.ExePrm(st, 1)
+
+	return instr.temp
+}*/
+
+func VmBasic_ConstArray(instr *VmInstr, st *VmST) SAValue {
 	var arr SAValueArray
 	arr.Resize(len(instr.prms))
 	for i := range instr.prms {
-		arr.Get(i).value = instr.ExePrm(rec, st, i).value.value
+		arr.Get(i).value = instr.ExePrm(st, i).value
 	}
-	instr.temp.value.SetArray(&arr)
+	instr.temp.SetArray(&arr)
 	return instr.temp
 }
 
-func VmBasic_ConstTable(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+func VmBasic_ConstTable(instr *VmInstr, st *VmST) SAValue {
 	tb := NewSAValueTable(nil)
 	c := 0
 	r := 0
 	for i := range instr.prms {
-		v := instr.ExePrm(rec, st, i).value
+		v := instr.ExePrm(st, i)
 		if i == 0 {
 			tb = NewSAValueTable(strings.Split(v.String(), ";"))
 		} else {
@@ -242,6 +244,6 @@ func VmBasic_ConstTable(instr *VmInstr, rec *Rec, st *VmST) *Rec {
 		}
 	}
 
-	instr.temp.value.SetTable(tb)
+	instr.temp.SetTable(tb)
 	return instr.temp
 }

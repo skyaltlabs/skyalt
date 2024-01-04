@@ -22,106 +22,106 @@ import (
 	"strings"
 )
 
-func VmApi_If(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-	o := instr.ExePrm(rec, st, 0)
-	return instr.ExePrm(rec, st, OsTrn(o.Is(), 1, 2))
+func VmApi_If(instr *VmInstr, st *VmST) SAValue {
+	o := instr.ExePrm(st, 0)
+	return instr.ExePrm(st, OsTrn(o.Is(), 1, 2))
 }
 
-func VmApi_Not(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+func VmApi_Not(instr *VmInstr, st *VmST) SAValue {
 
-	o := instr.ExePrm(rec, st, 0)
-	instr.temp.value.SetBool(!o.Is())
+	o := instr.ExePrm(st, 0)
+	instr.temp.SetBool(!o.Is())
 	return instr.temp
 }
 
-func VmApi_Min(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+func VmApi_Min(instr *VmInstr, st *VmST) SAValue {
 
-	a := instr.ExePrmNumber(rec, st, 0)
-	b := instr.ExePrmNumber(rec, st, 1)
+	a := instr.ExePrmNumber(st, 0)
+	b := instr.ExePrmNumber(st, 1)
 
-	instr.temp.value.SetNumber(OsMinFloat(a, b))
+	instr.temp.SetNumber(OsMinFloat(a, b))
 	return instr.temp
 }
-func VmApi_Max(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+func VmApi_Max(instr *VmInstr, st *VmST) SAValue {
 
-	a := instr.ExePrmNumber(rec, st, 0)
-	b := instr.ExePrmNumber(rec, st, 1)
+	a := instr.ExePrmNumber(st, 0)
+	b := instr.ExePrmNumber(st, 1)
 
-	instr.temp.value.SetNumber(OsMaxFloat(a, b))
-	return instr.temp
-}
-
-func VmApi_Clamp(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-
-	v := instr.ExePrmNumber(rec, st, 0)
-	mi := instr.ExePrmNumber(rec, st, 1)
-	mx := instr.ExePrmNumber(rec, st, 2)
-
-	instr.temp.value.SetNumber(OsClampFloat(v, mi, mx))
+	instr.temp.SetNumber(OsMaxFloat(a, b))
 	return instr.temp
 }
 
-func VmApi_Sqrt(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-	v := instr.ExePrmNumber(rec, st, 0)
+func VmApi_Clamp(instr *VmInstr, st *VmST) SAValue {
+
+	v := instr.ExePrmNumber(st, 0)
+	mi := instr.ExePrmNumber(st, 1)
+	mx := instr.ExePrmNumber(st, 2)
+
+	instr.temp.SetNumber(OsClampFloat(v, mi, mx))
+	return instr.temp
+}
+
+func VmApi_Sqrt(instr *VmInstr, st *VmST) SAValue {
+	v := instr.ExePrmNumber(st, 0)
 	if v >= 0 {
 		v = math.Sqrt(v)
 	} else {
-		instr.temp.value.SetNumber(0)
+		instr.temp.SetNumber(0)
 		v = 0
 		fmt.Println("Sqrl from zero") //err ...
 	}
-	instr.temp.value.SetNumber(v)
+	instr.temp.SetNumber(v)
 	return instr.temp
 }
 
-func VmApi_Pow(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-	v := instr.ExePrmNumber(rec, st, 0)
-	exp := instr.ExePrmNumber(rec, st, 1)
+func VmApi_Pow(instr *VmInstr, st *VmST) SAValue {
+	v := instr.ExePrmNumber(st, 0)
+	exp := instr.ExePrmNumber(st, 1)
 
-	instr.temp.value.SetNumber(math.Pow(v, exp))
+	instr.temp.SetNumber(math.Pow(v, exp))
 	return instr.temp
 }
 
-func VmApi_Pi(instr *VmInstr, rec *Rec, st *VmST) *Rec {
+func VmApi_Pi(instr *VmInstr, st *VmST) SAValue {
 
-	instr.temp.value.SetNumber(math.Pi)
+	instr.temp.SetNumber(math.Pi)
 	return instr.temp
 }
-func VmApi_Sin(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-	v := instr.ExePrmNumber(rec, st, 0)
+func VmApi_Sin(instr *VmInstr, st *VmST) SAValue {
+	v := instr.ExePrmNumber(st, 0)
 
-	instr.temp.value.SetNumber(math.Sin(v))
+	instr.temp.SetNumber(math.Sin(v))
 	return instr.temp
 }
-func VmApi_Cos(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-	v := instr.ExePrmNumber(rec, st, 0)
+func VmApi_Cos(instr *VmInstr, st *VmST) SAValue {
+	v := instr.ExePrmNumber(st, 0)
 
-	instr.temp.value.SetNumber(math.Cos(v))
+	instr.temp.SetNumber(math.Cos(v))
 	return instr.temp
 }
 
-func VmApi_Tan(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-	v := instr.ExePrmNumber(rec, st, 0)
+func VmApi_Tan(instr *VmInstr, st *VmST) SAValue {
+	v := instr.ExePrmNumber(st, 0)
 
-	instr.temp.value.SetNumber(math.Tan(v))
+	instr.temp.SetNumber(math.Tan(v))
 	return instr.temp
 }
-func VmApi_ATan(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-	v := instr.ExePrmNumber(rec, st, 0)
+func VmApi_ATan(instr *VmInstr, st *VmST) SAValue {
+	v := instr.ExePrmNumber(st, 0)
 
-	instr.temp.value.SetNumber(math.Atan(v))
+	instr.temp.SetNumber(math.Atan(v))
 	return instr.temp
 }
-func VmApi_Log(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-	v := instr.ExePrmNumber(rec, st, 0)
+func VmApi_Log(instr *VmInstr, st *VmST) SAValue {
+	v := instr.ExePrmNumber(st, 0)
 
-	instr.temp.value.SetNumber(math.Log(v))
+	instr.temp.SetNumber(math.Log(v))
 	return instr.temp
 }
-func VmApi_Exp(instr *VmInstr, rec *Rec, st *VmST) *Rec {
-	v := instr.ExePrmNumber(rec, st, 0)
+func VmApi_Exp(instr *VmInstr, st *VmST) SAValue {
+	v := instr.ExePrmNumber(st, 0)
 
-	instr.temp.value.SetNumber(math.Exp(v))
+	instr.temp.SetNumber(math.Exp(v))
 	return instr.temp
 }
 
@@ -164,6 +164,8 @@ func NewVmApis() *VmApis {
 	apis._Add(VmApi{0, "combo", 2, VmApi_GuiCombo})
 	apis._Add(VmApi{0, "date", 1, VmApi_GuiDate})
 	apis._Add(VmApi{0, "color", 1, VmApi_GuiColor})
+
+	//apis._Add(VmApi{0, "array", 2, VmApi_GetArray})	//první musí být access ......
 
 	apis._Add(VmApi{0, "min", 2, VmApi_Min})
 	apis._Add(VmApi{0, "max", 2, VmApi_Max})
