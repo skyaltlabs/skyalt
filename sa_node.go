@@ -710,45 +710,37 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 		ui.Comp_text(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttr("label", "").GetString(), w.GetAttr("align", "combo(0, \"Left;Center;Right\")").GetInt())
 
 	case "switch":
-		a, instr := w.GetAttr("value", "").GetDirectLink()
-		value := a.finalValue.String()
+		instr := w.GetAttr("value", "").instr.GetConst()
+		value := instr.pos_attr.finalValue.String()
 		enable := w.GetAttr("enable", "bool(1)").GetBool() && instr != nil
 		if ui.Comp_switch(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, w.GetAttr("label", "").GetString(), "", enable) {
-			if instr != nil {
-				a.LineReplace(instr, value)
-			}
+			instr.LineReplace(value)
 		}
 
 	case "checkbox":
-		a, instr := w.GetAttr("value", "").GetDirectLink()
-		value := a.finalValue.String()
+		instr := w.GetAttr("value", "").instr.GetConst()
+		value := instr.pos_attr.finalValue.String()
 		enable := w.GetAttr("enable", "bool(1)").GetBool() && instr != nil
 		if ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, w.GetAttr("label", "").GetString(), "", enable) {
-			if instr != nil {
-				a.LineReplace(instr, value)
-			}
+			instr.LineReplace(value)
 		}
 
 	case "combo":
-		a, instr := w.GetAttr("value", "").GetDirectLink()
-		value := a.finalValue.String()
+		instr := w.GetAttr("value", "").instr.GetConst()
+		value := instr.pos_attr.finalValue.String()
 		enable := w.GetAttr("enable", "bool(1)").GetBool() && instr != nil
 		if ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, w.GetAttr("options", "\"a;b;c\")").GetString(), "", enable, w.GetAttr("search", "bool(0)").GetBool()) {
-			if instr != nil {
-				a.LineReplace(instr, value)
-			}
+			instr.LineReplace(value)
 		}
 
 	case "editbox":
-		a, instr := w.GetAttr("value", "").GetDirectLink()
-		value := a.finalValue.String()
+		instr := w.GetAttr("value", "").instr.GetConst()
+		value := instr.pos_attr.finalValue.String()
 		enable := w.GetAttr("enable", "bool(1)").GetBool() && instr != nil
 		tmpToValue := w.GetAttr("tempToValue", "bool(0)").GetBool()
 		_, _, chngd, fnshd, _ := ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, w.GetAttr("precision", "2").GetInt(), "", w.GetAttr("ghost", "").GetString(), false, tmpToValue, enable)
 		if fnshd || (tmpToValue && chngd) {
-			if instr != nil {
-				a.LineReplace(instr, value)
-			}
+			instr.LineReplace(value)
 		}
 
 	case "divider":
@@ -763,7 +755,7 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 	case "color_palette":
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
 		{
-			cdAttr := w.GetAttr("cd", "color(0, 0, 0, 255)")
+			cdAttr := w.GetAttr("cd", "color([0, 0, 0, 255])")
 			cd := cdAttr.GetCd()
 			if ui.comp_colorPalette(&cd) {
 				cdAttr.ReplaceCd(cd)
@@ -775,7 +767,7 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
 		{
 			enable := w.GetAttr("enable", "bool(1)").GetBool()
-			cdAttr := w.GetAttr("cd", "color(0, 0, 0, 255)")
+			cdAttr := w.GetAttr("cd", "color([0, 0, 0, 255])")
 			cd := cdAttr.GetCd()
 			if ui.comp_colorPicker(&cd, w.Name, enable) {
 				cdAttr.ReplaceCd(cd)
@@ -971,33 +963,36 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 			return
 		}
 
-		fn := attr.instr.fn
+		var fn VmInstr_callbackExecute
+		if attr.instr != nil {
+			fn = attr.instr.fn
+		}
 
-		//send data through link
-		a, instr := attr.GetDirectLink()
-		value := a.finalValue.String()
-
-		//fn := a.instr.fn
+		instr := attr.instr.GetConst()
+		value := ""
+		if instr != nil {
+			value = instr.pos_attr.finalValue.String()
+		}
 
 		if VmCallback_Cmp(fn, VmApi_GuiBool) {
 			if ui.Comp_switch(x, y, w, h, &value, false, "", "", instr != nil) {
-				a.LineReplace(instr, value)
+				instr.LineReplace(value)
 			}
 		} else if VmCallback_Cmp(fn, VmApi_GuiBool2) {
 			if ui.Comp_checkbox(x, y, w, h, &value, false, "", "", instr != nil) {
-				a.LineReplace(instr, value)
+				instr.LineReplace(value)
 			}
 		} else if VmCallback_Cmp(fn, VmApi_GuiDate) {
 			ui.Div_start(x, y, w, h)
-			val := int64(a.finalValue.Number())
+			val := int64(instr.pos_attr.finalValue.Number())
 			if ui.Comp_CalendarDataPicker(&val, true, attr.Name, instr != nil) {
-				a.LineReplace(instr, strconv.Itoa(int(val)))
+				instr.LineReplace(strconv.Itoa(int(val)))
 			}
 			ui.Div_end()
 		} else if VmCallback_Cmp(fn, VmApi_GuiCombo) {
 			options := instr.parent.temp.String() //instr is first parameter, GuiCombo() api is parent!
 			if ui.Comp_combo(x, y, w, h, &value, options, "", instr != nil, false) {
-				a.LineReplace(instr, value)
+				instr.LineReplace(value)
 			}
 		} else if VmCallback_Cmp(fn, VmApi_GuiColor) {
 			ui.Div_start(x, y, w, h)
@@ -1018,13 +1013,11 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 
 				arr := attr.finalValue.Array()
 				for i := range attr.instr.prms {
-
-					a, instr = attr.GetDirectLinkPrm(i)
 					if i < arr.Num() {
 						value = arr.Get(i).String()
 						_, _, _, fnshd, _ := ui.Comp_editbox(i, 0, 1, 1, &value, 2, "", "", false, false, instr != nil)
 						if fnshd {
-							a.LineReplace(instr, value)
+							attr.ReplaceArrayItem(i, value)
 						}
 					}
 				}
@@ -1032,12 +1025,12 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 			ui.Div_end()
 
 		} else if VmCallback_Cmp(fn, VmBasic_ConstTable) {
-			tb := a.finalValue.Table()
+			tb := attr.finalValue.Table()
 			ui.Comp_button(x, y, w, h, fmt.Sprintf("Table(%dcols x %drow)", len(tb.names), tb.NumRows()), "", true) //......
 		} else /*if VmCallback_Cmp(fn, VmBasic_Constant)*/ {
 			_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, 2, "", "", false, false, instr != nil)
 			if fnshd {
-				a.LineReplace(instr, value)
+				instr.LineReplace(value)
 			}
 		}
 	}

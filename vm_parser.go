@@ -26,7 +26,7 @@ func VmColor_api() OsCd     { return OsCd{150, 80, 200, 255} }
 func VmColor_apiDraw() OsCd { return OsCd{100, 40, 30, 255} }
 
 type VmLine struct {
-	node *SANode
+	attr *SANodeAttr
 	line string
 
 	lexer *VmLexer
@@ -35,14 +35,12 @@ type VmLine struct {
 	apis  *VmApis
 	prior int
 
-	depends []*SANodeAttr
-
 	errs []string
 }
 
-func InitVmLine(ln string, ops *VmOps, apis *VmApis, prior int, node *SANode) (*VmLine, error) {
+func InitVmLine(ln string, ops *VmOps, apis *VmApis, prior int, attr *SANodeAttr) (*VmLine, error) {
 	var line VmLine
-	line.node = node
+	line.attr = attr
 	line.line = ln
 	line.ops = ops
 	line.apis = apis
@@ -129,7 +127,7 @@ func (line *VmLine) getConstant(lexer *VmLexer) (bool, *VmInstr) {
 	lexer = lexer.subs[0]
 
 	if lexer.tp == VmLexerNumber {
-		instr := NewVmInstr(VmBasic_Constant, lexer)
+		instr := NewVmInstr(VmBasic_Constant, lexer, line.attr)
 		value, err := strconv.ParseFloat(lexer.GetString(line.line), 64)
 		if err != nil {
 			line.addError(lexer, "Converting string . number failed")
@@ -142,7 +140,7 @@ func (line *VmLine) getConstant(lexer *VmLexer) (bool, *VmInstr) {
 		line.addSyntax_text(lexer, VmColor_text())
 		ch := line.line[lexer.start]
 		if ch == '"' {
-			instr := NewVmInstr(VmBasic_Constant, lexer)
+			instr := NewVmInstr(VmBasic_Constant, lexer, line.attr)
 			instr.temp.SetString(lexer.GetStringReplaceDivs(line.line))
 			return true, instr
 		}
@@ -151,14 +149,14 @@ func (line *VmLine) getConstant(lexer *VmLexer) (bool, *VmInstr) {
 
 	// array
 	if lexer.tp == VmLexerBracketSquare {
-		instr := NewVmInstr(VmBasic_ConstArray, lexer)
+		instr := NewVmInstr(VmBasic_ConstArray, lexer, line.attr)
 		line.setParams(lexer, instr)
 		return true, instr
 	}
 
 	// table
 	if lexer.tp == VmLexerBracketCurly {
-		instr := NewVmInstr(VmBasic_ConstTable, lexer)
+		instr := NewVmInstr(VmBasic_ConstTable, lexer, line.attr)
 		line.setParams(lexer, instr)
 		return true, instr
 	}
@@ -182,7 +180,7 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 			return nil
 		}
 
-		op := NewVmInstr(opp.fn, lexer)
+		op := NewVmInstr(opp.fn, lexer, line.attr)
 
 		// right
 		rightLex := lexer.Extract(op_i+1, -1)
@@ -208,7 +206,7 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 
 	// brackets
 	if len(lexer.subs) == 1 && lexer.subs[0].tp == VmLexerBracketRound {
-		instr := NewVmInstr(VmBasic_Bracket, lexer.subs[0])
+		instr := NewVmInstr(VmBasic_Bracket, lexer.subs[0], line.attr)
 		instr.AddPropInstr(line.getExp(lexer.subs[0]))
 		return instr
 	}
@@ -234,7 +232,7 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 				line.addSyntax_text(firstLex, VmColor_apiDraw())
 			}
 
-			instr = NewVmInstr(api.fn, lexer) //lexer.subs[0], lexer.subs[1])
+			instr = NewVmInstr(api.fn, lexer, line.attr) //lexer.subs[0], lexer.subs[1])
 			prmsLex := lexer.subs[1]
 			line.setParams(prmsLex, instr)
 
@@ -266,19 +264,19 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 		//if len(lexer.subs) >= 3 {
 		//	attrLex = lexer.subs[2]
 		//}
-		instr := NewVmInstr(VmBasic_Access, lexer) //lexer.subs[0], attrLex)
+		instr := NewVmInstr(VmBasic_Access, lexer, line.attr) //lexer.subs[0], attrLex)
 
 		if len(lexer.subs) == 1 {
 			//attribute from same node
-			line.addAccess(line.node, lexer.subs[0].GetString(line.line), instr, lexer)
+			line.addAccess(line.attr.node, lexer.subs[0].GetString(line.line), instr, lexer, line.attr)
 		} else if len(lexer.subs) >= 2 && lexer.subs[1].tp == VmLexerDot {
 			if len(lexer.subs) >= 3 && lexer.subs[2].tp == VmLexerWord {
 				if len(lexer.subs) == 3 {
 					//node.attribute
 					nodeName := lexer.subs[0].GetString(line.line)
-					ww := line.node.parent.FindNode(nodeName)
+					ww := line.attr.node.parent.FindNode(nodeName)
 					if ww != nil {
-						line.addAccess(ww, lexer.subs[2].GetString(line.line), instr, lexer)
+						line.addAccess(ww, lexer.subs[2].GetString(line.line), instr, lexer, line.attr)
 					} else {
 						line.addError(lexer, fmt.Sprintf("Node(%s) not found", nodeName))
 					}
@@ -299,12 +297,12 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 		//if len(lexer.subs) >= 2 {
 		//	attrLex = lexer.subs[1]
 		//}
-		instr := NewVmInstr(VmBasic_Access, lexer) //nil, attrLex)
+		instr := NewVmInstr(VmBasic_Access, lexer, line.attr) //nil, attrLex)
 
 		if len(lexer.subs) >= 2 && lexer.subs[1].tp == VmLexerWord {
 			if len(lexer.subs) == 2 {
 				//attribute from parent node
-				line.addAccess(line.node.parent, lexer.subs[1].GetString(line.line), instr, lexer)
+				line.addAccess(line.attr.node.parent, lexer.subs[1].GetString(line.line), instr, lexer, line.attr)
 			} else {
 				line.addError(lexer, "Access must be in form of <node>.<attribute> or .<attribute>")
 			}
@@ -318,11 +316,11 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 	return nil
 }
 
-func (line *VmLine) addAccess(node *SANode, attrName string, instr *VmInstr, lexer *VmLexer) {
+func (line *VmLine) addAccess(node *SANode, attrName string, instr *VmInstr, lexer *VmLexer, mainAttr *SANodeAttr) {
 	vv := node.findAttr(attrName)
 	if vv != nil {
-		instr.attr = vv
-		line.depends = append(line.depends, vv) //add
+		instr.accessAttr = vv
+		mainAttr.depends = append(mainAttr.depends, vv) //add
 	} else {
 		line.addError(lexer, fmt.Sprintf("Attribute(%s) not found", attrName))
 	}

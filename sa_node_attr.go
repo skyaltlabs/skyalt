@@ -41,78 +41,10 @@ func (attr *SANodeAttr) SetErrorExe(err string) {
 	attr.errExe = errors.New(err)
 }
 
-func (attr *SANodeAttr) getDirectLink_inner(orig *SANodeAttr, prm_i int) (*SANodeAttr, *VmInstr) {
-
-	instr := attr.instr
-
-	if instr == nil {
-		fmt.Println("Warning: instr == nil")
-		return attr, nil //err
-	}
-
-	if prm_i >= 0 {
-		if prm_i < len(attr.instr.prms) {
-			instr = attr.instr.prms[prm_i].instr
-		}
-	}
-
-	if instr == nil {
-		fmt.Println("Warning: instr2 == nil")
-		return attr, nil //err
-	}
-
-	accInstr, arrInstr := instr.GetDirectDirectAccess()
-	if accInstr != nil {
-		if accInstr.attr == orig {
-			fmt.Println("Warning: infinite loop")
-			return attr, nil //avoid infinite loop
-		}
-		return accInstr.attr.getDirectLink_inner(orig, -1) //go to source
-	}
-	if arrInstr != nil {
-		arrAttr := arrInstr.prms[0].instr.attr
-		arrInd := int(arrInstr.prms[1].instr.temp.Number())
-		if arrAttr == orig {
-			fmt.Println("Warning: infinite loop")
-			return attr, nil //avoid infinite loop
-		}
-		return arrAttr.getDirectLink_inner(orig, arrInd) //go to source
-	}
-
-	return attr, instr.GetConst()
-}
-
-func (attr *SANodeAttr) GetDirectLinkPrm(prm_i int) (*SANodeAttr, *VmInstr) {
-	return attr.getDirectLink_inner(attr, prm_i)
-}
-func (attr *SANodeAttr) GetDirectLink() (*SANodeAttr, *VmInstr) {
-	return attr.GetDirectLinkPrm(-1)
-}
-
-/*func (attr *SANodeAttr) GetArrayDirectLink(i int) (*SANodeAttr, *VmInstr) {
-
-	if attr.instr != nil && i < len(attr.instr.prms) {
-		prm := attr.instr.prms[i]
-		link := prm.instr.GetDirectDirectAccess()
-		if link != nil && link.attr != nil {
-			if link.attr == attr {
-				fmt.Println("Warning: infinite loop")
-				return attr, nil //avoid infinite loop
-			}
-			return link.attr.getDirectLink_inner(attr) //go to source
-		}
-
-		if prm.instr != nil {
-			return attr, prm.instr.GetConst()
-		}
-	}
-	return attr, nil //err
-}*/
-
 func (attr *SANodeAttr) SetExpString(value string) {
-	a, instr := attr.GetDirectLink()
+	instr := attr.instr.GetConst()
 	if instr != nil { //editable
-		a.LineReplace(instr, value)
+		instr.LineReplace(value)
 	}
 }
 func (attr *SANodeAttr) SetExpInt(value int) {
@@ -125,21 +57,32 @@ func (attr *SANodeAttr) SetExpFloat(value float64) {
 	attr.SetExpString(strconv.FormatFloat(value, 'f', -1, 64))
 }
 
+func (attr *SANodeAttr) _getFinalValue() SAValue {
+	if attr.instr != nil {
+		instr := attr.instr.GetConst()
+		if instr != nil {
+			return instr.pos_attr.finalValue
+		}
+	}
+
+	return SAValue{}
+}
+
 func (attr *SANodeAttr) GetString() string {
-	a, _ := attr.GetDirectLink()
-	return a.finalValue.String()
+	v := attr._getFinalValue()
+	return v.String()
 }
 func (attr *SANodeAttr) GetInt() int {
-	a, _ := attr.GetDirectLink()
-	return int(a.finalValue.Number())
+	v := attr._getFinalValue()
+	return int(v.Number())
 }
 func (attr *SANodeAttr) GetInt64() int64 {
-	a, _ := attr.GetDirectLink()
-	return int64(a.finalValue.Number())
+	v := attr._getFinalValue()
+	return int64(v.Number())
 }
 func (attr *SANodeAttr) GetFloat() float64 {
-	a, _ := attr.GetDirectLink()
-	return a.finalValue.Number()
+	v := attr._getFinalValue()
+	return v.Number()
 }
 func (attr *SANodeAttr) GetBool() bool {
 	return attr.GetInt() != 0
@@ -167,10 +110,10 @@ func (attr *SANodeAttr) ParseExpresion() {
 
 	app := attr.node.app
 	if attr.Value != "" {
-		ln, err := InitVmLine(attr.Value, app.ops, app.apis, app.prior, attr.node)
+		ln, err := InitVmLine(attr.Value, app.ops, app.apis, app.prior, attr)
 		if err == nil {
 			attr.instr = ln.Parse()
-			attr.depends = ln.depends
+			//attr.depends = ln.depends
 			if len(ln.errs) > 0 {
 				attr.errExp = errors.New(ln.errs[0])
 			}
@@ -194,8 +137,7 @@ func (attr *SANodeAttr) ExecuteExpression() {
 
 	if attr.instr != nil {
 		st := InitVmST()
-		rec := attr.instr.Exe(&st)
-		attr.finalValue = rec
+		attr.finalValue = attr.instr.Exe(&st)
 	} else {
 		attr.finalValue.SetString(attr.Value)
 	}
@@ -212,26 +154,13 @@ func (a *SANodeAttr) SetCd(cd OsCd) {
 	a.finalValue.Array().SetCd(cd)
 }
 
-func (a *SANodeAttr) LineReplace(instr *VmInstr, value string) {
-	if value != "" {
-		_, err := strconv.ParseFloat(value, 64)
-		if err != nil {
-			value = "\"" + value + "\""
-		}
-	}
-
-	instr.LineReplace(&a.Value, value)
-	a.ParseExpresion()
-	a.ExecuteExpression()
-}
-
 func (a *SANodeAttr) ReplaceArrayItem(prm_i int, value string) {
 	if a == nil {
 		return
 	}
-	a, instr := a.GetDirectLinkPrm(prm_i)
+	instr := a.instr.GetConstArrayPrm(prm_i)
 	if instr != nil {
-		a.LineReplace(instr, value)
+		instr.LineReplace(value)
 	}
 }
 func (a *SANodeAttr) ReplaceArrayItemInt(prm_i int, value int) {

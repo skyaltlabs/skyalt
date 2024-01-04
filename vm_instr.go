@@ -18,6 +18,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -49,19 +50,21 @@ type VmInstr struct {
 
 	temp SAValue
 
-	attr *SANodeAttr
+	accessAttr *SANodeAttr
 
 	next *VmInstr
 
-	pos OsV2
+	pos_attr *SANodeAttr
+	pos      OsV2
 }
 
-func NewVmInstr(exe VmInstr_callbackExecute, lexer *VmLexer) *VmInstr {
+func NewVmInstr(exe VmInstr_callbackExecute, lexer *VmLexer, pos_attr *SANodeAttr) *VmInstr {
 	var instr VmInstr
 
 	instr.fn = exe
 	instr.temp = InitSAValue()
 
+	instr.pos_attr = pos_attr
 	instr.pos = OsV2{lexer.start, lexer.end}
 
 	return &instr
@@ -88,22 +91,36 @@ func (instr *VmInstr) IsRunning(st *VmST) bool {
 	return st.running
 }
 
-func (instr *VmInstr) LineReplace(line *string, value string) {
+func (instr *VmInstr) _lineReplace(line *string, value string) {
 	if instr == nil {
 		return
 	}
 	*line = (*line)[:instr.pos.X] + value + (*line)[instr.pos.Y:]
 }
+
+func (instr *VmInstr) LineReplace(value string) {
+	if instr == nil {
+		return
+	}
+
+	if value != "" {
+		_, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			value = "\"" + value + "\""
+		}
+	}
+
+	instr.pos_attr.Value = instr.pos_attr.Value[:instr.pos.X] + value + instr.pos_attr.Value[instr.pos.Y:] //replace
+
+	instr.pos_attr.ParseExpresion()
+	instr.pos_attr.ExecuteExpression()
+}
+
 func (instr *VmInstr) LineExtract(line string, value string) string {
 	return line[instr.pos.X:instr.pos.Y]
 }
 
-func (instr *VmInstr) GetConst() *VmInstr {
-
-	if VmCallback_Cmp(instr.fn, VmBasic_Constant) { //const(!)
-		return instr
-	}
-
+func (instr *VmInstr) IsFnGui() *VmInstr {
 	if VmCallback_Cmp(instr.fn, VmApi_GuiBool) ||
 		VmCallback_Cmp(instr.fn, VmApi_GuiBool2) ||
 		VmCallback_Cmp(instr.fn, VmApi_GuiCombo) ||
@@ -111,18 +128,17 @@ func (instr *VmInstr) GetConst() *VmInstr {
 		VmCallback_Cmp(instr.fn, VmApi_GuiColor) {
 
 		if len(instr.prms) >= 1 {
-			return instr.prms[0].instr.GetConst()
+			return instr.prms[0].instr
 		}
 	}
-
 	return nil
 }
 
-func (instr *VmInstr) GetDirectDirectAccess() (*VmInstr, *VmInstr) {
+func (instr *VmInstr) isFnAccess() *VmInstr {
 
 	if VmCallback_Cmp(instr.fn, VmBasic_Access) { //access(!)
-		if instr.attr != nil {
-			return instr, nil
+		if instr.accessAttr != nil {
+			return instr.accessAttr.instr
 		}
 	}
 
@@ -131,25 +147,85 @@ func (instr *VmInstr) GetDirectDirectAccess() (*VmInstr, *VmInstr) {
 			acc := instr.prms[0].instr
 			ind := instr.prms[1].instr
 
-			if VmCallback_Cmp(acc.fn, VmBasic_Access) && acc.attr != nil && VmCallback_Cmp(ind.fn, VmBasic_Constant) {
-				return nil, instr
+			if VmCallback_Cmp(acc.fn, VmBasic_Access) && acc.accessAttr != nil && VmCallback_Cmp(ind.fn, VmBasic_Constant) {
+				arr_instr := acc.accessAttr.instr
+				if arr_instr != nil {
+					arr_i := int(ind.temp.Number())
+					if arr_i < len(arr_instr.prms) {
+						return arr_instr.prms[arr_i].instr
+					}
+				}
 			}
 		}
+	}
+	return nil
+}
 
+func (instr *VmInstr) GetConst() *VmInstr {
+	if instr == nil {
+		return nil
 	}
 
-	if VmCallback_Cmp(instr.fn, VmApi_GuiBool) ||
-		VmCallback_Cmp(instr.fn, VmApi_GuiBool2) ||
-		VmCallback_Cmp(instr.fn, VmApi_GuiCombo) ||
-		VmCallback_Cmp(instr.fn, VmApi_GuiDate) ||
-		VmCallback_Cmp(instr.fn, VmApi_GuiColor) {
-
-		if len(instr.prms) >= 1 {
-			return instr.prms[0].instr.GetDirectDirectAccess()
-		}
+	if VmCallback_Cmp(instr.fn, VmBasic_Constant) { //const(!)
+		return instr
+	}
+	acc := instr.isFnAccess()
+	if acc != nil {
+		return acc.GetConst()
+	}
+	gui := instr.IsFnGui()
+	if gui != nil {
+		return gui.GetConst()
+	}
+	return nil
+}
+func (instr *VmInstr) GetConstArray() *VmInstr {
+	if instr == nil {
+		return nil
 	}
 
-	return nil, nil
+	if VmCallback_Cmp(instr.fn, VmBasic_ConstArray) { //const(!)
+		return instr
+	}
+	acc := instr.isFnAccess()
+	if acc != nil {
+		return acc.GetConstArray()
+	}
+	gui := instr.IsFnGui()
+	if gui != nil {
+		return gui.GetConstArray()
+	}
+	return nil
+}
+func (instr *VmInstr) GetConstTable() *VmInstr {
+	if instr == nil {
+		return nil
+	}
+
+	if VmCallback_Cmp(instr.fn, VmBasic_ConstTable) { //const(!)
+		return instr
+	}
+	acc := instr.isFnAccess()
+	if acc != nil {
+		return acc.GetConstTable()
+	}
+	gui := instr.IsFnGui()
+	if gui != nil {
+		return gui.GetConstTable()
+	}
+	return nil
+}
+
+func (instr *VmInstr) GetConstArrayPrm(i int) *VmInstr {
+	if instr == nil {
+		return nil
+	}
+
+	instr = instr.GetConstArray()
+	if instr != nil && i < len(instr.prms) {
+		return instr.prms[i].instr.GetConst()
+	}
+	return nil
 }
 
 func (instr *VmInstr) NumPrms() int {
@@ -205,7 +281,7 @@ func VmBasic_Bracket(instr *VmInstr, st *VmST) SAValue {
 }
 
 func VmBasic_Access(instr *VmInstr, st *VmST) SAValue {
-	instr.temp = instr.attr.finalValue
+	instr.temp = instr.accessAttr.finalValue
 	return instr.temp
 }
 
@@ -225,7 +301,7 @@ func VmApi_GuiDate(instr *VmInstr, st *VmST) SAValue {
 	return instr.ExePrm(st, 0)
 }
 func VmApi_GuiColor(instr *VmInstr, st *VmST) SAValue {
-	return VmBasic_ConstArray(instr, st)
+	return instr.ExePrm(st, 0)
 }
 
 func VmApi_AccessArray(instr *VmInstr, st *VmST) SAValue {
