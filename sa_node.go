@@ -763,7 +763,6 @@ func (w *SANode) Render(ui *Ui, app *SAApp) {
 		_, _, chngd, fnshd, _ := ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, w.GetAttr("precision", "2").GetInt(), "", w.GetAttr("ghost", "").GetString(), false, tmpToValue, enable)
 		if fnshd || (tmpToValue && chngd) {
 			if instr != nil {
-				//number or text? ... cut quoetes from instr.Pos ...................
 				a.LineReplace(instr, value)
 			}
 		}
@@ -1019,12 +1018,6 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 			if ui.Comp_combo(x, y, w, h, &value, options, "", instr != nil, false) {
 				a.LineReplace(instr, value)
 			}
-		} else if VmCallback_Cmp(fn, VmBasic_Constant) {
-			_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, 2, "", "", false, false, instr != nil)
-			if fnshd {
-				//number or text? ... cut quoetes from instr.Pos ...................
-				a.LineReplace(instr, value)
-			}
 		} else if VmCallback_Cmp(fn, VmApi_GuiColor) {
 			ui.Div_start(x, y, w, h)
 			{
@@ -1048,10 +1041,12 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 				for i := range attr.instr.prms {
 
 					a, instr = attr.GetArrayDirectLink(i)
-					value = arr.Get(i).String()
-					_, _, _, fnshd, _ := ui.Comp_editbox(i, 0, 1, 1, &value, 2, "", "", false, false, instr != nil)
-					if fnshd {
-						a.LineReplace(instr, value)
+					if i < arr.Num() {
+						value = arr.Get(i).String()
+						_, _, _, fnshd, _ := ui.Comp_editbox(i, 0, 1, 1, &value, 2, "", "", false, false, instr != nil)
+						if fnshd {
+							a.LineReplace(instr, value)
+						}
 					}
 				}
 			}
@@ -1060,6 +1055,11 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 		} else if VmCallback_Cmp(fn, VmBasic_ConstTable) {
 			tb := a.finalValue.Table()
 			ui.Comp_button(x, y, w, h, fmt.Sprintf("Table(%dcols x %drow)", len(tb.names), tb.NumRows()), "", true) //......
+		} else /*if VmCallback_Cmp(fn, VmBasic_Constant)*/ {
+			_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, 2, "", "", false, false, instr != nil)
+			if fnshd {
+				a.LineReplace(instr, value)
+			}
 		}
 	}
 }

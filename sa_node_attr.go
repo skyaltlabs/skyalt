@@ -142,15 +142,17 @@ func (attr *SANodeAttr) ParseExpresion() {
 	attr.errExp = nil
 
 	app := attr.node.app
-	ln, err := InitVmLine(attr.Value, app.ops, app.apis, app.prior, attr.node)
-	if err == nil {
-		attr.instr = ln.Parse()
-		attr.depends = ln.depends
-		if len(ln.errs) > 0 {
-			attr.errExp = errors.New(ln.errs[0])
+	if attr.Value != "" {
+		ln, err := InitVmLine(attr.Value, app.ops, app.apis, app.prior, attr.node)
+		if err == nil {
+			attr.instr = ln.Parse()
+			attr.depends = ln.depends
+			if len(ln.errs) > 0 {
+				attr.errExp = errors.New(ln.errs[0])
+			}
+		} else {
+			attr.errExp = err
 		}
-	} else {
-		attr.errExp = err
 	}
 
 }
@@ -187,6 +189,12 @@ func (a *SANodeAttr) SetCd(cd OsCd) {
 }
 
 func (a *SANodeAttr) LineReplace(instr *VmInstr, value string) {
+	if value != "" {
+		_, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			value = "\"" + value + "\""
+		}
+	}
 
 	instr.LineReplace(&a.Value, value)
 	a.ParseExpresion()
