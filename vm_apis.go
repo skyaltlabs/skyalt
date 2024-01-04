@@ -163,7 +163,7 @@ func NewVmApis() *VmApis {
 	apis._Add(VmApi{0, "bool", 1, VmApi_GuiBool})
 	apis._Add(VmApi{0, "combo", 2, VmApi_GuiCombo})
 	apis._Add(VmApi{0, "date", 1, VmApi_GuiDate})
-	apis._Add(VmApi{0, "color", 1, VmApi_GuiColor})
+	apis._Add(VmApi{0, "color", 4, VmApi_GuiColor})
 
 	apis._Add(VmApi{0, "array", 2, VmApi_AccessArray})
 
