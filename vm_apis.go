@@ -165,7 +165,7 @@ func NewVmApis() *VmApis {
 	apis._Add(VmApi{0, "date", 1, VmApi_GuiDate})
 	apis._Add(VmApi{0, "color", 1, VmApi_GuiColor})
 
-	//apis._Add(VmApi{0, "array", 2, VmApi_GetArray})	//první musí být access ......
+	apis._Add(VmApi{0, "array", 2, VmApi_AccessArray})
 
 	apis._Add(VmApi{0, "min", 2, VmApi_Min})
 	apis._Add(VmApi{0, "max", 2, VmApi_Max})

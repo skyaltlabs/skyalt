@@ -41,31 +41,55 @@ func (attr *SANodeAttr) SetErrorExe(err string) {
 	attr.errExe = errors.New(err)
 }
 
-func (attr *SANodeAttr) getDirectLink_inner(orig *SANodeAttr) (*SANodeAttr, *VmInstr) {
+func (attr *SANodeAttr) getDirectLink_inner(orig *SANodeAttr, prm_i int) (*SANodeAttr, *VmInstr) {
 
-	if attr.instr != nil {
-		link := attr.instr.GetDirectDirectAccess()
-		if link != nil && link.attr != nil {
-			if link.attr == orig {
-				fmt.Println("Warning: infinite loop")
-				return attr, nil //avoid infinite loop
-			}
-			return link.attr.getDirectLink_inner(orig) //go to source
+	instr := attr.instr
+
+	if instr == nil {
+		fmt.Println("Warning: instr == nil")
+		return attr, nil //err
+	}
+
+	if prm_i >= 0 {
+		if prm_i < len(attr.instr.prms) {
+			instr = attr.instr.prms[prm_i].instr
 		}
 	}
 
-	if attr.instr != nil {
-		return attr, attr.instr.GetConst()
+	if instr == nil {
+		fmt.Println("Warning: instr2 == nil")
+		return attr, nil //err
 	}
 
-	return attr, nil //err
+	accInstr, arrInstr := instr.GetDirectDirectAccess()
+	if accInstr != nil {
+		if accInstr.attr == orig {
+			fmt.Println("Warning: infinite loop")
+			return attr, nil //avoid infinite loop
+		}
+		return accInstr.attr.getDirectLink_inner(orig, -1) //go to source
+	}
+	if arrInstr != nil {
+		arrAttr := arrInstr.prms[0].instr.attr
+		arrInd := int(arrInstr.prms[1].instr.temp.Number())
+		if arrAttr == orig {
+			fmt.Println("Warning: infinite loop")
+			return attr, nil //avoid infinite loop
+		}
+		return arrAttr.getDirectLink_inner(orig, arrInd) //go to source
+	}
+
+	return attr, instr.GetConst()
 }
 
+func (attr *SANodeAttr) GetDirectLinkPrm(prm_i int) (*SANodeAttr, *VmInstr) {
+	return attr.getDirectLink_inner(attr, prm_i)
+}
 func (attr *SANodeAttr) GetDirectLink() (*SANodeAttr, *VmInstr) {
-	return attr.getDirectLink_inner(attr)
+	return attr.GetDirectLinkPrm(-1)
 }
 
-func (attr *SANodeAttr) GetArrayDirectLink(i int) (*SANodeAttr, *VmInstr) {
+/*func (attr *SANodeAttr) GetArrayDirectLink(i int) (*SANodeAttr, *VmInstr) {
 
 	if attr.instr != nil && i < len(attr.instr.prms) {
 		prm := attr.instr.prms[i]
@@ -83,7 +107,7 @@ func (attr *SANodeAttr) GetArrayDirectLink(i int) (*SANodeAttr, *VmInstr) {
 		}
 	}
 	return attr, nil //err
-}
+}*/
 
 func (attr *SANodeAttr) SetExpString(value string) {
 	a, instr := attr.GetDirectLink()

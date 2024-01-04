@@ -620,13 +620,13 @@ func (w *SANode) SetGridStart(v OsV2) {
 		return
 	}
 	//y
-	a, instr := attr.GetArrayDirectLink(1)
+	a, instr := attr.GetDirectLinkPrm(1)
 	if instr != nil {
 		a.LineReplace(instr, strconv.Itoa(v.Y))
 	}
 
 	//x
-	a, instr = attr.GetArrayDirectLink(0)
+	a, instr = attr.GetDirectLinkPrm(0)
 	if instr != nil {
 		a.LineReplace(instr, strconv.Itoa(v.X))
 	}
@@ -637,13 +637,13 @@ func (w *SANode) SetGridSize(v OsV2) {
 		return
 	}
 	//h
-	a, instr := attr.GetArrayDirectLink(3)
+	a, instr := attr.GetDirectLinkPrm(3)
 	if instr != nil {
 		a.LineReplace(instr, strconv.Itoa(v.Y))
 	}
 
 	//w
-	a, instr = attr.GetArrayDirectLink(2)
+	a, instr = attr.GetDirectLinkPrm(2)
 	if instr != nil {
 		a.LineReplace(instr, strconv.Itoa(v.X))
 	}
@@ -1040,7 +1040,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 				arr := attr.finalValue.Array()
 				for i := range attr.instr.prms {
 
-					a, instr = attr.GetArrayDirectLink(i)
+					a, instr = attr.GetDirectLinkPrm(i)
 					if i < arr.Num() {
 						value = arr.Get(i).String()
 						_, _, _, fnshd, _ := ui.Comp_editbox(i, 0, 1, 1, &value, 2, "", "", false, false, instr != nil)

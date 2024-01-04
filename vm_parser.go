@@ -319,7 +319,6 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 }
 
 func (line *VmLine) addAccess(node *SANode, attrName string, instr *VmInstr, lexer *VmLexer) {
-
 	vv := node.findAttr(attrName)
 	if vv != nil {
 		instr.attr = vv
@@ -327,7 +326,6 @@ func (line *VmLine) addAccess(node *SANode, attrName string, instr *VmInstr, lex
 	} else {
 		line.addError(lexer, fmt.Sprintf("Attribute(%s) not found", attrName))
 	}
-
 }
 
 func (line *VmLine) Parse() *VmInstr {

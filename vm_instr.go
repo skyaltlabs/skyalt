@@ -47,8 +47,9 @@ type VmInstr struct {
 
 	prms []VmInstrPrm
 
-	attr *SANodeAttr
 	temp SAValue
+
+	attr *SANodeAttr
 
 	next *VmInstr
 
@@ -114,10 +115,24 @@ func (instr *VmInstr) GetConst() *VmInstr {
 	return nil
 }
 
-func (instr *VmInstr) GetDirectDirectAccess() *VmInstr {
+func (instr *VmInstr) GetDirectDirectAccess() (*VmInstr, *VmInstr) {
 
 	if VmCallback_Cmp(instr.fn, VmBasic_Access) { //access(!)
-		return instr
+		if instr.attr != nil {
+			return instr, nil
+		}
+	}
+
+	if VmCallback_Cmp(instr.fn, VmApi_AccessArray) { //array(!)
+		if len(instr.prms) >= 2 {
+			acc := instr.prms[0].instr
+			ind := instr.prms[1].instr
+
+			if VmCallback_Cmp(acc.fn, VmBasic_Access) && acc.attr != nil && VmCallback_Cmp(ind.fn, VmBasic_Constant) {
+				return nil, instr
+			}
+		}
+
 	}
 
 	if VmCallback_Cmp(instr.fn, VmApi_GuiBool) ||
@@ -128,7 +143,7 @@ func (instr *VmInstr) GetDirectDirectAccess() *VmInstr {
 		return instr.prms[0].instr.GetDirectDirectAccess()
 	}
 
-	return nil
+	return nil, nil
 }
 
 func (instr *VmInstr) NumPrms() int {
@@ -207,13 +222,16 @@ func VmApi_GuiColor(instr *VmInstr, st *VmST) SAValue {
 	return VmBasic_ConstArray(instr, st)
 }
 
-/*func VmApi_GetArray(instr *VmInstr, st *VmST) SAValue{
+func VmApi_AccessArray(instr *VmInstr, st *VmST) SAValue {
 
 	item := instr.ExePrm(st, 0)
 	index := instr.ExePrm(st, 1)
 
-	return instr.temp
-}*/
+	return *item.Array().Get(int(index.Number()))
+
+	//instr.attr_item = int(index.Number())
+	//return instr.temp
+}
 
 func VmBasic_ConstArray(instr *VmInstr, st *VmST) SAValue {
 	var arr SAValueArray
