@@ -356,14 +356,15 @@ func (w *SANode) markUnusedAttrs() {
 }
 func (w *SANode) removeUnusedAttrs() {
 
-	if !w.CanBeRenderOnCanvas() || w.GetGridShow() { //don't remove atttr which are GUI, but hidden(render doesn't call getAttr())
-		for i := len(w.Attrs) - 1; i >= 0; i-- {
-			if !w.Attrs[i].useMark {
-				w.Attrs = append(w.Attrs[:i], w.Attrs[i+1:]...) //remove
+	if !w.Bypass {
+		if !w.CanBeRenderOnCanvas() || w.GetGridShow() { //don't remove atttr which are GUI, but hidden(render doesn't call getAttr())
+			for i := len(w.Attrs) - 1; i >= 0; i-- {
+				if !w.Attrs[i].useMark {
+					w.Attrs = append(w.Attrs[:i], w.Attrs[i+1:]...) //remove
+				}
 			}
 		}
 	}
-
 	for _, n := range w.Subs {
 		n.removeUnusedAttrs()
 	}
@@ -376,14 +377,18 @@ func (w *SANode) Execute(app *SAApp) bool {
 
 	switch w.Exe {
 	case "sqlite_select":
-		w.Sqlite_select()
-		//...
+		ok = w.Sqlite_select()
+	case "sqlite_insert":
+		//ok = w.Sqlite_insert()
 	case "sqlite_update":
 		//...
 	case "sqlite_delete":
 		//...
 	case "sqlite_execute":
 		//...
+
+	case "csv_select":
+		ok = w.Csv_select()
 
 	default:
 		ok = w.executeProgram(app)

@@ -18,9 +18,66 @@ package main
 
 import (
 	"database/sql"
+	"encoding/csv"
 	"fmt"
 	"os"
 )
+
+func (node *SANode) _Sqlite_open(fileAttr *SANodeAttr) *sql.DB {
+
+	file := fileAttr.GetString()
+
+	if file == "" {
+		fileAttr.SetErrorExe("empty")
+		return nil
+	}
+
+	_, err := os.Stat(file)
+	if os.IsNotExist(err) {
+		fileAttr.SetErrorExe(fmt.Sprintf("file(%s) doesn't exist", file))
+		return nil
+	}
+
+	db, err := sql.Open("sqlite3", "file:"+file+"?&_journal_mode=WAL")
+	if err != nil {
+		fileAttr.SetErrorExe(fmt.Sprintf("Open(%s) failed: %v", file, err))
+		return nil
+	}
+	return db
+}
+
+func (node *SANode) Sqlite_insert() bool {
+
+	triggerAttr := node.GetAttr("trigger", "bool(0)")
+	fileAttr := node.GetAttr("file", "")
+	tableAttr := node.GetAttr("table", "") //combo ...
+
+	if triggerAttr.GetBool() {
+
+		db := node._Sqlite_open(fileAttr)
+		if db == nil {
+			return false
+		}
+		defer db.Close()
+
+		table := tableAttr.GetString()
+		if table == "" {
+			tableAttr.SetErrorExe("empty")
+			return false
+		}
+
+		query := "INSERT INTO" + table
+		//...........
+		//INSERT INTO table_name (column1, column2, column3, ...) VALUES (value1, value2, value3, ...);
+
+		query += ";"
+		db.Exec(query)
+
+		triggerAttr.SetExpBool(false)
+	}
+
+	return true
+}
 
 func (node *SANode) Sqlite_select() bool {
 
@@ -28,30 +85,17 @@ func (node *SANode) Sqlite_select() bool {
 	queryAttr := node.GetAttr("query", "")
 	resultAttr := node.GetAttr("result", "{}")
 
-	file := fileAttr.GetString()
-	query := queryAttr.GetString()
-
-	if file == "" {
-		fileAttr.SetErrorExe("empty")
+	db := node._Sqlite_open(fileAttr)
+	if db == nil {
 		return false
 	}
+	defer db.Close()
+
+	query := queryAttr.GetString()
 	if query == "" {
 		queryAttr.SetErrorExe("empty")
 		return false
 	}
-
-	_, err := os.Stat(file)
-	if os.IsNotExist(err) {
-		fileAttr.SetErrorExe(fmt.Sprintf("file(%s) doesn't exist", file))
-		return false
-	}
-
-	db, err := sql.Open("sqlite3", "file:"+file+"?&_journal_mode=WAL")
-	if err != nil {
-		fileAttr.SetErrorExe(fmt.Sprintf("Open(%s) failed: %v", file, err))
-		return false
-	}
-	defer db.Close()
 
 	rows, err := db.Query(query)
 	if err != nil {
@@ -124,6 +168,72 @@ func (node *SANode) Sqlite_select() bool {
 
 	resultAttr.Value = ""
 	resultAttr.finalValue.SetTable(tb)
+	return true
+}
 
+func (node *SANode) Csv_select() bool {
+
+	fileAttr := node.GetAttr("file", "")
+	firstLineHeader := node.GetAttr("first_line_header", "bool(1)").GetBool()
+	resultAttr := node.GetAttr("result", "{}")
+
+	file := fileAttr.GetString()
+	if file == "" {
+		fileAttr.SetErrorExe("empty")
+		return false
+	}
+
+	_, err := os.Stat(file)
+	if os.IsNotExist(err) {
+		fileAttr.SetErrorExe(fmt.Sprintf("file(%s) doesn't exist", file))
+		return false
+	}
+
+	f, err := os.Open(file)
+	if err != nil {
+		fileAttr.SetErrorExe(fmt.Sprintf("Open(%s) error: %v", file, err))
+		return false
+	}
+	defer f.Close()
+
+	csv := csv.NewReader(f)
+	data, err := csv.ReadAll()
+	if err != nil {
+		node.SetError(fmt.Sprintf("ReadAll() failed: %v", err))
+	}
+
+	max_cols := 0
+	for _, ln := range data {
+		max_cols = OsMax(max_cols, len(ln))
+	}
+
+	tb := NewSAValueTable(nil)
+
+	if max_cols > 0 {
+		//create columns list
+		var columnNames []string
+		if firstLineHeader {
+			columnNames = append(columnNames, data[0]...)
+		}
+		for i := len(columnNames); i < max_cols; i++ {
+			columnNames = append(columnNames, fmt.Sprintf("c%d", i))
+		}
+
+		tb = NewSAValueTable(columnNames)
+
+		//add data
+		for i, ln := range data {
+			if firstLineHeader && i == 0 {
+				continue //skip header
+			}
+			r := tb.AddRow()
+			for c, it := range ln {
+				tb.Get(c, r).SetString(it)
+			}
+		}
+	}
+
+	resultAttr.Value = ""
+	resultAttr.finalValue.SetTable(tb)
 	return true
 }

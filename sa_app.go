@@ -392,7 +392,7 @@ func (app *SAApp) History(ui *Ui) {
 
 var SAStandardPrimitives = []string{"button", "text", "checkbox", "switch", "editbox", "divider", "combo", "color_palette", "color", "calendar", "date"}
 var SAStandardComponents = []string{"layout", "map", "map_locators"}
-var SAStandardModifiers = []string{"sqlite_select", "sqlite_insert", "sqlite_update", "sqlite_delete", "sqlite_execute"}
+var SAStandardModifiers = []string{"sqlite_select", "sqlite_insert", "sqlite_update", "sqlite_delete", "sqlite_execute", "csv_select"}
 
 func SAApp_IsStdPrimitive(name string) bool {
 	for _, fn := range SAStandardPrimitives {
