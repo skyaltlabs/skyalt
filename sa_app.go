@@ -69,6 +69,11 @@ type SAApp struct {
 
 func (a *SAApp) init(base *SABase) {
 	a.base = base
+
+	a.ops = NewVmOps()
+	a.apis = NewVmApis()
+	a.prior = 100
+
 	a.mapp = NewUiLayoutMap()
 	a.graph = NewSAGraph(a)
 
@@ -245,7 +250,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 			ui.GetCall().call.data.scrollV.attach = &rowDiv.data.scrollV
 		}
 
-		app.act.RenderLayout(ui, app)
+		app.act.RenderLayout()
 	}
 	ui.Div_end()
 
@@ -392,6 +397,7 @@ func (app *SAApp) History(ui *Ui) {
 
 var SAStandardPrimitives = []string{"button", "text", "checkbox", "switch", "editbox", "divider", "combo", "color_palette", "color", "calendar", "date"}
 var SAStandardComponents = []string{"layout", "map", "map_locators"}
+var SAStandardBackComp = []string{"dialog"}
 var SAStandardModifiers = []string{"sqlite_select", "sqlite_insert", "sqlite_update", "sqlite_delete", "sqlite_execute", "csv_select"}
 
 func SAApp_IsStdPrimitive(name string) bool {
@@ -410,10 +416,44 @@ func SAApp_IsStdComponent(name string) bool {
 	}
 	return false
 }
+func SAApp_IsStdModifier(name string) bool {
+	for _, fn := range SAStandardModifiers {
+		if strings.EqualFold(fn, name) {
+			return true
+		}
+	}
+	return false
+}
+
+func SAApp_IsStdBackComp(name string) bool {
+	for _, fn := range SAStandardBackComp {
+		if strings.EqualFold(fn, name) {
+			return true
+		}
+	}
+	return false
+}
+
+func SAApp_IsExternal(name string) bool {
+	if SAApp_IsStdPrimitive(name) {
+		return false
+	}
+	if SAApp_IsStdComponent(name) {
+		return false
+	}
+	if SAApp_IsStdModifier(name) {
+		return false
+	}
+	if SAApp_IsStdBackComp(name) {
+		return false
+	}
+	return true
+}
 
 func (app *SAApp) getListOfNodes() []string {
 	fns := SAStandardPrimitives
 	fns = append(fns, SAStandardComponents...)
+	fns = append(fns, SAStandardBackComp...)
 	fns = append(fns, SAStandardModifiers...)
 	fns = append(fns, app.base.server.nodes...) //from /nodes dir
 	return fns
@@ -622,7 +662,7 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 }
 
 func (app *SAApp) cmpAndAddHistory() {
-	if len(app.history) > 0 && app.act == app.root.FindMirror(app.history[app.history_pos], app.history_act[app.history_pos]) {
+	if len(app.history) > 0 /*&& app.act == app.root.FindMirror(app.history[app.history_pos], app.history_act[app.history_pos])*/ {
 		historyDiff := false
 		exeDiff := !app.root.Cmp(app.history[app.history_pos], &historyDiff)
 		if exeDiff || historyDiff {
@@ -649,16 +689,21 @@ func (app *SAApp) addHistory(exeIt bool, rewriteLast bool) {
 		app.history_act = app.history_act[:app.history_pos+1]
 	}
 
-	root, _ := app.root.Copy(app) //err ...
-	act := root.FindMirror(app.root, app.act)
+	cp_root, _ := app.root.Copy(app) //err ...
+	cp_act := cp_root.FindMirror(app.root, app.act)
 
 	if rewriteLast {
-		app.history[app.history_pos] = root
-		app.history_act[app.history_pos] = act
+		app.history[app.history_pos] = cp_root
+		app.history_act[app.history_pos] = cp_act
 	} else {
+
+		if cp_root == nil || cp_act == nil {
+			fmt.Print("df")
+		}
+
 		//add history
-		app.history = append(app.history, root)
-		app.history_act = append(app.history_act, act)
+		app.history = append(app.history, cp_root)
+		app.history_act = append(app.history_act, cp_act)
 		app.history_pos++
 	}
 	app.saveIt = true
@@ -706,10 +751,6 @@ func (app *SAApp) Execute(numThreads int) {
 			app.exe.Stop()
 			app.exe = nil
 		}
-
-		app.ops = NewVmOps()
-		app.apis = NewVmApis()
-		app.prior = 100
 
 		app.root.PrepareExe() //.state = WAITING(to be executed)
 
