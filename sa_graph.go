@@ -157,9 +157,9 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 		ui.Div_rowMax(0, 100)
 		ui.Paint_rect(0, 0, 1, 1, 0, pl.GetGrey(0.8), 0)
 
-		//fade "press tab" centered in background
+		//fade "press tab" bottom - middle in background
 		lv := ui.GetCall()
-		ui._compDrawText(lv.call.canvas, "press tab", "", pl.GetGrey(1), SKYALT_FONT_HEIGHT, false, false, 1, 1, true)
+		ui._compDrawText(lv.call.canvas.AddSpace(ui.CellWidth(0.5)), "press tab", "", pl.GetGrey(1), SKYALT_FONT_HEIGHT, false, false, 1, 2, true)
 
 		//+
 		gr.drawCreateNode(ui)
