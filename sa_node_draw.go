@@ -164,7 +164,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 	}
 
 	//go inside sub
-	if node.IsGuiLayout() && inside && touch.numClicks >= 2 {
+	if node.IsGuiLayout() && inside && touch.end && touch.numClicks > 1 {
 		app.act = node
 	}
 
