@@ -75,7 +75,10 @@ func (exe *SANodeExe) Tick(app *SAApp) bool {
 			active = true
 
 			if it.IsReadyToBeExe() {
-				if it.IsExe() && !it.Bypass && (!app.IDE || app.EnableExecution) { //ignore in releaseMode
+				if !it.Bypass && (!app.IDE || app.EnableExecution) { //ignore in releaseMode
+
+					it.ExecuteGui(false)
+
 					//maximum concurent threads
 					if exe.numActiveThreads.Load() >= int64(exe.max_threads) {
 						return true

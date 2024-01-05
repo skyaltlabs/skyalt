@@ -332,19 +332,6 @@ func (w *SANode) CanBeRenderOnCanvas() bool {
 	return (SAApp_IsStdPrimitive(w.Exe) || SAApp_IsStdComponent(w.Exe))
 }
 
-func (w *SANode) IsExe() bool {
-	if w.Exe == "" {
-		return false
-	}
-	if SAApp_IsStdPrimitive(w.Exe) {
-		return false
-	}
-	if SAApp_IsStdComponent(w.Exe) {
-		return false
-	}
-	return true
-}
-
 func (w *SANode) markUnusedAttrs() {
 	for _, a := range w.Attrs {
 		a.useMark = false
@@ -357,11 +344,9 @@ func (w *SANode) markUnusedAttrs() {
 func (w *SANode) removeUnusedAttrs() {
 
 	if !w.Bypass {
-		if !w.CanBeRenderOnCanvas() || w.GetGridShow() { //don't remove atttr which are GUI, but hidden(render doesn't call getAttr())
-			for i := len(w.Attrs) - 1; i >= 0; i-- {
-				if !w.Attrs[i].useMark {
-					w.Attrs = append(w.Attrs[:i], w.Attrs[i+1:]...) //remove
-				}
+		for i := len(w.Attrs) - 1; i >= 0; i-- {
+			if !w.Attrs[i].useMark {
+				//..... w.Attrs = append(w.Attrs[:i], w.Attrs[i+1:]...) //remove
 			}
 		}
 	}
@@ -370,12 +355,52 @@ func (w *SANode) removeUnusedAttrs() {
 	}
 }
 
+func (w *SANode) ExecuteGui(renderIt bool) {
+
+	switch strings.ToLower(w.Exe) {
+
+	case "dialog":
+		w.SARender_Dialog(renderIt)
+
+	case "button":
+		w.SARender_Button(renderIt)
+	case "text":
+		w.SARender_Text(renderIt)
+	case "switch":
+		w.SARender_Switch(renderIt)
+	case "checkbox":
+		w.SARender_Checkbox(renderIt)
+	case "combo":
+		w.SARender_Combo(renderIt)
+	case "editbox":
+		w.SARender_Editbox(renderIt)
+	case "divider":
+		w.SARender_Divider(renderIt)
+	case "color_palette":
+		w.SARender_ColorPalette(renderIt)
+	case "color":
+		w.SARender_Color(renderIt)
+	case "calendar":
+		w.SARender_Calendar(renderIt)
+	case "date":
+		w.SARender_Date(renderIt)
+	case "map":
+		w.SARender_Map(renderIt)
+	case "map_locators":
+		w.SARender_MapLocators(renderIt)
+	case "layout":
+		w.SARender_Layout(renderIt)
+	default: //layout
+		w.SARender_Layout(renderIt)
+	}
+}
+
 func (w *SANode) Execute(app *SAApp) bool {
 
 	ok := true
 	st := OsTime()
 
-	switch w.Exe {
+	switch strings.ToLower(w.Exe) {
 	case "sqlite_select":
 		ok = w.Sqlite_select()
 	case "sqlite_insert":
@@ -391,11 +416,13 @@ func (w *SANode) Execute(app *SAApp) bool {
 		ok = w.Csv_select()
 
 	default:
-		ok = w.executeProgram(app)
+		if SAApp_IsExternal(w.Exe) {
+			ok = w.executeProgram(app)
+		}
 	}
 
 	w.exeTimeSec = OsTime() - st
-	fmt.Println(w.Name, "done in %.2fs", w.exeTimeSec)
+	fmt.Printf("'%s' done in %.2fs\n", w.Name, w.exeTimeSec)
 	return ok
 }
 
@@ -491,13 +518,13 @@ func (w *SANode) Copy(app *SAApp) (*SANode, error) {
 	return dst, nil
 }
 
-func (a *SANode) FindMirror(b *SANode, b_act *SANode) *SANode {
+func (a *SANode) FindMirror(b *SANode, b_find *SANode) *SANode {
 
-	if b == b_act {
+	if b == b_find {
 		return a
 	}
 	for i, na := range a.Subs {
-		ret := na.FindMirror(b.Subs[i], b_act)
+		ret := na.FindMirror(b.Subs[i], b_find)
 		if ret != nil {
 			return ret
 		}
@@ -614,7 +641,9 @@ func (w *SANode) _getAttr(defValue SANodeAttr) *SANodeAttr {
 		*v = defValue
 		v.node = w
 		w.Attrs = append(w.Attrs, v)
+	}
 
+	if v.instr == nil {
 		v.ParseExpresion()
 		v.ExecuteExpression() //right now, so default value is in v.finalValue
 	}
@@ -670,232 +699,21 @@ func (w *SANode) SetGrid(coord OsV4) {
 func (w *SANode) GetGridShow() bool {
 	return w.GetAttr("grid_show", "bool(1)").GetBool()
 }
-func (w *SANode) IsGuiAndShown() bool {
-	return w.CanBeRenderOnCanvas() && w.GetGridShow()
-}
 
-func (w *SANode) Render(ui *Ui, app *SAApp) {
+func (w *SANode) Render() {
 
-	if !w.IsGuiAndShown() {
-		return
-	}
+	ui := w.app.base.ui
 
-	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
+	w.ExecuteGui(true)
 
-	switch strings.ToLower(w.Exe) {
+	if w.app.IDE && w.CanBeRenderOnCanvas() {
 
-	case "button":
-		enable := w.GetAttr("enable", "bool(1)").GetBool()
-		tp := w.GetAttr("type", "combo(0, \"Classic;Light;Menu;Segments\")").GetInt()
+		grid := w.GetGrid()
+		grid.Size.X = OsMax(grid.Size.X, 1)
+		grid.Size.Y = OsMax(grid.Size.Y, 1)
 
-		clicked := false
-		switch tp {
-		case 0:
-			clicked = ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttr("label", "").GetString(), "", enable) > 0
-		case 1:
-			clicked = ui.Comp_buttonLight(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttr("label", "").GetString(), "", enable) > 0
-		case 2:
-			selected := w.GetAttr("selected", "bool(0)").GetBool()
-			clicked = ui.Comp_buttonMenu(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttr("label", "").GetString(), "", enable, selected) > 0
-			if clicked {
-				sel := w.findAttr("selected")
-				sel.SetExpBool(!selected)
-			}
-
-		case 3:
-			labels := w.GetAttr("label", "").GetString()
-			butts := strings.Split(labels, ";")
-
-			selected := w.GetAttr("selected", fmt.Sprintf("combo(0, %s)", labels)).GetInt()
-			ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
-			{
-				for i := range butts {
-					ui.Div_colMax(i*2+0, 100)
-					if i+1 < len(butts) {
-						ui.Div_col(i*2+1, 0.1)
-					}
-				}
-				for i, it := range butts {
-					clicked = ui.Comp_buttonText(i*2+0, 0, 1, 1, it, "", "", enable, selected == i) > 0
-					if clicked {
-						sel := w.findAttr("selected")
-						sel.SetExpInt(i)
-					}
-					if i+1 < len(butts) {
-						ui.Div_SpacerCol(i*2+1, 0, 1, 1)
-					}
-				}
-				//ui.Paint_rect(0, 0, 1, 1, 0, ui.buff.win.io.GetPalette().GetGrey(0.5), 0.03)
-			}
-			ui.Div_end()
-		}
-		w.GetAttr("clicked", "bool(0)").GetBool()
-		cl := w.findAttr("clicked")
-		cl.Value = OsTrnString(clicked, "1", "0")
-
-	case "text":
-		ui.Comp_text(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.GetAttr("label", "").GetString(), w.GetAttr("align", "combo(0, \"Left;Center;Right\")").GetInt())
-
-	case "switch":
-		instr := w.GetAttr("value", "").instr.GetConst()
-		value := instr.pos_attr.finalValue.String()
-		enable := w.GetAttr("enable", "bool(1)").GetBool() && instr != nil
-		if ui.Comp_switch(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, w.GetAttr("label", "").GetString(), "", enable) {
-			instr.LineReplace(value)
-		}
-
-	case "checkbox":
-		instr := w.GetAttr("value", "").instr.GetConst()
-		value := instr.pos_attr.finalValue.String()
-		enable := w.GetAttr("enable", "bool(1)").GetBool() && instr != nil
-		if ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, w.GetAttr("label", "").GetString(), "", enable) {
-			instr.LineReplace(value)
-		}
-
-	case "combo":
-		instr := w.GetAttr("value", "").instr.GetConst()
-		value := instr.pos_attr.finalValue.String()
-		enable := w.GetAttr("enable", "bool(1)").GetBool() && instr != nil
-		if ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, w.GetAttr("options", "\"a;b;c\")").GetString(), "", enable, w.GetAttr("search", "bool(0)").GetBool()) {
-			instr.LineReplace(value)
-		}
-
-	case "editbox":
-		instr := w.GetAttr("value", "").instr.GetConst()
-		value := instr.pos_attr.finalValue.String()
-		enable := w.GetAttr("enable", "bool(1)").GetBool() && instr != nil
-		tmpToValue := w.GetAttr("tempToValue", "bool(0)").GetBool()
-		_, _, chngd, fnshd, _ := ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, w.GetAttr("precision", "2").GetInt(), "", w.GetAttr("ghost", "").GetString(), false, tmpToValue, enable)
-		if fnshd || (tmpToValue && chngd) {
-			instr.LineReplace(value)
-		}
-
-	case "divider":
-		tp := w.GetAttr("type", "combo(0, \"Column;Row\"").GetInt()
-		switch tp {
-		case 0:
-			ui.Div_SpacerCol(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
-		case 1:
-			ui.Div_SpacerRow(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
-		}
-
-	case "color_palette":
-		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-		{
-			cdAttr := w.GetAttr("cd", "color([0, 0, 0, 255])")
-			cd := cdAttr.GetCd()
-			if ui.comp_colorPalette(&cd) {
-				cdAttr.ReplaceCd(cd)
-			}
-		}
-		ui.Div_end()
-
-	case "color":
-		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-		{
-			enable := w.GetAttr("enable", "bool(1)").GetBool()
-			cdAttr := w.GetAttr("cd", "color([0, 0, 0, 255])")
-			cd := cdAttr.GetCd()
-			if ui.comp_colorPicker(&cd, w.Name, enable) {
-				cdAttr.ReplaceCd(cd)
-			}
-		}
-		ui.Div_end()
-
-	case "calendar":
-		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-		{
-			value := w.GetAttr("value", "date(0)").GetInt64()
-			page := w.GetAttr("page", "date(0)").GetInt64()
-
-			ui.Comp_Calendar(&value, &page, 100, 100)
-
-			w.GetAttr("value", "date(0)").SetExpInt(int(value))
-			w.GetAttr("page", "date(0)").SetExpInt(int(page))
-		}
-		ui.Div_end()
-
-	case "date":
-		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-		{
-			enable := w.GetAttr("enable", "bool(1)").GetBool()
-			value := w.GetAttr("value", "date(0)").GetInt64()
-			show_time := w.GetAttr("show_time", "bool(0)").GetBool()
-			if ui.Comp_CalendarDataPicker(&value, show_time, w.Name, enable) {
-				w.GetAttr("value", "date(0)").SetExpInt(int(value))
-			}
-		}
-		ui.Div_end()
-
-	case "map":
-		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-		{
-			file := w.GetAttr("file", "\"maps/osm\"").GetString()
-			url := w.GetAttr("url", "\"https://tile.openstreetmap.org/{z}/{x}/{y}.png\"").GetString()
-			copyright := w.GetAttr("copyright", "\"(c)OpenStreetMap contributors\"").GetString()
-			copyright_url := w.GetAttr("copyright_url", "\"https://www.openstreetmap.org/copyright\"").GetString()
-
-			file = "disk/" + file
-
-			cam_lon := w.GetAttr("lon", "14.4071117049").GetFloat()
-			cam_lat := w.GetAttr("lat", "50.0852013259").GetFloat()
-			cam_zoom := w.GetAttr("zoom", "5").GetFloat()
-
-			err := ui.comp_map(app.mapp, &cam_lon, &cam_lat, &cam_zoom, file, url, copyright, copyright_url)
-			if err != nil {
-				w.errExe = err
-			}
-
-			//set back
-			w.GetAttr("lon", "0").SetExpFloat(cam_lon)
-			w.GetAttr("lat", "0").SetExpFloat(cam_lat)
-			w.GetAttr("zoom", "5").SetExpInt(int(cam_zoom))
-
-			//app.mapp.comp_map(w, ui)
-			ui.Div_end()
-		}
-		div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, ".subs.")
-		{
-			div.touch_enabled = false
-			w.RenderLayout(ui, app)
-		}
-		ui.Div_end()
-
-	case "map_locators":
-		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-		{
-			lonAttr, cam_lon := w.parent.findAttrFloat("lon")
-			latAttr, cam_lat := w.parent.findAttrFloat("lat")
-			zoomAttr, cam_zoom := w.parent.findAttrFloat("zoom")
-			if lonAttr == nil || latAttr == nil || zoomAttr == nil {
-				w.errExe = fmt.Errorf("parent node is not 'Map' type")
-				return
-			}
-			items := w.GetAttr("items", "\"[{\"lon\":14.4071117049, \"lat\":50.0852013259, \"label\":\"1\"}, {\"lon\":14, \"lat\":50, \"label\":\"2\"}]\"").GetString()
-
-			err := ui.comp_mapLocators(app.mapp, cam_lon, cam_lat, cam_zoom, items)
-			if err != nil {
-				w.findAttr("items").errExe = err
-			}
-		}
-		ui.Div_end()
-
-	case "layout":
-		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-		w.RenderLayout(ui, app)
-		ui.Div_end()
-
-	default: //layout
-		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-		w.RenderLayout(ui, app)
-		ui.Div_end()
-	}
-
-	if app.IDE {
 		//draw Select rectangle
-		if app.act == w.parent {
+		if w.app.act == w.parent {
 			if w.HasExeError() || w.HasExpError() {
 				pl := ui.buff.win.io.GetPalette()
 				cd := pl.E
@@ -938,7 +756,9 @@ func (w *SANode) GetResizerCoord(ui *Ui) OsV4 {
 	return InitOsV4Mid(w.selected_canvas.End(), OsV2{s, s})
 }
 
-func (w *SANode) RenderLayout(ui *Ui, app *SAApp) {
+func (w *SANode) RenderLayout() {
+
+	ui := w.app.base.ui
 
 	//columns
 	for i, c := range w.Cols {
@@ -966,7 +786,7 @@ func (w *SANode) RenderLayout(ui *Ui, app *SAApp) {
 
 	//items
 	for _, it := range w.Subs {
-		it.Render(ui, app)
+		it.Render()
 	}
 }
 
