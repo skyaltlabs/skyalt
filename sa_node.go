@@ -355,9 +355,12 @@ func (w *SANode) markUnusedAttrs() {
 	}
 }
 func (w *SANode) removeUnusedAttrs() {
-	for i := len(w.Attrs) - 1; i >= 0; i-- {
-		if !w.Attrs[i].useMark {
-			w.Attrs = append(w.Attrs[:i], w.Attrs[i+1:]...) //remove
+
+	if !w.CanBeRenderOnCanvas() || w.GetGridShow() { //don't remove atttr which are GUI, but hidden(render doesn't call getAttr())
+		for i := len(w.Attrs) - 1; i >= 0; i-- {
+			if !w.Attrs[i].useMark {
+				w.Attrs = append(w.Attrs[:i], w.Attrs[i+1:]...) //remove
+			}
 		}
 	}
 
@@ -662,14 +665,13 @@ func (w *SANode) SetGrid(coord OsV4) {
 func (w *SANode) GetGridShow() bool {
 	return w.GetAttr("grid_show", "bool(1)").GetBool()
 }
+func (w *SANode) IsGuiAndShown() bool {
+	return w.CanBeRenderOnCanvas() && w.GetGridShow()
+}
 
 func (w *SANode) Render(ui *Ui, app *SAApp) {
 
-	if !w.CanBeRenderOnCanvas() {
-		return
-	}
-
-	if !w.GetGridShow() {
+	if !w.IsGuiAndShown() {
 		return
 	}
 
