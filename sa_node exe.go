@@ -37,6 +37,8 @@ func NewSANodeExe(app *SAApp, max_threads int) *SANodeExe {
 
 	app.root.buildList(&exe.list)
 
+	app.root.markUnusedAttrs()
+
 	return exe
 }
 
@@ -95,6 +97,11 @@ func (exe *SANodeExe) Tick(app *SAApp) bool {
 				}
 			}
 		}
+	}
+
+	//done
+	if !active {
+		app.root.removeUnusedAttrs()
 	}
 
 	return active

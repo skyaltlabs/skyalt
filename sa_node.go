@@ -345,6 +345,27 @@ func (w *SANode) IsExe() bool {
 	return true
 }
 
+func (w *SANode) markUnusedAttrs() {
+	for _, a := range w.Attrs {
+		a.useMark = false
+	}
+
+	for _, n := range w.Subs {
+		n.markUnusedAttrs()
+	}
+}
+func (w *SANode) removeUnusedAttrs() {
+	for i := len(w.Attrs) - 1; i >= 0; i-- {
+		if !w.Attrs[i].useMark {
+			w.Attrs = append(w.Attrs[:i], w.Attrs[i+1:]...) //remove
+		}
+	}
+
+	for _, n := range w.Subs {
+		n.removeUnusedAttrs()
+	}
+}
+
 func (w *SANode) Execute(app *SAApp) bool {
 
 	ok := true
@@ -366,8 +387,7 @@ func (w *SANode) Execute(app *SAApp) bool {
 	}
 
 	w.exeTimeSec = OsTime() - st
-
-	fmt.Println(w.Name, "done")
+	fmt.Println(w.Name, "done in %.2fs", w.exeTimeSec)
 	return ok
 }
 
@@ -572,6 +592,7 @@ func (w *SANode) Remove() bool {
 func (w *SANode) findAttr(name string) *SANodeAttr {
 	for _, it := range w.Attrs {
 		if it.Name == name {
+			it.useMark = true
 			return it
 		}
 	}
@@ -590,6 +611,7 @@ func (w *SANode) _getAttr(defValue SANodeAttr) *SANodeAttr {
 		v.ExecuteExpression() //right now, so default value is in v.finalValue
 	}
 
+	v.useMark = true
 	return v
 }
 
@@ -1015,6 +1037,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 				for i := range attr.instr.prms {
 					if i < arr.Num() {
 						value = arr.Get(i).String()
+						instr := attr.instr.GetConstArrayPrm(i)
 						_, _, _, fnshd, _ := ui.Comp_editbox(i, 0, 1, 1, &value, 2, "", "", false, false, instr != nil)
 						if fnshd {
 							attr.ReplaceArrayItem(i, value)

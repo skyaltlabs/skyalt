@@ -35,6 +35,8 @@ type SANodeAttr struct {
 
 	errExp error
 	errExe error
+
+	useMark bool
 }
 
 func (attr *SANodeAttr) SetErrorExe(err string) {
