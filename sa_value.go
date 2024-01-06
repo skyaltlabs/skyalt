@@ -150,6 +150,16 @@ func (vt *SAValueTable) NumRows() int {
 	}
 	return 0
 }
+
+func (vt *SAValueTable) FindName(name string) int {
+	for i, nm := range vt.names {
+		if strings.EqualFold(nm, name) {
+			return i
+		}
+	}
+	return -1
+}
+
 func (vt *SAValueTable) Get(col int, row int) *SAValue {
 	return vt.items[col].Get(row)
 }
