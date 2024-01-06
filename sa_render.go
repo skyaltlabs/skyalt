@@ -343,21 +343,35 @@ func (w *SANode) SARender_Map(renderIt bool) {
 	cam_latAttr := w.GetAttr("lat", "50.0852013259")
 	cam_zoomAttr := w.GetAttr("zoom", "5")
 
+	//locators
+	itemsAttr := w.GetAttr("items", "{\"lon;lat;label\", 14.4071117049, 50.0852013259, \"1\", 14, 50, \"2\"}")
+	items := itemsAttr.finalValue.Table()
+	lon_i := items.FindName("lon")
+	lat_i := items.FindName("lat")
+	label_i := items.FindName("label")
+	if lon_i < 0 {
+		itemsAttr.SetErrorExe("'lon' column not found")
+	}
+	if lat_i < 0 {
+		itemsAttr.SetErrorExe("'lat' column not found")
+	}
+	if label_i < 0 {
+		itemsAttr.SetErrorExe("'label_i' column not found")
+	}
+
 	if showIt {
-		div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
+		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
 		{
+			ui.Div_colMax(0, 100)
+			ui.Div_rowMax(0, 100)
+
 			file = "disk/" + file
 
 			cam_lon := cam_lonAttr.GetFloat()
 			cam_lat := cam_latAttr.GetFloat()
 			cam_zoom := cam_zoomAttr.GetFloat()
 
-			mp := w.app.mapp
-			if !div.IsOver(ui) { //only one map can zoom
-				mp = NewUiLayoutMap()
-			}
-
-			err := ui.comp_map(mp, &cam_lon, &cam_lat, &cam_zoom, file, url, copyright, copyright_url)
+			err := ui.comp_map(&cam_lon, &cam_lat, &cam_zoom, file, url, copyright, copyright_url)
 			if err != nil {
 				w.errExe = err
 			}
@@ -367,19 +381,30 @@ func (w *SANode) SARender_Map(renderIt bool) {
 			cam_latAttr.SetExpFloat(cam_lat)
 			cam_zoomAttr.SetExpInt(int(cam_zoom))
 
-			//app.mapp.comp_map(w, ui)
+			//locators
+			{
+				var locators []UiCompMapLocator
+				for r := 0; r < items.NumRows(); r++ {
+					locators = append(locators, UiCompMapLocator{lon: items.Get(lon_i, r).Number(), lat: items.Get(lat_i, r).Number(), label: items.Get(label_i, r).String()})
+				}
+
+				err := ui.comp_mapLocators(cam_lon, cam_lat, cam_zoom, locators)
+				if err != nil {
+					w.findAttr("items").errExe = err
+				}
+			}
 			ui.Div_end()
 		}
-		div = ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, ".subs.")
+		/*div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, ".subs.")
 		{
 			div.touch_enabled = false
 			w.RenderLayout()
 		}
-		ui.Div_end()
+		ui.Div_end()*/
 	}
 }
 
-func (w *SANode) SARender_MapLocators(renderIt bool) {
+/*func (w *SANode) SARender_MapLocators(renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -421,14 +446,14 @@ func (w *SANode) SARender_MapLocators(renderIt bool) {
 				locators = append(locators, UiCompMapLocator{lon: items.Get(lon_i, r).Number(), lat: items.Get(lat_i, r).Number(), label: items.Get(label_i, r).String()})
 			}
 
-			err := ui.comp_mapLocators(w.app.mapp, cam_lon, cam_lat, cam_zoom, locators)
+			err := ui.comp_mapLocators(cam_lon, cam_lat, cam_zoom, locators)
 			if err != nil {
 				w.findAttr("items").errExe = err
 			}
 		}
 		ui.Div_end()
 	}
-}
+}*/
 
 func (w *SANode) SARender_Layout(renderIt bool) {
 	ui := w.app.base.ui

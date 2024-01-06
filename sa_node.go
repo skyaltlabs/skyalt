@@ -386,8 +386,6 @@ func (w *SANode) ExecuteGui(renderIt bool) {
 		w.SARender_Date(renderIt)
 	case "map":
 		w.SARender_Map(renderIt)
-	case "map_locators":
-		w.SARender_MapLocators(renderIt)
 	case "layout":
 		w.SARender_Layout(renderIt)
 	default: //layout

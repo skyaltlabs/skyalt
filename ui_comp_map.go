@@ -29,6 +29,8 @@ import (
 // https://wiki.openstreetmap.org/wiki/Raster_tile_providers
 
 type UiLayoutMap struct {
+	active *UiLayoutDiv
+
 	lonOld, latOld, zoomOld float64
 	start_pos               OsV2f
 	start_tile              OsV2f
@@ -43,11 +45,15 @@ func NewUiLayoutMap() *UiLayoutMap {
 func (mp *UiLayoutMap) Destroy() {
 }
 
+func (mp *UiLayoutMap) SetActive(ui *Ui) {
+	mp.active = ui.GetCall().call
+}
+
 func (mp *UiLayoutMap) GetAnim(lon float64, lat float64, zoom float64, ui *Ui) (float64, float64, float64, float64, bool) {
 
 	scale := float64(1)
 	isZooming, dt, ANIM_TIME := mp.isZooming()
-	if isZooming {
+	if isZooming && mp.active == ui.GetCall().call {
 		t := dt / ANIM_TIME
 		if zoom > mp.zoomOld {
 			scale = 1 + t
@@ -149,14 +155,14 @@ type UiCompMapLocator struct {
 	label    string
 }
 
-func (ui *Ui) comp_mapLocators(mp *UiLayoutMap, cam_lon, cam_lat, cam_zoom float64, items []UiCompMapLocator) error {
+func (ui *Ui) comp_mapLocators(cam_lon, cam_lat, cam_zoom float64, items []UiCompMapLocator) error {
 	cell := ui.DivInfo_get(SA_DIV_GET_cell, 0)
 	width := ui.DivInfo_get(SA_DIV_GET_screenWidth, 0)
 	height := ui.DivInfo_get(SA_DIV_GET_screenHeight, 0)
 
 	coord := OsV2f{float32(width), float32(height)}
 
-	lon, lat, zoom, scale, _ := mp.GetAnim(cam_lon, cam_lat, cam_zoom, ui)
+	lon, lat, zoom, scale, _ := ui.mapp.GetAnim(cam_lon, cam_lat, cam_zoom, ui)
 
 	tile := 256 / cell * scale
 	tileW := tile / width
@@ -165,8 +171,6 @@ func (ui *Ui) comp_mapLocators(mp *UiLayoutMap, cam_lon, cam_lat, cam_zoom float
 	UiLayoutMap_camCheck(coord, tile, lon, lat, zoom)
 	bbStart, _, _ := UiLayoutMap_camBbox(coord, tile, lon, lat, zoom)
 
-	ui.Div_colMax(0, 100)
-	ui.Div_rowMax(0, 100)
 	for i, it := range items {
 		p := UiLayoutMap_lonLatToPos(it.lon, it.lat, zoom) //...
 
@@ -178,14 +182,27 @@ func (ui *Ui) comp_mapLocators(mp *UiLayoutMap, cam_lon, cam_lat, cam_zoom float
 		rad_y := rad / height
 
 		ui.Div_startEx(0, 0, 1, 1, x-rad_x/2, y-rad_y, rad_x, rad_y, strconv.Itoa(i))
-		ui.Paint_file(0, 0, 1, 1, 0, "file:apps/base/resources/locator.png", InitOsCd32(200, 20, 20, 255), 1, 0, false) //red
+		{
+			//ui.Paint_file(0, 0, 1, 1, 0, "file:apps/base/resources/locator.png", InitOsCd32(200, 20, 20, 255), 1, 0, false) //red
+
+			nm := strconv.Itoa(i)
+			if ui.Comp_buttonIcon(0, 0, 1, 1, "file:apps/base/resources/locator.png", 0, it.label, CdPalette_P, true, false) > 0 {
+				ui.Dialog_open(nm, 1)
+			}
+			if ui.Dialog_start(nm) {
+				ui.Div_colMax(0, 5)
+				ui.Comp_text(0, 0, 1, 1, it.label, 1)
+				ui.Comp_text(0, 1, 1, 1, fmt.Sprintf("Lon: %.3f", it.lon), 0)
+				ui.Comp_text(0, 2, 1, 1, fmt.Sprintf("Lat: %.3f", it.lat), 0)
+				ui.Dialog_end()
+			}
+		}
 		ui.Div_end()
-		//ui.Paint_file(x-rad_x/2, y-rad_y, rad_x, rad_y, 0, "file:apps/base/resources/locator.png", InitOsCd32(200, 20, 20, 255), 1, 0, false) //red
 	}
 	return nil
 }
 
-func (ui *Ui) comp_map(mp *UiLayoutMap, cam_lon, cam_lat, cam_zoom *float64, file, url, copyright, copyright_url string) error {
+func (ui *Ui) comp_map(cam_lon, cam_lat, cam_zoom *float64, file, url, copyright, copyright_url string) error {
 
 	*cam_zoom = UiLayoutMap_zoomClamp(*cam_zoom) //check
 
@@ -200,6 +217,8 @@ func (ui *Ui) comp_map(mp *UiLayoutMap, cam_lon, cam_lat, cam_zoom *float64, fil
 			return fmt.Errorf("CREATE TABLE in db(%s) failed: %w", file, err)
 		}
 	}
+
+	mp := ui.mapp
 
 	lon, lat, zoom, scale, isZooming := mp.GetAnim(*cam_lon, *cam_lat, *cam_zoom, ui)
 
@@ -287,6 +306,7 @@ func (ui *Ui) comp_map(mp *UiLayoutMap, cam_lon, cam_lat, cam_zoom *float64, fil
 		mp.zoomOld = *cam_zoom
 		*cam_zoom = UiLayoutMap_zoomClamp(*cam_zoom - wheel)
 		if mp.zoomOld != *cam_zoom {
+			mp.SetActive(ui)
 			mp.lonOld = *cam_lon
 			mp.latOld = *cam_lat
 
@@ -305,6 +325,8 @@ func (ui *Ui) comp_map(mp *UiLayoutMap, cam_lon, cam_lat, cam_zoom *float64, fil
 	}
 
 	if active {
+		mp.SetActive(ui)
+
 		var move OsV2f
 		move.X = mp.start_pos.X - touch_x
 		move.Y = mp.start_pos.Y - touch_y
@@ -324,6 +346,8 @@ func (ui *Ui) comp_map(mp *UiLayoutMap, cam_lon, cam_lat, cam_zoom *float64, fil
 		*cam_zoom = UiLayoutMap_zoomClamp(*cam_zoom + 1)
 
 		if mp.zoomOld != *cam_zoom {
+			mp.SetActive(ui)
+
 			mp.lonOld = *cam_lon
 			mp.latOld = *cam_lat
 
@@ -342,13 +366,14 @@ func (ui *Ui) comp_map(mp *UiLayoutMap, cam_lon, cam_lat, cam_zoom *float64, fil
 	}
 
 	//copyright
-	ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
-	ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
-	ui.Div_colMax(0, 100)
-	ui.Div_col(1, 5)
-	ui.Div_rowMax(0, 100)
-	ui.Div_row(1, 0.5)
-
-	ui.Comp_buttonText(1, 1, 1, 1, copyright, copyright_url, "", true, false)
+	{
+		h := 1 / height / 2
+		ui.Div_startEx(0, 0, 1, 1, 0, 1-h, 1, h, "copyright")
+		ui.Div_colMax(0, 100)
+		ui.Div_col(1, 5)
+		ui.Div_row(0, 0.5)
+		ui.Comp_buttonText(1, 0, 1, 1, copyright, copyright_url, "", true, false)
+		ui.Div_end()
+	}
 	return nil
 }
