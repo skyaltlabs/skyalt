@@ -49,12 +49,10 @@ type UiTranslations struct {
 	DATE_FORMAT_ISO  string
 	DATE_FORMAT_TEXT string
 
-	THEME       string
-	THEME_OCEAN string
-	THEME_RED   string
-	THEME_BLUE  string
-	THEME_GREEN string
-	THEME_GREY  string
+	THEME  string
+	LIGHT  string
+	DARK   string
+	CUSTOM string
 
 	DPI        string
 	THREADS    string
