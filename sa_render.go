@@ -344,19 +344,19 @@ func (w *SANode) SARender_Map(renderIt bool) {
 	cam_zoomAttr := w.GetAttr("zoom", "5")
 
 	//locators
-	itemsAttr := w.GetAttr("items", "{\"lon;lat;label\", 14.4071117049, 50.0852013259, \"1\", 14, 50, \"2\"}")
-	items := itemsAttr.finalValue.Table()
-	lon_i := items.FindName("lon")
-	lat_i := items.FindName("lat")
-	label_i := items.FindName("label")
+	locatorsAttr := w.GetAttr("locators", "{\"lon;lat;label\", 14.4071117049, 50.0852013259, \"1\", 14, 50, \"2\"}")
+	locrs := locatorsAttr.finalValue.Table()
+	lon_i := locrs.FindName("lon")
+	lat_i := locrs.FindName("lat")
+	label_i := locrs.FindName("label")
 	if lon_i < 0 {
-		itemsAttr.SetErrorExe("'lon' column not found")
+		locatorsAttr.SetErrorExe("'lon' column not found")
 	}
 	if lat_i < 0 {
-		itemsAttr.SetErrorExe("'lat' column not found")
+		locatorsAttr.SetErrorExe("'lat' column not found")
 	}
 	if label_i < 0 {
-		itemsAttr.SetErrorExe("'label_i' column not found")
+		locatorsAttr.SetErrorExe("'label_i' column not found")
 	}
 
 	if showIt {
@@ -384,76 +384,19 @@ func (w *SANode) SARender_Map(renderIt bool) {
 			//locators
 			{
 				var locators []UiCompMapLocator
-				for r := 0; r < items.NumRows(); r++ {
-					locators = append(locators, UiCompMapLocator{lon: items.Get(lon_i, r).Number(), lat: items.Get(lat_i, r).Number(), label: items.Get(label_i, r).String()})
+				for r := 0; r < locrs.NumRows(); r++ {
+					locators = append(locators, UiCompMapLocator{lon: locrs.Get(lon_i, r).Number(), lat: locrs.Get(lat_i, r).Number(), label: locrs.Get(label_i, r).String()})
 				}
 
 				err := ui.comp_mapLocators(cam_lon, cam_lat, cam_zoom, locators)
 				if err != nil {
-					w.findAttr("items").errExe = err
+					locatorsAttr.errExe = err
 				}
 			}
 			ui.Div_end()
 		}
-		/*div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, ".subs.")
-		{
-			div.touch_enabled = false
-			w.RenderLayout()
-		}
-		ui.Div_end()*/
 	}
 }
-
-/*func (w *SANode) SARender_MapLocators(renderIt bool) {
-	ui := w.app.base.ui
-	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
-
-	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
-
-	lonAttr, cam_lon := w.parent.findAttrFloat("lon")
-	latAttr, cam_lat := w.parent.findAttrFloat("lat")
-	zoomAttr, cam_zoom := w.parent.findAttrFloat("zoom")
-
-	if lonAttr == nil || latAttr == nil || zoomAttr == nil {
-		w.errExe = fmt.Errorf("parent node is not 'Map' type")
-		return
-	}
-
-	itemsAttr := w.GetAttr("items", "{\"lon;lat;label\", 14.4071117049, 50.0852013259, \"1\", 14, 50, \"2\"}")
-	items := itemsAttr.finalValue.Table()
-
-	lon_i := items.FindName("lon")
-	lat_i := items.FindName("lat")
-	label_i := items.FindName("label")
-
-	if lon_i < 0 {
-		itemsAttr.SetErrorExe("'lon' column not found")
-	}
-	if lat_i < 0 {
-		itemsAttr.SetErrorExe("'lat' column not found")
-	}
-	if label_i < 0 {
-		itemsAttr.SetErrorExe("'label_i' column not found")
-	}
-
-	if showIt {
-		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-		{
-			var locators []UiCompMapLocator
-			for r := 0; r < items.NumRows(); r++ {
-				locators = append(locators, UiCompMapLocator{lon: items.Get(lon_i, r).Number(), lat: items.Get(lat_i, r).Number(), label: items.Get(label_i, r).String()})
-			}
-
-			err := ui.comp_mapLocators(cam_lon, cam_lat, cam_zoom, locators)
-			if err != nil {
-				w.findAttr("items").errExe = err
-			}
-		}
-		ui.Div_end()
-	}
-}*/
 
 func (w *SANode) SARender_Layout(renderIt bool) {
 	ui := w.app.base.ui
