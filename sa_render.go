@@ -353,7 +353,7 @@ func (w *SANode) SARender_Map(renderIt bool) {
 			cam_zoom := cam_zoomAttr.GetFloat()
 
 			mp := w.app.mapp
-			if !div.IsOver(ui) {
+			if !div.IsOver(ui) { //only one map can zoom
 				mp = NewUiLayoutMap()
 			}
 
