@@ -344,7 +344,7 @@ func (w *SANode) SARender_Map(renderIt bool) {
 	cam_zoomAttr := w.GetAttr("zoom", "5")
 
 	if showIt {
-		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
+		div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
 		{
 			file = "disk/" + file
 
@@ -352,7 +352,12 @@ func (w *SANode) SARender_Map(renderIt bool) {
 			cam_lat := cam_latAttr.GetFloat()
 			cam_zoom := cam_zoomAttr.GetFloat()
 
-			err := ui.comp_map(w.app.mapp, &cam_lon, &cam_lat, &cam_zoom, file, url, copyright, copyright_url)
+			mp := w.app.mapp
+			if !div.IsOver(ui) {
+				mp = NewUiLayoutMap()
+			}
+
+			err := ui.comp_map(mp, &cam_lon, &cam_lat, &cam_zoom, file, url, copyright, copyright_url)
 			if err != nil {
 				w.errExe = err
 			}
@@ -365,7 +370,7 @@ func (w *SANode) SARender_Map(renderIt bool) {
 			//app.mapp.comp_map(w, ui)
 			ui.Div_end()
 		}
-		div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, ".subs.")
+		div = ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, ".subs.")
 		{
 			div.touch_enabled = false
 			w.RenderLayout()
