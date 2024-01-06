@@ -330,13 +330,14 @@ func VmBasic_ConstTable(instr *VmInstr, st *VmST) SAValue {
 		v := instr.ExePrm(st, i)
 		if i == 0 {
 			tb = NewSAValueTable(strings.Split(v.String(), ";"))
+			r = tb.AddRow()
 		} else {
 			tb.Get(c, r).value = v.value
 
 			c++
 			if c >= len(tb.names) {
 				c = 0
-				r++
+				r = tb.AddRow()
 			}
 		}
 	}
