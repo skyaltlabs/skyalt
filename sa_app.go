@@ -59,8 +59,6 @@ type SAApp struct {
 	apis  *VmApis
 	prior int
 
-	mapp *UiLayoutMap
-
 	EnableExecution bool
 	exe             *SANodeExe
 
@@ -74,7 +72,6 @@ func (a *SAApp) init(base *SABase) {
 	a.apis = NewVmApis()
 	a.prior = 100
 
-	a.mapp = NewUiLayoutMap()
 	a.graph = NewSAGraph(a)
 
 	ic := a.GetFolderPath() + "icon.png"
@@ -94,7 +91,6 @@ func NewSAApp(name string, base *SABase) *SAApp {
 	return app
 }
 func (app *SAApp) Destroy() {
-	app.mapp.Destroy()
 }
 
 func SAApp_GetNewFolderPath(name string) string {
@@ -392,11 +388,10 @@ func (app *SAApp) History(ui *Ui) {
 	if touch.end || keys.hasChanged || app.base.ui.touch.scrollWheel != nil {
 		app.cmpAndAddHistory()
 	}
-
 }
 
-var SAStandardPrimitives = []string{"button", "text", "checkbox", "switch", "editbox", "divider", "combo", "color_palette", "color", "calendar", "date"}
-var SAStandardComponents = []string{"layout", "map", "map_locators"}
+var SAStandardPrimitives = []string{"button", "text", "checkbox", "switch", "editbox", "divider", "combo", "color_palette", "color", "calendar", "date", "map"}
+var SAStandardComponents = []string{"layout"}
 var SAStandardBackComp = []string{"dialog"}
 var SAStandardModifiers = []string{"sqlite_select", "sqlite_insert", "sqlite_update", "sqlite_delete", "sqlite_execute", "csv_select"}
 

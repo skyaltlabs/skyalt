@@ -61,11 +61,15 @@ type Ui struct {
 	trns UiTranslations
 
 	date_page int64
+
+	mapp *UiLayoutMap
 }
 
 func NewUi(win *Win, base_app_layout_path string) (*Ui, error) {
 	var ui Ui
 	ui.win = win
+
+	ui.mapp = NewUiLayoutMap()
 
 	ui.base_app = NewUiLayoutApp("base", base_app_layout_path)
 
@@ -83,6 +87,8 @@ func NewUi(win *Win, base_app_layout_path string) (*Ui, error) {
 }
 
 func (ui *Ui) Destroy() {
+
+	ui.mapp.Destroy()
 
 	ui.base_app.Destroy()
 
