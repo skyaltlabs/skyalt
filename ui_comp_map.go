@@ -63,18 +63,19 @@ func UiLayoutMap_posToLonLat(pos OsV2f, zoom float64) (float64, float64) {
 }
 
 func UiLayoutMap_camBbox(res OsV2f, tile float64, lon, lat, zoom float64) (OsV2f, OsV2f, OsV2f) {
+	hres := res.MulV(0.5)
+
 	tilePos := UiLayoutMap_lonLatToPos(lon, lat, zoom)
 	max_res := math.Pow(2, zoom)
 
-	var start, end, size OsV2f
+	var start, end OsV2f
 
-	start.X = float32(OsClampFloat((float64(tilePos.X)*tile-float64(res.X)/2)/tile, 0, max_res))
-	start.Y = float32(OsClampFloat((float64(tilePos.Y)*tile-float64(res.Y/2))/tile, 0, max_res))
-	end.X = float32(OsClampFloat((float64(tilePos.X)*tile+float64(res.X/2))/tile, 0, max_res))
-	end.Y = float32(OsClampFloat((float64(tilePos.Y)*tile+float64(res.Y/2))/tile, 0, max_res))
+	start.X = float32(OsClampFloat((float64(tilePos.X)*tile-float64(hres.X))/tile, 0, max_res))
+	start.Y = float32(OsClampFloat((float64(tilePos.Y)*tile-float64(hres.Y))/tile, 0, max_res))
+	end.X = float32(OsClampFloat((float64(tilePos.X)*tile+float64(hres.X))/tile, 0, max_res))
+	end.Y = float32(OsClampFloat((float64(tilePos.Y)*tile+float64(hres.Y))/tile, 0, max_res))
 
-	size.X = end.X - start.X
-	size.Y = end.Y - start.Y
+	size := end.Sub(start)
 
 	return start, end, size
 }
@@ -220,14 +221,14 @@ func (ui *Ui) comp_map(mp *UiLayoutMap, cam_lon, cam_lat, cam_zoom *float64, fil
 	wheel := ui.DivInfo_get(SA_DIV_GET_touchWheel, 0)
 	clicks := ui.DivInfo_get(SA_DIV_GET_touchClicks, 0)
 
-	coord := OsV2f{float32(width), float32(height)}
+	canvas_size := OsV2f{float32(width), float32(height)}
 
 	tile := 256 / cell * scale
 	tileW := tile / width
 	tileH := tile / height
 
-	UiLayoutMap_camCheck(coord, tile, *cam_lon, *cam_lat, *cam_zoom)
-	bbStart, bbEnd, bbSize := UiLayoutMap_camBbox(coord, tile, lon, lat, zoom)
+	UiLayoutMap_camCheck(canvas_size, tile, *cam_lon, *cam_lat, *cam_zoom)
+	bbStart, bbEnd, bbSize := UiLayoutMap_camBbox(canvas_size, tile, lon, lat, zoom)
 
 	//draw tiles
 	for y := float64(int(bbStart.Y)); y < float64(bbEnd.Y); y++ {
@@ -294,13 +295,15 @@ func (ui *Ui) comp_map(mp *UiLayoutMap, cam_lon, cam_lat, cam_zoom *float64, fil
 			mp.lonOld = *cam_lon
 			mp.latOld = *cam_lat
 
-			//where the mouse is
-			if wheel < 0 {
-				var pos OsV2f
-				pos.X = bbStart.X + bbSize.X*touch_x
-				pos.Y = bbStart.Y + bbSize.Y*touch_y
-				*cam_lon, *cam_lat = UiLayoutMap_posToLonLat(pos, zoom)
-			}
+			//get touch lon and lat
+			touch_lon, touch_lat := UiLayoutMap_posToLonLat(OsV2f{bbStart.X + bbSize.X*touch_x, bbStart.Y + bbSize.Y*touch_y}, mp.zoomOld)
+			//get new zoom touch pos
+			pos := UiLayoutMap_lonLatToPos(touch_lon, touch_lat, *cam_zoom)
+			//get center
+			pos.X -= bbSize.X * (touch_x - 0.5)
+			pos.Y -= bbSize.Y * (touch_y - 0.5)
+			//get new zoom lon and lat
+			*cam_lon, *cam_lat = UiLayoutMap_posToLonLat(pos, *cam_zoom)
 
 			mp.start_zoom_time = OsTime()
 		}
@@ -329,10 +332,15 @@ func (ui *Ui) comp_map(mp *UiLayoutMap, cam_lon, cam_lat, cam_zoom *float64, fil
 			mp.lonOld = *cam_lon
 			mp.latOld = *cam_lat
 
-			var pos OsV2f
-			pos.X = bbStart.X + bbSize.X*touch_x
-			pos.Y = bbStart.Y + bbSize.Y*touch_y
-			*cam_lon, *cam_lat = UiLayoutMap_posToLonLat(pos, zoom)
+			//get touch lon and lat
+			touch_lon, touch_lat := UiLayoutMap_posToLonLat(OsV2f{bbStart.X + bbSize.X*touch_x, bbStart.Y + bbSize.Y*touch_y}, mp.zoomOld)
+			//get new zoom touch pos
+			pos := UiLayoutMap_lonLatToPos(touch_lon, touch_lat, *cam_zoom)
+			//get center
+			pos.X -= bbSize.X * (touch_x - 0.5)
+			pos.Y -= bbSize.Y * (touch_y - 0.5)
+			//get new zoom lon and lat
+			*cam_lon, *cam_lat = UiLayoutMap_posToLonLat(pos, *cam_zoom)
 
 			mp.start_zoom_time = OsTime()
 		}
