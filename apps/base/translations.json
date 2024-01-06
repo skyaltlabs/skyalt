@@ -376,9 +376,6 @@
 "LAYOUT.cs": "Layout",
 
 "MAP.en": "Map",
-"MAP.cs": "Mapa",
-
-"MAP_LOCATORS.en": "Mapa-locators",
-"MAP_LOCATORS.cs": "Mapa-lokátory"
+"MAP.cs": "Mapa"
 
 }

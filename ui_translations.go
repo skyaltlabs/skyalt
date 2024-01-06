@@ -183,9 +183,8 @@ type UiTranslations struct {
 	CALENDAR      string
 	DATE          string
 
-	LAYOUT       string
-	MAP          string
-	MAP_LOCATORS string
+	LAYOUT string
+	MAP    string
 }
 
 func (trns *UiTranslations) Find(name string) string {
