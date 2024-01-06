@@ -22,16 +22,17 @@ import (
 	"strconv"
 )
 
-func (ui *Ui) comp_colorPicker(cd *OsCd, dialogName string, enable bool) bool {
+func (ui *Ui) comp_colorPicker(x, y, w, h int, cd *OsCd, dialogName string, enable bool) bool {
 	origCd := *cd
 	cd.A = 255
 
+	ui.Div_start(x, y, w, h)
 	ui.Div_colMax(0, 100)
 	ui.Div_rowMax(0, 100)
-
 	if ui._colorButton(0, 0, 1, 1, "", "", *cd, enable) {
 		ui.Dialog_open(dialogName, 1)
 	}
+	ui.Div_end()
 
 	dialogOpen := ui.Dialog_start(dialogName)
 	if dialogOpen {

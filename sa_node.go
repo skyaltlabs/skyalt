@@ -842,15 +842,10 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 				instr.LineReplace(value)
 			}
 		} else if VmCallback_Cmp(fn, VmApi_GuiColor) {
-			ui.Div_start(x, y, w, h)
-			{
-				cd := attr.GetCd()
-				if ui.comp_colorPicker(&cd, attr.Name, true) {
-					attr.ReplaceCd(cd)
-				}
+			cd := attr.GetCd()
+			if ui.comp_colorPicker(x, y, w, h, &cd, attr.Name, true) {
+				attr.ReplaceCd(cd)
 			}
-			ui.Div_end()
-
 		} else if VmCallback_Cmp(fn, VmBasic_ConstArray) {
 			ui.Div_start(x, y, w, h)
 			{

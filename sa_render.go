@@ -266,13 +266,9 @@ func (w *SANode) SARender_Color(renderIt bool) {
 	cd := cdAttr.GetCd()
 
 	if showIt {
-		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-		{
-			if ui.comp_colorPicker(&cd, w.Name, enable) {
-				cdAttr.ReplaceCd(cd)
-			}
+		if ui.comp_colorPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &cd, w.Name, enable) {
+			cdAttr.ReplaceCd(cd)
 		}
-		ui.Div_end()
 	}
 }
 
