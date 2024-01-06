@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
 	"strconv"
@@ -42,6 +41,27 @@ func NewUiLayoutMap() *UiLayoutMap {
 }
 
 func (mp *UiLayoutMap) Destroy() {
+}
+
+func (mp *UiLayoutMap) GetAnim(lon float64, lat float64, zoom float64, ui *Ui) (float64, float64, float64, float64, bool) {
+
+	scale := float64(1)
+	isZooming, dt, ANIM_TIME := mp.isZooming()
+	if isZooming {
+		t := dt / ANIM_TIME
+		if zoom > mp.zoomOld {
+			scale = 1 + t
+		} else {
+			scale = 1 - t/2
+		}
+		zoom = mp.zoomOld
+		lon = mp.lonOld + (lon-mp.lonOld)*t
+		lat = mp.latOld + (lat-mp.latOld)*t
+
+		ui.win.SetRedraw()
+	}
+
+	return lon, lat, zoom, scale, isZooming
 }
 
 func UiLayoutMap_metersPerPixel(lat, zoom float64) float64 {
@@ -124,35 +144,31 @@ func (mp *UiLayoutMap) isZooming() (bool, float64, float64) {
 	return (dt < ANIM_TIME), dt, ANIM_TIME
 }
 
-func (ui *Ui) comp_mapLocators(mp *UiLayoutMap, cam_lon, cam_lat, cam_zoom float64, items string) error {
+type UiCompMapLocator struct {
+	lon, lat float64
+	label    string
+}
+
+func (ui *Ui) comp_mapLocators(mp *UiLayoutMap, cam_lon, cam_lat, cam_zoom float64, items []UiCompMapLocator) error {
 	cell := ui.DivInfo_get(SA_DIV_GET_cell, 0)
 	width := ui.DivInfo_get(SA_DIV_GET_screenWidth, 0)
 	height := ui.DivInfo_get(SA_DIV_GET_screenHeight, 0)
 
 	coord := OsV2f{float32(width), float32(height)}
 
-	tile := 256 / cell * 1 /*1=scale*/
+	lon, lat, zoom, scale, _ := mp.GetAnim(cam_lon, cam_lat, cam_zoom, ui)
+
+	tile := 256 / cell * scale
 	tileW := tile / width
 	tileH := tile / height
 
-	UiLayoutMap_camCheck(coord, tile, cam_lon, cam_lat, cam_zoom)
-	bbStart, _, _ := UiLayoutMap_camBbox(coord, tile, cam_lon, cam_lat, cam_zoom)
-
-	type Item struct {
-		Lon   float64
-		Lat   float64
-		Label string
-	}
-	var its []Item
-	err := json.Unmarshal([]byte(items), &its)
-	if err != nil {
-		return fmt.Errorf("invalide json: %w", err)
-	}
+	UiLayoutMap_camCheck(coord, tile, lon, lat, zoom)
+	bbStart, _, _ := UiLayoutMap_camBbox(coord, tile, lon, lat, zoom)
 
 	ui.Div_colMax(0, 100)
 	ui.Div_rowMax(0, 100)
-	for i, it := range its {
-		p := UiLayoutMap_lonLatToPos(it.Lon, it.Lat, cam_zoom)
+	for i, it := range items {
+		p := UiLayoutMap_lonLatToPos(it.lon, it.lat, zoom) //...
 
 		x := float64(p.X-bbStart.X) * tileW
 		y := float64(p.Y-bbStart.Y) * tileH
@@ -173,12 +189,6 @@ func (ui *Ui) comp_map(mp *UiLayoutMap, cam_lon, cam_lat, cam_zoom *float64, fil
 
 	*cam_zoom = UiLayoutMap_zoomClamp(*cam_zoom) //check
 
-	zooming := 0
-
-	lon := *cam_lon
-	lat := *cam_lat
-	zoom := *cam_zoom
-
 	db, alreadyOpen, err := ui.win.disk.OpenDb(file)
 	if err != nil {
 		return fmt.Errorf("GetDb(%s) failed: %w", file, err)
@@ -191,22 +201,7 @@ func (ui *Ui) comp_map(mp *UiLayoutMap, cam_lon, cam_lat, cam_zoom *float64, fil
 		}
 	}
 
-	scale := float64(1)
-	isZooming, dt, ANIM_TIME := mp.isZooming()
-	if isZooming {
-		t := dt / ANIM_TIME
-		if *cam_zoom > mp.zoomOld {
-			scale = 1 + t
-		} else {
-			scale = 1 - t/2
-		}
-		zoom = mp.zoomOld
-		lon = mp.lonOld + (*cam_lon-mp.lonOld)*t
-		lat = mp.latOld + (*cam_lat-mp.latOld)*t
-		zooming = 1
-
-		ui.win.SetRedraw()
-	}
+	lon, lat, zoom, scale, isZooming := mp.GetAnim(*cam_lon, *cam_lat, *cam_zoom, ui)
 
 	cell := ui.DivInfo_get(SA_DIV_GET_cell, 0)
 	width := ui.DivInfo_get(SA_DIV_GET_screenWidth, 0)
@@ -275,7 +270,7 @@ func (ui *Ui) comp_map(mp *UiLayoutMap, cam_lon, cam_lat, cam_zoom *float64, fil
 				file := fmt.Sprintf("blob:%s:tiles/file/%d", file, rowid)
 
 				//extra margin will fix white spaces during zooming
-				ui.Paint_file(tileCoord_sx, tileCoord_sy, tileW, tileH, float64(zooming)*-0.03, file, InitOsCd32(255, 255, 255, 255), 0, 0, false)
+				ui.Paint_file(tileCoord_sx, tileCoord_sy, tileW, tileH, OsTrnFloat(isZooming, -0.03, 0), file, InitOsCd32(255, 255, 255, 255), 0, 0, false)
 			}
 
 		}
