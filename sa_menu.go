@@ -139,7 +139,7 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 	}
 
 	if ui.Dialog_start("settings") {
-		ui.Div_colMax(1, 8)
+		ui.Div_colMax(1, 15)
 		ui.Div_colMax(2, 1)
 
 		y := 0
@@ -203,8 +203,48 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 		ui.Comp_combo_desc(ui.trns.DATE_FORMAT, 0, 4, 1, y, 1, 2, &ini.DateFormat, ui.trns.DATE_FORMAT_EU+";"+ui.trns.DATE_FORMAT_US+";"+ui.trns.DATE_FORMAT_ISO+";"+ui.trns.DATE_FORMAT_TEXT, "", true, true)
 		y += 2
 
-		ui.Comp_combo_desc(ui.trns.THEME, 0, 4, 1, y, 1, 2, &ini.Theme, ui.trns.THEME_OCEAN+";"+ui.trns.THEME_RED+";"+ui.trns.THEME_BLUE+";"+ui.trns.THEME_GREEN+";"+ui.trns.THEME_GREY, "", true, true)
-		y += 2
+		{
+			ui.Comp_combo_desc(ui.trns.THEME, 0, 4, 1, y, 1, 2, &ini.Theme, ui.trns.LIGHT+";"+ui.trns.DARK+";"+ui.trns.CUSTOM, "", true, true)
+			y++
+
+			//custom palette
+			if ui.win.io.ini.Theme >= len(ui.win.io.palettes) {
+				pl := &ui.win.io.ini.CustomPalette
+				ui.Div_start(1, y, 1, 2)
+				{
+					ui.Div_col(0, 4)
+					ui.Div_colMax(1, 100)
+					ui.Div_colMax(2, 100)
+					ui.Div_colMax(3, 100)
+					ui.Div_colMax(4, 100)
+					ui.Div_colMax(5, 100)
+
+					if ui.Comp_buttonLight(0, 0, 1, 1, "Reset", "", true) > 0 {
+						*pl = ui.win.io.palettes[0] //light
+					}
+
+					ui.Comp_text(1, 0, 1, 1, "Primary", 1)
+					ui.comp_colorPicker(1, 1, 1, 1, &pl.P, "p", true)
+
+					ui.Comp_text(2, 0, 1, 1, "Secondary", 1)
+					ui.comp_colorPicker(2, 1, 1, 1, &pl.S, "s", true)
+
+					ui.Comp_text(3, 0, 1, 1, "Tertiary", 1)
+					ui.comp_colorPicker(3, 1, 1, 1, &pl.T, "t", true)
+
+					ui.Comp_text(4, 0, 1, 1, "Background", 1)
+					ui.comp_colorPicker(4, 1, 1, 1, &pl.B, "b", true)
+
+					ui.Comp_text(5, 0, 1, 1, "Error", 1)
+					ui.comp_colorPicker(5, 1, 1, 1, &pl.E, "e", true)
+
+				}
+				ui.Div_end()
+				y += 2
+			}
+
+			y++
+		}
 
 		ui.Comp_editbox_desc(ui.trns.DPI, 0, 4, 1, y, 1, 2, &ini.Dpi, 0, "", "", false, false, true)
 		y += 2

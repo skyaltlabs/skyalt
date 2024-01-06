@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"runtime"
 
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -114,8 +113,8 @@ type WinIni struct {
 	Languages              []string
 	WinX, WinY, WinW, WinH int
 
-	Theme    int
-	Palettes []WinCdPalette //don't save, only custom colors ...
+	Theme         int
+	CustomPalette WinCdPalette
 
 	Offline bool
 }
@@ -124,10 +123,16 @@ type WinIO struct {
 	touch WinTouch
 	keys  WinKeys
 	ini   WinIni
+
+	palettes []WinCdPalette //don't save, only custom colors ...
+
 }
 
 func NewWinIO() (*WinIO, error) {
 	var io WinIO
+
+	io.palettes = append(io.palettes, InitWinCdPalette_light())
+	io.palettes = append(io.palettes, InitWinCdPalette_dark())
 
 	err := io._IO_setDefault()
 	if err != nil {
@@ -221,14 +226,17 @@ func (io *WinIO) _IO_setDefault() error {
 		io.ini.DateFormat = OsTrn((OsTimeZone() <= -3 && OsTimeZone() >= -10), 1, 0)
 	}
 
-	io.ini.Palettes = nil
+	if io.ini.CustomPalette.P.A == 0 {
+		io.ini.CustomPalette = InitWinCdPalette_light()
+	}
+	/*io.ini.Palettes = nil
 	//if len(io.ini.Palettes) == 0 {	//...
 	io.ini.Palettes = append(io.ini.Palettes, InitWinCdPalette_light())
 	io.ini.Palettes = append(io.ini.Palettes, InitWinCdPalette_dark())
 	//}
 	if io.ini.Theme >= len(io.ini.Palettes) {
 		io.ini.Theme = len(io.ini.Palettes) - 1
-	}
+	}*/
 
 	//languages
 	if len(io.ini.Languages) == 0 {
@@ -244,7 +252,7 @@ func (io *WinIO) _IO_setDefault() error {
 	}
 
 	if io.ini.Threads <= 0 {
-		io.ini.Threads = runtime.NumCPU()
+		io.ini.Threads = 1 //runtime.NumCPU()
 	}
 
 	return nil
@@ -270,10 +278,11 @@ func (io *WinIO) Cell() int {
 }
 
 func (io *WinIO) GetPalette() *WinCdPalette {
-	if io.ini.Theme >= len(io.ini.Palettes) {
-		io.ini.Theme = len(io.ini.Palettes) - 1
+	io.ini.Theme = OsMax(0, io.ini.Theme) //check
+	if io.ini.Theme < len(io.palettes) {
+		return &io.palettes[io.ini.Theme]
 	}
-	return &io.ini.Palettes[io.ini.Theme]
+	return &io.ini.CustomPalette
 }
 
 func (io *WinIO) GetCoord() OsV4 {
