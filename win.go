@@ -24,7 +24,6 @@ import (
 	"image/png"
 	"math"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -225,13 +224,11 @@ func IsAltActive() bool {
 	return state[sdl.SCANCODE_LALT] != 0 || state[sdl.SCANCODE_RALT] != 0
 }
 
-func (win *Win) GetMousePosition() OsV2 {
-
+func (win *Win) GetMousePosition() (OsV2, bool) {
 	x, y, _ := sdl.GetGlobalMouseState()
-
-	w, h := win.window.GetPosition()
-
-	return OsV2_32(x, y).Sub(OsV2_32(w, h))
+	wx, wy := win.window.GetPosition()
+	ww, wh := win.window.GetSize()
+	return OsV2_32(x, y).Sub(OsV2_32(wx, wy)), InitOsV4(int(wx), int(wy), int(ww), int(wh)).Inside(OsV2_32(x, y))
 }
 
 func (win *Win) GetOutputSize() (int, int) {
@@ -334,6 +331,8 @@ func (win *Win) AddImage(path WinMediaPath) (*WinImage, error) {
 
 	return img, nil
 }
+
+var g_dropPath string //dirty trick, because, when drop, the mouse position is invalid
 
 func (win *Win) Event() (bool, bool, error) {
 
@@ -485,11 +484,10 @@ func (win *Win) Event() (bool, bool, error) {
 			return true, true, nil
 
 		case sdl.DropEvent:
-			io.touch.drop_path = val.File
-			io.touch.drop_name = filepath.Base(val.File)
-			io.touch.drop_ext = filepath.Ext(val.File)
+			if val.Type == sdl.DROPFILE {
+				g_dropPath = val.File
+			}
 			return true, true, nil
-
 		}
 	}
 
@@ -593,7 +591,14 @@ func (win *Win) UpdateIO() (bool, bool, error) {
 	io.SetDeviceDPI()
 
 	if !io.touch.start && !io.touch.end && !io.touch.rm {
-		io.touch.pos = win.GetMousePosition()
+		var inside bool
+		io.touch.pos, inside = win.GetMousePosition()
+
+		if inside && g_dropPath != "" {
+			win.io.touch.drop_path = g_dropPath
+			g_dropPath = ""
+			redraw = true
+		}
 	}
 	io.touch.numClicks = win.numClicks
 	if io.touch.end {

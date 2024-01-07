@@ -84,9 +84,7 @@ type WinTouch struct {
 	end       bool
 	rm        bool // right/middle button
 
-	drop_name string
 	drop_path string
-	drop_ext  string
 
 	wheel_last_sec float64
 }
