@@ -18,6 +18,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -392,6 +393,80 @@ func (w *SANode) SARender_Map(renderIt bool) {
 			ui.Div_end()
 		}
 	}
+}
+
+func (w *SANode) SARender_Image(renderIt bool) {
+	ui := w.app.base.ui
+	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
+
+	grid := w.GetGrid()
+	grid.Size.X = OsMax(grid.Size.X, 1)
+	grid.Size.Y = OsMax(grid.Size.Y, 1)
+
+	if showIt {
+		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
+		{
+			//.......
+			//musí být blob, né path? ...
+		}
+		ui.Div_end()
+	}
+}
+
+func (w *SANode) SARender_Drop(renderIt bool) {
+	ui := w.app.base.ui
+	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
+
+	grid := w.GetGrid()
+	grid.Size.X = OsMax(grid.Size.X, 1)
+	grid.Size.Y = OsMax(grid.Size.Y, 1)
+
+	instr := w.GetAttr("path", "").instr.GetConst()
+	value := instr.pos_attr.finalValue.String()
+
+	outputAttr := w.GetAttr("output", "")
+
+	if showIt {
+		div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
+		{
+			ui.Div_colMax(0, 100)
+			ui.Div_rowMax(0, 100)
+			ui.Div_start(0, 0, 1, 1)
+			ui.Paint_rect(0, 0, 1, 1, 0.03, OsCd{0, 0, 0, 255}, 0.03)
+			ui.Div_end()
+			ui.Comp_text(0, 0, 1, 1, "Drag file & drop it here", 1)
+
+			_, _, _, fnshd, _ := ui.Comp_editbox(0, 1, 1, 1, &value, 0, "", "path", false, false, true)
+			if fnshd {
+				instr.LineReplace(value)
+			}
+
+			if div.IsOver(ui) {
+				value = ui.win.io.touch.drop_path //rewrite 'value'!
+				if value != "" {
+					instr.LineReplace(value)
+					//drop_name := filepath.Base(path)
+					//drop_ext := filepath.Ext(path)
+				}
+			}
+		}
+		ui.Div_end()
+	}
+
+	if value == "" && outputAttr.finalValue.Is() {
+		//reset output? .....
+	}
+
+	//call only when 'renderIt'==false? .......
+	if value != "" {
+
+		data, err := os.ReadFile(value)
+		if err != nil {
+			outputAttr.finalValue.SetBlobCopy(data)
+			instr.LineReplace("") //reset
+		}
+	}
+
 }
 
 func (w *SANode) SARender_Layout(renderIt bool) {

@@ -386,6 +386,11 @@ func (w *SANode) ExecuteGui(renderIt bool) {
 		w.SARender_Date(renderIt)
 	case "map":
 		w.SARender_Map(renderIt)
+	case "image":
+		w.SARender_Image(renderIt)
+	case "drop":
+		w.SARender_Drop(renderIt)
+
 	case "layout":
 		w.SARender_Layout(renderIt)
 	default: //layout
@@ -641,6 +646,10 @@ func (w *SANode) _getAttr(defValue SANodeAttr) *SANodeAttr {
 		w.Attrs = append(w.Attrs, v)
 	}
 
+	if v.Value == "" {
+		v.Value = "\"\"" //edit
+	}
+
 	if v.instr == nil {
 		v.ParseExpresion()
 		v.ExecuteExpression() //right now, so default value is in v.finalValue
@@ -661,9 +670,6 @@ func (w *SANode) findAttrFloat(name string) (*SANodeAttr, float64) {
 }
 
 func (w *SANode) GetAttr(name string, value string) *SANodeAttr {
-	if value == "" {
-		value = "\"\"" //edit
-	}
 	return w._getAttr(SANodeAttr{Name: name, Value: value})
 }
 
