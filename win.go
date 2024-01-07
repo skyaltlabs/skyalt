@@ -226,6 +226,8 @@ func IsAltActive() bool {
 
 func (win *Win) GetMousePosition() (OsV2, bool) {
 	x, y, _ := sdl.GetGlobalMouseState()
+	//fmt.Println(x, y)
+
 	wx, wy := win.window.GetPosition()
 	ww, wh := win.window.GetSize()
 	return OsV2_32(x, y).Sub(OsV2_32(wx, wy)), InitOsV4(int(wx), int(wy), int(ww), int(wh)).Inside(OsV2_32(x, y))
@@ -594,10 +596,11 @@ func (win *Win) UpdateIO() (bool, bool, error) {
 		var inside bool
 		io.touch.pos, inside = win.GetMousePosition()
 
+		//drop file
 		if inside && g_dropPath != "" {
 			win.io.touch.drop_path = g_dropPath
 			g_dropPath = ""
-			redraw = true
+			win.SetRedraw()
 		}
 	}
 	io.touch.numClicks = win.numClicks
