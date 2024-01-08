@@ -401,8 +401,6 @@ func (w *SANode) ExecuteGui(renderIt bool) {
 
 	case "layout":
 		w.SARender_Layout(renderIt)
-	default: //layout
-		w.SARender_Layout(renderIt)
 	}
 }
 
