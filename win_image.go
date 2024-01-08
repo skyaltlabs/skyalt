@@ -42,7 +42,7 @@ type WinImage struct {
 	origSize   OsV2
 	maxUseSize OsV2
 
-	path            WinMediaPath
+	path            WinMedia
 	blobDbLoadTicks int64
 	blobHash        OsHash
 
@@ -51,7 +51,7 @@ type WinImage struct {
 	lastDrawTick int64
 }
 
-func NewWinImage(path WinMediaPath, disk *Disk) (*WinImage, error) {
+func NewWinImage(path WinMedia, disk *Disk) (*WinImage, error) {
 
 	var img WinImage
 

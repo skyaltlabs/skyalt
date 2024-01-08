@@ -17,14 +17,13 @@ limitations under the License.
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
 )
 
-type WinMediaPath struct {
+type WinMedia struct {
 	blob      []byte
 	blob_hash OsHash
 
@@ -36,15 +35,15 @@ type WinMediaPath struct {
 	row    int
 }
 
-func InitWinMediaPath_blob(blob []byte, hash OsHash) WinMediaPath {
-	var ip WinMediaPath
+func InitWinMedia_blob(blob []byte, hash OsHash) WinMedia {
+	var ip WinMedia
 	ip.blob = blob
 	ip.blob_hash = hash
 	return ip
 }
 
-func InitWinMediaPath_url(url string) (WinMediaPath, error) {
-	var ip WinMediaPath
+func InitWinMedia_url(url string) WinMedia {
+	var ip WinMedia
 
 	//get type + cut
 	var isFile bool
@@ -53,7 +52,8 @@ func InitWinMediaPath_url(url string) (WinMediaPath, error) {
 		var isDbsPath bool
 		url, isDbsPath = strings.CutPrefix(url, "db:")
 		if !isDbsPath {
-			return ip, fmt.Errorf("must start with 'file:' or 'db:'")
+			fmt.Println("must start with 'file:' or 'db:'")
+			return WinMedia{}
 		}
 	}
 
@@ -66,7 +66,8 @@ func InitWinMediaPath_url(url string) (WinMediaPath, error) {
 		//table
 		d := strings.Index(opt, "/")
 		if d <= 0 {
-			return ip, errors.New("table '/' is missing")
+			fmt.Println("table '/' is missing")
+			return WinMedia{}
 		}
 		ip.table = opt[:d]
 		opt = opt[d+1:]
@@ -74,7 +75,8 @@ func InitWinMediaPath_url(url string) (WinMediaPath, error) {
 		//column
 		d = strings.Index(opt, "/")
 		if d <= 0 {
-			return ip, errors.New("column '/' is missing")
+			fmt.Println("column '/' is missing")
+			return WinMedia{}
 		}
 		ip.column = opt[:d]
 		opt = opt[d+1:]
@@ -83,37 +85,38 @@ func InitWinMediaPath_url(url string) (WinMediaPath, error) {
 		var err error
 		ip.row, err = strconv.Atoi(opt)
 		if err != nil {
-			return ip, fmt.Errorf("Atoi(%s) failed: %w", opt, err)
+			fmt.Println("Atoi(%s) failed: %v", opt, err)
+			return WinMedia{}
 		}
 	} else {
 		ip.path = url
 	}
 
-	return ip, nil
+	return ip
 }
 
-func (ip *WinMediaPath) IsBlob() bool {
+func (ip *WinMedia) IsBlob() bool {
 	return len(ip.blob) > 0
 }
-func (ip *WinMediaPath) IsDb() bool {
+func (ip *WinMedia) IsDb() bool {
 	return len(ip.table) > 0
 }
-func (ip *WinMediaPath) IsFile() bool {
+func (ip *WinMedia) IsFile() bool {
 	return !ip.IsDb()
 }
 
-func (ip *WinMediaPath) GetString() string {
+func (ip *WinMedia) GetString() string {
 	return fmt.Sprintf("%s - %s/%s/%d", ip.path, ip.table, ip.column, ip.row)
 }
 
-func (a *WinMediaPath) Cmp(b *WinMediaPath) bool {
+func (a *WinMedia) Cmp(b *WinMedia) bool {
 	if a.IsBlob() && b.IsBlob() {
 		return a.blob_hash.Cmp(&b.blob_hash)
 	}
 	return a.path == b.path && a.table == b.table && a.column == b.column && a.row == b.row
 }
 
-func (ip *WinMediaPath) GetBlob(disk *Disk) ([]byte, error) {
+func (ip *WinMedia) GetBlob(disk *Disk) ([]byte, error) {
 	var data []byte
 	var err error
 

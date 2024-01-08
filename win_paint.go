@@ -176,7 +176,7 @@ func (b *WinPaintBuff) AddCircle(coord OsV4, cd OsCd, thick int) {
 	}
 }
 
-func (b *WinPaintBuff) AddImage(path WinMediaPath, coord OsV4, cd OsCd, alignV int, alignH int, fill bool) {
+func (b *WinPaintBuff) AddImage(path WinMedia, coord OsV4, cd OsCd, alignV int, alignH int, fill bool) {
 
 	if !b.skipDraw {
 		img, err := b.win.AddImage(path) //2nd thread => black

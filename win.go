@@ -306,7 +306,7 @@ func (win *Win) GetImagesBytes() int {
 	return n
 }
 
-func (win *Win) FindImage(path WinMediaPath) *WinImage {
+func (win *Win) FindImage(path WinMedia) *WinImage {
 	for _, it := range win.images {
 		if it.path.Cmp(&path) {
 			return it
@@ -315,7 +315,7 @@ func (win *Win) FindImage(path WinMediaPath) *WinImage {
 	return nil
 }
 
-func (win *Win) AddImage(path WinMediaPath) (*WinImage, error) {
+func (win *Win) AddImage(path WinMedia) (*WinImage, error) {
 
 	img := win.FindImage(path)
 
