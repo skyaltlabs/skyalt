@@ -121,11 +121,11 @@ func (instr *VmInstr) LineExtract(line string, value string) string {
 }
 
 func (instr *VmInstr) IsFnGui() *VmInstr {
-	if VmCallback_Cmp(instr.fn, VmApi_GuiBool) ||
-		VmCallback_Cmp(instr.fn, VmApi_GuiBool2) ||
-		VmCallback_Cmp(instr.fn, VmApi_GuiCombo) ||
-		VmCallback_Cmp(instr.fn, VmApi_GuiDate) ||
-		VmCallback_Cmp(instr.fn, VmApi_GuiColor) {
+	if VmCallback_Cmp(instr.fn, VmApi_UiSwitch) ||
+		VmCallback_Cmp(instr.fn, VmApi_UiCheckbox) ||
+		VmCallback_Cmp(instr.fn, VmApi_UiCombo) ||
+		VmCallback_Cmp(instr.fn, VmApi_UiDate) ||
+		VmCallback_Cmp(instr.fn, VmApi_UiColor) {
 
 		if len(instr.prms) >= 1 {
 			return instr.prms[0].instr
@@ -285,22 +285,26 @@ func VmBasic_Access(instr *VmInstr, st *VmST) SAValue {
 	return instr.temp
 }
 
-func VmApi_GuiBool(instr *VmInstr, st *VmST) SAValue {
+func VmApi_Output(instr *VmInstr, st *VmST) SAValue {
+	return instr.temp
+}
+
+func VmApi_UiSwitch(instr *VmInstr, st *VmST) SAValue {
 	return instr.ExePrm(st, 0)
 }
-func VmApi_GuiBool2(instr *VmInstr, st *VmST) SAValue {
+func VmApi_UiCheckbox(instr *VmInstr, st *VmST) SAValue {
 	return instr.ExePrm(st, 0)
 }
 
-func VmApi_GuiCombo(instr *VmInstr, st *VmST) SAValue {
+func VmApi_UiCombo(instr *VmInstr, st *VmST) SAValue {
 	ret := instr.ExePrm(st, 0)
 	instr.temp = instr.ExePrm(st, 1) //save options into temp
 	return ret
 }
-func VmApi_GuiDate(instr *VmInstr, st *VmST) SAValue {
+func VmApi_UiDate(instr *VmInstr, st *VmST) SAValue {
 	return instr.ExePrm(st, 0)
 }
-func VmApi_GuiColor(instr *VmInstr, st *VmST) SAValue {
+func VmApi_UiColor(instr *VmInstr, st *VmST) SAValue {
 	return instr.ExePrm(st, 0)
 }
 
