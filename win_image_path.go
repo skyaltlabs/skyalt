@@ -96,10 +96,10 @@ func InitWinMedia_url(url string) WinMedia {
 }
 
 func (ip *WinMedia) IsBlob() bool {
-	return len(ip.blob) > 0
+	return ip.path == ""
 }
 func (ip *WinMedia) IsDb() bool {
-	return len(ip.table) > 0
+	return ip.table != ""
 }
 func (ip *WinMedia) IsFile() bool {
 	return !ip.IsDb()
