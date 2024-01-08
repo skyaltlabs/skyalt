@@ -465,8 +465,6 @@ func (w *SANode) SARender_File(renderIt bool) {
 				value = ui.win.io.touch.drop_path //rewrite 'value'!
 				if value != "" {
 					instr.LineReplace(value)
-					//drop_name := filepath.Base(path)
-					//drop_ext := filepath.Ext(path)
 				}
 			}
 		}
@@ -474,6 +472,8 @@ func (w *SANode) SARender_File(renderIt bool) {
 	}
 
 	if !renderIt {
+		outputAttr.result.SetBlobCopy(nil) //reset
+
 		if value != "" {
 			data, err := os.ReadFile(value)
 			if err == nil {
