@@ -835,28 +835,26 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 			value = instr.pos_attr.result.String()
 		}
 
-		if attr.Output {
-			instr = nil
-		}
+		editable := (!attr.Output && instr != nil)
 
 		if VmCallback_Cmp(fn, VmApi_UiSwitch) {
-			if ui.Comp_switch(x, y, w, h, &value, false, "", "", instr != nil) {
+			if ui.Comp_switch(x, y, w, h, &value, false, "", "", editable) {
 				instr.LineReplace(value)
 			}
 		} else if VmCallback_Cmp(fn, VmApi_UiCheckbox) {
-			if ui.Comp_checkbox(x, y, w, h, &value, false, "", "", instr != nil) {
+			if ui.Comp_checkbox(x, y, w, h, &value, false, "", "", editable) {
 				instr.LineReplace(value)
 			}
 		} else if VmCallback_Cmp(fn, VmApi_UiDate) {
 			ui.Div_start(x, y, w, h)
 			val := int64(instr.pos_attr.result.Number())
-			if ui.Comp_CalendarDataPicker(&val, true, attr.Name, instr != nil) {
+			if ui.Comp_CalendarDataPicker(&val, true, attr.Name, editable) {
 				instr.LineReplace(strconv.Itoa(int(val)))
 			}
 			ui.Div_end()
 		} else if VmCallback_Cmp(fn, VmApi_UiCombo) {
 			options := attr.instr.temp.String() //instr is first parameter, GuiCombo() api is parent!
-			if ui.Comp_combo(x, y, w, h, &value, options, "", instr != nil, false) {
+			if ui.Comp_combo(x, y, w, h, &value, options, "", editable, false) {
 				instr.LineReplace(value)
 			}
 		} else if VmCallback_Cmp(fn, VmApi_UiColor) {
@@ -892,7 +890,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 					if i < arr.Num() {
 						value = arr.Get(i).String()
 						instr2 := attr.instr.GetConstArrayPrm(i)
-						_, _, _, fnshd, _ := ui.Comp_editbox(i, 0, 1, 1, &value, 2, nil, "", false, false, instr != nil && instr2 != nil)
+						_, _, _, fnshd, _ := ui.Comp_editbox(i, 0, 1, 1, &value, 2, nil, "", false, false, !attr.Output && instr2 != nil)
 						if fnshd {
 							attr.ReplaceArrayItem(i, value)
 						}
@@ -906,7 +904,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 			ui.Comp_button(x, y, w, h, fmt.Sprintf("Table(%dcols x %drow)", len(tb.names), tb.NumRows()), "", true) //......
 		} else {
 			//VmBasic_Constant
-			_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, 2, nil, "", false, false, instr != nil)
+			_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, 2, nil, "", false, false, editable)
 			if fnshd {
 				instr.LineReplace(value)
 			}
