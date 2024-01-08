@@ -668,6 +668,7 @@ func (w *SANode) _getAttr(defValue SANodeAttr) *SANodeAttr {
 		v.ExecuteExpression() //right now, so default value is in v.finalValue
 	}
 
+	v.defaultValue = defValue.Value //update
 	v.useMark = true
 	return v
 }
@@ -1048,27 +1049,47 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 			_SANode_renderAttrValue(x, 0, 1, 1, it, ui)
 			x++
 
-			if len(it.depends) == 1 {
-				if ui.Comp_buttonLight(x, 0, 1, 1, ui.trns.GOTO, "", true) > 0 {
-					it.depends[0].node.SelectOnlyThis()
+			//context
+			{
+				dnm := "context_" + it.Name
+				if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/context.png"), 0.3, "", CdPalette_B, true, false) > 0 {
+					ui.Dialog_open(dnm, 1)
 				}
-				x++
-			} else if len(it.depends) > 1 {
-				nm := "goto_" + it.Name
-				if ui.Comp_buttonLight(x, 0, 1, 1, ui.trns.GOTO, "", true) > 0 {
-					ui.Dialog_open(nm, 1)
-				}
-				if ui.Dialog_start(nm) {
+				if ui.Dialog_start(dnm) {
 					ui.Div_colMax(0, 5)
-					for i, dp := range it.depends {
-						if ui.Comp_buttonMenu(0, i, 1, 1, dp.node.Name+"."+dp.Name, "", true, false) > 0 {
-							dp.node.SelectOnlyThis()
-						}
+					if ui.Comp_buttonMenu(0, 0, 1, 1, "Reset value to default", "", true, false) > 0 {
+						it.Value = it.defaultValue
+						ui.Dialog_close()
 					}
 					ui.Dialog_end()
 				}
-
 				x++
+			}
+
+			//goto
+			{
+				if len(it.depends) == 1 {
+					if ui.Comp_buttonLight(x, 0, 1, 1, ui.trns.GOTO, "", true) > 0 {
+						it.depends[0].node.SelectOnlyThis()
+					}
+					x++
+				} else if len(it.depends) > 1 {
+					nm := "goto_" + it.Name
+					if ui.Comp_buttonLight(x, 0, 1, 1, ui.trns.GOTO, "", true) > 0 {
+						ui.Dialog_open(nm, 1)
+					}
+					if ui.Dialog_start(nm) {
+						ui.Div_colMax(0, 5)
+						for i, dp := range it.depends {
+							if ui.Comp_buttonMenu(0, i, 1, 1, dp.node.Name+"."+dp.Name, "", true, false) > 0 {
+								dp.node.SelectOnlyThis()
+							}
+						}
+						ui.Dialog_end()
+					}
+
+					x++
+				}
 			}
 
 			//error

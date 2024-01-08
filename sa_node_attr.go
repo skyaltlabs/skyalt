@@ -30,6 +30,8 @@ type SANodeAttr struct {
 	Output  bool
 	ShowExp bool
 
+	defaultValue string
+
 	result  SAValue
 	instr   *VmInstr
 	depends []*SANodeAttr
