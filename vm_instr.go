@@ -285,10 +285,6 @@ func VmBasic_Access(instr *VmInstr, st *VmST) SAValue {
 	return instr.temp
 }
 
-func VmApi_Output(instr *VmInstr, st *VmST) SAValue {
-	return instr.temp
-}
-
 func VmApi_UiSwitch(instr *VmInstr, st *VmST) SAValue {
 	return instr.ExePrm(st, 0)
 }
@@ -305,6 +301,9 @@ func VmApi_UiDate(instr *VmInstr, st *VmST) SAValue {
 	return instr.ExePrm(st, 0)
 }
 func VmApi_UiColor(instr *VmInstr, st *VmST) SAValue {
+	return instr.ExePrm(st, 0)
+}
+func VmApi_UiBlob(instr *VmInstr, st *VmST) SAValue {
 	return instr.ExePrm(st, 0)
 }
 

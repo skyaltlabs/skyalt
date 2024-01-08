@@ -410,7 +410,7 @@ func (w *SANode) SARender_Image(renderIt bool) {
 	alignH := w.GetAttr("alignH", "uiCombo(1, \"Left;Center;Right\")").GetInt()
 	fill := w.GetAttr("fill", "uiSwitch(0)").GetBool()
 
-	blobAttr := w.GetAttr("blob", "")
+	blobAttr := w.GetAttr("blob", "uiBlob(0)")
 
 	if !renderIt {
 		if !blobAttr.result.IsBlob() {
@@ -444,7 +444,7 @@ func (w *SANode) SARender_Drop(renderIt bool) {
 	instr := pathAttr.instr.GetConst()
 	value := instr.pos_attr.result.String()
 
-	outputAttr := w.GetAttr("output", "output()")
+	outputAttr := w.GetAttrOutput("output", "uiBlob(0)")
 
 	if showIt {
 		div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
@@ -477,7 +477,6 @@ func (w *SANode) SARender_Drop(renderIt bool) {
 		if value != "" {
 			data, err := os.ReadFile(value)
 			if err == nil {
-				outputAttr.Value = "output()"
 				outputAttr.result.SetBlobCopy(data)
 			} else {
 				pathAttr.SetErrorExe(fmt.Sprintf("ReadFile(%s) failed: %v", value, err))

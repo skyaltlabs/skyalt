@@ -680,6 +680,11 @@ func (w *SANode) findAttrFloat(name string) (*SANodeAttr, float64) {
 func (w *SANode) GetAttr(name string, value string) *SANodeAttr {
 	return w._getAttr(SANodeAttr{Name: name, Value: value})
 }
+func (w *SANode) GetAttrOutput(name string, value string) *SANodeAttr {
+	a := w.GetAttr(name, value)
+	a.Output = true
+	return a
+}
 
 func (w *SANode) GetGrid() OsV4 {
 	return w.GetAttr("grid", "[0, 0, 1, 1]").result.Array().GetV4()
@@ -835,7 +840,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 			value = instr.pos_attr.result.String()
 		}
 
-		if VmCallback_Cmp(fn, VmApi_Output) {
+		if attr.Output {
 			if attr.result.IsBlob() {
 				ui.Comp_text(x, y, w, h, "blob here", 0) //......
 
@@ -1015,7 +1020,11 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 			//name
 			{
 				//switch: value or expression
-				if ui.Comp_buttonMenu(x, 0, 1, 1, it.Name, "", true, it.ShowExp) > 0 {
+				nm := it.Name
+				if it.Output {
+					nm += "(OUT)"
+				}
+				if ui.Comp_buttonMenu(x, 0, 1, 1, nm, "", true, it.ShowExp) > 0 {
 					it.ShowExp = !it.ShowExp
 				}
 				x++

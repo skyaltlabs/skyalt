@@ -27,6 +27,7 @@ type SANodeAttr struct {
 
 	Name    string
 	Value   string `json:",omitempty"` //every(!) value is expression
+	Output  bool
 	ShowExp bool
 
 	result  SAValue
@@ -127,6 +128,11 @@ func (attr *SANodeAttr) ParseExpresion() {
 }
 
 func (attr *SANodeAttr) ExecuteExpression() {
+
+	if attr.Output {
+		return
+	}
+
 	if attr.errExp != nil {
 		return
 	}
