@@ -85,7 +85,7 @@ func InitWinMedia_url(url string) WinMedia {
 		var err error
 		ip.row, err = strconv.Atoi(opt)
 		if err != nil {
-			fmt.Println("Atoi(%s) failed: %v", opt, err)
+			fmt.Printf("Atoi(%s) failed: %v", opt, err)
 			return WinMedia{}
 		}
 	} else {
