@@ -302,11 +302,13 @@ type WinCdPalette struct {
 }
 
 const (
-	CdPalette_P = uint8(0)
-	CdPalette_S = uint8(1)
-	CdPalette_T = uint8(2)
-	CdPalette_E = uint8(3)
-	CdPalette_B = uint8(4)
+	CdPalette_White = uint8(0)
+
+	CdPalette_P = uint8(1)
+	CdPalette_S = uint8(2)
+	CdPalette_T = uint8(3)
+	CdPalette_E = uint8(4)
+	CdPalette_B = uint8(5)
 )
 
 // light
@@ -382,15 +384,17 @@ func (pl *WinCdPalette) GetCd2(cd OsCd, fade, enable, inside, active bool) OsCd 
 
 func (pl *WinCdPalette) GetCdI(i uint8) (OsCd, OsCd) {
 	switch i {
-	case 0:
+	case CdPalette_White:
+		return InitOsCd32(255, 255, 255, 255), InitOsCd32(0, 0, 0, 255)
+	case CdPalette_P:
 		return pl.P, pl.OnP
-	case 1:
+	case CdPalette_S:
 		return pl.S, pl.OnS
-	case 2:
+	case CdPalette_T:
 		return pl.T, pl.OnT
-	case 3:
+	case CdPalette_E:
 		return pl.E, pl.OnE
-	case 4:
+	case CdPalette_B:
 		return pl.B, pl.OnB
 	}
 
