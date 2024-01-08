@@ -390,7 +390,7 @@ func (app *SAApp) History(ui *Ui) {
 	}
 }
 
-var SAStandardPrimitives = []string{"button", "text", "checkbox", "switch", "editbox", "divider", "combo", "color_palette", "color", "calendar", "date", "map", "image", "drop"}
+var SAStandardPrimitives = []string{"button", "text", "checkbox", "switch", "editbox", "divider", "combo", "color_palette", "color", "calendar", "date", "map", "image", "file"}
 var SAStandardComponents = []string{"layout"}
 var SAStandardBackComp = []string{"dialog"}
 var SAStandardModifiers = []string{"sqlite_select", "sqlite_insert", "sqlite_update", "sqlite_delete", "sqlite_execute", "csv_select"}

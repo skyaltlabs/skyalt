@@ -396,8 +396,8 @@ func (w *SANode) ExecuteGui(renderIt bool) {
 		w.SARender_Map(renderIt)
 	case "image":
 		w.SARender_Image(renderIt)
-	case "drop":
-		w.SARender_Drop(renderIt)
+	case "file":
+		w.SARender_File(renderIt)
 
 	case "layout":
 		w.SARender_Layout(renderIt)

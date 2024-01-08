@@ -432,7 +432,7 @@ func (w *SANode) SARender_Image(renderIt bool) {
 	}
 }
 
-func (w *SANode) SARender_Drop(renderIt bool) {
+func (w *SANode) SARender_File(renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
