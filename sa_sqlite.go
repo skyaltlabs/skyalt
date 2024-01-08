@@ -84,7 +84,6 @@ func (node *SANode) Sqlite_select() bool {
 	fileAttr := node.GetAttr("file", "")
 	queryAttr := node.GetAttr("query", "")
 	resultAttr := node.GetAttrOutput("result", "{}") //table
-
 	resultAttr.result.SetTable(NewSAValueTable(nil)) //reset
 
 	db := node._Sqlite_open(fileAttr)
@@ -177,7 +176,6 @@ func (node *SANode) Csv_select() bool {
 	fileAttr := node.GetAttr("file", "")
 	firstLineHeader := node.GetAttr("first_line_header", "uiSwitch(1)").GetBool()
 	resultAttr := node.GetAttrOutput("result", "{}") //table
-
 	resultAttr.result.SetTable(NewSAValueTable(nil)) //reset
 
 	file := fileAttr.GetString()
