@@ -217,6 +217,12 @@ func (w *SANode) HasError() bool {
 	return w.HasExeError() || w.HasExpError()
 }
 
+func (w *SANode) ResetAttrsExeErrors() {
+	for _, v := range w.Attrs {
+		v.errExe = nil
+	}
+}
+
 func (w *SANode) PrepareExe() {
 	w.state.Store(SANode_STATE_WAITING)
 
@@ -356,6 +362,8 @@ func (w *SANode) removeUnusedAttrs() {
 }
 
 func (w *SANode) ExecuteGui(renderIt bool) {
+
+	//w.ResetAttrsExeErrors()
 
 	switch strings.ToLower(w.Exe) {
 
@@ -701,7 +709,7 @@ func (w *SANode) SetGrid(coord OsV4) {
 }
 
 func (w *SANode) GetGridShow() bool {
-	return w.GetAttr("grid_show", "bool(1)").GetBool()
+	return w.GetAttr("grid_show", "uiSwitch(1)").GetBool()
 }
 
 func (w *SANode) Render() {
@@ -827,27 +835,36 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 			value = instr.pos_attr.finalValue.String()
 		}
 
-		if VmCallback_Cmp(fn, VmApi_GuiBool) {
+		if VmCallback_Cmp(fn, VmApi_Output) {
+			if attr.finalValue.IsBlob() {
+				ui.Comp_text(x, y, w, h, "blob here", 0) //......
+
+			} else if attr.finalValue.IsTable() {
+				tb := attr.finalValue.Table()
+				ui.Comp_button(x, y, w, h, fmt.Sprintf("Table(%dcols x %drow)", len(tb.names), tb.NumRows()), "", true) //......
+			}
+
+		} else if VmCallback_Cmp(fn, VmApi_UiSwitch) {
 			if ui.Comp_switch(x, y, w, h, &value, false, "", "", instr != nil) {
 				instr.LineReplace(value)
 			}
-		} else if VmCallback_Cmp(fn, VmApi_GuiBool2) {
+		} else if VmCallback_Cmp(fn, VmApi_UiCheckbox) {
 			if ui.Comp_checkbox(x, y, w, h, &value, false, "", "", instr != nil) {
 				instr.LineReplace(value)
 			}
-		} else if VmCallback_Cmp(fn, VmApi_GuiDate) {
+		} else if VmCallback_Cmp(fn, VmApi_UiDate) {
 			ui.Div_start(x, y, w, h)
 			val := int64(instr.pos_attr.finalValue.Number())
 			if ui.Comp_CalendarDataPicker(&val, true, attr.Name, instr != nil) {
 				instr.LineReplace(strconv.Itoa(int(val)))
 			}
 			ui.Div_end()
-		} else if VmCallback_Cmp(fn, VmApi_GuiCombo) {
+		} else if VmCallback_Cmp(fn, VmApi_UiCombo) {
 			options := instr.parent.temp.String() //instr is first parameter, GuiCombo() api is parent!
 			if ui.Comp_combo(x, y, w, h, &value, options, "", instr != nil, false) {
 				instr.LineReplace(value)
 			}
-		} else if VmCallback_Cmp(fn, VmApi_GuiColor) {
+		} else if VmCallback_Cmp(fn, VmApi_UiColor) {
 			cd := attr.GetCd()
 			if ui.comp_colorPicker(x, y, w, h, &cd, attr.Name, true) {
 				attr.ReplaceCd(cd)
@@ -876,7 +893,8 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 		} else if VmCallback_Cmp(fn, VmBasic_ConstTable) {
 			tb := attr.finalValue.Table()
 			ui.Comp_button(x, y, w, h, fmt.Sprintf("Table(%dcols x %drow)", len(tb.names), tb.NumRows()), "", true) //......
-		} else /*if VmCallback_Cmp(fn, VmBasic_Constant)*/ {
+		} else {
+			//VmBasic_Constant
 			_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, 2, "", "", false, false, instr != nil)
 			if fnshd {
 				instr.LineReplace(value)
