@@ -23,11 +23,22 @@ import (
 	"strings"
 )
 
+type SAValueBlob struct {
+	data []byte
+	hash OsHash
+}
+
+func NewSAValueBlob(in []byte) *SAValueBlob {
+	var bl SAValueBlob
+	bl.data = make([]byte, len(in))
+	copy(bl.data, in)
+
+	bl.hash, _ = InitOsHash(in) //err ...
+	return &bl
+}
+
 type SAValueArray struct {
 	items []SAValue
-
-	//depends      []*SANodeAttr
-	//isDirectLink bool
 }
 
 func (va *SAValueArray) GetV2() OsV2 {
@@ -215,10 +226,8 @@ func (v *SAValue) SetNumber(val float64) {
 func (v *SAValue) SetString(val string) {
 	v.value = val
 }
-func (v *SAValue) SetBlobCopy(val []byte) {
-	vv := make([]byte, len(val))
-	copy(vv, val)
-	v.value = v
+func (v *SAValue) SetBlobCopy(in []byte) {
+	v.value = NewSAValueBlob(in)
 }
 func (v *SAValue) SetArray(val *SAValueArray) {
 	v.value = val
@@ -241,8 +250,8 @@ func (v *SAValue) String() string {
 		return vv
 	case float64:
 		return strconv.FormatFloat(vv, 'f', -1, 64)
-	case []byte:
-		return string(vv) //?
+	case *SAValueBlob:
+		return string(vv.data) //?
 
 	case *SAValueArray:
 		return vv.GetString()
@@ -262,22 +271,15 @@ func (v *SAValue) Number() float64 {
 		return ret
 	case float64:
 		return vv
-	case []byte:
-		ret, _ := strconv.ParseFloat(string(vv), 64)
-		return ret
 	default:
 		fmt.Println("Warning: Unknown SAValue conversion into Number")
 	}
 	return 0
 }
 
-func (v *SAValue) Blob() []byte {
+func (v *SAValue) Blob() *SAValueBlob {
 	switch vv := v.value.(type) {
-	case string:
-		return []byte(vv)
-	case float64:
-		return nil
-	case []byte:
+	case *SAValueBlob:
 		return vv
 	default:
 		fmt.Println("Warning: Unknown SAValue conversion into Blob")
@@ -306,8 +308,12 @@ func (v *SAValue) Is() bool {
 		return vv != ""
 	case float64:
 		return vv != 0
-	case []byte:
-		return len(vv) > 0
+	case *SAValueBlob:
+		return len(vv.data) > 0
+	case *SAValueArray:
+		return len(vv.items) > 0
+	case *SAValueTable:
+		return len(vv.items) > 0 && len(vv.names) > 0
 	}
 	return false
 }
@@ -326,16 +332,16 @@ func (v *SAValue) IsNumber() bool {
 	}
 	return false
 }
-func (v *SAValue) IsBlobb() bool {
+func (v *SAValue) IsBlob() bool {
 	switch v.value.(type) {
-	case []byte:
+	case *SAValueBlob:
 		return true
 	}
 	return false
 }
 func (v *SAValue) IsTable() bool {
 	switch v.value.(type) {
-	case SAValueTable:
+	case *SAValueTable:
 		return true
 	}
 	return false
