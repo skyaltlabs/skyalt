@@ -51,9 +51,9 @@ func InitWinMediaPath_url(url string) (WinMediaPath, error) {
 	url, isFile = strings.CutPrefix(url, "file:")
 	if !isFile {
 		var isDbsPath bool
-		url, isDbsPath = strings.CutPrefix(url, "blob:")
+		url, isDbsPath = strings.CutPrefix(url, "db:")
 		if !isDbsPath {
-			return ip, fmt.Errorf("must start with 'file:' or 'blob:'")
+			return ip, fmt.Errorf("must start with 'file:' or 'db:'")
 		}
 	}
 

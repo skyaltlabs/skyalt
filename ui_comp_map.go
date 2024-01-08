@@ -288,7 +288,7 @@ func (ui *Ui) comp_map(cam_lon, cam_lat, cam_zoom *float64, file, url, copyright
 
 			if rowid > 0 {
 				//extra margin will fix white spaces during zooming
-				path, err := InitWinMediaPath_url(fmt.Sprintf("blob:%s:tiles/file/%d", file, rowid))
+				path, err := InitWinMediaPath_url(fmt.Sprintf("db:%s:tiles/file/%d", file, rowid))
 				if err != nil {
 					return err
 				}
