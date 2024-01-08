@@ -385,7 +385,7 @@ func (app *SAApp) History(ui *Ui) {
 		app.stepHistoryForward()
 	}
 
-	if touch.end || keys.hasChanged || app.base.ui.touch.scrollWheel != nil {
+	if touch.end || keys.hasChanged || app.base.ui.touch.scrollWheel != nil || touch.drop_path != "" {
 		app.cmpAndAddHistory()
 	}
 }
