@@ -426,6 +426,13 @@ func (w *SANode) Execute(app *SAApp) bool {
 	case "csv_select":
 		ok = w.Csv_select()
 
+	case "blob":
+		ok = w.ConstBlob()
+	case "array":
+		ok = w.ConstArray()
+	case "table":
+		ok = w.ConstTable()
+
 	default:
 		if SAApp_IsExternal(w.Exe) {
 			ok = w.executeProgram(app)
