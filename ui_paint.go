@@ -79,7 +79,7 @@ func (ui *Ui) Paint_circle(x, y, w, h float64, margin float64, sx, sy, rad float
 	return true
 }
 
-func (ui *Ui) Paint_file(x, y, w, h float64, margin float64, url string, cd OsCd, alignV, alignH int, fill bool) bool {
+func (ui *Ui) Paint_file(x, y, w, h float64, margin float64, path WinMediaPath, cd OsCd, alignV, alignH int, fill bool) bool {
 
 	lv := ui.GetCall()
 	if lv.call == nil || lv.call.crop.IsZero() {
@@ -87,12 +87,6 @@ func (ui *Ui) Paint_file(x, y, w, h float64, margin float64, url string, cd OsCd
 	}
 
 	coord := ui.getCoord(x, y, w, h, margin, 0, 0)
-
-	path, err := InitWinMedia(url)
-	if err != nil {
-		lv.call.data.app.AddLogErr(err)
-		return false
-	}
 
 	ui.buff.AddImage(path, coord, cd, alignV, alignH, fill)
 

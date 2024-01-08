@@ -120,7 +120,7 @@ func (ui *Ui) _compDrawImage(coord OsV4, icon string, cd OsCd, style *UiComp) {
 
 	lv := ui.GetCall()
 
-	path, err := InitWinMedia(icon)
+	path, err := InitWinMediaPath_url(icon)
 	if err != nil {
 		lv.call.data.app.AddLogErr(err)
 	} else {

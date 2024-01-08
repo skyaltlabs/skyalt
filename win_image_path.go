@@ -25,8 +25,10 @@ import (
 )
 
 type WinMediaPath struct {
-	isFile bool
-	path   string
+	blob      []byte
+	blob_hash OsHash
+
+	path string
 
 	//optional(blob)
 	table  string
@@ -34,12 +36,20 @@ type WinMediaPath struct {
 	row    int
 }
 
-func InitWinMedia(url string) (WinMediaPath, error) {
+func InitWinMediaPath_blob(blob []byte, hash OsHash) WinMediaPath {
+	var ip WinMediaPath
+	ip.blob = blob
+	ip.blob_hash = hash
+	return ip
+}
+
+func InitWinMediaPath_url(url string) (WinMediaPath, error) {
 	var ip WinMediaPath
 
 	//get type + cut
-	url, ip.isFile = strings.CutPrefix(url, "file:")
-	if !ip.isFile {
+	var isFile bool
+	url, isFile = strings.CutPrefix(url, "file:")
+	if !isFile {
 		var isDbsPath bool
 		url, isDbsPath = strings.CutPrefix(url, "blob:")
 		if !isDbsPath {
@@ -82,6 +92,9 @@ func InitWinMedia(url string) (WinMediaPath, error) {
 	return ip, nil
 }
 
+func (ip *WinMediaPath) IsBlob() bool {
+	return len(ip.blob) > 0
+}
 func (ip *WinMediaPath) IsDb() bool {
 	return len(ip.table) > 0
 }
@@ -94,6 +107,9 @@ func (ip *WinMediaPath) GetString() string {
 }
 
 func (a *WinMediaPath) Cmp(b *WinMediaPath) bool {
+	if a.IsBlob() && b.IsBlob() {
+		return a.blob_hash.Cmp(&b.blob_hash)
+	}
 	return a.path == b.path && a.table == b.table && a.column == b.column && a.row == b.row
 }
 
@@ -101,7 +117,9 @@ func (ip *WinMediaPath) GetBlob(disk *Disk) ([]byte, error) {
 	var data []byte
 	var err error
 
-	if ip.IsFile() {
+	if ip.IsBlob() {
+		return ip.blob, nil
+	} else if ip.IsFile() {
 		//file
 		data, err = os.ReadFile(ip.path)
 		if err != nil {

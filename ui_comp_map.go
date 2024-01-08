@@ -190,6 +190,7 @@ func (ui *Ui) comp_mapLocators(cam_lon, cam_lat, cam_zoom float64, items []UiCom
 				ui.Dialog_open(nm, 1)
 			}
 			if ui.Dialog_start(nm) {
+				//when map is on dialog, this dialog won't show up, wierd ...................
 				ui.Div_colMax(0, 5)
 				ui.Comp_text(0, 0, 1, 1, it.label, 1)
 				ui.Comp_text(0, 1, 1, 1, fmt.Sprintf("Lon: %.3f", it.lon), 0)
@@ -286,10 +287,12 @@ func (ui *Ui) comp_map(cam_lon, cam_lat, cam_zoom *float64, file, url, copyright
 			}
 
 			if rowid > 0 {
-				file := fmt.Sprintf("blob:%s:tiles/file/%d", file, rowid)
-
 				//extra margin will fix white spaces during zooming
-				ui.Paint_file(tileCoord_sx, tileCoord_sy, tileW, tileH, OsTrnFloat(isZooming, -0.03, 0), file, InitOsCd32(255, 255, 255, 255), 0, 0, false)
+				path, err := InitWinMediaPath_url(fmt.Sprintf("blob:%s:tiles/file/%d", file, rowid))
+				if err != nil {
+					return err
+				}
+				ui.Paint_file(tileCoord_sx, tileCoord_sy, tileW, tileH, OsTrnFloat(isZooming, -0.03, 0), path, InitOsCd32(255, 255, 255, 255), 0, 0, false)
 			}
 
 		}
