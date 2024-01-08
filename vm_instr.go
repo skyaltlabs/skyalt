@@ -91,13 +91,6 @@ func (instr *VmInstr) IsRunning(st *VmST) bool {
 	return st.running
 }
 
-func (instr *VmInstr) _lineReplace(line *string, value string) {
-	if instr == nil {
-		return
-	}
-	*line = (*line)[:instr.pos.X] + value + (*line)[instr.pos.Y:]
-}
-
 func (instr *VmInstr) LineReplace(value string) {
 	if instr == nil {
 		return
