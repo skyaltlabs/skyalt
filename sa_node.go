@@ -667,16 +667,6 @@ func (w *SANode) _getAttr(defValue SANodeAttr) *SANodeAttr {
 	return v
 }
 
-func (w *SANode) findAttrFloat(name string) (*SANodeAttr, float64) {
-	for _, it := range w.Attrs {
-		if it.Name == name {
-			vv, _ := strconv.ParseFloat(it.Value, 64)
-			return it, vv
-		}
-	}
-	return nil, 0
-}
-
 func (w *SANode) GetAttr(name string, value string) *SANodeAttr {
 	return w._getAttr(SANodeAttr{Name: name, Value: value})
 }
