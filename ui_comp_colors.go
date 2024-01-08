@@ -29,7 +29,7 @@ func (ui *Ui) comp_colorPicker(x, y, w, h int, cd *OsCd, dialogName string, enab
 	ui.Div_start(x, y, w, h)
 	ui.Div_colMax(0, 100)
 	ui.Div_rowMax(0, 100)
-	if ui._colorButton(0, 0, 1, 1, "", "", *cd, enable) {
+	if ui._colorButton(0, 0, 1, 1, "", fmt.Sprintf("rgba: %d, %d, %d, %d", cd.R, cd.G, cd.B, cd.A), *cd, enable) {
 		ui.Dialog_open(dialogName, 1)
 	}
 	ui.Div_end()
