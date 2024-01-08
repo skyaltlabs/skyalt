@@ -138,7 +138,7 @@ func (w *SANode) SARender_Switch(renderIt bool) {
 
 	label := w.GetAttr("label", "").GetString()
 	instr := w.GetAttr("value", "").instr.GetConst()
-	value := instr.pos_attr.finalValue.String()
+	value := instr.pos_attr.result.String()
 	enable := w.GetAttr("enable", "uiSwitch(1)").GetBool() && instr != nil
 
 	if showIt {
@@ -158,7 +158,7 @@ func (w *SANode) SARender_Checkbox(renderIt bool) {
 
 	label := w.GetAttr("label", "").GetString()
 	instr := w.GetAttr("value", "").instr.GetConst()
-	value := instr.pos_attr.finalValue.String()
+	value := instr.pos_attr.result.String()
 	enable := w.GetAttr("enable", "uiSwitch(1)").GetBool() && instr != nil
 
 	if showIt {
@@ -177,7 +177,7 @@ func (w *SANode) SARender_Combo(renderIt bool) {
 	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	instr := w.GetAttr("value", "").instr.GetConst()
-	value := instr.pos_attr.finalValue.String()
+	value := instr.pos_attr.result.String()
 	enable := w.GetAttr("enable", "uiSwitch(1)").GetBool() && instr != nil
 	options := w.GetAttr("options", "\"a;b;c\")").GetString()
 	search := w.GetAttr("search", "uiSwitch(0)").GetBool()
@@ -198,7 +198,7 @@ func (w *SANode) SARender_Editbox(renderIt bool) {
 	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	instr := w.GetAttr("value", "").instr.GetConst()
-	value := instr.pos_attr.finalValue.String()
+	value := instr.pos_attr.result.String()
 	enable := w.GetAttr("enable", "uiSwitch(1)").GetBool() && instr != nil
 	tmpToValue := w.GetAttr("tempToValue", "uiSwitch(0)").GetBool()
 	precision := w.GetAttr("precision", "2").GetInt()
@@ -342,7 +342,7 @@ func (w *SANode) SARender_Map(renderIt bool) {
 
 	//locators
 	locatorsAttr := w.GetAttr("locators", "{\"lon;lat;label\", 14.4071117049, 50.0852013259, \"1\", 14, 50, \"2\"}")
-	locrs := locatorsAttr.finalValue.Table()
+	locrs := locatorsAttr.result.Table()
 	lon_i := locrs.FindName("lon")
 	lat_i := locrs.FindName("lat")
 	label_i := locrs.FindName("label")
@@ -403,8 +403,8 @@ func (w *SANode) SARender_Image(renderIt bool) {
 	grid.Size.X = OsMax(grid.Size.X, 1)
 	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
-	margin := w.GetAttr("margin", "0").finalValue.Number()
-	cd := w.GetAttr("cd", "uiColor([255, 255, 255, 255])").finalValue.Array().GetCd()
+	margin := w.GetAttr("margin", "0").result.Number()
+	cd := w.GetAttr("cd", "uiColor([255, 255, 255, 255])").result.Array().GetCd()
 
 	alignV := w.GetAttr("alignV", "uiCombo(1, \"Left;Center;Right\")").GetInt()
 	alignH := w.GetAttr("alignH", "uiCombo(1, \"Left;Center;Right\")").GetInt()
@@ -413,7 +413,7 @@ func (w *SANode) SARender_Image(renderIt bool) {
 	blobAttr := w.GetAttr("blob", "")
 
 	if !renderIt {
-		if !blobAttr.finalValue.IsBlob() {
+		if !blobAttr.result.IsBlob() {
 			blobAttr.SetErrorExe("Not BLOB")
 			return
 		}
@@ -422,8 +422,8 @@ func (w *SANode) SARender_Image(renderIt bool) {
 	if showIt {
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
 		{
-			if blobAttr.finalValue.IsBlob() {
-				blob := blobAttr.finalValue.Blob()
+			if blobAttr.result.IsBlob() {
+				blob := blobAttr.result.Blob()
 				path := InitWinMediaPath_blob(blob.data, blob.hash)
 				ui.Paint_file(0, 0, 1, 1, margin, path, cd, alignV, alignH, fill)
 			}
@@ -442,7 +442,7 @@ func (w *SANode) SARender_Drop(renderIt bool) {
 
 	pathAttr := w.GetAttr("path", "")
 	instr := pathAttr.instr.GetConst()
-	value := instr.pos_attr.finalValue.String()
+	value := instr.pos_attr.result.String()
 
 	outputAttr := w.GetAttr("output", "output()")
 
@@ -478,7 +478,7 @@ func (w *SANode) SARender_Drop(renderIt bool) {
 			data, err := os.ReadFile(value)
 			if err == nil {
 				outputAttr.Value = "output()"
-				outputAttr.finalValue.SetBlobCopy(data)
+				outputAttr.result.SetBlobCopy(data)
 			} else {
 				pathAttr.SetErrorExe(fmt.Sprintf("ReadFile(%s) failed: %v", value, err))
 			}

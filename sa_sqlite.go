@@ -167,7 +167,7 @@ func (node *SANode) Sqlite_select() bool {
 	}
 
 	resultAttr.Value = "output()"
-	resultAttr.finalValue.SetTable(tb)
+	resultAttr.result.SetTable(tb)
 	return true
 }
 
@@ -234,6 +234,6 @@ func (node *SANode) Csv_select() bool {
 	}
 
 	resultAttr.Value = "output()"
-	resultAttr.finalValue.SetTable(tb)
+	resultAttr.result.SetTable(tb)
 	return true
 }

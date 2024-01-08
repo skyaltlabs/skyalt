@@ -467,7 +467,7 @@ func (w *SANode) executeProgram(app *SAApp) bool {
 		src := w.Attrs[i]
 		dst := conn.FindAttr(src.Name)
 		if dst != nil {
-			dst.Value = src.finalValue.String()
+			dst.Value = src.result.String()
 		} else {
 			w.Attrs = append(w.Attrs[:i], w.Attrs[i+1:]...) //remove
 		}
@@ -682,7 +682,7 @@ func (w *SANode) GetAttr(name string, value string) *SANodeAttr {
 }
 
 func (w *SANode) GetGrid() OsV4 {
-	return w.GetAttr("grid", "[0, 0, 1, 1]").finalValue.Array().GetV4()
+	return w.GetAttr("grid", "[0, 0, 1, 1]").result.Array().GetV4()
 }
 
 func (w *SANode) SetGridStart(v OsV2) {
@@ -832,15 +832,15 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 		instr := attr.instr.GetConst()
 		value := ""
 		if instr != nil {
-			value = instr.pos_attr.finalValue.String()
+			value = instr.pos_attr.result.String()
 		}
 
 		if VmCallback_Cmp(fn, VmApi_Output) {
-			if attr.finalValue.IsBlob() {
+			if attr.result.IsBlob() {
 				ui.Comp_text(x, y, w, h, "blob here", 0) //......
 
-			} else if attr.finalValue.IsTable() {
-				tb := attr.finalValue.Table()
+			} else if attr.result.IsTable() {
+				tb := attr.result.Table()
 				ui.Comp_button(x, y, w, h, fmt.Sprintf("Table(%dcols x %drow)", len(tb.names), tb.NumRows()), "", true) //......
 			}
 
@@ -854,7 +854,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 			}
 		} else if VmCallback_Cmp(fn, VmApi_UiDate) {
 			ui.Div_start(x, y, w, h)
-			val := int64(instr.pos_attr.finalValue.Number())
+			val := int64(instr.pos_attr.result.Number())
 			if ui.Comp_CalendarDataPicker(&val, true, attr.Name, instr != nil) {
 				instr.LineReplace(strconv.Itoa(int(val)))
 			}
@@ -876,7 +876,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 					ui.Div_colMax(i, 100)
 				}
 
-				arr := attr.finalValue.Array()
+				arr := attr.result.Array()
 				for i := range attr.instr.prms {
 					if i < arr.Num() {
 						value = arr.Get(i).String()
@@ -891,7 +891,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 			ui.Div_end()
 
 		} else if VmCallback_Cmp(fn, VmBasic_ConstTable) {
-			tb := attr.finalValue.Table()
+			tb := attr.result.Table()
 			ui.Comp_button(x, y, w, h, fmt.Sprintf("Table(%dcols x %drow)", len(tb.names), tb.NumRows()), "", true) //......
 		} else {
 			//VmBasic_Constant

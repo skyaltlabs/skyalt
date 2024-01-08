@@ -281,7 +281,7 @@ func VmBasic_Bracket(instr *VmInstr, st *VmST) SAValue {
 }
 
 func VmBasic_Access(instr *VmInstr, st *VmST) SAValue {
-	instr.temp = instr.accessAttr.finalValue
+	instr.temp = instr.accessAttr.result
 	return instr.temp
 }
 

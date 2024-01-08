@@ -26,12 +26,12 @@ type SANodeAttr struct {
 	node *SANode
 
 	Name    string
-	Value   string `json:",omitempty"` //every value is expression
+	Value   string `json:",omitempty"` //every(!) value is expression
 	ShowExp bool
 
-	finalValue SAValue
-	instr      *VmInstr
-	depends    []*SANodeAttr
+	result  SAValue
+	instr   *VmInstr
+	depends []*SANodeAttr
 
 	errExp error
 	errExe error
@@ -63,7 +63,7 @@ func (attr *SANodeAttr) _getFinalValue() SAValue {
 	if attr.instr != nil {
 		instr := attr.instr.GetConst()
 		if instr != nil {
-			return instr.pos_attr.finalValue
+			return instr.pos_attr.result
 		}
 	}
 
@@ -139,9 +139,9 @@ func (attr *SANodeAttr) ExecuteExpression() {
 
 	if attr.instr != nil {
 		st := InitVmST()
-		attr.finalValue = attr.instr.Exe(&st)
+		attr.result = attr.instr.Exe(&st)
 	} else {
-		attr.finalValue.SetString(attr.Value)
+		attr.result.SetString(attr.Value)
 	}
 }
 
@@ -150,10 +150,10 @@ func (a *SANodeAttr) Cmp(b *SANodeAttr) bool {
 }
 
 func (a *SANodeAttr) GetCd() OsCd {
-	return a.finalValue.Array().GetCd()
+	return a.result.Array().GetCd()
 }
 func (a *SANodeAttr) SetCd(cd OsCd) {
-	a.finalValue.Array().SetCd(cd)
+	a.result.Array().SetCd(cd)
 }
 
 func (a *SANodeAttr) ReplaceArrayItem(prm_i int, value string) {
