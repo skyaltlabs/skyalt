@@ -59,14 +59,6 @@ func (line *VmLine) addSyntax_text(lexer *VmLexer, cd OsCd) {
 	//...
 }
 
-func (line *VmLine) addSyntax_back(lexer *VmLexer, cd OsCd) {
-	//...
-}
-
-func (line *VmLine) addSyntax_label(lexer *VmLexer, cd OsCd, label string) {
-	//...
-}
-
 func (line *VmLine) addError(lexer *VmLexer, err string) bool {
 	line.errs = append(line.errs, err)
 	return false
