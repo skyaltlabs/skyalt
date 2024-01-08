@@ -79,7 +79,7 @@ func (ui *Ui) Paint_circle(x, y, w, h float64, margin float64, sx, sy, rad float
 	return true
 }
 
-func (ui *Ui) Paint_file(x, y, w, h float64, margin float64, path WinMediaPath, cd OsCd, alignV, alignH int, fill bool) bool {
+func (ui *Ui) Paint_file(x, y, w, h float64, margin float64, path WinMedia, cd OsCd, alignV, alignH int, fill bool) bool {
 
 	lv := ui.GetCall()
 	if lv.call == nil || lv.call.crop.IsZero() {

@@ -205,7 +205,7 @@ func (w *SANode) SARender_Editbox(renderIt bool) {
 	ghost := w.GetAttr("ghost", "").GetString()
 
 	if showIt {
-		_, _, chngd, fnshd, _ := ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, precision, "", ghost, false, tmpToValue, enable)
+		_, _, chngd, fnshd, _ := ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, precision, nil, ghost, false, tmpToValue, enable)
 		if fnshd || (tmpToValue && chngd) {
 			instr.LineReplace(value)
 		}
@@ -424,7 +424,7 @@ func (w *SANode) SARender_Image(renderIt bool) {
 		{
 			if blobAttr.result.IsBlob() {
 				blob := blobAttr.result.Blob()
-				path := InitWinMediaPath_blob(blob.data, blob.hash)
+				path := InitWinMedia_blob(blob.data, blob.hash)
 				ui.Paint_file(0, 0, 1, 1, margin, path, cd, alignV, alignH, fill)
 			}
 		}
@@ -456,7 +456,7 @@ func (w *SANode) SARender_File(renderIt bool) {
 			ui.Div_end()
 			ui.Comp_text(0, 0, 1, 1, "Drag file & drop it here", 1)
 
-			_, _, _, fnshd, _ := ui.Comp_editbox(0, 1, 1, 1, &value, 0, "", "path", false, false, true)
+			_, _, _, fnshd, _ := ui.Comp_editbox(0, 1, 1, 1, &value, 0, nil, "path", false, false, true)
 			if fnshd {
 				instr.LineReplace(value)
 			}

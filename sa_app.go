@@ -496,7 +496,7 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 		ui.Div_colMax(0, 5)
 
 		y := 0
-		ui.Comp_editbox(0, 0, 1, 1, &app.canvas.addnode_search, 0, "", ui.trns.SEARCH, app.canvas.addnode_search != "", true, true)
+		ui.Comp_editbox(0, 0, 1, 1, &app.canvas.addnode_search, 0, nil, ui.trns.SEARCH, app.canvas.addnode_search != "", true, true)
 		y++
 
 		keys := &ui.buff.win.io.keys
@@ -560,15 +560,15 @@ func _SAApp_drawColsRowsDialog(name string, items *[]SANodeColRow, i int, ui *Ui
 		}
 		ui.Div_end()
 
-		_, _, _, fnshd1, _ := ui.Comp_editbox_desc(ui.trns.MIN, 0, 2, 0, 1, 1, 1, &(*items)[i].Min, 1, "", "", false, false, true)
-		_, _, _, fnshd2, _ := ui.Comp_editbox_desc(ui.trns.MAX, 0, 2, 0, 2, 1, 1, &(*items)[i].Max, 1, "", "", false, false, true)
+		_, _, _, fnshd1, _ := ui.Comp_editbox_desc(ui.trns.MIN, 0, 2, 0, 1, 1, 1, &(*items)[i].Min, 1, nil, "", false, false, true)
+		_, _, _, fnshd2, _ := ui.Comp_editbox_desc(ui.trns.MAX, 0, 2, 0, 2, 1, 1, &(*items)[i].Max, 1, nil, "", false, false, true)
 
 		ui.Div_start(0, 3, 1, 1)
 		{
 			ui.Div_colMax(0, 100)
 			ui.Div_colMax(1, 100)
 
-			_, _, _, fnshd3, _ := ui.Comp_editbox_desc(ui.trns.RESIZE, 0, 2, 0, 0, 1, 1, &(*items)[i].ResizeName, 1, "", "Name", false, false, true)
+			_, _, _, fnshd3, _ := ui.Comp_editbox_desc(ui.trns.RESIZE, 0, 2, 0, 0, 1, 1, &(*items)[i].ResizeName, 1, nil, "Name", false, false, true)
 			ui.Comp_text(1, 0, 1, 1, strconv.FormatFloat((*items)[i].Resize, 'f', 2, 64), 0)
 
 			if fnshd1 || fnshd2 || fnshd3 {
@@ -597,7 +597,7 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 	//ui.Div_colMax(5, 2)
 
 	//level up
-	if ui.Comp_buttonIcon(0, 0, 1, 1, "file:apps/base/resources/levelup.png", 0.3, "One level up", CdPalette_P, app.act.parent != nil, false) > 0 {
+	if ui.Comp_buttonIcon(0, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/levelup.png"), 0.3, "One level up", CdPalette_P, app.act.parent != nil, false) > 0 {
 		app.act = app.act.parent
 	}
 	keys := &ui.buff.win.io.keys

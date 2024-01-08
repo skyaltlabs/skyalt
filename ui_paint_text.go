@@ -48,7 +48,7 @@ func (ui *Ui) Paint_textWidth(value string, cursorPos int64, ratioH float64, fon
 	return -1
 }
 
-func (ui *Ui) Paint_textGrid(grid OsV4, cd OsCd, style *UiComp, value string, valueOrigEdit string, icon string, selection bool, editable bool) {
+func (ui *Ui) Paint_textGrid(grid OsV4, cd OsCd, style *UiComp, value string, valueOrigEdit string, icon *WinMedia, selection bool, editable bool) {
 
 	lv := ui.GetCall()
 	if lv.call == nil /*|| lv.call.crop.IsZero()*/ {
@@ -66,9 +66,9 @@ func (ui *Ui) Paint_textGrid(grid OsV4, cd OsCd, style *UiComp, value string, va
 	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 	//style.Paint(st.stack.canvas, value, valueOrigEdit, selection, edit, icon, icon_margin, enable, app)
 
-	coordImage, coordText := ui._compGetTextImageCoord(lv.call.canvas, 1, style.image_alignH, len(icon) > 0, len(value) > 0)
-	if len(icon) > 0 {
-		ui._compDrawImage(coordImage, icon, cd, style)
+	coordImage, coordText := ui._compGetTextImageCoord(lv.call.canvas, 1, style.image_alignH, icon != nil, len(value) > 0)
+	if icon != nil {
+		ui._compDrawImage(coordImage, *icon, cd, style)
 	}
 	if editable || len(value) > 0 {
 		ui._compDrawText(coordText, value, valueOrigEdit, cd, SKYALT_FONT_HEIGHT, selection, editable, int(style.label_alignH), int(style.label_alignV), style.label_formating)

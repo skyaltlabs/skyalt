@@ -116,23 +116,19 @@ func (ui *Ui) _compDrawShape(coord OsV4, shape uint8, cd OsCd, margin float64, b
 	return coord
 }
 
-func (ui *Ui) _compDrawImage(coord OsV4, icon string, cd OsCd, style *UiComp) {
+func (ui *Ui) _compDrawImage(coord OsV4, icon WinMedia, cd OsCd, style *UiComp) {
 
 	lv := ui.GetCall()
 
-	path, err := InitWinMediaPath_url(icon)
-	if err != nil {
-		lv.call.data.app.AddLogErr(err)
-	} else {
-		m := ui.CellWidth(style.image_margin)
-		coord = coord.Inner(m, m, m, m)
+	m := ui.CellWidth(style.image_margin)
+	coord = coord.Inner(m, m, m, m)
 
-		//style.image_fill = true
+	//style.image_fill = true
 
-		imgRectBackup := ui.buff.AddCrop(lv.call.crop.GetIntersect(coord))
-		ui.buff.AddImage(path, coord, cd, int(style.image_alignV), int(style.image_alignH), style.image_fill)
-		ui.buff.AddCrop(imgRectBackup)
-	}
+	imgRectBackup := ui.buff.AddCrop(lv.call.crop.GetIntersect(coord))
+	ui.buff.AddImage(icon, coord, cd, int(style.image_alignV), int(style.image_alignH), style.image_fill)
+	ui.buff.AddCrop(imgRectBackup)
+
 }
 
 func (ui *Ui) _compDrawText(coord OsV4, value string, valueOrigEdit string, cd OsCd, textH float64, selection bool, editable bool, alignH int, alignV int, formating bool) {
@@ -183,7 +179,7 @@ func (ui *Ui) Comp_button(x, y, w, h int, label string, tooltip string, enable b
 	ui.Div_start(x, y, w, h)
 
 	style := ui._buttonBasicStyle(enable, tooltip)
-	click, rclick := ui.Comp_button_s(&style, label, "", "", 1, false)
+	click, rclick := ui.Comp_button_s(&style, label, nil, "", 1, false)
 
 	ui.Div_end()
 	if rclick > 0 {
@@ -194,7 +190,7 @@ func (ui *Ui) Comp_button(x, y, w, h int, label string, tooltip string, enable b
 	return 0
 }
 
-func (ui *Ui) Comp_buttonIcon(x, y, w, h int, icon string, icon_margin float64, tooltip string, cd uint8, enable bool, selected bool) int {
+func (ui *Ui) Comp_buttonIcon(x, y, w, h int, icon WinMedia, icon_margin float64, tooltip string, cd uint8, enable bool, selected bool) int {
 	ui.Div_start(x, y, w, h)
 
 	style := ui._buttonBasicStyle(enable, tooltip)
@@ -202,7 +198,7 @@ func (ui *Ui) Comp_buttonIcon(x, y, w, h int, icon string, icon_margin float64, 
 	style.image_margin = icon_margin
 	style.cd = cd
 
-	click, rclick := ui.Comp_button_s(&style, "", icon, "", OsTrnFloat(selected, 1, 0), false)
+	click, rclick := ui.Comp_button_s(&style, "", &icon, "", OsTrnFloat(selected, 1, 0), false)
 
 	ui.Div_end()
 	if rclick > 0 {
@@ -217,7 +213,7 @@ func (ui *Ui) Comp_buttonLight(x, y, w, h int, label string, tooltip string, ena
 	ui.Div_start(x, y, w, h)
 
 	style := ui._buttonBasicStyle(enable, tooltip)
-	click, rclick := ui.Comp_button_s(&style, label, "", "", 0.5, false)
+	click, rclick := ui.Comp_button_s(&style, label, nil, "", 0.5, false)
 
 	ui.Div_end()
 	if rclick > 0 {
@@ -232,7 +228,7 @@ func (ui *Ui) Comp_buttonText(x, y, w, h int, label string, url string, tooltip 
 	ui.Div_start(x, y, w, h)
 
 	style := ui._buttonBasicStyle(enable, tooltip)
-	click, rclick := ui.Comp_button_s(&style, label, "", url, OsTrnFloat(selected, 1, 0), false)
+	click, rclick := ui.Comp_button_s(&style, label, nil, url, OsTrnFloat(selected, 1, 0), false)
 
 	ui.Div_end()
 	if rclick > 0 {
@@ -248,7 +244,7 @@ func (ui *Ui) Comp_buttonTextFade(x, y, w, h int, label string, url string, tool
 
 	style := ui._buttonBasicStyle(enable, tooltip)
 	style.fade = fade
-	click, rclick := ui.Comp_button_s(&style, label, "", url, OsTrnFloat(selected, 1, 0), false)
+	click, rclick := ui.Comp_button_s(&style, label, nil, url, OsTrnFloat(selected, 1, 0), false)
 
 	ui.Div_end()
 	if rclick > 0 {
@@ -263,7 +259,7 @@ func (ui *Ui) Comp_buttonOutlined(x, y, w, h int, label string, tooltip string, 
 	ui.Div_start(x, y, w, h)
 
 	style := ui._buttonBasicStyle(enable, tooltip)
-	click, rclick := ui.Comp_button_s(&style, label, "", "", OsTrnFloat(selected, 1, 0), true)
+	click, rclick := ui.Comp_button_s(&style, label, nil, "", OsTrnFloat(selected, 1, 0), true)
 
 	ui.Div_end()
 	if rclick > 0 {
@@ -279,7 +275,7 @@ func (ui *Ui) Comp_buttonOutlinedFade(x, y, w, h int, label string, tooltip stri
 
 	style := ui._buttonBasicStyle(enable, tooltip)
 	style.fade = fade
-	click, rclick := ui.Comp_button_s(&style, label, "", "", OsTrnFloat(selected, 1, 0), true)
+	click, rclick := ui.Comp_button_s(&style, label, nil, "", OsTrnFloat(selected, 1, 0), true)
 
 	ui.Div_end()
 	if rclick > 0 {
@@ -290,7 +286,7 @@ func (ui *Ui) Comp_buttonOutlinedFade(x, y, w, h int, label string, tooltip stri
 	return 0
 }
 
-func (ui *Ui) Comp_buttonMenuIcon(x, y, w, h int, label string, icon string, iconMargin float64, tooltip string, enable bool, selected bool) int {
+func (ui *Ui) Comp_buttonMenuIcon(x, y, w, h int, label string, icon WinMedia, iconMargin float64, tooltip string, enable bool, selected bool) int {
 	ui.Div_start(x, y, w, h)
 
 	style := ui._buttonBasicStyle(enable, tooltip)
@@ -300,7 +296,7 @@ func (ui *Ui) Comp_buttonMenuIcon(x, y, w, h int, label string, icon string, ico
 		style.cd = CdPalette_B
 	}
 
-	click, rclick := ui.Comp_button_s(&style, label, icon, "", OsTrnFloat(selected, 1, 0), false)
+	click, rclick := ui.Comp_button_s(&style, label, &icon, "", OsTrnFloat(selected, 1, 0), false)
 
 	ui.Div_end()
 	if rclick > 0 {
@@ -312,10 +308,26 @@ func (ui *Ui) Comp_buttonMenuIcon(x, y, w, h int, label string, icon string, ico
 }
 
 func (ui *Ui) Comp_buttonMenu(x, y, w, h int, label string, tooltip string, enable bool, selected bool) int {
-	return ui.Comp_buttonMenuIcon(x, y, w, h, label, "", 0, tooltip, enable, selected)
+	ui.Div_start(x, y, w, h)
+
+	style := ui._buttonBasicStyle(enable, tooltip)
+	style.label_alignH = 0
+	if !selected {
+		style.cd = CdPalette_B
+	}
+
+	click, rclick := ui.Comp_button_s(&style, label, nil, "", OsTrnFloat(selected, 1, 0), false)
+
+	ui.Div_end()
+	if rclick > 0 {
+		return 2
+	} else if click > 0 {
+		return 1
+	}
+	return 0
 }
 
-func (ui *Ui) Comp_button_s(style *UiComp, value string, icon string, url string, drawBack float64, drawBorder bool) (int, int) {
+func (ui *Ui) Comp_button_s(style *UiComp, value string, icon *WinMedia, url string, drawBack float64, drawBorder bool) (int, int) {
 
 	lv := ui.GetCall()
 
@@ -372,13 +384,13 @@ func (ui *Ui) Comp_button_s(style *UiComp, value string, icon string, url string
 		ui._compDrawShape(coord, style.shape, cd, 0, 0.03)
 	}
 
-	if len(icon) > 0 {
+	if icon != nil {
 		style.image_alignH = 0
 	}
 
-	coordImage, coordText := ui._compGetTextImageCoord(coord, 1, style.image_alignH, len(icon) > 0, len(value) > 0)
-	if len(icon) > 0 {
-		ui._compDrawImage(coordImage, icon, onCd, style)
+	coordImage, coordText := ui._compGetTextImageCoord(coord, 1, style.image_alignH, icon != nil, len(value) > 0)
+	if icon != nil {
+		ui._compDrawImage(coordImage, *icon, onCd, style)
 	}
 	if len(value) > 0 {
 		ui._compDrawText(coordText, value, "", onCd, SKYALT_FONT_HEIGHT, false, false, int(style.label_alignH), int(style.label_alignV), style.label_formating)
@@ -399,7 +411,7 @@ func (ui *Ui) Comp_button_s(style *UiComp, value string, icon string, url string
 	return click, rclick
 }
 
-func (ui *Ui) Comp_textIcon(x, y, w, h int, label string, icon string, iconMargin float64) {
+func (ui *Ui) Comp_textIcon(x, y, w, h int, label string, icon WinMedia, iconMargin float64) {
 	ui.Div_start(x, y, w, h)
 
 	var style UiComp
@@ -409,7 +421,7 @@ func (ui *Ui) Comp_textIcon(x, y, w, h int, label string, icon string, iconMargi
 	style.image_alignV = 1
 	style.image_margin = iconMargin
 
-	ui.Comp_text_s(&style, label, icon, false)
+	ui.Comp_text_s(&style, label, &icon, false)
 
 	ui.Div_end()
 }
@@ -424,7 +436,7 @@ func (ui *Ui) Comp_text(x, y, w, h int, label string, alignH int) *UiLayoutDiv {
 	style.label_alignV = 1
 	style.label_alignH = uint8(alignH)
 
-	ui.Comp_text_s(&style, label, "", true)
+	ui.Comp_text_s(&style, label, nil, true)
 
 	ui.Div_end()
 	return div
@@ -441,13 +453,13 @@ func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, alignH int, selectio
 	style.label_alignH = uint8(alignH)
 	style.label_formating = true
 
-	ui.Comp_text_s(&style, label, "", selection)
+	ui.Comp_text_s(&style, label, nil, selection)
 
 	ui.Div_end()
 	return div
 }
 
-func (ui *Ui) Comp_text_s(style *UiComp, value string, icon string, selection bool) {
+func (ui *Ui) Comp_text_s(style *UiComp, value string, icon *WinMedia, selection bool) {
 
 	pl := ui.buff.win.io.GetPalette()
 	_, onCd := pl.GetCd(style.cd, style.fade, style.enable, false, false)
@@ -468,7 +480,7 @@ func (ui *Ui) Comp_text_s(style *UiComp, value string, icon string, selection bo
 	ui.Paint_textGrid(InitOsV4(0, 0, 1, 1), onCd, style, value, "", icon, selection, false)
 }
 
-func (ui *Ui) Comp_editbox_desc(description string, description_alignH int, width float64, x, y, w, h int, valueIn interface{}, value_precision int, icon string, ghost string, highlight bool, tempToValue bool, enable bool) (string, bool, bool, bool, *UiLayoutDiv) {
+func (ui *Ui) Comp_editbox_desc(description string, description_alignH int, width float64, x, y, w, h int, valueIn interface{}, value_precision int, icon *WinMedia, ghost string, highlight bool, tempToValue bool, enable bool) (string, bool, bool, bool, *UiLayoutDiv) {
 	ui.Div_start(x, y, w, h)
 
 	xx := 0
@@ -491,7 +503,7 @@ func (ui *Ui) Comp_editbox_desc(description string, description_alignH int, widt
 	return editedValue, active, changed, finished, div
 }
 
-func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, value_precision int, icon string, ghost string, highlight bool, tempToValue bool, enable bool) (string, bool, bool, bool, *UiLayoutDiv) {
+func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, value_precision int, icon *WinMedia, ghost string, highlight bool, tempToValue bool, enable bool) (string, bool, bool, bool, *UiLayoutDiv) {
 
 	ui.Div_start(x, y, w, h)
 	div := ui.GetCall().call
@@ -552,7 +564,7 @@ func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, value_precision 
 
 	return editedValue, active, changed, finished, div
 }
-func (ui *Ui) Comp_edit_s(style *UiComp, valueIn string, valueInOrig string, icon string, ghost string, highlight bool, tempToValue bool) (string, bool, bool, bool) {
+func (ui *Ui) Comp_edit_s(style *UiComp, valueIn string, valueInOrig string, icon *WinMedia, ghost string, highlight bool, tempToValue bool) (string, bool, bool, bool) {
 
 	lv := ui.GetCall()
 
@@ -1213,7 +1225,7 @@ func (ui *Ui) Comp_switch_s(style *UiComp, value bool, label string) bool {
 	return value
 }
 
-func (ui *Ui) Comp_image(x, y, w, h int, path string, cd OsCd, margin float64, alignH, alignV int, fill bool) {
+func (ui *Ui) Comp_image(x, y, w, h int, image WinMedia, cd OsCd, margin float64, alignH, alignV int, fill bool) {
 
 	ui.Div_start(x, y, w, h)
 
@@ -1225,7 +1237,7 @@ func (ui *Ui) Comp_image(x, y, w, h int, path string, cd OsCd, margin float64, a
 	style.image_fill = fill
 
 	lv := ui.GetCall()
-	ui._compDrawImage(lv.call.canvas, path, cd, &style)
+	ui._compDrawImage(lv.call.canvas, image, cd, &style)
 
 	ui.Div_end()
 }

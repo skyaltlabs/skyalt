@@ -354,7 +354,7 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 		path := "file:apps/base/resources/"
 
 		y := 0
-		if ui.Comp_buttonIcon(0, y, 1, 1, path+OsTrnString(gr.app.EnableExecution, "pause.png", "play.png"), 0.25, "Enable/Disable nodes execution", uint8(OsTrn(gr.app.EnableExecution, int(CdPalette_B), int(CdPalette_E))), true, false) > 0 {
+		if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+OsTrnString(gr.app.EnableExecution, "pause.png", "play.png")), 0.25, "Enable/Disable nodes execution", uint8(OsTrn(gr.app.EnableExecution, int(CdPalette_B), int(CdPalette_E))), true, false) > 0 {
 			gr.app.EnableExecution = !gr.app.EnableExecution
 			if gr.app.EnableExecution {
 				gr.app.exeIt = true
@@ -362,22 +362,22 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 		}
 		y++
 
-		if ui.Comp_buttonIcon(0, y, 1, 1, path+"home.png", 0.3, "Zoom all nodes(H)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
+		if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"home.png"), 0.3, "Zoom all nodes(H)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
 			gr.autoZoom(false, graphCanvas, ui) //zoom to all
 		}
 		y++
 
-		if ui.Comp_buttonIcon(0, y, 1, 1, path+"home_select.png", 0.2, "Zoom selected nodes(G)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "g")) {
+		if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"home_select.png"), 0.2, "Zoom selected nodes(G)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "g")) {
 			gr.autoZoom(true, graphCanvas, ui) //zoom to selected
 		}
 		y++
 
-		if ui.Comp_buttonIcon(0, y, 1, 1, path+"hierarchy.png", 0.25, "Reoder all nodes(l)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "l")) {
+		if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy.png"), 0.25, "Reoder all nodes(l)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "l")) {
 			gr.reorder(false, ui) //reorder nodes
 		}
 		y++
 
-		if ui.Comp_buttonIcon(0, y, 1, 1, path+"hierarchy_select.png", 0.2, "Reorder selected nodes(K)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "k")) {
+		if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy_select.png"), 0.2, "Reorder selected nodes(K)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "k")) {
 			gr.reorder(true, ui) //reorder only selected nodes
 		}
 		y++
