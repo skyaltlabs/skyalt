@@ -264,7 +264,7 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 
 			//zoom
 			if over && touch.wheel != 0 {
-				zoom := OsClampFloat(float64(gr.app.act.Cam_z)+float64(touch.wheel)*-0.1, 0.2, 1.0) //zoom += wheel
+				zoom := OsClampFloat(float64(gr.app.act.Cam_z)+float64(touch.wheel)*-0.1, 0.2, 2) //zoom += wheel
 				gr.app.act.Cam_z = zoom
 				gr.app.saveIt = true
 
@@ -359,6 +359,11 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 			if gr.app.EnableExecution {
 				gr.app.exeIt = true
 			}
+		}
+		y++
+
+		if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"update.png"), 0.25, "Recompute all nodes", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
+			gr.app.exeIt = true
 		}
 		y++
 
