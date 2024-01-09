@@ -151,8 +151,9 @@ func (mp *UiLayoutMap) isZooming() (bool, float64, float64) {
 }
 
 type UiCompMapLocator struct {
-	lon, lat float64
-	label    string
+	Lon   float64
+	Lat   float64
+	Label string
 }
 
 func (ui *Ui) comp_mapLocators(cam_lon, cam_lat, cam_zoom float64, items []UiCompMapLocator) error {
@@ -172,7 +173,7 @@ func (ui *Ui) comp_mapLocators(cam_lon, cam_lat, cam_zoom float64, items []UiCom
 	bbStart, _, _ := UiLayoutMap_camBbox(coord, tile, lon, lat, zoom)
 
 	for i, it := range items {
-		p := UiLayoutMap_lonLatToPos(it.lon, it.lat, zoom) //...
+		p := UiLayoutMap_lonLatToPos(it.Lon, it.Lat, zoom) //...
 
 		x := float64(p.X-bbStart.X) * tileW
 		y := float64(p.Y-bbStart.Y) * tileH
@@ -186,15 +187,15 @@ func (ui *Ui) comp_mapLocators(cam_lon, cam_lat, cam_zoom float64, items []UiCom
 			//ui.Paint_file(0, 0, 1, 1, 0, "file:apps/base/resources/locator.png", InitOsCd32(200, 20, 20, 255), 1, 0, false) //red
 
 			nm := strconv.Itoa(i)
-			if ui.Comp_buttonIcon(0, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/locator.png"), 0, it.label, CdPalette_P, true, false) > 0 {
+			if ui.Comp_buttonIcon(0, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/locator.png"), 0, it.Label, CdPalette_P, true, false) > 0 {
 				ui.Dialog_open(nm, 1)
 			}
 			if ui.Dialog_start(nm) {
 				//when map is on dialog, this dialog won't show up, wierd ...................
 				ui.Div_colMax(0, 5)
-				ui.Comp_text(0, 0, 1, 1, it.label, 1)
-				ui.Comp_text(0, 1, 1, 1, fmt.Sprintf("Lon: %.3f", it.lon), 0)
-				ui.Comp_text(0, 2, 1, 1, fmt.Sprintf("Lat: %.3f", it.lat), 0)
+				ui.Comp_text(0, 0, 1, 1, it.Label, 1)
+				ui.Comp_text(0, 1, 1, 1, fmt.Sprintf("Lon: %.3f", it.Lon), 0)
+				ui.Comp_text(0, 2, 1, 1, fmt.Sprintf("Lat: %.3f", it.Lat), 0)
 				ui.Dialog_end()
 			}
 		}
@@ -368,6 +369,8 @@ func (ui *Ui) comp_map(cam_lon, cam_lat, cam_zoom *float64, file, url, copyright
 	{
 		h := 1 / height / 2
 		ui.Div_startEx(0, 0, 1, 1, 0, 1-h, 1, h, "copyright")
+		ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
+		ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
 		ui.Div_colMax(0, 100)
 		ui.Div_col(1, 5)
 		ui.Div_row(0, 0.5)
