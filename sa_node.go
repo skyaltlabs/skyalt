@@ -683,7 +683,7 @@ func (w *SANode) GetAttrOutput(name string, value string) *SANodeAttr {
 }
 
 func (w *SANode) GetGrid() OsV4 {
-	return w.GetAttr("grid", "[0, 0, 1, 1]").result.Array().GetV4()
+	return w.GetAttr("grid", "[0, 0, 1, 1]").result.GetV4()
 }
 
 func (w *SANode) SetGridStart(v OsV2) {
@@ -854,55 +854,46 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 			}
 			ui.Div_end()
 		} else if VmCallback_Cmp(fn, VmApi_UiCombo) {
-			options := attr.instr.temp.String() //instr is first parameter, GuiCombo() api is parent!
+			options := attr.instr.prms[1].instr.temp.String() //instr is first parameter, GuiCombo() api is parent!
 			if ui.Comp_combo(x, y, w, h, &value, options, "", editable, false) {
 				instr.LineReplace(value)
 			}
 		} else if VmCallback_Cmp(fn, VmApi_UiColor) {
-			cd := attr.GetCd()
+			cd := attr.result.GetCd()
 			if ui.comp_colorPicker(x, y, w, h, &cd, attr.Name, true) {
 				attr.ReplaceCd(cd)
 			}
 		} else if VmCallback_Cmp(fn, VmApi_UiBlob) {
-			if attr.result.IsBlob() {
-				blob := attr.result.Blob()
-				dnm := "blob_" + attr.Name
-				if ui.Comp_buttonIcon(x, y, w, h, InitWinMedia_blob(blob.data, blob.hash), 0, "", CdPalette_White, true, false) > 0 {
-					ui.Dialog_open(dnm, 0)
-				}
-				if ui.Dialog_start(dnm) {
-					ui.Div_colMax(0, 20)
-					ui.Div_rowMax(0, 20)
-					ui.Comp_image(0, 0, 1, 1, InitWinMedia_blob(blob.data, blob.hash), InitOsCd32(255, 255, 255, 255), 0, 1, 1, false)
-					ui.Dialog_end()
-				}
-			} else {
-				ui.Comp_text(x, y, w, h, "Error: Not Blob", 1)
+			blob := attr.result.Blob()
+			dnm := "blob_" + attr.Name
+			if ui.Comp_buttonIcon(x, y, w, h, InitWinMedia_blob(blob), 0, "", CdPalette_White, true, false) > 0 {
+				ui.Dialog_open(dnm, 0)
 			}
-		} else if VmCallback_Cmp(fn, VmBasic_ConstArray) {
+			if ui.Dialog_start(dnm) {
+				ui.Div_colMax(0, 20)
+				ui.Div_rowMax(0, 20)
+				ui.Comp_image(0, 0, 1, 1, InitWinMedia_blob(blob), InitOsCd32(255, 255, 255, 255), 0, 1, 1, false)
+				ui.Dialog_end()
+			}
+		} else if VmCallback_Cmp(fn, VmBasic_BuildArray) {
 			ui.Div_start(x, y, w, h)
 			{
 				for i := range attr.instr.prms {
 					ui.Div_colMax(i, 100)
 				}
-
-				arr := attr.result.Array()
 				for i := range attr.instr.prms {
-					if i < arr.Num() {
-						value = arr.Get(i).String()
-						instr2 := attr.instr.GetConstArrayPrm(i)
-						_, _, _, fnshd, _ := ui.Comp_editbox(i, 0, 1, 1, &value, 2, nil, "", false, false, !attr.Output && instr2 != nil)
-						if fnshd {
-							attr.ReplaceArrayItem(i, value)
-						}
+					value = attr.instr.prms[i].instr.temp.String()
+					instr2 := attr.instr.GetConstArrayPrm(i)
+					_, _, _, fnshd, _ := ui.Comp_editbox(i, 0, 1, 1, &value, 2, nil, "", false, false, !attr.Output && instr2 != nil)
+					if fnshd {
+						attr.ReplaceArrayItem(i, value)
 					}
 				}
 			}
 			ui.Div_end()
+		} else if VmCallback_Cmp(fn, VmBasic_BuildMap) {
+			//..........
 
-		} else if VmCallback_Cmp(fn, VmBasic_ConstTable) {
-			tb := attr.result.Table()
-			ui.Comp_button(x, y, w, h, fmt.Sprintf("Table(%dcols x %drow)", len(tb.names), tb.NumRows()), "", true) //......
 		} else {
 			//VmBasic_Constant
 			_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, 2, nil, "", false, false, editable)
