@@ -35,10 +35,10 @@ type WinMedia struct {
 	row    int
 }
 
-func InitWinMedia_blob(blob []byte, hash OsHash) WinMedia {
+func InitWinMedia_blob(blob []byte) WinMedia {
 	var ip WinMedia
 	ip.blob = blob
-	ip.blob_hash = hash
+	ip.blob_hash, _ = InitOsHash(blob) //err ...
 	return ip
 }
 
