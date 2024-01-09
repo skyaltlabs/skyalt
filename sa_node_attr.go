@@ -157,13 +157,6 @@ func (a *SANodeAttr) Cmp(b *SANodeAttr) bool {
 	return a.Name == b.Name && a.Value == b.Value
 }
 
-func (a *SANodeAttr) GetCd() OsCd {
-	return a.result.Array().GetCd()
-}
-func (a *SANodeAttr) SetCd(cd OsCd) {
-	a.result.Array().SetCd(cd)
-}
-
 func (a *SANodeAttr) ReplaceArrayItem(prm_i int, value string) {
 	if a == nil {
 		return
@@ -177,12 +170,25 @@ func (a *SANodeAttr) ReplaceArrayItemInt(prm_i int, value int) {
 	a.ReplaceArrayItem(prm_i, strconv.Itoa(value))
 }
 
+func (a *SANodeAttr) ReplaceMapItem(prm_i int, value string) {
+	if a == nil {
+		return
+	}
+	_, instr := a.instr.GetConstMapPrm(prm_i)
+	if instr != nil {
+		instr.LineReplace(value)
+	}
+}
+func (a *SANodeAttr) ReplaceMapItemInt(prm_i int, value int) {
+	a.ReplaceMapItem(prm_i, strconv.Itoa(value))
+}
+
 func (a *SANodeAttr) ReplaceCd(cd OsCd) {
 	if a == nil {
 		return
 	}
 
-	oldCd := a.GetCd()
+	oldCd := a.result.GetCd()
 
 	if oldCd.A != cd.A {
 		a.ReplaceArrayItemInt(3, int(cd.A))
