@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -241,7 +242,7 @@ func (w *SANode) SARender_ColorPalette(renderIt bool) {
 	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	cdAttr := w.GetAttr("cd", "uiColor([0, 0, 0, 255])")
-	cd := cdAttr.GetCd()
+	cd := cdAttr.result.GetCd()
 
 	if showIt {
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
@@ -264,7 +265,7 @@ func (w *SANode) SARender_Color(renderIt bool) {
 
 	enable := w.GetAttr("enable", "uiSwitch(1)").GetBool()
 	cdAttr := w.GetAttr("cd", "uiColor([0, 0, 0, 255])")
-	cd := cdAttr.GetCd()
+	cd := cdAttr.result.GetCd()
 
 	if showIt {
 		if ui.comp_colorPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &cd, w.Name, enable) {
@@ -341,20 +342,9 @@ func (w *SANode) SARender_Map(renderIt bool) {
 	cam_zoomAttr := w.GetAttr("zoom", "5")
 
 	//locators
-	locatorsAttr := w.GetAttr("locators", "{\"lon;lat;label\", 14.4071117049, 50.0852013259, \"1\", 14, 50, \"2\"}")
-	locrs := locatorsAttr.result.Table()
-	lon_i := locrs.FindName("lon")
-	lat_i := locrs.FindName("lat")
-	label_i := locrs.FindName("label")
-	if lon_i < 0 {
-		locatorsAttr.SetErrorExe("'lon' column not found")
-	}
-	if lat_i < 0 {
-		locatorsAttr.SetErrorExe("'lat' column not found")
-	}
-	if label_i < 0 {
-		locatorsAttr.SetErrorExe("'label_i' column not found")
-	}
+	locatorsAttr := w.GetAttr("locators", "[{\"label\":\"1\", \"lon\":14.4071117049, \"lat\":50.0852013259}, {\"label\":\"2\", \"lon\":14, \"lat\":50}]") //color ...........
+	//paths
+	//	pathsAttr := w.GetAttr("paths", "[[\"1\", [14, 50, 14.4071117049, 50.0852013259, 15, 51, 14, 50]], [\"2\", [14, 50, 13, 49]]]")
 
 	if showIt {
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
@@ -381,14 +371,21 @@ func (w *SANode) SARender_Map(renderIt bool) {
 			//locators
 			{
 				var locators []UiCompMapLocator
-				for r := 0; r < locrs.NumRows(); r++ {
-					locators = append(locators, UiCompMapLocator{lon: locrs.Get(lon_i, r).Number(), lat: locrs.Get(lat_i, r).Number(), label: locrs.Get(label_i, r).String()})
-				}
-
-				err := ui.comp_mapLocators(cam_lon, cam_lat, cam_zoom, locators)
-				if err != nil {
+				err := json.Unmarshal(locatorsAttr.result.Blob(), &locators)
+				if err == nil {
+					err = ui.comp_mapLocators(cam_lon, cam_lat, cam_zoom, locators)
+					if err != nil {
+						locatorsAttr.errExe = err
+					}
+				} else {
 					locatorsAttr.errExe = err
 				}
+
+			}
+
+			//paths
+			{
+				//......
 			}
 			ui.Div_end()
 		}
@@ -404,7 +401,7 @@ func (w *SANode) SARender_Image(renderIt bool) {
 	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	margin := w.GetAttr("margin", "0").result.Number()
-	cd := w.GetAttr("cd", "uiColor([255, 255, 255, 255])").result.Array().GetCd()
+	cd := w.GetAttr("cd", "uiColor([255, 255, 255, 255])").result.GetCd()
 
 	alignV := w.GetAttr("alignV", "uiCombo(1, \"Left;Center;Right\")").GetInt()
 	alignH := w.GetAttr("alignH", "uiCombo(1, \"Left;Center;Right\")").GetInt()
@@ -422,11 +419,9 @@ func (w *SANode) SARender_Image(renderIt bool) {
 	if showIt {
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
 		{
-			if blobAttr.result.IsBlob() {
-				blob := blobAttr.result.Blob()
-				path := InitWinMedia_blob(blob.data, blob.hash)
-				ui.Paint_file(0, 0, 1, 1, margin, path, cd, alignV, alignH, fill)
-			}
+			blob := blobAttr.result.Blob()
+			path := InitWinMedia_blob(blob)
+			ui.Paint_file(0, 0, 1, 1, margin, path, cd, alignV, alignH, fill)
 		}
 		ui.Div_end()
 	}
@@ -472,12 +467,12 @@ func (w *SANode) SARender_File(renderIt bool) {
 	}
 
 	if !renderIt {
-		outputAttr.result.SetBlobCopy(nil) //reset
+		outputAttr.result.SetBlob(nil) //reset
 
 		if value != "" {
 			data, err := os.ReadFile(value)
 			if err == nil {
-				outputAttr.result.SetBlobCopy(data)
+				outputAttr.result.SetBlob(data)
 			} else {
 				pathAttr.SetErrorExe(fmt.Sprintf("ReadFile(%s) failed: %v", value, err))
 			}
