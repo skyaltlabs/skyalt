@@ -84,16 +84,15 @@ func (line *VmLine) findOp(lexer *VmLexer) (*VmOp, int) {
 	return ret_op, ret_i
 }
 
-func (line *VmLine) setParams(lexer *VmLexer, instr *VmInstr) int {
+func (line *VmLine) setParams(parseKey bool, lexer *VmLexer, instr *VmInstr) int {
 
 	if len(lexer.subs) == 0 {
 		return 0
 	}
 
 	prm_i := 0
-	var param *VmLexer
 	for {
-		param = lexer.ExtractParam(prm_i)
+		param := lexer.ExtractParam(prm_i)
 		if param == nil {
 			break
 		}
@@ -103,7 +102,27 @@ func (line *VmLine) setParams(lexer *VmLexer, instr *VmInstr) int {
 			return -1
 		}
 
-		instr.AddPropInstr(line.getExp(param))
+		if parseKey {
+			if len(param.subs) != 3 {
+				line.addError(param, "Invalid \"key\" : value")
+				return -1
+			}
+
+			if param.subs[0].tp != VmLexerQuote {
+				line.addError(param, "\"Key\" must be in quotes")
+				return -1
+			}
+			if param.subs[1].tp != VmLexerDiv {
+				line.addError(param, "Missing ':'")
+				return -1
+			}
+
+			value := param.Extract(2, -1)
+			instr.AddPrm_key(param.subs[0].GetStringReplaceDivs(line.line), line.getExp(value))
+
+		} else {
+			instr.AddPrm_instr(line.getExp(param))
+		}
 
 		prm_i++
 	}
@@ -141,15 +160,15 @@ func (line *VmLine) getConstant(lexer *VmLexer) (bool, *VmInstr) {
 
 	// array
 	if lexer.tp == VmLexerBracketSquare {
-		instr := NewVmInstr(VmBasic_ConstArray, lexer, line.attr)
-		line.setParams(lexer, instr)
+		instr := NewVmInstr(VmBasic_BuildArray, lexer, line.attr)
+		line.setParams(false, lexer, instr)
 		return true, instr
 	}
 
-	// table
+	// map
 	if lexer.tp == VmLexerBracketCurly {
-		instr := NewVmInstr(VmBasic_ConstTable, lexer, line.attr)
-		line.setParams(lexer, instr)
+		instr := NewVmInstr(VmBasic_BuildMap, lexer, line.attr)
+		line.setParams(true, lexer, instr)
 		return true, instr
 	}
 
@@ -183,8 +202,8 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 		opLeft := line.getExp(leftLex)
 
 		if opLeft != nil && opRight != nil {
-			op.AddPropInstr(opLeft)
-			op.AddPropInstr(opRight)
+			op.AddPrm_instr(opLeft)
+			op.AddPrm_instr(opRight)
 		} else {
 			if opLeft == nil {
 				line.addError(leftLex, "Left side is Missing")
@@ -199,7 +218,7 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 	// brackets
 	if len(lexer.subs) == 1 && lexer.subs[0].tp == VmLexerBracketRound {
 		instr := NewVmInstr(VmBasic_Bracket, lexer.subs[0], line.attr)
-		instr.AddPropInstr(line.getExp(lexer.subs[0]))
+		instr.AddPrm_instr(line.getExp(lexer.subs[0]))
 		return instr
 	}
 
@@ -226,7 +245,7 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 
 			instr = NewVmInstr(api.fn, lexer, line.attr) //lexer.subs[0], lexer.subs[1])
 			prmsLex := lexer.subs[1]
-			line.setParams(prmsLex, instr)
+			line.setParams(false, prmsLex, instr)
 
 			if api.prms != instr.NumPrms() {
 				line.addError(lexer, "Need exactly "+strconv.Itoa(api.prms)+" parameter(s)")

@@ -167,6 +167,7 @@ func NewVmApis() *VmApis {
 	apis._Add(VmApi{0, "uiBlob", 1, VmApi_UiBlob})
 
 	apis._Add(VmApi{0, "array", 2, VmApi_AccessArray})
+	apis._Add(VmApi{0, "map", 2, VmApi_AccessMap})
 
 	apis._Add(VmApi{0, "min", 2, VmApi_Min})
 	apis._Add(VmApi{0, "max", 2, VmApi_Max})

@@ -39,6 +39,7 @@ func InitVmST() VmST {
 }
 
 type VmInstrPrm struct {
+	key   string
 	instr *VmInstr
 }
 
@@ -151,6 +152,26 @@ func (instr *VmInstr) isFnAccess() *VmInstr {
 			}
 		}
 	}
+
+	if VmCallback_Cmp(instr.fn, VmApi_AccessMap) { //map(!)
+		if len(instr.prms) >= 2 {
+			acc := instr.prms[0].instr
+			key := instr.prms[1].instr
+
+			if VmCallback_Cmp(acc.fn, VmBasic_Access) && acc.accessAttr != nil && VmCallback_Cmp(key.fn, VmBasic_Constant) {
+				arr_instr := acc.accessAttr.instr
+				if arr_instr != nil {
+					arr_key := key.temp.String()
+					for i, prm := range arr_instr.prms {
+						if prm.key == arr_key {
+							return arr_instr.prms[i].instr
+						}
+					}
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -177,7 +198,7 @@ func (instr *VmInstr) GetConstArray() *VmInstr {
 		return nil
 	}
 
-	if VmCallback_Cmp(instr.fn, VmBasic_ConstArray) { //const(!)
+	if VmCallback_Cmp(instr.fn, VmBasic_BuildArray) { //const(!)
 		return instr
 	}
 	acc := instr.isFnAccess()
@@ -190,21 +211,21 @@ func (instr *VmInstr) GetConstArray() *VmInstr {
 	}
 	return nil
 }
-func (instr *VmInstr) GetConstTable() *VmInstr {
+func (instr *VmInstr) GetConstMap() *VmInstr {
 	if instr == nil {
 		return nil
 	}
 
-	if VmCallback_Cmp(instr.fn, VmBasic_ConstTable) { //const(!)
+	if VmCallback_Cmp(instr.fn, VmBasic_BuildMap) { //const(!)
 		return instr
 	}
 	acc := instr.isFnAccess()
 	if acc != nil {
-		return acc.GetConstTable()
+		return acc.GetConstMap()
 	}
 	gui := instr.IsFnGui()
 	if gui != nil {
-		return gui.GetConstTable()
+		return gui.GetConstMap()
 	}
 	return nil
 }
@@ -220,21 +241,36 @@ func (instr *VmInstr) GetConstArrayPrm(i int) *VmInstr {
 	}
 	return nil
 }
+func (instr *VmInstr) GetConstMapPrm(i int) (string, *VmInstr) {
+	if instr == nil {
+		return "", nil
+	}
+
+	instr = instr.GetConstMap()
+	if instr != nil && i < len(instr.prms) {
+		return instr.prms[i].key, instr.prms[i].instr.GetConst()
+	}
+	return "", nil
+}
 
 func (instr *VmInstr) NumPrms() int {
 	return len(instr.prms)
 }
 
-func (instr *VmInstr) AddPropInstr(add *VmInstr) int {
-
+func (instr *VmInstr) AddPrm_key(key string, add *VmInstr) int {
 	add.parent = instr
 
 	var t VmInstrPrm
+	t.key = key
 	t.instr = add
 
 	instr.prms = append(instr.prms, t)
 
 	return instr.NumPrms() - 1
+}
+
+func (instr *VmInstr) AddPrm_instr(add *VmInstr) int {
+	return instr.AddPrm_key("", add)
 }
 
 func (instr *VmInstr) Exe(st *VmST) SAValue {
@@ -279,65 +315,97 @@ func VmBasic_Access(instr *VmInstr, st *VmST) SAValue {
 }
 
 func VmApi_UiSwitch(instr *VmInstr, st *VmST) SAValue {
-	return instr.ExePrm(st, 0)
+	instr.temp = instr.ExePrm(st, 0)
+	return instr.temp
+
 }
 func VmApi_UiCheckbox(instr *VmInstr, st *VmST) SAValue {
-	return instr.ExePrm(st, 0)
+	instr.temp = instr.ExePrm(st, 0)
+	return instr.temp
+
 }
 
 func VmApi_UiCombo(instr *VmInstr, st *VmST) SAValue {
-	ret := instr.ExePrm(st, 0)
-	instr.temp = instr.ExePrm(st, 1) //save options into temp
-	return ret
+	instr.temp = instr.ExePrm(st, 0)
+	//instr.temp = instr.ExePrm(st, 1) //save options into temp
+	return instr.temp
 }
 func VmApi_UiDate(instr *VmInstr, st *VmST) SAValue {
-	return instr.ExePrm(st, 0)
+	instr.temp = instr.ExePrm(st, 0)
+	return instr.temp
 }
 func VmApi_UiColor(instr *VmInstr, st *VmST) SAValue {
-	return instr.ExePrm(st, 0)
+	instr.temp = instr.ExePrm(st, 0)
+	return instr.temp
 }
 func VmApi_UiBlob(instr *VmInstr, st *VmST) SAValue {
-	return instr.ExePrm(st, 0)
-}
-
-func VmApi_AccessArray(instr *VmInstr, st *VmST) SAValue {
-
-	item := instr.ExePrm(st, 0)
-	index := instr.ExePrm(st, 1)
-
-	return *item.Array().Get(int(index.Number()))
-}
-
-func VmBasic_ConstArray(instr *VmInstr, st *VmST) SAValue {
-	var arr SAValueArray
-	arr.Resize(len(instr.prms))
-	for i := range instr.prms {
-		arr.Get(i).value = instr.ExePrm(st, i).value
-	}
-	instr.temp.SetArray(&arr)
+	instr.temp = instr.ExePrm(st, 0)
 	return instr.temp
 }
 
-func VmBasic_ConstTable(instr *VmInstr, st *VmST) SAValue {
-	tb := NewSAValueTable(nil)
-	c := 0
-	r := 0
-	for i := range instr.prms {
-		v := instr.ExePrm(st, i)
-		if i == 0 {
-			tb = NewSAValueTable(strings.Split(v.String(), ";"))
-			r = tb.AddRow()
-		} else {
-			tb.Get(c, r).value = v.value
+func VmApi_AccessArray(instr *VmInstr, st *VmST) SAValue {
+	item := instr.ExePrm(st, 0)
+	index := instr.ExePrm(st, 1)
 
-			c++
-			if c >= len(tb.names) {
-				c = 0
-				r = tb.AddRow()
-			}
-		}
+	arr := item.GetArray(int(index.Number()))
+	if arr != nil {
+		instr.temp = *arr
+	} else {
+		instr.pos_attr.SetErrorExe("source is not Array []")
+		instr.temp = InitSAValue()
 	}
+	return instr.temp
+}
 
-	instr.temp.SetTable(tb)
+func VmApi_AccessMap(instr *VmInstr, st *VmST) SAValue {
+	item := instr.ExePrm(st, 0)
+	name := instr.ExePrm(st, 1)
+
+	mp := item.GetMap(name.String())
+	if mp != nil {
+		instr.temp = *mp
+	} else {
+		instr.pos_attr.SetErrorExe("source is not Map {} or key is not found")
+		instr.temp = InitSAValue()
+	}
+	return instr.temp
+}
+
+func VmBasic_BuildArray(instr *VmInstr, st *VmST) SAValue {
+	str := "["
+	for i := range instr.prms {
+		prm := instr.ExePrm(st, i)
+		str += prm.String()
+		str += ","
+	}
+	str, _ = strings.CutSuffix(str, ",")
+	str += "]"
+
+	instr.temp.SetBlob([]byte(str))
+	return instr.temp
+}
+
+func VmBasic_BuildMap(instr *VmInstr, st *VmST) SAValue {
+	str := "{"
+	for i, it := range instr.prms {
+
+		v := instr.ExePrm(st, i)
+
+		value := ""
+		quotes := !v.IsNumber()
+		if quotes {
+			value += "\""
+		}
+		value += v.String()
+		if quotes {
+			value += "\""
+		}
+
+		str += fmt.Sprintf("\"%s\": %s,", it.key, value)
+	}
+	str, _ = strings.CutSuffix(str, ",")
+	str += "}"
+
+	instr.temp.SetBlob([]byte(str))
 	return instr.temp
 }
