@@ -27,29 +27,30 @@ func (w *SANode) ConstBlob() bool {
 	value := instr.pos_attr.result.String()
 
 	outputAttr := w.GetAttrOutput("output", "uiBlob(0)")
-	outputAttr.result.SetBlobCopy(nil) //reset
+	outputAttr.result.SetBlob(nil) //reset
 
 	if value == "" {
 		pathAttr.SetErrorExe("value is empty")
 		return false
 	}
 
-	url := OsTrnString(tp == 0, "db:apps/"+w.app.Name+"/", "file:") + value
+	url := OsTrnString(tp == 0, "db:", "file:apps/"+w.app.Name+"/") + value
 	m := InitWinMedia_url(url)
 	data, err := m.GetBlob(w.app.base.ui.win.disk)
 	if err != nil {
 		pathAttr.SetErrorExe(fmt.Sprintf("GetBlob() failed: %v", err))
 		return false
 	}
-	outputAttr.result.SetBlobCopy(data)
+	outputAttr.result.SetBlob(data)
 
 	return true
 }
+
 func (w *SANode) ConstArray() bool {
 	//...
 	return true
 }
 func (w *SANode) ConstTable() bool {
-	//...
+	//........
 	return true
 }
