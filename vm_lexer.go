@@ -16,6 +16,7 @@ const (
 	VmLexerQuote         = 6
 	VmLexerDot           = 7
 	VmLexerComma         = 8
+	VmLexerDiv           = 9
 )
 
 // use for root and brackets
@@ -243,6 +244,9 @@ func ParseLine(line string, skipN int, ops *VmOps) (*VmLexer, error) {
 		} else if ch == ',' {
 			//comma
 			lexer.subs = append(lexer.subs, NewVmLexer(VmLexerComma, i, i+1))
+		} else if ch == ':' {
+			//div
+			lexer.subs = append(lexer.subs, NewVmLexer(VmLexerDiv, i, i+1))
 		} else if IsWordLetter(ch) || ch == '$' || (ch == '#' && (i+1 >= len(line) || line[i+1] != '=')) {
 			//word
 			var lex *VmLexer
