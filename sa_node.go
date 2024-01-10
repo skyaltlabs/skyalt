@@ -340,24 +340,11 @@ func (w *SANode) CanBeRenderOnCanvas() bool {
 
 func (w *SANode) markUnusedAttrs() {
 	for _, a := range w.Attrs {
-		a.useMark = false
+		a.exeMark = false
 	}
 
 	for _, n := range w.Subs {
 		n.markUnusedAttrs()
-	}
-}
-func (w *SANode) removeUnusedAttrs() {
-
-	if !w.Bypass {
-		for i := len(w.Attrs) - 1; i >= 0; i-- {
-			if !w.Attrs[i].useMark {
-				//..... w.Attrs = append(w.Attrs[:i], w.Attrs[i+1:]...) //remove
-			}
-		}
-	}
-	for _, n := range w.Subs {
-		n.removeUnusedAttrs()
 	}
 }
 
@@ -413,7 +400,7 @@ func (w *SANode) Execute(app *SAApp) bool {
 	case "sqlite_select":
 		ok = w.Sqlite_select()
 	case "sqlite_insert":
-		//ok = w.Sqlite_insert()
+		//ok = w.Sqlite_insert()	//.......
 	case "sqlite_update":
 		//...
 	case "sqlite_delete":
@@ -426,8 +413,8 @@ func (w *SANode) Execute(app *SAApp) bool {
 
 	case "blob":
 		ok = w.ConstBlob()
-	case "attribute":
-		ok = w.ConstAttribute()
+	case "medium":
+		ok = w.ConstMedium()
 
 	default:
 		if SAApp_IsExternal(w.Exe) {
@@ -667,7 +654,7 @@ func (w *SANode) Remove() bool {
 func (w *SANode) findAttr(name string) *SANodeAttr {
 	for _, it := range w.Attrs {
 		if it.Name == name {
-			it.useMark = true
+			it.exeMark = true
 			return it
 		}
 	}
@@ -697,7 +684,7 @@ func (w *SANode) _getAttr(find bool, defValue SANodeAttr) *SANodeAttr {
 	}
 
 	v.defaultValue = defValue.Value //update
-	v.useMark = true
+	v.exeMark = true
 	return v
 }
 
@@ -850,9 +837,11 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 		}
 
 		instr := attr.instr.GetConst()
-		value := ""
+		var value string
 		if instr != nil {
 			value = instr.pos_attr.result.String()
+		} else {
+			value = attr.result.String()
 		}
 
 		editable := (!attr.Output && instr != nil)
@@ -987,14 +976,19 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 
 	ui.Div_start(0, y, 1, 1)
 	{
-		ui.Div_colMax(0, 100)
-		ui.Div_colMax(1, 3)
+		ui.Div_colMax(1, 100)
 		ui.Div_colMax(2, 3)
-		ui.Div_colMax(3, 2)
+		ui.Div_colMax(3, 3)
+		ui.Div_colMax(4, 2)
+
+		//create new attribute
+		if ui.Comp_button(0, 0, 1, 1, "+", "Add attribute", true) > 0 {
+			w.AddAttr("attr")
+		}
 
 		//Name
 		oldName := w.Name
-		_, _, _, fnshd, _ := ui.Comp_editbox_desc(ui.trns.NAME, 0, 2, 0, 0, 1, 1, &w.Name, 0, nil, ui.trns.NAME, false, false, true)
+		_, _, _, fnshd, _ := ui.Comp_editbox_desc(ui.trns.NAME, 2, 2, 1, 0, 1, 1, &w.Name, 0, nil, ui.trns.NAME, false, false, true)
 		if fnshd && w.parent != nil {
 			w.CheckUniqueName()
 
@@ -1005,15 +999,15 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 		}
 
 		//type
-		w.Exe = app.ComboListOfNodes(1, 0, 1, 1, w.Exe, ui)
+		w.Exe = app.ComboListOfNodes(2, 0, 1, 1, w.Exe, ui)
 
 		//context with duplicate(rename! + edit expressions to keep links between new nodes) / delete ......
 
 		//bypass
-		ui.Comp_switch(2, 0, 1, 1, &w.Bypass, false, ui.trns.BYPASS, "", true)
+		ui.Comp_switch(3, 0, 1, 1, &w.Bypass, false, ui.trns.BYPASS, "", true)
 
 		//delete
-		if ui.Comp_button(3, 0, 1, 1, ui.trns.REMOVE, "", true) > 0 {
+		if ui.Comp_button(4, 0, 1, 1, ui.trns.REMOVE, "", true) > 0 {
 			w.Remove()
 		}
 	}
@@ -1034,17 +1028,29 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 		y++
 	}
 
-	isAttributeNode := strings.EqualFold(w.Exe, "attribute")
+	hasAttrWith_goto := false
+	hasAttrWith_err := false
+	for _, it := range w.Attrs {
+		if len(it.depends) == 1 {
+			hasAttrWith_goto = true
+		}
+		if it.errExe != nil {
+			hasAttrWith_err = true
+		}
+
+	}
 
 	for i, it := range w.Attrs {
 		ui.Div_start(0, y, 1, 1)
 		{
-			if isAttributeNode {
-				ui.Div_colMax(2, 3)
-				ui.Div_colMax(3, 100)
-			} else {
-				ui.Div_colMax(1, 3)
-				ui.Div_colMax(2, 100)
+			ui.Div_colMax(2, 3)
+			ui.Div_colMax(3, 100)
+
+			if hasAttrWith_goto || hasAttrWith_err {
+				ui.Div_col(5, 1)
+				if hasAttrWith_goto && hasAttrWith_err {
+					ui.Div_col(6, 1)
+				}
 			}
 
 			//highlight because it has expression
@@ -1061,14 +1067,12 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 			x++
 
 			//edit name
-			if isAttributeNode {
+			if !it.exeMark {
 				dnm := "rename_" + it.Name
 
 				if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/edit.png"), 0.22, "Rename", CdPalette_B, true, false) > 0 {
 					ui.Dialog_open(dnm, 1)
 				}
-				x++
-
 				if ui.Dialog_start(dnm) {
 					ui.Div_colMax(0, 5)
 					ui.Comp_editbox(0, 0, 1, 1, &it.Name, 0, nil, "Name", false, false, true)
@@ -1076,6 +1080,7 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 					ui.Dialog_end()
 				}
 			}
+			x++
 
 			//name: drag & drop
 			ui.Div_start(x, 0, 1, 1)
@@ -1115,34 +1120,20 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 			_SANode_renderAttrValue(x, 0, 1, 1, it, ui)
 			x++
 
-			//context
-			{
-				dnm := "context_" + it.Name
-				if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/context.png"), 0.3, "", CdPalette_B, true, false) > 0 {
-					ui.Dialog_open(dnm, 1)
+			//error
+			if it.errExe != nil {
+				ui.Div_start(x, 0, 1, 1)
+				{
+					ui.Paint_tooltip(0, 0, 1, 1, it.errExe.Error())
+					pl := ui.buff.win.io.GetPalette()
+					ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0) //red rect
 				}
-				if ui.Dialog_start(dnm) {
-					ui.Div_colMax(0, 5)
-					y := 0
-
-					//default
-					if ui.Comp_buttonMenu(0, y, 1, 1, "Reset value to default", "", true, false) > 0 {
-						it.Value = it.defaultValue
-						ui.Dialog_close()
-					}
-					y++
-
-					//remove
-					if isAttributeNode {
-						if ui.Comp_buttonMenu(0, y, 1, 1, "Delete", "", true, false) > 0 {
-							w.Attrs = append(w.Attrs[:i], w.Attrs[i+1:]...) //remove
-						}
-					}
-					y++
-
-					ui.Dialog_end()
-				}
+				ui.Div_end()
 				x++
+			} else {
+				if hasAttrWith_err {
+					x++
+				}
 			}
 
 			//goto
@@ -1168,30 +1159,45 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 					}
 
 					x++
+				} else {
+					if hasAttrWith_goto {
+						x++
+					}
 				}
 			}
 
-			//error
-			if it.errExe != nil {
-				ui.Div_start(x, 0, 1, 1)
-				{
-					ui.Paint_tooltip(0, 0, 1, 1, it.errExe.Error())
-					pl := ui.buff.win.io.GetPalette()
-					ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0) //red rect
+			//context
+			{
+				dnm := "context_" + it.Name
+				if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/context.png"), 0.3, "", CdPalette_B, true, false) > 0 {
+					ui.Dialog_open(dnm, 1)
 				}
-				ui.Div_end()
+				if ui.Dialog_start(dnm) {
+					ui.Div_colMax(0, 5)
+					y := 0
+
+					//default
+					if ui.Comp_buttonMenu(0, y, 1, 1, "Reset value to default", "", true, false) > 0 {
+						it.Value = it.defaultValue
+						ui.Dialog_close()
+					}
+					y++
+
+					//remove
+					if !it.exeMark {
+						if ui.Comp_buttonMenu(0, y, 1, 1, "Delete", "", true, false) > 0 {
+							w.Attrs = append(w.Attrs[:i], w.Attrs[i+1:]...) //remove
+						}
+					}
+					y++
+
+					ui.Dialog_end()
+				}
 				x++
 			}
+
 		}
 		ui.Div_end()
-		y++
-	}
-
-	//create new attribute
-	if isAttributeNode {
-		if ui.Comp_button(0, y, 1, 1, "Add attribute", "", true) > 0 {
-			w.AddAttr("attr")
-		}
 		y++
 	}
 
