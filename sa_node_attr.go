@@ -40,7 +40,7 @@ type SANodeAttr struct {
 	errExp error
 	errExe error
 
-	useMark bool
+	exeMark bool
 }
 
 func (attr *SANodeAttr) CheckUniqueName() {
