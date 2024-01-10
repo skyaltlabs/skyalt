@@ -347,7 +347,7 @@ func VmApi_AccessArray(instr *VmInstr, st *VmST) SAValue {
 	item := instr.ExePrm(st, 0)
 	index := instr.ExePrm(st, 1)
 
-	arr := item.GetArray(int(index.Number()))
+	arr := item.GetArrayItem(int(index.Number()))
 	if arr != nil {
 		instr.temp = *arr
 	} else {
@@ -361,7 +361,7 @@ func VmApi_AccessMap(instr *VmInstr, st *VmST) SAValue {
 	item := instr.ExePrm(st, 0)
 	name := instr.ExePrm(st, 1)
 
-	mp := item.GetMap(name.String())
+	mp := item.GetMapKey(name.String())
 	if mp != nil {
 		instr.temp = *mp
 	} else {
