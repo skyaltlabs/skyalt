@@ -18,9 +18,12 @@ package main
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"encoding/csv"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 )
 
 func (node *SANode) _Sqlite_open(fileAttr *SANodeAttr) *sql.DB {
@@ -83,8 +86,11 @@ func (node *SANode) Sqlite_select() bool {
 
 	fileAttr := node.GetAttr("file", "")
 	queryAttr := node.GetAttr("query", "")
-	resultAttr := node.GetAttrOutput("result", "{}") //table
-	resultAttr.result.SetTable(NewSAValueTable(nil)) //reset
+	rowsAttr := node.GetAttrOutput("rows", "[]")
+	rowsAttr.result.SetBlob(nil) //reset
+
+	colsAttr := node.GetAttrOutput("columns", "[]")
+	colsAttr.result.SetBlob(nil) //reset
 
 	db := node._Sqlite_open(fileAttr)
 	if db == nil {
@@ -134,13 +140,26 @@ func (node *SANode) Sqlite_select() bool {
 		}
 	}
 
-	columnNames, err := rows.Columns()
-	if err != nil {
-		node.SetError(fmt.Sprintf("Columns() failed: %v", err))
-		return false
-	}
-	tb := NewSAValueTable(columnNames)
+	{
+		columnNames, err := rows.Columns()
+		if err != nil {
+			node.SetError(fmt.Sprintf("Columns() failed: %v", err))
+			return false
+		}
 
+		cols := "["
+		for _, c := range columnNames {
+			cols += "\"" + c + "\","
+		}
+		cols, _ = strings.CutSuffix(cols, ",")
+		cols += "]"
+
+		colsAttr.result.SetBlob([]byte(cols))
+	}
+
+	rws := "["
+
+	//rows
 	for rows.Next() {
 		err := rows.Scan(scanArgs...)
 		if err != nil {
@@ -148,26 +167,33 @@ func (node *SANode) Sqlite_select() bool {
 			return false
 		}
 
-		r := tb.AddRow()
-
+		//columns
+		rws += "["
 		for i := range columnTypes {
 			if z, ok := (scanArgs[i]).(*sql.RawBytes); ok {
-				tb.Get(i, r).SetBlobCopy(*z)
+				rws += "\"" + base64.StdEncoding.EncodeToString(*z) + "\","
 				continue
 			}
 
 			if z, ok := (scanArgs[i]).(*sql.NullString); ok {
-				tb.Get(i, r).SetString(z.String)
+				rws += "\"" + z.String + "\","
 				continue
 			}
 			if z, ok := (scanArgs[i]).(*sql.NullFloat64); ok {
-				tb.Get(i, r).SetNumber(z.Float64)
+				rws += strconv.FormatFloat(z.Float64, 'f', -1, 64) + ","
 				continue
 			}
+
+			fmt.Printf("Unknown type\n")
 		}
+		rws, _ = strings.CutSuffix(rws, ",")
+		rws += "],"
 	}
 
-	resultAttr.result.SetTable(tb)
+	rws, _ = strings.CutSuffix(rws, ",")
+	rws += "]"
+
+	rowsAttr.result.SetBlob([]byte(rws))
 	return true
 }
 
@@ -175,8 +201,8 @@ func (node *SANode) Csv_select() bool {
 
 	fileAttr := node.GetAttr("file", "")
 	firstLineHeader := node.GetAttr("first_line_header", "uiSwitch(1)").GetBool()
-	resultAttr := node.GetAttrOutput("result", "{}") //table
-	resultAttr.result.SetTable(NewSAValueTable(nil)) //reset
+	resultAttr := node.GetAttrOutput("result", "[]")
+	resultAttr.result.SetBlob(nil) //reset
 
 	file := fileAttr.GetString()
 	if file == "" {
@@ -208,7 +234,7 @@ func (node *SANode) Csv_select() bool {
 		max_cols = OsMax(max_cols, len(ln))
 	}
 
-	tb := NewSAValueTable(nil)
+	rws := "["
 
 	if max_cols > 0 {
 		//create columns list
@@ -220,20 +246,25 @@ func (node *SANode) Csv_select() bool {
 			columnNames = append(columnNames, fmt.Sprintf("c%d", i))
 		}
 
-		tb = NewSAValueTable(columnNames)
-
-		//add data
+		//lines
 		for i, ln := range data {
 			if firstLineHeader && i == 0 {
 				continue //skip header
 			}
-			r := tb.AddRow()
-			for c, it := range ln {
-				tb.Get(c, r).SetString(it)
+
+			//items
+			rws += "["
+			for _, str := range ln {
+				rws += "\"" + str + "\","
 			}
+			rws, _ = strings.CutSuffix(rws, ",")
+			rws += "],"
 		}
 	}
 
-	resultAttr.result.SetTable(tb)
+	rws, _ = strings.CutSuffix(rws, ",")
+	rws += "]"
+
+	resultAttr.result.SetBlob([]byte(rws))
 	return true
 }
