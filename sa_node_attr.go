@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 type SANodeAttr struct {
@@ -40,6 +41,17 @@ type SANodeAttr struct {
 	errExe error
 
 	useMark bool
+}
+
+func (attr *SANodeAttr) CheckUniqueName() {
+	if attr.Name == "" {
+		attr.Name = "attr"
+	}
+	attr.Name = strings.ReplaceAll(attr.Name, ".", "") //remove all '.'
+
+	for attr.node.NumAttrNames(attr.Name) >= 2 {
+		attr.Name += "1"
+	}
 }
 
 func (attr *SANodeAttr) SetErrorExe(err string) {
