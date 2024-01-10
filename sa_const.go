@@ -46,11 +46,14 @@ func (w *SANode) ConstBlob() bool {
 	return true
 }
 
-func (w *SANode) ConstArray() bool {
-	//...
-	return true
-}
-func (w *SANode) ConstTable() bool {
-	//........
+func (w *SANode) ConstAttribute() bool {
+
+	//nothing here, it's all about RenderAttrs()
+
+	//mark attributes
+	for _, it := range w.Attrs {
+		it.useMark = true
+	}
+
 	return true
 }
