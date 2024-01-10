@@ -426,10 +426,8 @@ func (w *SANode) Execute(app *SAApp) bool {
 
 	case "blob":
 		ok = w.ConstBlob()
-	case "array":
-		ok = w.ConstArray()
-	case "table":
-		ok = w.ConstTable()
+	case "attribute":
+		ok = w.ConstAttribute()
 
 	default:
 		if SAApp_IsExternal(w.Exe) {
@@ -613,9 +611,35 @@ func (w *SANode) getPath() string {
 	return path
 }
 
+func (w *SANode) NumAttrNames(name string) int {
+	n := 0
+	for _, attr := range w.Attrs {
+		if attr.Name == name {
+			n++
+		}
+	}
+	return n
+}
+
+func (w *SANode) NumSubNames(name string) int {
+	n := 0
+	for _, nd := range w.Subs {
+		if nd.Name == name {
+			n++
+		}
+	}
+	return n
+}
+
 func (w *SANode) CheckUniqueName() {
+
+	if w.Name == "" {
+		w.Name = "node"
+	}
+
 	w.Name = strings.ReplaceAll(w.Name, ".", "") //remove all '.'
-	for w.parent.NumNames(w.Name) >= 2 {
+
+	for w.parent.NumSubNames(w.Name) >= 2 {
 		w.Name += "1"
 	}
 }
@@ -649,16 +673,20 @@ func (w *SANode) findAttr(name string) *SANodeAttr {
 	}
 	return nil
 }
-func (w *SANode) _getAttr(defValue SANodeAttr) *SANodeAttr {
+func (w *SANode) _getAttr(find bool, defValue SANodeAttr) *SANodeAttr {
 
-	v := w.findAttr(defValue.Name)
+	var v *SANodeAttr
+	if find {
+		v = w.findAttr(defValue.Name)
+	}
+
 	if v == nil {
 		v = &SANodeAttr{}
 		*v = defValue
 		v.node = w
 		w.Attrs = append(w.Attrs, v)
+		v.CheckUniqueName()
 	}
-
 	if v.Value == "" {
 		v.Value = "\"\"" //edit
 	}
@@ -673,8 +701,11 @@ func (w *SANode) _getAttr(defValue SANodeAttr) *SANodeAttr {
 	return v
 }
 
+func (w *SANode) AddAttr(name string) *SANodeAttr {
+	return w._getAttr(false, SANodeAttr{Name: name})
+}
 func (w *SANode) GetAttr(name string, value string) *SANodeAttr {
-	return w._getAttr(SANodeAttr{Name: name, Value: value})
+	return w._getAttr(true, SANodeAttr{Name: name, Value: value})
 }
 func (w *SANode) GetAttrOutput(name string, value string) *SANodeAttr {
 	a := w.GetAttr(name, value)
@@ -803,18 +834,6 @@ func (w *SANode) RenderLayout() {
 	}
 }
 
-func (w *SANode) NumNames(name string) int {
-
-	n := 0
-	for _, it := range w.Subs {
-		if it.Name == name {
-			n++
-		}
-	}
-	return n
-
-}
-
 func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 
 	if attr.ShowExp {
@@ -878,11 +897,22 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 		} else if VmCallback_Cmp(fn, VmBasic_BuildArray) {
 			ui.Div_start(x, y, w, h)
 			{
-				for i := range attr.instr.prms {
+
+				//přidat +/- ......
+				//1M rows? .......
+
+				n := attr.result.NumArrayItems()
+				for i := 0; i < n; i++ {
 					ui.Div_colMax(i, 100)
 				}
-				for i := range attr.instr.prms {
-					value = attr.instr.prms[i].instr.temp.String()
+
+				for i := 0; i < n; i++ {
+					it := attr.result.GetArrayItem(i)
+					value := ""
+					if it != nil {
+						value = it.String()
+					}
+					//value = attr.instr.prms[i].instr.temp.String()	//if attribute is Output then there is no instr
 					instr2 := attr.instr.GetConstArrayPrm(i)
 					_, _, _, fnshd, _ := ui.Comp_editbox(i, 0, 1, 1, &value, 2, nil, "", false, false, !attr.Output && instr2 != nil)
 					if fnshd {
@@ -892,7 +922,28 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 			}
 			ui.Div_end()
 		} else if VmCallback_Cmp(fn, VmBasic_BuildMap) {
-			//..........
+
+			//přidat +/- ......
+			//1M rows? .......
+
+			n := attr.result.NumMapItems()
+			for i := 0; i < n; i++ {
+				ui.Div_colMax(i, 100)
+			}
+
+			for i := 0; i < n; i++ {
+				//možná button + dialog? .........
+				/*key, it := attr.result.GetMapItem(i)
+				value := ""
+				if it != nil {
+					value = it.String()
+				}
+				instr2 := attr.instr.GetConstArrayPrm(i)
+				_, _, _, fnshd, _ := ui.Comp_editbox(i, 0, 1, 1, &value, 2, nil, "", false, false, !attr.Output && instr2 != nil)
+				if fnshd {
+					attr.ReplaceArrayItem(i, value)
+				}*/
+			}
 
 		} else {
 			//VmBasic_Constant
@@ -983,11 +1034,18 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 		y++
 	}
 
+	isAttributeNode := strings.EqualFold(w.Exe, "attribute")
+
 	for i, it := range w.Attrs {
 		ui.Div_start(0, y, 1, 1)
 		{
-			ui.Div_colMax(1, 3)
-			ui.Div_colMax(2, 100)
+			if isAttributeNode {
+				ui.Div_colMax(2, 3)
+				ui.Div_colMax(3, 100)
+			} else {
+				ui.Div_colMax(1, 3)
+				ui.Div_colMax(2, 100)
+			}
 
 			//highlight because it has expression
 			if len(it.depends) > 0 {
@@ -1001,6 +1059,23 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 				keys.clipboard = w.Name + "." + it.Name
 			}
 			x++
+
+			//edit name
+			if isAttributeNode {
+				dnm := "rename_" + it.Name
+
+				if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/edit.png"), 0.22, "Rename", CdPalette_B, true, false) > 0 {
+					ui.Dialog_open(dnm, 1)
+				}
+				x++
+
+				if ui.Dialog_start(dnm) {
+					ui.Div_colMax(0, 5)
+					ui.Comp_editbox(0, 0, 1, 1, &it.Name, 0, nil, "Name", false, false, true)
+					it.CheckUniqueName()
+					ui.Dialog_end()
+				}
+			}
 
 			//name: drag & drop
 			ui.Div_start(x, 0, 1, 1)
@@ -1048,10 +1123,23 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 				}
 				if ui.Dialog_start(dnm) {
 					ui.Div_colMax(0, 5)
-					if ui.Comp_buttonMenu(0, 0, 1, 1, "Reset value to default", "", true, false) > 0 {
+					y := 0
+
+					//default
+					if ui.Comp_buttonMenu(0, y, 1, 1, "Reset value to default", "", true, false) > 0 {
 						it.Value = it.defaultValue
 						ui.Dialog_close()
 					}
+					y++
+
+					//remove
+					if isAttributeNode {
+						if ui.Comp_buttonMenu(0, y, 1, 1, "Delete", "", true, false) > 0 {
+							w.Attrs = append(w.Attrs[:i], w.Attrs[i+1:]...) //remove
+						}
+					}
+					y++
+
 					ui.Dialog_end()
 				}
 				x++
@@ -1098,6 +1186,15 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 		ui.Div_end()
 		y++
 	}
+
+	//create new attribute
+	if isAttributeNode {
+		if ui.Comp_button(0, y, 1, 1, "Add attribute", "", true) > 0 {
+			w.AddAttr("attr")
+		}
+		y++
+	}
+
 }
 
 // node copy/paste ...
