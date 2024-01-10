@@ -103,9 +103,9 @@ func (exe *SANodeExe) Tick(app *SAApp) bool {
 	}
 
 	//done
-	if !active {
-		app.root.removeUnusedAttrs()
-	}
+	//if !active {
+	//app.root.removeUnusedAttrs()
+	//}
 
 	return active
 }
