@@ -140,7 +140,39 @@ func (a *SAValue) GetV4() OsV4 {
 	//return InitOsV4(v.X, v.Y, v.W, v.H)
 }
 
-func (v *SAValue) GetArray(i int) *SAValue {
+func (v *SAValue) NumArrayItems() int {
+
+	blob := v.Blob()
+	if len(blob) == 0 {
+		return 0
+	}
+
+	var arr []interface{}
+	err := json.Unmarshal(blob, &arr)
+	if err != nil {
+		fmt.Printf("Warning: Array Unmarshal(%s) failed: %v", string(blob), err)
+		return 0
+	}
+	return len(arr)
+}
+
+func (v *SAValue) NumMapItems() int {
+
+	blob := v.Blob()
+	if len(blob) == 0 {
+		return 0
+	}
+
+	var arr map[string]interface{}
+	err := json.Unmarshal(blob, &arr)
+	if err != nil {
+		fmt.Printf("Warning: Map Unmarshal(%s) failed: %v", string(blob), err)
+		return 0
+	}
+	return len(arr)
+}
+
+func (v *SAValue) GetArrayItem(i int) *SAValue {
 	var arr []interface{}
 	err := json.Unmarshal(v.Blob(), &arr)
 	if err != nil {
@@ -159,7 +191,33 @@ func (v *SAValue) GetArray(i int) *SAValue {
 	return &SAValue{value: ret}
 }
 
-func (v *SAValue) GetMap(key string) *SAValue {
+func (v *SAValue) GetMapItem(i int) (string, *SAValue) {
+	var arr map[string]interface{}
+	err := json.Unmarshal(v.Blob(), &arr)
+	if err != nil {
+		return "", nil
+	}
+
+	if i >= len(arr) {
+		return "", nil
+	}
+
+	ii := 0
+	for key, value := range arr {
+		if i == ii {
+			ret, err := json.Marshal(value)
+			if err != nil {
+				return "", nil
+			}
+			return key, &SAValue{value: ret}
+		}
+		ii++
+	}
+
+	return "", nil
+}
+
+func (v *SAValue) GetMapKey(key string) *SAValue {
 
 	var arr map[string]interface{}
 	err := json.Unmarshal(v.Blob(), &arr)
