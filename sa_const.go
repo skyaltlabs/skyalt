@@ -46,14 +46,11 @@ func (w *SANode) ConstBlob() bool {
 	return true
 }
 
-func (w *SANode) ConstAttribute() bool {
-
+func (w *SANode) ConstMedium() bool {
 	//nothing here, it's all about RenderAttrs()
-
-	//mark attributes
-	for _, it := range w.Attrs {
-		it.useMark = true
-	}
-
 	return true
 }
+
+//neukládat jako JSON(ponechat save()), ale jako lines: .................................
+//edit = editbox(grid:[0, 0, 1, 1], grid_show:1, value:"hello")
+//text = text(grid:[1, 2, 1, 1], grid_show:1, value: edit.value & "hi")
