@@ -717,3 +717,25 @@ func (fl *OsFileList) FindInSubs(name string, isDir bool) int {
 	}
 	return -1
 }
+
+func OsText_RawToPrint(str string) string {
+
+	v := strings.Clone(str)
+
+	v = strings.ReplaceAll(v, "\\n", "\n")
+	v = strings.ReplaceAll(v, "\\t", "\t")
+	v = strings.ReplaceAll(v, "\\\"", "\"")
+
+	return v
+}
+
+func OsText_PrintToRaw(str string) string {
+
+	v := strings.Clone(str)
+
+	v = strings.ReplaceAll(v, "\n", "\\n")
+	v = strings.ReplaceAll(v, "\t", "\\t")
+	v = strings.ReplaceAll(v, "\"", "\\\"")
+
+	return v
+}
