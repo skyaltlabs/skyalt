@@ -103,7 +103,7 @@ func (line *VmLine) setParams(parseKey bool, lexer *VmLexer, instr *VmInstr) int
 		}
 
 		if parseKey {
-			if len(param.subs) != 3 {
+			if len(param.subs) < 3 {
 				line.addError(param, "Invalid \"key\" : value")
 				return -1
 			}
@@ -117,11 +117,15 @@ func (line *VmLine) setParams(parseKey bool, lexer *VmLexer, instr *VmInstr) int
 				return -1
 			}
 
+			key := param.Extract(0, 1)
 			value := param.Extract(2, -1)
-			instr.AddPrm_key(param.subs[0].GetStringReplaceDivs(line.line), line.getExp(value))
+			instr.AddPrm_key(line.getExp(key), line.getExp(value))
 
 		} else {
-			instr.AddPrm_instr(line.getExp(param))
+			value := line.getExp(param)
+			if value != nil {
+				instr.AddPrm_instr(value)
+			}
 		}
 
 		prm_i++
@@ -152,7 +156,7 @@ func (line *VmLine) getConstant(lexer *VmLexer) (bool, *VmInstr) {
 		ch := line.line[lexer.start]
 		if ch == '"' {
 			instr := NewVmInstr(VmBasic_Constant, lexer, line.attr)
-			instr.temp.SetString(lexer.GetStringReplaceDivs(line.line))
+			instr.temp.SetString(OsText_RawToPrint(lexer.GetString(line.line)))
 			return true, instr
 		}
 

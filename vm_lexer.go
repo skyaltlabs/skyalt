@@ -53,17 +53,6 @@ func (lexer *VmLexer) GetString(line string) string {
 	return line[st:en]
 }
 
-func (lexer *VmLexer) GetStringReplaceDivs(line string) string {
-
-	value := strings.Clone(lexer.GetString(line))
-
-	value = strings.ReplaceAll(value, "\\n", "\n")
-	value = strings.ReplaceAll(value, "\\t", "\t")
-	value = strings.ReplaceAll(value, "\\\"", "\"")
-
-	return value
-}
-
 func (lexer *VmLexer) GetRange(line string) OsV2 {
 
 	start := 0

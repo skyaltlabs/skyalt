@@ -39,8 +39,8 @@ func InitVmST() VmST {
 }
 
 type VmInstrPrm struct {
-	key   string
-	instr *VmInstr
+	key   *VmInstr
+	value *VmInstr
 }
 
 type VmInstr struct {
@@ -80,8 +80,8 @@ func (instr *VmInstr) RenameAccessNode(line string, oldName, newName string) str
 	}
 
 	for _, prm := range instr.prms {
-		if prm.instr != nil {
-			line = prm.instr.RenameAccessNode(line, oldName, newName)
+		if prm.value != nil {
+			line = prm.value.RenameAccessNode(line, oldName, newName)
 		}
 	}
 
@@ -98,6 +98,8 @@ func (instr *VmInstr) LineReplace(value string) {
 	}
 
 	if value != "" {
+		value = OsText_PrintToRaw(value)
+
 		_, err := strconv.ParseFloat(value, 64)
 		if err != nil {
 			value = "\"" + value + "\""
@@ -122,7 +124,7 @@ func (instr *VmInstr) IsFnGui() *VmInstr {
 		VmCallback_Cmp(instr.fn, VmApi_UiColor) {
 
 		if len(instr.prms) >= 1 {
-			return instr.prms[0].instr
+			return instr.prms[0].value
 		}
 	}
 	return nil
@@ -138,15 +140,15 @@ func (instr *VmInstr) isFnAccess() *VmInstr {
 
 	if VmCallback_Cmp(instr.fn, VmApi_AccessArray) { //array(!)
 		if len(instr.prms) >= 2 {
-			acc := instr.prms[0].instr
-			ind := instr.prms[1].instr
+			acc := instr.prms[0].value
+			ind := instr.prms[1].value
 
 			if VmCallback_Cmp(acc.fn, VmBasic_Access) && acc.accessAttr != nil && VmCallback_Cmp(ind.fn, VmBasic_Constant) {
 				arr_instr := acc.accessAttr.instr
 				if arr_instr != nil {
 					arr_i := int(ind.temp.Number())
 					if arr_i < len(arr_instr.prms) {
-						return arr_instr.prms[arr_i].instr
+						return arr_instr.prms[arr_i].value
 					}
 				}
 			}
@@ -155,16 +157,16 @@ func (instr *VmInstr) isFnAccess() *VmInstr {
 
 	if VmCallback_Cmp(instr.fn, VmApi_AccessMap) { //map(!)
 		if len(instr.prms) >= 2 {
-			acc := instr.prms[0].instr
-			key := instr.prms[1].instr
+			acc := instr.prms[0].value
+			key := instr.prms[1].value
 
 			if VmCallback_Cmp(acc.fn, VmBasic_Access) && acc.accessAttr != nil && VmCallback_Cmp(key.fn, VmBasic_Constant) {
 				arr_instr := acc.accessAttr.instr
 				if arr_instr != nil {
 					arr_key := key.temp.String()
 					for i, prm := range arr_instr.prms {
-						if prm.key == arr_key {
-							return arr_instr.prms[i].instr
+						if prm.key.temp.String() == arr_key {
+							return arr_instr.prms[i].value
 						}
 					}
 				}
@@ -237,32 +239,37 @@ func (instr *VmInstr) GetConstArrayPrm(i int) *VmInstr {
 
 	instr = instr.GetConstArray()
 	if instr != nil && i < len(instr.prms) {
-		return instr.prms[i].instr.GetConst()
+		return instr.prms[i].value.GetConst()
 	}
 	return nil
 }
-func (instr *VmInstr) GetConstMapPrm(i int) (string, *VmInstr) {
+func (instr *VmInstr) GetConstMapPrm(i int) (*VmInstr, *VmInstr) {
 	if instr == nil {
-		return "", nil
+		return nil, nil
 	}
 
 	instr = instr.GetConstMap()
 	if instr != nil && i < len(instr.prms) {
-		return instr.prms[i].key, instr.prms[i].instr.GetConst()
+		return instr.prms[i].key, instr.prms[i].value.GetConst()
 	}
-	return "", nil
+	return nil, nil
 }
 
 func (instr *VmInstr) NumPrms() int {
 	return len(instr.prms)
 }
 
-func (instr *VmInstr) AddPrm_key(key string, add *VmInstr) int {
-	add.parent = instr
+func (instr *VmInstr) AddPrm_key(key *VmInstr, add *VmInstr) int {
+	if key != nil {
+		key.parent = instr
+	}
+	if add != nil {
+		add.parent = instr
+	}
 
 	var t VmInstrPrm
 	t.key = key
-	t.instr = add
+	t.value = add
 
 	instr.prms = append(instr.prms, t)
 
@@ -270,7 +277,7 @@ func (instr *VmInstr) AddPrm_key(key string, add *VmInstr) int {
 }
 
 func (instr *VmInstr) AddPrm_instr(add *VmInstr) int {
-	return instr.AddPrm_key("", add)
+	return instr.AddPrm_key(nil, add)
 }
 
 func (instr *VmInstr) Exe(st *VmST) SAValue {
@@ -285,8 +292,12 @@ func (instr *VmInstr) Exe(st *VmST) SAValue {
 	return ret
 }
 
+func (instr *VmInstr) ExePrmKey(st *VmST, prm_i int) SAValue {
+	return instr.prms[prm_i].key.Exe(st)
+}
+
 func (instr *VmInstr) ExePrm(st *VmST, prm_i int) SAValue {
-	return instr.prms[prm_i].instr.Exe(st)
+	return instr.prms[prm_i].value.Exe(st)
 }
 
 func (instr *VmInstr) ExePrmString(st *VmST, prm_i int) string {
@@ -375,7 +386,7 @@ func VmBasic_BuildArray(instr *VmInstr, st *VmST) SAValue {
 	str := "["
 	for i := range instr.prms {
 		prm := instr.ExePrm(st, i)
-		str += prm.String()
+		str += prm.StringWithQuotes()
 		str += ","
 	}
 	str, _ = strings.CutSuffix(str, ",")
@@ -387,21 +398,15 @@ func VmBasic_BuildArray(instr *VmInstr, st *VmST) SAValue {
 
 func VmBasic_BuildMap(instr *VmInstr, st *VmST) SAValue {
 	str := "{"
-	for i, it := range instr.prms {
+	for i := range instr.prms {
 
+		k := instr.ExePrmKey(st, i)
 		v := instr.ExePrm(st, i)
 
-		value := ""
-		quotes := !v.IsNumber()
-		if quotes {
-			value += "\""
-		}
-		value += v.String()
-		if quotes {
-			value += "\""
-		}
+		key := k.StringWithQuotes()
+		value := v.StringWithQuotes()
 
-		str += fmt.Sprintf("\"%s\": %s,", it.key, value)
+		str += fmt.Sprintf("%s: %s,", key, value)
 	}
 	str, _ = strings.CutSuffix(str, ",")
 	str += "}"
