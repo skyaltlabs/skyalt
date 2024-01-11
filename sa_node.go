@@ -121,7 +121,7 @@ func (w *SANode) UpdateDepth(orig *SANode) {
 			}
 
 			if n == orig {
-				//loop ...
+				//loop err ...
 				return
 			}
 
@@ -413,7 +413,7 @@ func (w *SANode) ExecuteGui(renderIt bool) {
 	}
 }
 
-func (w *SANode) Execute(app *SAApp) bool {
+func (w *SANode) Execute() bool {
 
 	ok := true
 	st := OsTime()
@@ -440,7 +440,7 @@ func (w *SANode) Execute(app *SAApp) bool {
 
 	default:
 		if SAApp_IsExternal(w.Exe) {
-			ok = w.executeProgram(app)
+			ok = w.executeProgram()
 		}
 	}
 
@@ -449,7 +449,7 @@ func (w *SANode) Execute(app *SAApp) bool {
 	return ok
 }
 
-func (w *SANode) executeProgram(app *SAApp) bool {
+func (w *SANode) executeProgram() bool {
 
 	fmt.Println("execute:", w.Name)
 
@@ -457,7 +457,7 @@ func (w *SANode) executeProgram(app *SAApp) bool {
 	w.progress = 0
 	w.progress_desc = ""
 
-	conn := app.base.server.Start(w.Exe)
+	conn := w.app.base.server.Start(w.Exe)
 	if conn == nil {
 		w.errExe = fmt.Errorf("can't find node program(%s)", w.Exe)
 		return false
@@ -523,20 +523,20 @@ func (w *SANode) updateLinks(parent *SANode, app *SAApp) {
 	}
 }
 
-func (w *SANode) Copy(app *SAApp) (*SANode, error) {
+func (w *SANode) Copy() (*SANode, error) {
 
 	js, err := json.Marshal(w)
 	if err != nil {
 		return nil, err
 	}
 
-	dst := NewSANode(app, nil, "", "", OsV4{}, OsV2f{})
+	dst := NewSANode(w.app, nil, "", "", OsV4{}, OsV2f{})
 	err = json.Unmarshal(js, dst)
 	if err != nil {
 		return nil, err
 	}
 
-	dst.updateLinks(nil, app)
+	dst.updateLinks(nil, w.app)
 
 	return dst, nil
 }
@@ -656,6 +656,18 @@ func (w *SANode) CheckUniqueName() {
 func (w *SANode) AddNode(grid OsV4, pos OsV2f, exe string) *SANode {
 	nw := NewSANode(w.app, w, exe, exe, grid, pos)
 	w.Subs = append(w.Subs, nw)
+	nw.CheckUniqueName()
+	return nw
+}
+
+func (w *SANode) AddNodeCopy() *SANode {
+	if w.parent == nil {
+		return nil //err ...
+	}
+	nw, _ := w.Copy() //err ...
+	nw.updateLinks(w.parent, w.app)
+	nw.Pos = nw.Pos.Add(OsV2f{1, 1})
+	w.parent.Subs = append(w.parent.Subs, nw)
 	nw.CheckUniqueName()
 	return nw
 }
@@ -1034,9 +1046,9 @@ func (w *SANode) RenameExpressionAccess(oldName string, newName string) {
 	}
 }
 
-func (w *SANode) RenderAttrs(app *SAApp) {
+func (w *SANode) RenderAttrs() {
 
-	ui := app.base.ui
+	ui := w.app.base.ui
 
 	ui.Div_colMax(0, 100)
 	if w.IsGuiLayout() {
@@ -1049,7 +1061,7 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 
 	if w.IsGuiLayout() {
 		if ui.Comp_buttonLight(0, y, 1, 1, ui.trns.OPEN, "", true) > 0 {
-			app.act = w
+			w.app.act = w
 		}
 		y++
 	}
@@ -1058,8 +1070,6 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 	{
 		ui.Div_colMax(1, 100)
 		ui.Div_colMax(2, 3)
-		ui.Div_colMax(3, 3)
-		ui.Div_colMax(4, 2)
 
 		//create new attribute
 		if ui.Comp_button(0, 0, 1, 1, "+", "Add attribute", true) > 0 {
@@ -1079,16 +1089,39 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 		}
 
 		//type
-		w.Exe = app.ComboListOfNodes(2, 0, 1, 1, w.Exe, ui)
+		w.Exe = w.app.ComboListOfNodes(2, 0, 1, 1, w.Exe, ui)
 
-		//context with duplicate(rename! + edit expressions to keep links between new nodes) / delete ......
+		//context
+		{
+			dnm := "node_" + w.Name
+			if ui.Comp_buttonIcon(3, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/context.png"), 0.3, "", CdPalette_B, true, false) > 0 {
+				ui.Dialog_open(dnm, 1)
+			}
+			if ui.Dialog_start(dnm) {
+				ui.Div_colMax(0, 5)
+				y := 0
 
-		//bypass
-		ui.Comp_switch(3, 0, 1, 1, &w.Bypass, false, ui.trns.BYPASS, "", true)
+				if ui.Comp_buttonMenu(0, y, 1, 1, ui.trns.DUPLICATE, "", true, false) > 0 {
+					nw := w.AddNodeCopy()
+					nw.SelectOnlyThis()
+					ui.Dialog_close()
+				}
+				y++
 
-		//delete
-		if ui.Comp_button(4, 0, 1, 1, ui.trns.REMOVE, "", true) > 0 {
-			w.Remove()
+				if ui.Comp_buttonMenu(0, y, 1, 1, ui.trns.BYPASS, "", true, false) > 0 {
+					w.Bypass = !w.Bypass
+					ui.Dialog_close()
+				}
+				y++
+
+				if ui.Comp_buttonMenu(0, y, 1, 1, ui.trns.REMOVE, "", true, false) > 0 {
+					w.Remove()
+					ui.Dialog_close()
+				}
+				y++
+
+				ui.Dialog_end()
+			}
 		}
 	}
 	ui.Div_end()
@@ -1280,7 +1313,4 @@ func (w *SANode) RenderAttrs(app *SAApp) {
 		ui.Div_end()
 		y++
 	}
-
 }
-
-// node copy/paste ...
