@@ -342,9 +342,9 @@ func (w *SANode) SARender_Map(renderIt bool) {
 	cam_zoomAttr := w.GetAttr("zoom", "5")
 
 	//locators
-	locatorsAttr := w.GetAttr("locators", "[{\"label\":\"1\", \"lon\":14.4071117049, \"lat\":50.0852013259}, {\"label\":\"2\", \"lon\":14, \"lat\":50}]") //color ...........
+	locatorsAttr := w.GetAttr("locators", "[{\"label\":\"1\", \"lon\":14.4071117049, \"lat\":50.0852013259}, {\"label\":\"2\", \"lon\":14, \"lat\":50}]")
 	//paths
-	//	pathsAttr := w.GetAttr("paths", "[[\"1\", [14, 50, 14.4071117049, 50.0852013259, 15, 51, 14, 50]], [\"2\", [14, 50, 13, 49]]]")
+	//	pathsAttr := w.GetAttr("paths", "[[\"1\", [14, 50, 14.4071117049, 50.0852013259, 15, 51, 14, 50]], [\"2\", [14, 50, 13, 49]]]")	//.....
 
 	if showIt {
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)

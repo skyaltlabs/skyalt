@@ -51,6 +51,6 @@ func (w *SANode) ConstMedium() bool {
 	return true
 }
 
-//neukládat jako JSON(ponechat save()), ale jako lines: .................................
+//neukládat jako JSON(ponechat save()), ale jako lines: ... kam dát Node.Pos,Bypass? ..............................
 //edit = editbox(grid:[0, 0, 1, 1], grid_show:1, value:"hello")
 //text = text(grid:[1, 2, 1, 1], grid_show:1, value: edit.value & "hi")

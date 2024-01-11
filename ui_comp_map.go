@@ -196,6 +196,7 @@ func (ui *Ui) comp_mapLocators(cam_lon, cam_lat, cam_zoom float64, items []UiCom
 				ui.Comp_text(0, 0, 1, 1, it.Label, 1)
 				ui.Comp_text(0, 1, 1, 1, fmt.Sprintf("Lon: %.3f", it.Lon), 0)
 				ui.Comp_text(0, 2, 1, 1, fmt.Sprintf("Lat: %.3f", it.Lat), 0)
+
 				ui.Dialog_end()
 			}
 		}

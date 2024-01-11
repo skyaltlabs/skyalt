@@ -1314,3 +1314,5 @@ func (w *SANode) RenderAttrs() {
 		y++
 	}
 }
+
+//maybe make dialog with expression like a dialog(bellow is active) and user can click on nodes and their path is insert into expression? .......
