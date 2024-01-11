@@ -660,14 +660,12 @@ func (w *SANode) AddNode(grid OsV4, pos OsV2f, exe string) *SANode {
 	return nw
 }
 
-func (w *SANode) AddNodeCopy() *SANode {
-	if w.parent == nil {
-		return nil //err ...
-	}
-	nw, _ := w.Copy() //err ...
-	nw.updateLinks(w.parent, w.app)
+func (w *SANode) AddNodeCopy(src *SANode) *SANode { // note: 'w' can be root graph
+	nw, _ := src.Copy() //err ...
+	nw.updateLinks(w, w.app)
 	nw.Pos = nw.Pos.Add(OsV2f{1, 1})
-	w.parent.Subs = append(w.parent.Subs, nw)
+
+	w.Subs = append(w.Subs, nw)
 	nw.CheckUniqueName()
 	return nw
 }
@@ -1037,12 +1035,17 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 }
 
 func (w *SANode) RenameExpressionAccess(oldName string, newName string) {
-	for _, it := range w.Subs {
-		for _, attr := range it.Attrs {
-			if attr.instr != nil {
-				attr.Value = attr.instr.RenameAccessNode(attr.Value, oldName, newName)
-			}
+	for _, attr := range w.Attrs {
+		if attr.instr != nil {
+			attr.Value = attr.instr.RenameAccessNode(attr.Value, oldName, newName)
 		}
+	}
+
+}
+
+func (w *SANode) RenameSubsExpressionAccess(oldName string, newName string) {
+	for _, it := range w.Subs {
+		it.RenameExpressionAccess(oldName, newName)
 	}
 }
 
@@ -1084,7 +1087,7 @@ func (w *SANode) RenderAttrs() {
 
 			//rename access in other nodes expressions
 			if w.parent != nil {
-				w.parent.RenameExpressionAccess(oldName, w.Name)
+				w.parent.RenameSubsExpressionAccess(oldName, w.Name)
 			}
 		}
 
@@ -1102,7 +1105,7 @@ func (w *SANode) RenderAttrs() {
 				y := 0
 
 				if ui.Comp_buttonMenu(0, y, 1, 1, ui.trns.DUPLICATE, "", true, false) > 0 {
-					nw := w.AddNodeCopy()
+					nw := w.parent.AddNodeCopy(w)
 					nw.SelectOnlyThis()
 					ui.Dialog_close()
 				}

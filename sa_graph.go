@@ -30,6 +30,8 @@ type SAGraph struct {
 	cam_start          OsV2f
 	touch_start        OsV2
 	node_move_selected *SANode
+
+	copiedNodes []*SANode
 }
 
 func NewSAGraph(app *SAApp) *SAGraph {
@@ -279,6 +281,61 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 				gr.app.act.RemoveSelectedNodes()
 			}
 
+			//copy
+			if keys.copy {
+				//add selected into list
+				gr.app.graph.copiedNodes = nil
+				for _, n := range gr.app.act.Subs {
+					if n.Selected {
+						gr.app.graph.copiedNodes = append(gr.app.graph.copiedNodes, n)
+					}
+				}
+			}
+
+			//cut
+			if keys.cut {
+				//add selected into list
+				gr.app.graph.copiedNodes = nil
+				for _, n := range gr.app.act.Subs {
+					if n.Selected {
+						gr.app.graph.copiedNodes = append(gr.app.graph.copiedNodes, n)
+					}
+				}
+				gr.app.act.RemoveSelectedNodes()
+			}
+			//paste
+			if keys.paste {
+
+				var newNodes []*SANode
+				for _, src := range gr.copiedNodes {
+					nw := gr.app.act.AddNodeCopy(src)
+					newNodes = append(newNodes, nw)
+				}
+
+				//rename expressions access to keep links between copied nodes
+				{
+					for i := 0; i < len(newNodes); i++ {
+
+						node := newNodes[i]
+						node.ParseExpresions()
+
+						for j := 0; j < len(newNodes); j++ {
+							oldName := gr.copiedNodes[j].Name
+							newName := newNodes[j].Name
+
+							node.RenameExpressionAccess(oldName, newName)
+						}
+					}
+				}
+
+				//select and zoom
+				gr.app.act.DeselectAll()
+				for _, n := range newNodes {
+					n.Selected = true
+				}
+				gr.autoZoom(true, graphCanvas, ui)
+			}
+
 			if keys.copy {
 				for _, n := range gr.app.act.Subs {
 					if n.Selected {
@@ -467,5 +524,3 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 	}
 	ui.Div_end()
 }
-
-// node copy/paste + edit expressions to keep links between new nodes .......
