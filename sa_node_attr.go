@@ -169,7 +169,7 @@ func (a *SANodeAttr) Cmp(b *SANodeAttr) bool {
 	return a.Name == b.Name && a.Value == b.Value
 }
 
-func (a *SANodeAttr) ReplaceArrayItem(prm_i int, value string) {
+func (a *SANodeAttr) ReplaceArrayItemValue(prm_i int, value string) {
 	if a == nil {
 		return
 	}
@@ -178,11 +178,11 @@ func (a *SANodeAttr) ReplaceArrayItem(prm_i int, value string) {
 		instr.LineReplace(value)
 	}
 }
-func (a *SANodeAttr) ReplaceArrayItemInt(prm_i int, value int) {
-	a.ReplaceArrayItem(prm_i, strconv.Itoa(value))
+func (a *SANodeAttr) ReplaceArrayItemValueInt(prm_i int, value int) {
+	a.ReplaceArrayItemValue(prm_i, strconv.Itoa(value))
 }
 
-func (a *SANodeAttr) ReplaceMapItem(prm_i int, value string) {
+func (a *SANodeAttr) ReplaceMapItemValue(prm_i int, value string) {
 	if a == nil {
 		return
 	}
@@ -191,8 +191,14 @@ func (a *SANodeAttr) ReplaceMapItem(prm_i int, value string) {
 		instr.LineReplace(value)
 	}
 }
-func (a *SANodeAttr) ReplaceMapItemInt(prm_i int, value int) {
-	a.ReplaceMapItem(prm_i, strconv.Itoa(value))
+func (a *SANodeAttr) ReplaceMapItemKey(prm_i int, key string) {
+	if a == nil {
+		return
+	}
+	key_instr, _ := a.instr.GetConstMapPrm(prm_i)
+	if key_instr != nil {
+		key_instr.LineReplace(key)
+	}
 }
 
 func (a *SANodeAttr) ReplaceCd(cd OsCd) {
@@ -203,15 +209,53 @@ func (a *SANodeAttr) ReplaceCd(cd OsCd) {
 	oldCd := a.result.GetCd()
 
 	if oldCd.A != cd.A {
-		a.ReplaceArrayItemInt(3, int(cd.A))
+		a.ReplaceArrayItemValueInt(3, int(cd.A))
 	}
 	if oldCd.B != cd.B {
-		a.ReplaceArrayItemInt(2, int(cd.B))
+		a.ReplaceArrayItemValueInt(2, int(cd.B))
 	}
 	if oldCd.G != cd.G {
-		a.ReplaceArrayItemInt(1, int(cd.G))
+		a.ReplaceArrayItemValueInt(1, int(cd.G))
 	}
 	if oldCd.R != cd.R {
-		a.ReplaceArrayItemInt(0, int(cd.R))
+		a.ReplaceArrayItemValueInt(0, int(cd.R))
+	}
+}
+
+func (a *SANodeAttr) AddParamsItem(itemVal string, isMap bool) {
+	n := 0
+	if isMap {
+		n = a.result.NumMapItems()
+	} else {
+		n = a.result.NumArrayItems()
+	}
+
+	if n > 0 {
+		pe := a.instr.prms[n-1].value.pos.Y
+		a.Value = a.Value[:pe] + ", " + itemVal + a.Value[pe:]
+	} else {
+		a.Value = OsTrnString(isMap, "{"+itemVal+"}", "["+itemVal+"]")
+	}
+}
+
+func (a *SANodeAttr) RemoveParamsItem(isMap bool) {
+	n := 0
+	if isMap {
+		n = a.result.NumMapItems()
+	} else {
+		n = a.result.NumArrayItems()
+	}
+
+	if n > 1 {
+		p := a.instr.prms[n-1].value.pos
+
+		stValue := a.Value[:p.X]
+		comma := strings.LastIndexByte(stValue, ',')
+		if comma >= 0 {
+			stValue = stValue[:comma]
+		}
+		a.Value = stValue + a.Value[p.Y:]
+	} else {
+		a.Value = OsTrnString(isMap, "{}", "[]")
 	}
 }
