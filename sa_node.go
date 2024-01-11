@@ -710,8 +710,8 @@ func (w *SANode) SetGridStart(v OsV2) {
 		return
 	}
 
-	attr.ReplaceArrayItemInt(1, v.Y) //y
-	attr.ReplaceArrayItemInt(0, v.X) //x
+	attr.ReplaceArrayItemValueInt(1, v.Y) //y
+	attr.ReplaceArrayItemValueInt(0, v.X) //x
 }
 func (w *SANode) SetGridSize(v OsV2) {
 	attr := w.GetAttr("grid", "[0, 0, 1, 1]")
@@ -719,8 +719,8 @@ func (w *SANode) SetGridSize(v OsV2) {
 		return
 	}
 
-	attr.ReplaceArrayItemInt(3, v.Y) //h
-	attr.ReplaceArrayItemInt(2, v.X) //w
+	attr.ReplaceArrayItemValueInt(3, v.Y) //h
+	attr.ReplaceArrayItemValueInt(2, v.X) //w
 }
 func (w *SANode) SetGrid(coord OsV4) {
 	w.SetGridStart(coord.Start)
@@ -862,7 +862,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 			}
 			ui.Div_end()
 		} else if VmCallback_Cmp(fn, VmApi_UiCombo) {
-			options := attr.instr.prms[1].instr.temp.String() //instr is first parameter, GuiCombo() api is parent!
+			options := attr.instr.prms[1].value.temp.String() //instr is first parameter, GuiCombo() api is parent!
 			if ui.Comp_combo(x, y, w, h, &value, options, "", editable, false) {
 				instr.LineReplace(value)
 			}
@@ -886,54 +886,112 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 		} else if VmCallback_Cmp(fn, VmBasic_BuildArray) {
 			ui.Div_start(x, y, w, h)
 			{
-
-				//přidat +/- ......
-				//1M rows? .......
+				//show first 4, then "others" -> open dialog? .......
 
 				n := attr.result.NumArrayItems()
-				for i := 0; i < n; i++ {
-					ui.Div_colMax(i, 100)
-				}
 
-				for i := 0; i < n; i++ {
-					it := attr.result.GetArrayItem(i)
-					value := ""
-					if it != nil {
-						value = it.String()
+				ui.Div_colMax(0, 100)
+				ui.Div_start(0, 0, 1, 1)
+				{
+					ui.DivInfo_set(SA_DIV_SET_scrollHnarrow, 1, 0)
+					ui.Div_row(0, 0.5)
+					ui.Div_rowMax(0, 2)
+
+					for i := 0; i < n; i++ {
+						ui.Div_colMax(i, 100)
 					}
-					//value = attr.instr.prms[i].instr.temp.String()	//if attribute is Output then there is no instr
-					instr2 := attr.instr.GetConstArrayPrm(i)
-					_, _, _, fnshd, _ := ui.Comp_editbox(i, 0, 1, 1, &value, 2, nil, "", false, false, !attr.Output && instr2 != nil)
-					if fnshd {
-						attr.ReplaceArrayItem(i, value)
+
+					for i := 0; i < n; i++ {
+						it := attr.result.GetArrayItem(i)
+						value := ""
+						if it != nil {
+							value = it.String()
+						}
+						//value = attr.instr.prms[i].instr.temp.String()	//if attribute is Output then there is no instr
+
+						item_instr := attr.instr.GetConstArrayPrm(i)
+						_, _, _, fnshd, _ := ui.Comp_editbox(i, 0, 1, 1, &value, 2, nil, "", false, false, !attr.Output && item_instr != nil)
+						if fnshd {
+							attr.ReplaceArrayItemValue(i, value)
+						}
+					}
+
+					if n == 0 {
+						ui.Div_colMax(0, 100) //key
+						ui.Comp_text(0, 0, 1, 1, "Empty Array []", 0)
+					}
+				}
+				ui.Div_end()
+
+				if !attr.Output {
+					if ui.Comp_buttonLight(1, 0, 1, 1, "+", "Add item", true) > 0 {
+						attr.AddParamsItem("0", false)
+					}
+
+					if ui.Comp_buttonLight(2, 0, 1, 1, "-", "Remove last item", n > 0) > 0 {
+						attr.RemoveParamsItem(false)
 					}
 				}
 			}
 			ui.Div_end()
 		} else if VmCallback_Cmp(fn, VmBasic_BuildMap) {
+			ui.Div_start(x, y, w, h)
+			{
+				//show first 4, then "others" -> open dialog? .......
 
-			//přidat +/- ......
-			//1M rows? .......
+				n := attr.result.NumMapItems()
 
-			n := attr.result.NumMapItems()
-			for i := 0; i < n; i++ {
-				ui.Div_colMax(i, 100)
-			}
+				ui.Div_colMax(0, 100)
+				ui.Div_start(0, 0, 1, 1)
+				{
+					ui.DivInfo_set(SA_DIV_SET_scrollHnarrow, 1, 0)
+					ui.Div_row(0, 0.5)
+					ui.Div_rowMax(0, 2)
 
-			for i := 0; i < n; i++ {
-				//možná button + dialog? .........
-				/*key, it := attr.result.GetMapItem(i)
-				value := ""
-				if it != nil {
-					value = it.String()
+					for i := 0; i < n; i++ {
+						ui.Div_colMax(i*3+0, 100) //key
+						ui.Div_colMax(i*3+1, 100) //value
+						ui.Div_col(i*3+2, 0.2)    //space
+					}
+
+					for i := 0; i < n; i++ {
+						key, it := attr.result.GetMapItem(i)
+
+						value := ""
+						if it != nil {
+							value = it.String()
+						}
+						key_instr, value_instr := attr.instr.GetConstMapPrm(i)
+
+						_, _, _, fnshd1, _ := ui.Comp_editbox(i*3+0, 0, 1, 1, &key, 2, nil, "", false, false, !attr.Output && key_instr != nil)
+						if fnshd1 {
+							attr.ReplaceMapItemKey(i, key)
+						}
+
+						_, _, _, fnshd2, _ := ui.Comp_editbox(i*3+1, 0, 1, 1, &value, 2, nil, "", false, false, !attr.Output && value_instr != nil)
+						if fnshd2 {
+							attr.ReplaceMapItemValue(i, value)
+						}
+					}
+
+					if n == 0 {
+						ui.Div_colMax(0, 100) //key
+						ui.Comp_text(0, 0, 1, 1, "Empty Map {}", 0)
+					}
 				}
-				instr2 := attr.instr.GetConstArrayPrm(i)
-				_, _, _, fnshd, _ := ui.Comp_editbox(i, 0, 1, 1, &value, 2, nil, "", false, false, !attr.Output && instr2 != nil)
-				if fnshd {
-					attr.ReplaceArrayItem(i, value)
-				}*/
-			}
+				ui.Div_end()
 
+				if !attr.Output {
+					if ui.Comp_buttonLight(1, 0, 1, 1, "+", "Add item", true) > 0 {
+						newKey := fmt.Sprintf("key_%d", n)
+						attr.AddParamsItem("\""+newKey+"\": 0", true)
+					}
+					if ui.Comp_buttonLight(2, 0, 1, 1, "-", "Remove last item", n > 0) > 0 {
+						attr.RemoveParamsItem(true)
+					}
+				}
+			}
+			ui.Div_end()
 		} else {
 			//VmBasic_Constant
 			_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, 2, nil, "", false, false, editable)
