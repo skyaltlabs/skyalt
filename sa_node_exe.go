@@ -89,7 +89,7 @@ func (exe *SANodeExe) Tick(app *SAApp) bool {
 					exe.wg.Add(1)
 					go func(ww *SANode) {
 						exe.numActiveThreads.Add(1)
-						ww.Execute(app)
+						ww.Execute()
 						exe.wg.Done()
 						exe.numActiveThreads.Add(-1)
 

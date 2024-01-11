@@ -628,7 +628,7 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 
 	ui.Comp_text(2, 0, 1, 1, "Press Alt-key to select nodes", 1)
 
-	//short cuts
+	//shortcuts
 	if ui.Comp_buttonLight(3, 0, 1, 1, "←", ui.trns.BACKWARD, app.canHistoryBack()) > 0 {
 		app.stepHistoryBack()
 
@@ -684,7 +684,7 @@ func (app *SAApp) addHistory(exeIt bool, rewriteLast bool) {
 		app.history_act = app.history_act[:app.history_pos+1]
 	}
 
-	cp_root, _ := app.root.Copy(app) //err ...
+	cp_root, _ := app.root.Copy() //err ...
 	cp_act := cp_root.FindMirror(app.root, app.act)
 
 	if rewriteLast {
@@ -706,7 +706,7 @@ func (app *SAApp) addHistory(exeIt bool, rewriteLast bool) {
 }
 
 func (app *SAApp) recoverHistory() {
-	app.root, _ = app.history[app.history_pos].Copy(app)
+	app.root, _ = app.history[app.history_pos].Copy()
 	app.act = app.root.FindMirror(app.history[app.history_pos], app.history_act[app.history_pos])
 
 	app.exeIt = true //update expressions into 'oldValue'
