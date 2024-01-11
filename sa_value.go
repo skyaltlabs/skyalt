@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -25,7 +26,6 @@ import (
 	"strings"
 )
 
-// can save only Number/String/Blob into JSON, because Table would become something else ...
 type SAValue struct {
 	value interface{}
 }
@@ -145,19 +145,50 @@ func (v *SAValue) IsBlob() bool {
 }
 
 func (a *SAValue) GetCd() OsCd {
-	var v []int                  //change? ....................
-	json.Unmarshal(a.Blob(), &v) //err? ...
-	return InitOsCd32(uint32(v[0]), uint32(v[1]), uint32(v[2]), uint32(v[3]))
+	var ret OsCd
+
+	var v []byte
+	err := json.Unmarshal(a.Blob(), &v)
+	if err == nil {
+		if len(v) > 0 {
+			ret.R = v[0]
+		}
+		if len(v) > 1 {
+			ret.G = v[1]
+		}
+		if len(v) > 2 {
+			ret.B = v[2]
+		}
+		if len(v) > 3 {
+			ret.A = v[3]
+		}
+	}
+
+	return ret
 }
 
 func (a *SAValue) GetV4() OsV4 {
-	//type Xywh struct {
-	//	X, Y, W, H int
-	//}
-	var v []int                  //change? ....................
-	json.Unmarshal(a.Blob(), &v) //err? ...
-	return InitOsV4(v[0], v[1], v[2], v[3])
-	//return InitOsV4(v.X, v.Y, v.W, v.H)
+	var ret OsV4
+
+	var v []int
+	err := json.Unmarshal(a.Blob(), &v)
+	if err == nil {
+		if len(v) > 0 {
+			ret.Start.X = v[0]
+		}
+		if len(v) > 1 {
+			ret.Start.Y = v[1]
+		}
+
+		if len(v) > 2 {
+			ret.Size.X = v[2]
+		}
+		if len(v) > 3 {
+			ret.Size.Y = v[3]
+		}
+	}
+
+	return ret
 }
 
 func (v *SAValue) NumArrayItems() int {
@@ -264,6 +295,8 @@ func (A *SAValue) Cmp(B *SAValue) int {
 			return OsTrn(ta > tb, 1, 0) - OsTrn(ta < tb, 1, 0)
 		case string:
 			return strings.Compare(val, B.String())
+		case []byte:
+			return bytes.Compare(val, B.Blob())
 		}
 	} else {
 		if A.IsNumber() || B.IsNumber() {
@@ -272,13 +305,11 @@ func (A *SAValue) Cmp(B *SAValue) int {
 			return OsTrn(ta > tb, 1, 0) - OsTrn(ta < tb, 1, 0)
 		}
 
-		if A.IsText() && B.IsText() {
+		if A.IsText() || B.IsText() {
 			return strings.Compare(A.String(), B.String())
 		}
 
-		//is blob? .......
-
-		return OsTrn(!A.Is() && !B.Is(), 0, 1) // both null = 0
+		return OsTrn(!A.Is() && !B.Is(), 0, 1) // both empty = 0(aka same)
 	}
 
 	return 1 // different
