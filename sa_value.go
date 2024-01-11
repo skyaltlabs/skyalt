@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -50,6 +51,25 @@ func (v *SAValue) SetBool(val bool) {
 
 func (v *SAValue) SetInt(val int) {
 	v.SetNumber(float64(val))
+}
+
+func (v *SAValue) StringWithQuotes() string {
+
+	switch vv := v.value.(type) {
+	case string:
+		return "\"" + OsText_PrintToRaw(vv) + "\""
+	case float64:
+		return strconv.FormatFloat(vv, 'f', -1, 64)
+	case []byte:
+		if len(vv) > 0 && (vv[0] == '{' || vv[0] == '[') {
+			return string(vv) //map or array
+		}
+		return "\"" + string(vv) + "\"" //binary/hex
+
+	default:
+		fmt.Println("Warning: Unknown SAValue conversion into String")
+	}
+	return "\"\""
 }
 
 func (v *SAValue) String() string {
@@ -183,12 +203,7 @@ func (v *SAValue) GetArrayItem(i int) *SAValue {
 		return nil
 	}
 
-	ret, err := json.Marshal(arr[i])
-	if err != nil {
-		return nil
-	}
-
-	return &SAValue{value: ret}
+	return &SAValue{value: arr[i]}
 }
 
 func (v *SAValue) GetMapItem(i int) (string, *SAValue) {
@@ -202,14 +217,16 @@ func (v *SAValue) GetMapItem(i int) (string, *SAValue) {
 		return "", nil
 	}
 
+	keys := make([]string, 0, len(arr))
+	for k := range arr {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
 	ii := 0
-	for key, value := range arr {
+	for _, key := range keys {
 		if i == ii {
-			ret, err := json.Marshal(value)
-			if err != nil {
-				return "", nil
-			}
-			return key, &SAValue{value: ret}
+			return key, &SAValue{value: arr[key]}
 		}
 		ii++
 	}
