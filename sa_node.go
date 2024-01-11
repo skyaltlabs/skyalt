@@ -74,6 +74,8 @@ type SANode struct {
 	progress      float64
 	progress_desc string
 	exeTimeSec    float64
+
+	depth int
 }
 
 func NewSANode(app *SAApp, parent *SANode, name string, exe string, grid OsV4, pos OsV2f) *SANode {
@@ -107,6 +109,26 @@ func NewSANodeRoot(path string, app *SAApp) (*SANode, error) {
 	}
 
 	return w, nil
+}
+
+func (w *SANode) UpdateDepth(orig *SANode) {
+	for _, attr := range w.Attrs {
+		for _, dp := range attr.depends {
+
+			n := dp.node
+			if n == w {
+				continue //inner link
+			}
+
+			if n == orig {
+				//loop ...
+				return
+			}
+
+			dp.node.UpdateDepth(orig)
+			w.depth = OsMax(w.depth, n.depth+1)
+		}
+	}
 }
 
 func (w *SANode) SetError(err string) {
@@ -886,7 +908,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 		} else if VmCallback_Cmp(fn, VmBasic_BuildArray) {
 			ui.Div_start(x, y, w, h)
 			{
-				//show first 4, then "others" -> open dialog? .......
+				//show first 4, then "others" -> open dialog? .....
 
 				n := attr.result.NumArrayItems()
 
@@ -937,7 +959,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 		} else if VmCallback_Cmp(fn, VmBasic_BuildMap) {
 			ui.Div_start(x, y, w, h)
 			{
-				//show first 4, then "others" -> open dialog? .......
+				//show first 4, then "others" -> open dialog? .....
 
 				n := attr.result.NumMapItems()
 

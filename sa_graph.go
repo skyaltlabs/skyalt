@@ -76,8 +76,76 @@ func (gr *SAGraph) reorder(onlySelected bool, ui *Ui) {
 		nodes = append(nodes, n)
 	}
 
-	//...
+	//vertical
+	{
+		//reset
+		for _, n := range nodes {
+			n.depth = 0
+		}
+		//update depth
+		for _, n := range nodes {
+			n.UpdateDepth(n)
+		}
+		//set posY
+		for _, n := range nodes {
+			n.Pos.Y = float32(n.depth * 2)
+		}
+	}
+	//horizontal
+	{
+		x_jump := float32(6)
 
+		//reset
+		for _, n := range nodes {
+			n.Pos.X = -1
+		}
+
+		//get num layers
+		mx_depth := 0
+		for _, n := range nodes {
+			mx_depth = OsMax(mx_depth, n.depth)
+		}
+
+		//init bottom layer(depends go up)
+		var last_layer []*SANode
+		x := float32(0)
+		for _, n := range nodes {
+			if n.depth == mx_depth {
+				n.Pos.X = x
+				x += x_jump
+				last_layer = append(last_layer, n)
+			}
+		}
+
+		//order layer by layer
+		for depth := mx_depth; depth >= 1; depth-- {
+			x = float32(0)
+
+			//depends
+			var next_layer []*SANode
+			for _, node := range last_layer {
+				for _, attr := range node.Attrs {
+					for _, dp := range attr.depends {
+						if dp.node.depth == depth-1 && dp.node.Pos.X < 0 { //never set
+							dp.node.Pos.X = x
+							x += x_jump
+							next_layer = append(next_layer, dp.node)
+						}
+					}
+				}
+
+			}
+			//no depends
+			for _, node := range nodes {
+				if node.depth == depth-1 && node.Pos.X < 0 { //never set
+					node.Pos.X = x
+					x += x_jump
+					next_layer = append(next_layer, node)
+				}
+			}
+			last_layer = next_layer
+		}
+	}
 }
 
 func (gr *SAGraph) autoZoom(onlySelected bool, canvas OsV4, ui *Ui) {
@@ -349,7 +417,7 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 		ui.DivInfo_set(SA_DIV_SET_scrollVnarrow, 1, 0)
 		ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
 
-		ui.Div_rowMax(5, 100)
+		ui.Div_rowMax(6, 100)
 
 		path := "file:apps/base/resources/"
 
@@ -378,12 +446,14 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 		y++
 
 		if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy.png"), 0.25, "Reoder all nodes(l)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "l")) {
-			gr.reorder(false, ui) //reorder nodes
+			gr.reorder(false, ui)               //reorder nodes
+			gr.autoZoom(false, graphCanvas, ui) //zoom to all
 		}
 		y++
 
 		if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy_select.png"), 0.2, "Reorder selected nodes(K)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "k")) {
-			gr.reorder(true, ui) //reorder only selected nodes
+			gr.reorder(true, ui)               //reorder only selected nodes
+			gr.autoZoom(true, graphCanvas, ui) //zoom to selected
 		}
 		y++
 
