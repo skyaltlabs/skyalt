@@ -375,10 +375,10 @@ func (w *SANode) SARender_Map(renderIt bool) {
 				if err == nil {
 					err = ui.comp_mapLocators(cam_lon, cam_lat, cam_zoom, locators)
 					if err != nil {
-						locatorsAttr.errExe = err
+						locatorsAttr.SetErrorExe(fmt.Sprintf("comp_mapLocators() failed: %v", err))
 					}
 				} else {
-					locatorsAttr.errExe = err
+					locatorsAttr.SetErrorExe(fmt.Sprintf("Unmarshal() failed: %v", err))
 				}
 
 			}
