@@ -343,8 +343,11 @@ func (w *SANode) SARender_Map(renderIt bool) {
 
 	//locators
 	locatorsAttr := w.GetAttr("locators", "[{\"label\":\"1\", \"lon\":14.4071117049, \"lat\":50.0852013259}, {\"label\":\"2\", \"lon\":14, \"lat\":50}]")
-	//paths
-	//	pathsAttr := w.GetAttr("paths", "[[\"1\", [14, 50, 14.4071117049, 50.0852013259, 15, 51, 14, 50]], [\"2\", [14, 50, 13, 49]]]")	//.....
+
+	//segments
+	segmentsAttr := w.GetAttr("segments", "[{\"Trkpt\":[{\"lat\":50,\"lon\":16,\"ele\":400,\"time\":\"2020-04-15T09:05:20Z\"},{\"lat\":50.4,\"lon\":16.1,\"ele\":400,\"time\":\"2020-04-15T09:05:23Z\"}]}]")
+
+	//Locators and Path can be Array or single Item(1x map)! .......
 
 	if showIt {
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
@@ -369,9 +372,10 @@ func (w *SANode) SARender_Map(renderIt bool) {
 			cam_zoomAttr.SetExpInt(int(cam_zoom))
 
 			//locators
-			{
+			locatorsBlob := locatorsAttr.result.Blob()
+			if len(locatorsBlob) > 0 {
 				var locators []UiCompMapLocator
-				err := json.Unmarshal(locatorsAttr.result.Blob(), &locators)
+				err := json.Unmarshal(locatorsBlob, &locators)
 				if err == nil {
 					err = ui.comp_mapLocators(cam_lon, cam_lat, cam_zoom, locators)
 					if err != nil {
@@ -380,12 +384,21 @@ func (w *SANode) SARender_Map(renderIt bool) {
 				} else {
 					locatorsAttr.SetErrorExe(fmt.Sprintf("Unmarshal() failed: %v", err))
 				}
-
 			}
 
 			//paths
-			{
-				//......
+			segmentsBlob := segmentsAttr.result.Blob()
+			if len(segmentsBlob) > 0 {
+				var segments []UiCompMapSegments
+				err := json.Unmarshal(segmentsBlob, &segments)
+				if err == nil {
+					err = ui.comp_mapSegments(cam_lon, cam_lat, cam_zoom, segments)
+					if err != nil {
+						segmentsAttr.SetErrorExe(fmt.Sprintf("comp_mapSegments() failed: %v", err))
+					}
+				} else {
+					segmentsAttr.SetErrorExe(fmt.Sprintf("Unmarshal() failed: %v", err))
+				}
 			}
 			ui.Div_end()
 		}

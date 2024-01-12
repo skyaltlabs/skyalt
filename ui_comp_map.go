@@ -153,7 +153,12 @@ func (mp *UiLayoutMap) isZooming() (bool, float64, float64) {
 type UiCompMapLocator struct {
 	Lon   float64
 	Lat   float64
+	Ele   float64
 	Label string
+	Time  string
+}
+type UiCompMapSegments struct {
+	Trkpt []UiCompMapLocator
 }
 
 func (ui *Ui) comp_mapLocators(cam_lon, cam_lat, cam_zoom float64, items []UiCompMapLocator) error {
@@ -201,6 +206,53 @@ func (ui *Ui) comp_mapLocators(cam_lon, cam_lat, cam_zoom float64, items []UiCom
 			}
 		}
 		ui.Div_end()
+	}
+	return nil
+}
+
+func (ui *Ui) comp_mapSegments(cam_lon, cam_lat, cam_zoom float64, items []UiCompMapSegments) error {
+	cell := ui.DivInfo_get(SA_DIV_GET_cell, 0)
+	width := ui.DivInfo_get(SA_DIV_GET_screenWidth, 0)
+	height := ui.DivInfo_get(SA_DIV_GET_screenHeight, 0)
+
+	coord := OsV2f{float32(width), float32(height)}
+
+	lon, lat, zoom, scale, _ := ui.mapp.GetAnim(cam_lon, cam_lat, cam_zoom, ui)
+
+	tile := 256 / cell * scale
+	tileW := tile / width
+	tileH := tile / height
+
+	UiLayoutMap_camCheck(coord, tile, lon, lat, zoom)
+	bbStart, _, _ := UiLayoutMap_camBbox(coord, tile, lon, lat, zoom)
+
+	rad := 0.2
+	rad_x := rad / width
+	rad_y := rad / height
+
+	for _, segs := range items {
+
+		last_x := float64(0)
+		last_y := float64(0)
+		last_set := false
+
+		for _, pt := range segs.Trkpt {
+			p := UiLayoutMap_lonLatToPos(pt.Lon, pt.Lat, zoom) //...
+
+			x := float64(p.X-bbStart.X) * tileW
+			y := float64(p.Y-bbStart.Y) * tileH
+
+			ui.Paint_circle(0, 0, 1, 1, 0, x, y, 0.1, InitOsCd32(200, 20, 20, 255), 0)
+
+			ui.Paint_tooltip(x-rad_x/2, y-rad_y, rad_x, rad_y, fmt.Sprintf("%.2f, %.2f, %s", pt.Lon, pt.Lat, pt.Time))
+
+			if last_set {
+				ui.Paint_line(0, 0, 1, 1, 0, last_x, last_y, x, y, InitOsCd32(200, 20, 20, 255), 0.06)
+			}
+			last_set = true
+			last_x = x
+			last_y = y
+		}
 	}
 	return nil
 }
