@@ -36,6 +36,7 @@ type UiTranslations struct {
 	COPY            string
 	CUT             string
 	PASTE           string
+	CLOSE           string
 
 	COPYRIGHT string
 	WARRANTY  string
