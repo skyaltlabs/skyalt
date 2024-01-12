@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"os"
 )
 
 type SAConvertGPX struct {
@@ -62,5 +63,20 @@ func (node *SANode) SAConvert_GpxToJson() bool {
 	}
 
 	jsonAttr.result.SetBlob(js)
+	return true
+}
+
+func (node *SANode) SA_WriteFile() bool {
+
+	triggerAttr := node.GetAttr("trigger", "uiSwitch(0)")
+	fileAttr := node.GetAttr("file", "")
+	jsonAttr := node.GetAttr("json", "")
+
+	if triggerAttr.GetBool() {
+		os.WriteFile(fileAttr.result.String(), jsonAttr.result.Blob(), 0644)
+
+		triggerAttr.SetExpBool(false)
+	}
+
 	return true
 }

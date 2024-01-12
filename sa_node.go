@@ -439,6 +439,9 @@ func (w *SANode) Execute() bool {
 	case "gpx_to_json":
 		ok = w.SAConvert_GpxToJson()
 
+	case "write_file":
+		ok = w.SA_WriteFile()
+
 	case "blob":
 		ok = w.ConstBlob()
 	case "medium":
@@ -853,7 +856,12 @@ func (w *SANode) RenderLayout() {
 		}
 	}
 
-	//items
+	//background(images)
+	/*for _, it := range w.Subs { //NEBO prostě přidat Nodes do pole + jejich depth a potom seřadit a vykreslit? ..................
+		it.Render()
+	}*/
+
+	//other items
 	for _, it := range w.Subs {
 		it.Render()
 	}
