@@ -239,7 +239,8 @@ func (w *SANode) HasError() bool {
 	return w.HasExeError() || w.HasExpError()
 }
 
-func (w *SANode) ResetAttrsExeErrors() {
+func (w *SANode) ResetExeErrors() {
+	w.errExe = nil
 	for _, v := range w.Attrs {
 		v.errExe = nil
 	}
@@ -372,7 +373,9 @@ func (w *SANode) markUnusedAttrs() {
 
 func (w *SANode) ExecuteGui(renderIt bool) {
 
-	//w.ResetAttrsExeErrors()
+	if !renderIt {
+		w.ResetExeErrors()
+	}
 
 	switch strings.ToLower(w.Exe) {
 
@@ -432,6 +435,9 @@ func (w *SANode) Execute() bool {
 
 	case "csv_select":
 		ok = w.Csv_select()
+
+	case "gpx_to_json":
+		ok = w.SAConvert_GpxToJson()
 
 	case "blob":
 		ok = w.ConstBlob()
