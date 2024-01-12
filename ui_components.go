@@ -126,7 +126,7 @@ func (ui *Ui) _compDrawImage(coord OsV4, icon WinMedia, cd OsCd, style *UiComp) 
 	//style.image_fill = true
 
 	imgRectBackup := ui.buff.AddCrop(lv.call.crop.GetIntersect(coord))
-	ui.buff.AddImage(icon, coord, cd, int(style.image_alignV), int(style.image_alignH), style.image_fill)
+	ui.buff.AddImage(icon, coord, cd, int(style.image_alignV), int(style.image_alignH), style.image_fill, false)
 	ui.buff.AddCrop(imgRectBackup)
 
 }

@@ -28,7 +28,7 @@ type WinPaintBuff struct {
 
 	skipDraw bool //not needed? ...
 
-	dialogs_num int
+	depth       int
 	dialogs_max int
 
 	hosts_iter      int
@@ -71,15 +71,17 @@ func (b *WinPaintBuff) Prepare(crop OsV4, drawBack bool) {
 	b.AddCrop(crop)
 
 	if drawBack {
-		b.AddRect(crop, b.win.io.GetPalette().B, 0)
+		b.AddRect(crop, b.win.io.GetPalette().B, 0) //depth=100
 	}
+	b.depth += 10 //items or are depth=110
 }
 
 func (b *WinPaintBuff) DialogStart(crop OsV4) error {
 	b.crop = crop
 
 	if !b.skipDraw {
-		b.dialogs_num++
+		b.depth = (b.depth + 100) - ((b.depth + 100) % 100)
+
 		b.dialogs_max++
 
 		//dialog's background
@@ -92,8 +94,10 @@ func (b *WinPaintBuff) DialogStart(crop OsV4) error {
 
 func (b *WinPaintBuff) DialogEnd() error {
 	if !b.skipDraw {
-		if b.dialogs_num > 0 {
-			b.dialogs_num--
+		if b.depth > 0 {
+			b.depth = (b.depth - 100) - ((b.depth - 100) % 100)
+
+			b.depth += 10 //items or are depth=110
 		}
 	}
 
@@ -110,7 +114,7 @@ func (b *WinPaintBuff) FinalDraw() error {
 		b.win.DrawRect(win.Start, win.End(), i*100+50, OsCd{0, 0, 0, 80})
 	}
 
-	b.dialogs_num = 0
+	b.depth = 0
 	b.dialogs_max = 0
 
 	return nil
@@ -128,7 +132,7 @@ func (b *WinPaintBuff) AddCrop(crop OsV4) OsV4 {
 }
 
 func (b *WinPaintBuff) getDepth() int {
-	return b.dialogs_num * 100
+	return b.depth
 }
 
 func (b *WinPaintBuff) AddRect(coord OsV4, cd OsCd, thick int) {
@@ -176,7 +180,7 @@ func (b *WinPaintBuff) AddCircle(coord OsV4, cd OsCd, thick int) {
 	}
 }
 
-func (b *WinPaintBuff) AddImage(path WinMedia, coord OsV4, cd OsCd, alignV int, alignH int, fill bool) {
+func (b *WinPaintBuff) AddImage(path WinMedia, coord OsV4, cd OsCd, alignV int, alignH int, fill bool, background bool) {
 
 	if !b.skipDraw {
 		img, err := b.win.AddImage(path) //2nd thread => black
@@ -191,33 +195,37 @@ func (b *WinPaintBuff) AddImage(path WinMedia, coord OsV4, cd OsCd, alignV int, 
 
 		origSize := img.origSize
 
+		//position
 		var q OsV4
-		if !fill {
-			rect_size := OsV2_InRatio(coord.Size, origSize)
-			q = OsV4_center(coord, rect_size)
-		} else {
-			q.Start = coord.Start
-			q.Size = OsV2_OutRatio(coord.Size, origSize)
+		{
+			if !fill {
+				rect_size := OsV2_InRatio(coord.Size, origSize)
+				q = OsV4_center(coord, rect_size)
+			} else {
+				q.Start = coord.Start
+				q.Size = OsV2_OutRatio(coord.Size, origSize)
+			}
+
+			if alignH == 0 {
+				q.Start.X = coord.Start.X
+			} else if alignH == 1 {
+				q.Start.X = OsV4_centerFull(coord, q.Size).Start.X
+			} else if alignH == 2 {
+				q.Start.X = coord.End().X - q.Size.X
+			}
+
+			if alignV == 0 {
+				q.Start.Y = coord.Start.Y
+			} else if alignV == 1 {
+				q.Start.Y = OsV4_centerFull(coord, q.Size).Start.Y
+			} else if alignV == 2 {
+				q.Start.Y = coord.End().Y - q.Size.Y
+			}
 		}
 
-		if alignH == 0 {
-			q.Start.X = coord.Start.X
-		} else if alignH == 1 {
-			q.Start.X = OsV4_centerFull(coord, q.Size).Start.X
-		} else if alignH == 2 {
-			q.Start.X = coord.End().X - q.Size.X
-		}
-
-		if alignV == 0 {
-			q.Start.Y = coord.Start.Y
-		} else if alignV == 1 {
-			q.Start.Y = OsV4_centerFull(coord, q.Size).Start.Y
-		} else if alignV == 2 {
-			q.Start.Y = coord.End().Y - q.Size.Y
-		}
-
+		//draw image
 		imgRectBackup := b.AddCrop(b.crop.GetIntersect(coord))
-		err = img.Draw(q, b.getDepth(), cd)
+		err = img.Draw(q, b.getDepth()-OsTrn(background, 1, 0), cd)
 		if err != nil {
 			fmt.Printf("Draw() failed: %v\n", err)
 		}

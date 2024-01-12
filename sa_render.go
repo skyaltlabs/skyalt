@@ -415,6 +415,7 @@ func (w *SANode) SARender_Image(renderIt bool) {
 
 	margin := w.GetAttr("margin", "0").result.Number()
 	cd := w.GetAttr("cd", "uiColor([255, 255, 255, 255])").result.GetCd()
+	background := w.GetAttr("background", "uiSwitch(0)").GetBool()
 
 	alignV := w.GetAttr("alignV", "uiCombo(1, \"Left;Center;Right\")").GetInt()
 	alignH := w.GetAttr("alignH", "uiCombo(1, \"Left;Center;Right\")").GetInt()
@@ -434,7 +435,7 @@ func (w *SANode) SARender_Image(renderIt bool) {
 		{
 			blob := blobAttr.result.Blob()
 			path := InitWinMedia_blob(blob)
-			ui.Paint_file(0, 0, 1, 1, margin, path, cd, alignV, alignH, fill)
+			ui.Paint_file(0, 0, 1, 1, margin, path, cd, alignV, alignH, fill, background)
 		}
 		ui.Div_end()
 	}
