@@ -504,8 +504,9 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 		app.canvas.addnode_search = strings.ToLower(app.canvas.addnode_search)
 
 		fns := app.getListOfNodes()
+		search := strings.ToLower(app.canvas.addnode_search)
 		for _, fn := range fns {
-			if app.canvas.addnode_search == "" || strings.Contains(fn, app.canvas.addnode_search) {
+			if search == "" || strings.Contains(strings.ToLower(fn), search) {
 				if keys.enter || ui.Comp_buttonMenu(0, y, 1, 1, fn, "", true, false) > 0 {
 					//add new node
 					nw := app.act.AddNode(app.canvas.addGrid, app.canvas.addPos, fn)
