@@ -274,7 +274,7 @@ func (v *SAValue) GetMapKey(key string) *SAValue {
 	}
 
 	item, found := arr[key]
-	if found {
+	if !found {
 		return nil
 	}
 
