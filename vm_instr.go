@@ -138,24 +138,38 @@ func (instr *VmInstr) isFnAccess() *VmInstr {
 		}
 	}
 
-	if VmCallback_Cmp(instr.fn, VmApi_AccessArray) { //array(!)
+	if VmCallback_Cmp(instr.fn, VmApi_Get) { //map or array(!)
 		if len(instr.prms) >= 2 {
 			acc := instr.prms[0].value
-			ind := instr.prms[1].value
+			key := instr.prms[1].value //index or key
 
-			if VmCallback_Cmp(acc.fn, VmBasic_Access) && acc.accessAttr != nil && VmCallback_Cmp(ind.fn, VmBasic_Constant) {
+			if VmCallback_Cmp(acc.fn, VmBasic_Access) && acc.accessAttr != nil && VmCallback_Cmp(key.fn, VmBasic_Constant) {
 				arr_instr := acc.accessAttr.instr
 				if arr_instr != nil {
-					arr_i := int(ind.temp.Number())
-					if arr_i < len(arr_instr.prms) {
-						return arr_instr.prms[arr_i].value
+
+					//map
+					if key.temp.IsText() {
+						arr_key := key.temp.String()
+						for i, prm := range arr_instr.prms {
+							if prm.key != nil && prm.key.temp.String() == arr_key {
+								return arr_instr.prms[i].value
+							}
+						}
+					}
+
+					//array
+					if key.temp.IsNumber() {
+						arr_i := int(key.temp.Number())
+						if arr_i < len(arr_instr.prms) {
+							return arr_instr.prms[arr_i].value
+						}
 					}
 				}
 			}
 		}
 	}
 
-	if VmCallback_Cmp(instr.fn, VmApi_AccessMap) { //map(!)
+	/*if VmCallback_Cmp(instr.fn, VmApi_AccessMap) { //map(!)
 		if len(instr.prms) >= 2 {
 			acc := instr.prms[0].value
 			key := instr.prms[1].value
@@ -172,7 +186,7 @@ func (instr *VmInstr) isFnAccess() *VmInstr {
 				}
 			}
 		}
-	}
+	}*/
 
 	return nil
 }
@@ -200,7 +214,7 @@ func (instr *VmInstr) GetConstArray() *VmInstr {
 		return nil
 	}
 
-	if VmCallback_Cmp(instr.fn, VmBasic_BuildArray) { //const(!)
+	if VmCallback_Cmp(instr.fn, VmBasic_InitArray) { //const(!)
 		return instr
 	}
 	acc := instr.isFnAccess()
@@ -218,7 +232,7 @@ func (instr *VmInstr) GetConstMap() *VmInstr {
 		return nil
 	}
 
-	if VmCallback_Cmp(instr.fn, VmBasic_BuildMap) { //const(!)
+	if VmCallback_Cmp(instr.fn, VmBasic_InitMap) { //const(!)
 		return instr
 	}
 	acc := instr.isFnAccess()
@@ -354,35 +368,7 @@ func VmApi_UiBlob(instr *VmInstr, st *VmST) SAValue {
 	return instr.temp
 }
 
-func VmApi_AccessArray(instr *VmInstr, st *VmST) SAValue {
-	item := instr.ExePrm(st, 0)
-	index := instr.ExePrm(st, 1)
-
-	arr := item.GetArrayItem(int(index.Number()))
-	if arr != nil {
-		instr.temp = *arr
-	} else {
-		instr.pos_attr.SetErrorExe("source is not Array []")
-		instr.temp = InitSAValue()
-	}
-	return instr.temp
-}
-
-func VmApi_AccessMap(instr *VmInstr, st *VmST) SAValue {
-	item := instr.ExePrm(st, 0)
-	name := instr.ExePrm(st, 1)
-
-	mp := item.GetMapKey(name.String())
-	if mp != nil {
-		instr.temp = *mp
-	} else {
-		instr.pos_attr.SetErrorExe("source is not Map {} or key is not found")
-		instr.temp = InitSAValue()
-	}
-	return instr.temp
-}
-
-func VmBasic_BuildArray(instr *VmInstr, st *VmST) SAValue {
+func VmBasic_InitArray(instr *VmInstr, st *VmST) SAValue {
 	str := "["
 	for i := range instr.prms {
 		prm := instr.ExePrm(st, i)
@@ -396,7 +382,7 @@ func VmBasic_BuildArray(instr *VmInstr, st *VmST) SAValue {
 	return instr.temp
 }
 
-func VmBasic_BuildMap(instr *VmInstr, st *VmST) SAValue {
+func VmBasic_InitMap(instr *VmInstr, st *VmST) SAValue {
 	str := "{"
 	for i := range instr.prms {
 
@@ -412,5 +398,77 @@ func VmBasic_BuildMap(instr *VmInstr, st *VmST) SAValue {
 	str += "}"
 
 	instr.temp.SetBlob([]byte(str))
+	return instr.temp
+}
+
+func VmApi_Get(instr *VmInstr, st *VmST) SAValue {
+	item := instr.ExePrm(st, 0)
+	key := instr.ExePrm(st, 1) //index or key
+
+	//array
+	{
+		arr := item.GetArrayItem(int(key.Number()))
+		if arr != nil {
+			instr.temp = *arr
+			return instr.temp
+		}
+	}
+
+	//map
+	{
+		mp := item.GetMapKey(key.String())
+		if mp != nil {
+			instr.temp = *mp
+			return instr.temp
+		}
+	}
+
+	instr.pos_attr.SetErrorExe("source is not Array [] or Map {} or map key isn't found")
+	instr.temp = InitSAValue()
+	return instr.temp
+}
+
+func VmApi_Array(instr *VmInstr, st *VmST) SAValue {
+
+	a := instr.ExePrm(st, 0)
+	b := instr.ExePrm(st, 1)
+
+	//result [a, b] or [a] or [b], where a,b can be number, string, array, map
+
+	str := "["
+
+	aStr := a.String()
+	bStr := b.String()
+
+	if aStr != "" {
+		str += aStr //a
+	}
+
+	if aStr != "" && bStr != "" {
+		str += "," //comma
+	}
+
+	if bStr != "" {
+		str += bStr //b
+	}
+
+	str += "]"
+
+	instr.temp.SetBlob([]byte(str))
+	return instr.temp
+}
+
+func VmApi_Compress(instr *VmInstr, st *VmST) SAValue {
+	src := instr.ExePrm(st, 0)
+
+	if src.IsBlob() {
+		js := src.String()
+		js = strings.ReplaceAll(js, " ", "")
+		js = strings.ReplaceAll(js, "\t", "")
+
+		instr.temp.SetBlob([]byte(js))
+	} else {
+		instr.temp = src //same
+	}
 	return instr.temp
 }
