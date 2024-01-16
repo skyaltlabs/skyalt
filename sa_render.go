@@ -458,7 +458,7 @@ func (w *SANode) SARender_File(renderIt bool) {
 	instr := pathAttr.instr.GetConst()
 	value := instr.pos_attr.result.String()
 
-	outputAttr := w.GetAttrOutput("output", "uiBlob(0)")
+	outputAttr := w.GetAttr("_out", "uiBlob(0)")
 
 	if showIt {
 		div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)

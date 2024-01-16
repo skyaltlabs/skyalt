@@ -740,11 +740,6 @@ func (w *SANode) AddAttr(name string) *SANodeAttr {
 func (w *SANode) GetAttr(name string, value string) *SANodeAttr {
 	return w._getAttr(true, SANodeAttr{Name: name, Value: value})
 }
-func (w *SANode) GetAttrOutput(name string, value string) *SANodeAttr {
-	a := w.GetAttr(name, value)
-	a.Output = true
-	return a
-}
 
 func (w *SANode) GetGrid() OsV4 {
 	return w.GetAttr("grid", "[0, 0, 1, 1]").result.GetV4()
@@ -895,7 +890,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 			value = attr.result.String()
 		}
 
-		editable := (!attr.Output && instr != nil)
+		editable := (!attr.IsOutput() && instr != nil)
 
 		if VmCallback_Cmp(fn, VmApi_UiSwitch) {
 			if ui.Comp_switch(x, y, w, h, &value, false, "", "", editable) {
@@ -961,7 +956,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 						//value = attr.instr.prms[i].instr.temp.String()	//if attribute is Output then there is no instr
 
 						item_instr := attr.instr.GetConstArrayPrm(i)
-						_, _, _, fnshd, _ := ui.Comp_editbox(i, 0, 1, 1, &value, 2, nil, "", false, false, !attr.Output && item_instr != nil)
+						_, _, _, fnshd, _ := ui.Comp_editbox(i, 0, 1, 1, &value, 2, nil, "", false, false, !attr.IsOutput() && item_instr != nil)
 						if fnshd {
 							attr.ReplaceArrayItemValue(i, value)
 						}
@@ -974,7 +969,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 				}
 				ui.Div_end()
 
-				if !attr.Output {
+				if !attr.IsOutput() {
 					if ui.Comp_buttonLight(1, 0, 1, 1, "+", "Add item", true) > 0 {
 						attr.AddParamsItem("0", false)
 					}
@@ -1014,12 +1009,12 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 						}
 						key_instr, value_instr := attr.instr.GetConstMapPrm(i)
 
-						_, _, _, fnshd1, _ := ui.Comp_editbox(i*3+0, 0, 1, 1, &key, 2, nil, "", false, false, !attr.Output && key_instr != nil)
+						_, _, _, fnshd1, _ := ui.Comp_editbox(i*3+0, 0, 1, 1, &key, 2, nil, "", false, false, !attr.IsOutput() && key_instr != nil)
 						if fnshd1 {
 							attr.ReplaceMapItemKey(i, key)
 						}
 
-						_, _, _, fnshd2, _ := ui.Comp_editbox(i*3+1, 0, 1, 1, &value, 2, nil, "", false, false, !attr.Output && value_instr != nil)
+						_, _, _, fnshd2, _ := ui.Comp_editbox(i*3+1, 0, 1, 1, &value, 2, nil, "", false, false, !attr.IsOutput() && value_instr != nil)
 						if fnshd2 {
 							attr.ReplaceMapItemValue(i, value)
 						}
@@ -1032,7 +1027,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 				}
 				ui.Div_end()
 
-				if !attr.Output {
+				if !attr.IsOutput() {
 					if ui.Comp_buttonLight(1, 0, 1, 1, "+", "Add item", true) > 0 {
 						newKey := fmt.Sprintf("key_%d", n)
 						attr.AddParamsItem("\""+newKey+"\": 0", true)
@@ -1231,11 +1226,7 @@ func (w *SANode) RenderAttrs() {
 			//name
 			{
 				//switch: value or expression
-				nm := it.Name
-				if it.Output {
-					nm += "(OUT)"
-				}
-				if ui.Comp_buttonMenu(x, 0, 1, 1, nm, "", true, it.ShowExp) > 0 {
+				if ui.Comp_buttonMenu(x, 0, 1, 1, it.Name, "", true, it.ShowExp) > 0 {
 					it.ShowExp = !it.ShowExp
 				}
 				x++

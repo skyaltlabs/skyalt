@@ -26,9 +26,8 @@ import (
 type SANodeAttr struct {
 	node *SANode
 
-	Name    string
+	Name    string //output attr start with '_'
 	Value   string `json:",omitempty"` //every(!) value is expression
-	Output  bool
 	ShowExp bool
 
 	defaultValue string
@@ -41,6 +40,10 @@ type SANodeAttr struct {
 	errExe error
 
 	exeMark bool
+}
+
+func (attr *SANodeAttr) IsOutput() bool {
+	return strings.HasPrefix(attr.Name, "_")
 }
 
 func (attr *SANodeAttr) CheckUniqueName() {
@@ -143,7 +146,7 @@ func (attr *SANodeAttr) ParseExpresion() {
 
 func (attr *SANodeAttr) ExecuteExpression() {
 
-	if attr.Output {
+	if attr.IsOutput() {
 		return
 	}
 

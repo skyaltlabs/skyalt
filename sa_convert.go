@@ -39,7 +39,7 @@ type SAConvertTrkseg struct {
 func (node *SANode) SAConvert_GpxToJson() bool {
 
 	gpxAttr := node.GetAttr("gpx", "")
-	jsonAttr := node.GetAttrOutput("json", "")
+	jsonAttr := node.GetAttr("_json", "")
 	jsonAttr.result.SetBlob(nil) //reset
 
 	gpx := gpxAttr.result.Blob()

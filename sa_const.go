@@ -26,7 +26,7 @@ func (w *SANode) ConstBlob() bool {
 	instr := pathAttr.instr.GetConst()
 	value := instr.pos_attr.result.String()
 
-	outputAttr := w.GetAttrOutput("output", "uiBlob(0)")
+	outputAttr := w.GetAttr("_out", "uiBlob(0)")
 	outputAttr.result.SetBlob(nil) //reset
 
 	if value == "" {
