@@ -161,7 +161,7 @@ type UiCompMapSegments struct {
 	Trkpt []UiCompMapLocator
 }
 
-func (ui *Ui) comp_mapLocators(cam_lon, cam_lat, cam_zoom float64, items []UiCompMapLocator) error {
+func (ui *Ui) comp_mapLocators(cam_lon, cam_lat, cam_zoom float64, items []UiCompMapLocator, dialogName string) error {
 	cell := ui.DivInfo_get(SA_DIV_GET_cell, 0)
 	width := ui.DivInfo_get(SA_DIV_GET_screenWidth, 0)
 	height := ui.DivInfo_get(SA_DIV_GET_screenHeight, 0)
@@ -191,11 +191,11 @@ func (ui *Ui) comp_mapLocators(cam_lon, cam_lat, cam_zoom float64, items []UiCom
 		{
 			//ui.Paint_file(0, 0, 1, 1, 0, "file:apps/base/resources/locator.png", InitOsCd32(200, 20, 20, 255), 1, 0, false) //red
 
-			nm := strconv.Itoa(i)
+			dnm := dialogName + "_" + strconv.Itoa(i)
 			if ui.Comp_buttonIcon(0, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/locator.png"), 0, it.Label, CdPalette_P, true, false) > 0 {
-				ui.Dialog_open(nm, 1)
+				ui.Dialog_open(dnm, 1)
 			}
-			if ui.Dialog_start(nm) {
+			if ui.Dialog_start(dnm) {
 				//when map is on dialog, this dialog won't show up, wierd ...................
 				ui.Div_colMax(0, 5)
 				ui.Comp_text(0, 0, 1, 1, it.Label, 1)

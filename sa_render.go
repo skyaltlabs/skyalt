@@ -31,12 +31,13 @@ func (w *SANode) SARender_Dialog(renderIt bool) bool {
 	typeAttr := w.GetAttr("type", "uiCombo(0, \"Center;Relative\")")
 
 	if showIt {
+		dnm := w.getPath()
 		if triggerAttr.GetBool() {
-			ui.Dialog_open(w.Name, uint8(OsClamp(typeAttr.GetInt(), 0, 2)))
+			ui.Dialog_open(dnm, uint8(OsClamp(typeAttr.GetInt(), 0, 2)))
 			triggerAttr.SetExpBool(false)
 		}
 
-		if ui.Dialog_start(w.Name) {
+		if ui.Dialog_start(dnm) {
 			w.renderLayout()
 			ui.Dialog_end()
 		}
@@ -268,7 +269,7 @@ func (w *SANode) SARender_Color(renderIt bool) {
 	cd := cdAttr.result.GetCd()
 
 	if showIt {
-		if ui.comp_colorPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &cd, w.Name, enable) {
+		if ui.comp_colorPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &cd, w.getPath(), enable) {
 			cdAttr.ReplaceCd(cd)
 		}
 	}
@@ -316,7 +317,7 @@ func (w *SANode) SARender_Date(renderIt bool) {
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
 		{
 			value := valueAttr.GetInt64()
-			if ui.Comp_CalendarDataPicker(&value, show_time, w.Name, enable) {
+			if ui.Comp_CalendarDataPicker(&value, show_time, w.getPath(), enable) {
 				valueAttr.SetExpInt(int(value))
 			}
 		}
@@ -377,7 +378,7 @@ func (w *SANode) SARender_Map(renderIt bool) {
 				var locators []UiCompMapLocator
 				err := json.Unmarshal(locatorsBlob, &locators)
 				if err == nil {
-					err = ui.comp_mapLocators(cam_lon, cam_lat, cam_zoom, locators)
+					err = ui.comp_mapLocators(cam_lon, cam_lat, cam_zoom, locators, w.getPath())
 					if err != nil {
 						locatorsAttr.SetErrorExe(fmt.Sprintf("comp_mapLocators() failed: %v", err))
 					}
