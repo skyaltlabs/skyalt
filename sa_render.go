@@ -346,7 +346,7 @@ func (w *SANode) SARender_Map(renderIt bool) {
 	locatorsAttr := w.GetAttr("locators", "[{\"label\":\"1\", \"lon\":14.4071117049, \"lat\":50.0852013259}, {\"label\":\"2\", \"lon\":14, \"lat\":50}]")
 
 	//segments
-	segmentsAttr := w.GetAttr("segments", "[{\"Trkpt\":[{\"lat\":50,\"lon\":16,\"ele\":400,\"time\":\"2020-04-15T09:05:20Z\"},{\"lat\":50.4,\"lon\":16.1,\"ele\":400,\"time\":\"2020-04-15T09:05:23Z\"}]}]")
+	segmentsAttr := w.GetAttr("segments", "[{\"label\":\"ABC\", \"Trkpt\":[{\"lat\":50,\"lon\":16,\"ele\":400,\"time\":\"2020-04-15T09:05:20Z\"},{\"lat\":50.4,\"lon\":16.1,\"ele\":400,\"time\":\"2020-04-15T09:05:23Z\"}]}]")
 
 	//Locators and Path can be Array or single Item(1x map)! .......
 

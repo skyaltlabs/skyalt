@@ -158,6 +158,7 @@ type UiCompMapLocator struct {
 	Time  string
 }
 type UiCompMapSegments struct {
+	Label string
 	Trkpt []UiCompMapLocator
 }
 
