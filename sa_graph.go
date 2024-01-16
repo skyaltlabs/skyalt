@@ -86,7 +86,7 @@ func (gr *SAGraph) reorder(onlySelected bool, ui *Ui) {
 	{
 		//reset
 		for _, n := range nodes {
-			n.depth = 0
+			n.sort_depth = 0
 		}
 		//update depth
 		for _, n := range nodes {
@@ -94,7 +94,7 @@ func (gr *SAGraph) reorder(onlySelected bool, ui *Ui) {
 		}
 		//set posY
 		for _, n := range nodes {
-			n.Pos.Y = float32(n.depth * 2)
+			n.Pos.Y = float32(n.sort_depth * 2)
 		}
 	}
 	//horizontal
@@ -109,14 +109,14 @@ func (gr *SAGraph) reorder(onlySelected bool, ui *Ui) {
 		//get num layers
 		mx_depth := 0
 		for _, n := range nodes {
-			mx_depth = OsMax(mx_depth, n.depth)
+			mx_depth = OsMax(mx_depth, n.sort_depth)
 		}
 
 		//init bottom layer(depends go up)
 		var last_layer []*SANode
 		x := float32(0)
 		for _, n := range nodes {
-			if n.depth == mx_depth {
+			if n.sort_depth == mx_depth {
 				n.Pos.X = x
 				x += x_jump
 				last_layer = append(last_layer, n)
@@ -132,7 +132,7 @@ func (gr *SAGraph) reorder(onlySelected bool, ui *Ui) {
 			for _, node := range last_layer {
 				for _, attr := range node.Attrs {
 					for _, dp := range attr.depends {
-						if dp.node.depth == depth-1 && dp.node.Pos.X < 0 { //never set
+						if dp.node.sort_depth == depth-1 && dp.node.Pos.X < 0 { //never set
 							dp.node.Pos.X = x
 							x += x_jump
 							next_layer = append(next_layer, dp.node)
@@ -143,7 +143,7 @@ func (gr *SAGraph) reorder(onlySelected bool, ui *Ui) {
 			}
 			//no depends
 			for _, node := range nodes {
-				if node.depth == depth-1 && node.Pos.X < 0 { //never set
+				if node.sort_depth == depth-1 && node.Pos.X < 0 { //never set
 					node.Pos.X = x
 					x += x_jump
 					next_layer = append(next_layer, node)

@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -75,7 +76,9 @@ type SANode struct {
 	progress_desc string
 	exeTimeSec    float64
 
-	depth int
+	z_depth float64
+
+	sort_depth int //hierarchy
 }
 
 func NewSANode(app *SAApp, parent *SANode, name string, exe string, grid OsV4, pos OsV2f) *SANode {
@@ -126,7 +129,7 @@ func (w *SANode) UpdateDepth(orig *SANode) {
 			}
 
 			dp.node.UpdateDepth(orig)
-			w.depth = OsMax(w.depth, n.depth+1)
+			w.sort_depth = OsMax(w.sort_depth, n.sort_depth+1)
 		}
 	}
 }
@@ -376,6 +379,8 @@ func (w *SANode) ExecuteGui(renderIt bool) {
 	if !renderIt {
 		w.ResetExeErrors()
 	}
+
+	w.z_depth = 1
 
 	switch strings.ToLower(w.Exe) {
 
@@ -828,7 +833,7 @@ func (w *SANode) GetResizerCoord(ui *Ui) OsV4 {
 	return InitOsV4Mid(w.selected_canvas.End(), OsV2{s, s})
 }
 
-func (w *SANode) RenderLayout() {
+func (w *SANode) renderLayout() {
 
 	ui := w.app.base.ui
 
@@ -856,10 +861,10 @@ func (w *SANode) RenderLayout() {
 		}
 	}
 
-	//background(images)
-	/*for _, it := range w.Subs { //NEBO prostě přidat Nodes do pole + jejich depth a potom seřadit a vykreslit? ..................
-		it.Render()
-	}*/
+	//sort z-depth
+	sort.Slice(w.Subs, func(i, j int) bool {
+		return w.Subs[i].z_depth < w.Subs[j].z_depth
+	})
 
 	//other items
 	for _, it := range w.Subs {
