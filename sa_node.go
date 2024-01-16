@@ -929,7 +929,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 				ui.Comp_image(0, 0, 1, 1, InitWinMedia_blob(blob), InitOsCd32(255, 255, 255, 255), 0, 1, 1, false)
 				ui.Dialog_end()
 			}
-		} else if VmCallback_Cmp(fn, VmBasic_BuildArray) {
+		} else if VmCallback_Cmp(fn, VmBasic_InitArray) {
 			ui.Div_start(x, y, w, h)
 			{
 				//show first 4, then "others" -> open dialog? .....
@@ -980,7 +980,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 				}
 			}
 			ui.Div_end()
-		} else if VmCallback_Cmp(fn, VmBasic_BuildMap) {
+		} else if VmCallback_Cmp(fn, VmBasic_InitMap) {
 			ui.Div_start(x, y, w, h)
 			{
 				//show first 4, then "others" -> open dialog? .....

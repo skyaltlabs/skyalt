@@ -164,14 +164,14 @@ func (line *VmLine) getConstant(lexer *VmLexer) (bool, *VmInstr) {
 
 	// array
 	if lexer.tp == VmLexerBracketSquare {
-		instr := NewVmInstr(VmBasic_BuildArray, lexer, line.attr)
+		instr := NewVmInstr(VmBasic_InitArray, lexer, line.attr)
 		line.setParams(false, lexer, instr)
 		return true, instr
 	}
 
 	// map
 	if lexer.tp == VmLexerBracketCurly {
-		instr := NewVmInstr(VmBasic_BuildMap, lexer, line.attr)
+		instr := NewVmInstr(VmBasic_InitMap, lexer, line.attr)
 		line.setParams(true, lexer, instr)
 		return true, instr
 	}
