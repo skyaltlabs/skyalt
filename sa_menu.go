@@ -143,8 +143,7 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 		{
 			ui.Comp_text(1, y, 1, 1, ui.trns.LANGUAGES, 0)
 			y++
-			for i, _ := range ini.Languages {
-
+			for i := range ini.Languages {
 				ui.Div_start(1, y, 1, 1)
 				{
 					ui.Div_colMax(2, 100)
