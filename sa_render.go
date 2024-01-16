@@ -28,7 +28,7 @@ func (w *SANode) SARender_Dialog(renderIt bool) bool {
 	showIt := renderIt && ui != nil
 
 	triggerAttr := w.GetAttr("trigger", "uiSwitch(0)")
-	typeAttr := w.GetAttr("type", "uiCombo(0, \"Center;Relative\")")
+	typeAttr := w.GetAttr("type", "uiCombo(0, \"Center;Relative\", \"\")")
 
 	if showIt {
 		dnm := w.getPath()
@@ -55,7 +55,7 @@ func (w *SANode) SARender_Button(renderIt bool) {
 	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	enable := w.GetAttr("enable", "uiSwitch(1)").GetBool()
-	tp := w.GetAttr("type", "uiCombo(0, \"Classic;Light;Menu;Segments\")").GetInt()
+	tp := w.GetAttr("type", "uiCombo(0, \"Classic;Light;Menu;Segments\", \"\")").GetInt()
 	label := w.GetAttr("label", "").GetString()
 
 	clicked := false
@@ -82,7 +82,7 @@ func (w *SANode) SARender_Button(renderIt bool) {
 	case 3:
 		labels := label
 		butts := strings.Split(labels, ";")
-		selected := w.GetAttr("selected", fmt.Sprintf("uiCombo(0, %s)", labels)).GetInt()
+		selected := w.GetAttr("selected", "").GetInt()
 
 		if showIt {
 			ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
@@ -123,7 +123,7 @@ func (w *SANode) SARender_Text(renderIt bool) {
 	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	label := w.GetAttr("label", "").GetString()
-	align := w.GetAttr("align", "uiCombo(0, \"Left;Center;Right\")").GetInt()
+	align := w.GetAttr("align", "uiCombo(0, \"Left;Center;Right\", \"\")").GetInt()
 
 	if showIt {
 		ui.Comp_text(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, align)
@@ -181,11 +181,12 @@ func (w *SANode) SARender_Combo(renderIt bool) {
 	instr := w.GetAttr("value", "").instr.GetConst()
 	value := instr.pos_attr.result.String()
 	enable := w.GetAttr("enable", "uiSwitch(1)").GetBool() && instr != nil
-	options := w.GetAttr("options", "\"a;b;c\")").GetString()
+	options_names := w.GetAttr("options_names", "\"a;b;c\")").GetString()
+	options_values := w.GetAttr("options_values", "\"a;b;c\")").GetString()
 	search := w.GetAttr("search", "uiSwitch(0)").GetBool()
 
 	if showIt {
-		if ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, options, "", enable, search) {
+		if ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, strings.Split(options_names, ";"), strings.Split(options_values, ";"), "", enable, search) {
 			instr.LineReplace(value)
 		}
 	}
@@ -222,7 +223,7 @@ func (w *SANode) SARender_Divider(renderIt bool) {
 	grid.Size.X = OsMax(grid.Size.X, 1)
 	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
-	tp := w.GetAttr("type", "uiCombo(0, \"Column;Row\"").GetInt()
+	tp := w.GetAttr("type", "uiCombo(0, \"Column;Row\", \"\"").GetInt()
 
 	if showIt {
 		switch tp {
@@ -418,8 +419,8 @@ func (w *SANode) SARender_Image(renderIt bool) {
 	cd := w.GetAttr("cd", "uiColor([255, 255, 255, 255])").result.GetCd()
 	background := w.GetAttr("background", "uiSwitch(0)").GetBool()
 
-	alignV := w.GetAttr("alignV", "uiCombo(1, \"Left;Center;Right\")").GetInt()
-	alignH := w.GetAttr("alignH", "uiCombo(1, \"Left;Center;Right\")").GetInt()
+	alignV := w.GetAttr("alignV", "uiCombo(1, \"Left;Center;Right\", \"\")").GetInt()
+	alignH := w.GetAttr("alignH", "uiCombo(1, \"Left;Center;Right\", \"\")").GetInt()
 	fill := w.GetAttr("fill", "uiSwitch(0)").GetBool()
 
 	blobAttr := w.GetAttr("blob", "uiBlob(0)")

@@ -18,8 +18,8 @@ package main
 
 import (
 	"math"
+	"slices"
 	"strconv"
-	"strings"
 	"unicode/utf8"
 )
 
@@ -775,7 +775,7 @@ func (ui *Ui) Comp_slider_s(style *UiComp, value *float64, minValue float64, max
 	return active, (old_value != *value), (ui.buff.win.io.touch.wheel != 0 || end)
 }
 
-func (ui *Ui) Comp_combo_desc(description string, description_alignH int, width float64, x, y, w, h int, value interface{}, optionsIn string, tooltip string, enable bool, search bool) bool {
+func (ui *Ui) Comp_combo_desc(description string, description_alignH int, width float64, x, y, w, h int, value *string, options_names []string, options_values []string, tooltip string, enable bool, search bool) bool {
 	ui.Div_start(x, y, w, h)
 
 	xx := 0
@@ -791,39 +791,18 @@ func (ui *Ui) Comp_combo_desc(description string, description_alignH int, width 
 		ui.Comp_text(0, 0, 1, 1, description, description_alignH)
 	}
 
-	ret := ui.Comp_combo(xx, 0, 1, 1, value, optionsIn, tooltip, enable, search)
+	ret := ui.Comp_combo(xx, 0, 1, 1, value, options_names, options_values, tooltip, enable, search)
 
 	ui.Div_end()
 
 	return ret
 }
 
-func (ui *Ui) Comp_combo(x, y, w, h int, valueIn interface{}, optionsIn string, tooltip string, enable bool, search bool) bool {
+func (ui *Ui) Comp_combo(x, y, w, h int, valueIn *string, options_names []string, options_values []string, tooltip string, enable bool, search bool) bool {
 
 	//search ...
 
 	ui.Div_start(x, y, w, h)
-
-	var value int
-	switch v := valueIn.(type) {
-	case *float32:
-		if v != nil {
-			value = int(*v)
-		}
-	case *float64:
-		if v != nil {
-			value = int(*v)
-		}
-	case *int:
-		if v != nil {
-			value = *v
-		}
-	case *string:
-		if v != nil {
-			value, _ = strconv.Atoi(*v)
-		}
-		//int8/16/32, uint8, byte, etc ...
-	}
 
 	var style UiComp
 	style.cd = CdPalette_B
@@ -831,46 +810,29 @@ func (ui *Ui) Comp_combo(x, y, w, h int, valueIn interface{}, optionsIn string, 
 	style.enable = enable
 	style.tooltip = tooltip
 
-	ret := ui.Comp_combo_s(&style, value, optionsIn)
-	changed := ret != value
-	if changed {
-		switch v := valueIn.(type) {
-		case *float32:
-			if v != nil {
-				*v = float32(ret)
-			}
-		case *float64:
-			if v != nil {
-				*v = float64(ret)
-			}
-		case *int:
-			if v != nil {
-				*v = ret
-			}
-		case *string:
-			if v != nil {
-				*v = strconv.Itoa(ret)
-			}
-			//int8/16/32, uint8, byte, etc ...
-		}
-	}
+	ret := ui.Comp_combo_s(&style, *valueIn, options_names, options_values)
+	changed := (ret != *valueIn)
+	*valueIn = ret
 
 	ui.Div_end()
 	return changed
 }
 
-func (ui *Ui) Comp_combo_s(style *UiComp, value int, optionsIn string) int {
+func (ui *Ui) Comp_combo_s(style *UiComp, value string, options_names []string, options_values []string) string {
+
+	//must have same size
+	if len(options_values) == 1 && options_values[0] == "" {
+		options_values = nil
+	}
+
+	//must have same size
+	if len(options_values) > 0 {
+		n := OsMin(len(options_names), len(options_values))
+		options_names = options_names[:n]
+		options_values = options_values[:n]
+	}
 
 	lv := ui.GetCall()
-
-	var options []string
-	if len(optionsIn) > 0 {
-		options = strings.Split(optionsIn, ";")
-	}
-	var valueStr string
-	if value >= 0 && value < len(options) {
-		valueStr = options[value]
-	}
 
 	nmd := "combo_" + strconv.Itoa(int(lv.call.data.hash))
 
@@ -903,29 +865,50 @@ func (ui *Ui) Comp_combo_s(style *UiComp, value int, optionsIn string) int {
 	ui.buff.AddRect(coord, onCd, ui.CellWidth(0.03)) //border
 
 	//text
-	ui._compDrawText(coord, valueStr, "", onCd, SKYALT_FONT_HEIGHT, false, false, int(style.label_alignH), int(style.label_alignV), style.label_formating)
-	style.label_alignH = 2
-	ui._compDrawText(coord.AddSpace(ui.CellWidth(0.1)), "▼", "", onCd, SKYALT_FONT_HEIGHT, false, false, int(style.label_alignH), int(style.label_alignV), style.label_formating)
+	{
+		label := value
+		if len(options_values) > 0 {
+			pos := slices.Index(options_values, value)
+			if pos >= 0 {
+				label = options_names[pos]
+			}
+		} else {
+			pos, err := strconv.Atoi(value)
+			if err == nil && pos >= 0 && pos < len(options_names) {
+				label = options_names[pos]
+			}
+		}
+		ui._compDrawText(coord, label, "", onCd, SKYALT_FONT_HEIGHT, false, false, int(style.label_alignH), int(style.label_alignV), style.label_formating)
+		style.label_alignH = 2
+		ui._compDrawText(coord.AddSpace(ui.CellWidth(0.1)), "▼", "", onCd, SKYALT_FONT_HEIGHT, false, false, int(style.label_alignH), int(style.label_alignV), style.label_formating)
+	}
 
 	//dialog
 	if ui.Dialog_start(nmd) {
 		//compute minimum dialog width
 		mx := 0
-		for _, opt := range options {
+		for _, opt := range options_names {
 			mx = OsMax(mx, len(opt))
 		}
 
 		ui.Div_colMax(0, OsMaxFloat(5, SKYALT_FONT_HEIGHT*float64(mx)))
 
-		for i, opt := range options {
-			//highlight
-			/*if value == int64(i) {
-				menuSt.cd = CdPalette_P
+		for i, opt := range options_names {
+
+			var highlight bool
+			if len(options_values) > 0 {
+				highlight = (value == options_values[i])
 			} else {
-				menuSt.cd = CdPalette_B
-			}*/
-			if ui.Comp_buttonMenu(0, i, 1, 1, opt, "", true, value == i) > 0 {
-				value = i
+				highlight = (value == strconv.Itoa(i))
+			}
+
+			if ui.Comp_buttonMenu(0, i, 1, 1, opt, "", true, highlight) > 0 {
+				if len(options_values) > 0 {
+					value = options_values[i]
+				} else {
+					value = strconv.Itoa(i)
+				}
+
 				ui.Dialog_close()
 				break
 			}

@@ -605,13 +605,8 @@ func (w *SANode) FindSelected() *SANode {
 	return nil
 }
 
-func (w *SANode) buildSubsList(listPathes *string, listNodes *[]*SANode) {
-	nm := w.getPath()
-	if len(nm) > 2 {
-		nm = nm[:len(nm)-1] //cut last ';'
-	}
-
-	*listPathes += nm + ";"
+func (w *SANode) buildSubsList(listPathes *[]string, listNodes *[]*SANode) {
+	*listPathes = append(*listPathes, w.getPath())
 	*listNodes = append(*listNodes, w)
 
 	for _, n := range w.Subs {
@@ -908,9 +903,12 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 			}
 			ui.Div_end()
 		} else if VmCallback_Cmp(fn, VmApi_UiCombo) {
-			options := attr.instr.prms[1].value.temp.String() //instr is first parameter, GuiCombo() api is parent!
-			if ui.Comp_combo(x, y, w, h, &value, options, "", editable, false) {
-				instr.LineReplace(value)
+			if len(attr.instr.prms) >= 3 {
+				options_names := attr.instr.prms[1].value.temp.String()  //instr is first parameter, GuiCombo() api is parent!
+				options_values := attr.instr.prms[2].value.temp.String() //instr is first parameter, GuiCombo() api is parent!
+				if ui.Comp_combo(x, y, w, h, &value, strings.Split(options_names, ";"), strings.Split(options_values, ";"), "", editable, false) {
+					instr.LineReplace(value)
+				}
 			}
 		} else if VmCallback_Cmp(fn, VmApi_UiColor) {
 			cd := attr.result.GetCd()

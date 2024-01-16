@@ -20,7 +20,7 @@ import "fmt"
 
 func (w *SANode) ConstBlob() bool {
 
-	tp := int(w.GetAttr("type", "uiCombo(0, \"Database;App\")").result.Number())
+	tp := int(w.GetAttr("type", "uiCombo(0, \"Database;App\", \"\")").result.Number())
 
 	pathAttr := w.GetAttr("path", "")
 	instr := pathAttr.instr.GetConst()

@@ -104,9 +104,9 @@ type SADate struct {
 	IsDST          bool
 }
 
-func (d *SADate) GetWeekDay(dateFormat int) int {
+func (d *SADate) GetWeekDay(dateFormat string) int {
 	week := d.WeekDay
-	if dateFormat != 1 {
+	if dateFormat != "us" {
 		//not "us"
 		week -= 1
 		if week < 0 {
@@ -159,7 +159,7 @@ func UiCalendar_GetStartDay(unix_sec int64) int64 {
 	return unix_sec - int64(d.Hour)*3600 - int64(d.Minute)*60 - int64(d.Second)
 }
 
-func UiCalendar_GetStartWeek(unix_sec int64, dateFormat int) int64 {
+func UiCalendar_GetStartWeek(unix_sec int64, dateFormat string) int64 {
 	unix_sec = UiCalendar_GetStartDay(unix_sec)
 
 	d := SA_InfoGetDateFromTime(unix_sec)
@@ -179,19 +179,19 @@ func (ui *Ui) GetTextDate(unix_sec int64) string {
 	dd := SA_InfoGetDateFromTime(unix_sec)
 
 	switch ui.win.io.ini.DateFormat {
-	case 0: //eu
+	case "eu":
 		return fmt.Sprintf("%d/%d/%d", dd.Day, dd.Month, dd.Year)
 
-	case 1: //us
+	case "us":
 		return fmt.Sprintf("%d/%d/%d", dd.Month, dd.Day, dd.Year)
 
-	case 2: //iso
+	case "iso":
 		return fmt.Sprintf("%d-%02d-%02d", dd.Year, dd.Month, dd.Day)
 
-	case 3: //text
+	case "text":
 		return fmt.Sprintf("%s %d, %d", ui.UiCalendar_MonthText(dd.Month), dd.Day, dd.Year)
 
-	case 4: //2base
+	case "2base":
 		return fmt.Sprintf("%d %d-%d", dd.Year, dd.Month, dd.Day)
 	}
 
@@ -263,7 +263,7 @@ func (ui *Ui) Comp_Calendar(value *int64, page *int64, maxColSize, maxRowSize fl
 		*page = UiCalendar_GetStartMonth(*page)
 
 		//--Day names(short)--
-		if format == 1 {
+		if format == "us" {
 			//"us"
 			ui.Comp_text(0, 0, 1, 1, ui.UiCalendar_DayTextShort(7), 1)
 			for x := 1; x < 7; x++ {

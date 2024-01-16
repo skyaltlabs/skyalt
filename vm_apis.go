@@ -161,7 +161,7 @@ func NewVmApis() *VmApis {
 
 	apis._Add(VmApi{0, "uiCheck", 1, VmApi_UiCheckbox})
 	apis._Add(VmApi{0, "uiSwitch", 1, VmApi_UiSwitch})
-	apis._Add(VmApi{0, "uiCombo", 2, VmApi_UiCombo})
+	apis._Add(VmApi{0, "uiCombo", 3, VmApi_UiCombo})
 	apis._Add(VmApi{0, "uiDate", 1, VmApi_UiDate})
 	apis._Add(VmApi{0, "uiColor", 1, VmApi_UiColor})
 	apis._Add(VmApi{0, "uiBlob", 1, VmApi_UiBlob})

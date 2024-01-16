@@ -101,7 +101,7 @@ type WinIni struct {
 
 	Threads int
 
-	DateFormat int
+	DateFormat string
 	//TimeZone   int
 
 	Fullscreen bool
@@ -111,7 +111,7 @@ type WinIni struct {
 	Languages              []string
 	WinX, WinY, WinW, WinH int
 
-	Theme         int
+	Theme         string
 	CustomPalette WinCdPalette
 
 	Offline bool
@@ -201,7 +201,7 @@ func _IO_getDPI() (int, error) {
 
 func (io *WinIO) _IO_setDefault() error {
 
-	isDefault := (io.ini.Dpi_default == 0)
+	//isDefault := (io.ini.Dpi_default == 0)
 
 	io.SetDeviceDPI()
 
@@ -220,21 +220,18 @@ func (io *WinIO) _IO_setDefault() error {
 	//}
 
 	//date
-	if isDefault {
-		io.ini.DateFormat = OsTrn((OsTimeZone() <= -3 && OsTimeZone() >= -10), 1, 0)
+	if io.ini.DateFormat == "" {
+		io.ini.DateFormat = OsTrnString((OsTimeZone() <= -3 && OsTimeZone() >= -10), "us", "eu")
+	}
+
+	//theme
+	if io.ini.Theme == "" {
+		io.ini.Theme = "light"
 	}
 
 	if io.ini.CustomPalette.P.A == 0 {
 		io.ini.CustomPalette = InitWinCdPalette_light()
 	}
-	/*io.ini.Palettes = nil
-	//if len(io.ini.Palettes) == 0 {	//...
-	io.ini.Palettes = append(io.ini.Palettes, InitWinCdPalette_light())
-	io.ini.Palettes = append(io.ini.Palettes, InitWinCdPalette_dark())
-	//}
-	if io.ini.Theme >= len(io.ini.Palettes) {
-		io.ini.Theme = len(io.ini.Palettes) - 1
-	}*/
 
 	//languages
 	if len(io.ini.Languages) == 0 {
@@ -276,10 +273,13 @@ func (io *WinIO) Cell() int {
 }
 
 func (io *WinIO) GetPalette() *WinCdPalette {
-	io.ini.Theme = OsMax(0, io.ini.Theme) //check
-	if io.ini.Theme < len(io.palettes) {
-		return &io.palettes[io.ini.Theme]
+	switch io.ini.Theme {
+	case "light":
+		return &io.palettes[0]
+	case "dark":
+		return &io.palettes[1]
 	}
+
 	return &io.ini.CustomPalette
 }
 

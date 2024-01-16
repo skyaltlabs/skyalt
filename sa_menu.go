@@ -106,18 +106,8 @@ func (base *SABase) drawMenu(ui *Ui) {
 }
 
 // https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
-const g_langs = "English;Chinese(中文);Hindi(हिंदी);Spanish(Español);Russian(Руштина);Czech(Česky)"
-
+var g_lang_names = []string{"English", "Chinese(中文)", "Hindi(हिंदी)", "Spanish(Español)", "Russian(Руштина)", "Czech(Česky)"}
 var g_lang_codes = []string{"en", "zh", "hi", "es", "ru", "cs"}
-
-func _SABase_FindLangCode(lng string) int {
-	for ii, cd := range g_lang_codes {
-		if cd == lng {
-			return ii
-		}
-	}
-	return 0
-}
 
 func (base *SABase) drawMenuDialogs(ui *Ui) {
 	if ui.Dialog_start("about") {
@@ -153,9 +143,8 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 		{
 			ui.Comp_text(1, y, 1, 1, ui.trns.LANGUAGES, 0)
 			y++
-			for i, lng := range ini.Languages {
+			for i, _ := range ini.Languages {
 
-				lang_id := _SABase_FindLangCode(lng)
 				ui.Div_start(1, y, 1, 1)
 				{
 					ui.Div_colMax(2, 100)
@@ -174,8 +163,7 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 					}
 					ui.Div_end()
 
-					if ui.Comp_combo(2, 0, 1, 1, &lang_id, g_langs, "", true, true) {
-						ini.Languages[i] = g_lang_codes[lang_id]
+					if ui.Comp_combo(2, 0, 1, 1, &ini.Languages[i], g_lang_names, g_lang_codes, "", true, true) {
 						ui.reloadTranslations()
 					}
 
@@ -200,15 +188,23 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 			y++ //space
 		}
 
-		ui.Comp_combo_desc(ui.trns.DATE_FORMAT, 0, 4, 1, y, 1, 2, &ini.DateFormat, ui.trns.DATE_FORMAT_EU+";"+ui.trns.DATE_FORMAT_US+";"+ui.trns.DATE_FORMAT_ISO+";"+ui.trns.DATE_FORMAT_TEXT, "", true, true)
-		y += 2
-
+		//format
 		{
-			ui.Comp_combo_desc(ui.trns.THEME, 0, 4, 1, y, 1, 2, &ini.Theme, ui.trns.LIGHT+";"+ui.trns.DARK+";"+ui.trns.CUSTOM, "", true, true)
+			format_names := []string{ui.trns.DATE_FORMAT_EU, ui.trns.DATE_FORMAT_US, ui.trns.DATE_FORMAT_ISO, ui.trns.DATE_FORMAT_TEXT}
+			format_values := []string{"eu", "us", "iso", "text"} //"2base"
+			ui.Comp_combo_desc(ui.trns.DATE_FORMAT, 0, 4, 1, y, 1, 2, &ini.DateFormat, format_names, format_values, "", true, true)
+			y += 2
+		}
+
+		//theme
+		{
+			format_names := []string{ui.trns.LIGHT, ui.trns.DARK, ui.trns.CUSTOM}
+			format_values := []string{"light", "dark", "custom"}
+			ui.Comp_combo_desc(ui.trns.THEME, 0, 4, 1, y, 1, 2, &ini.Theme, format_names, format_values, "", true, true)
 			y++
 
 			//custom palette
-			if ui.win.io.ini.Theme >= len(ui.win.io.palettes) {
+			if ui.win.io.ini.Theme == "custom" {
 				pl := &ui.win.io.ini.CustomPalette
 				ui.Div_start(1, y, 1, 2)
 				{

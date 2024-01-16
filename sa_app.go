@@ -479,23 +479,10 @@ func (app *SAApp) getListOfNodesTranslated() []string {
 }
 
 func (app *SAApp) ComboListOfNodes(x, y, w, h int, act string, ui *Ui) string {
-	fns := app.getListOfNodesTranslated()
-	i := 0
-	found_i := 0
-	options := ""
-	for _, fn := range fns {
-		options += fn + ";"
-		if fn == act {
-			found_i = i
-		}
-		i++
-	}
-	options, _ = strings.CutSuffix(options, ";")
+	fns_names := app.getListOfNodesTranslated()
+	fns_values := app.getListOfNodes()
 
-	if ui.Comp_combo(x, y, w, h, &found_i, options, "", true, true) {
-		fns = app.getListOfNodes()
-		act = fns[found_i]
-	}
+	ui.Comp_combo(x, y, w, h, &act, fns_names, fns_values, "", true, true)
 	return act
 }
 
@@ -619,20 +606,23 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 
 	//list
 	{
-		var listPathes string
+		var listPathes []string
 		var listNodes []*SANode
 		app.root.buildSubsList(&listPathes, &listNodes)
-		if len(listPathes) >= 1 {
-			listPathes = listPathes[:len(listPathes)-1] //cut last ';'
-		}
-		combo := 0
-		for i, n := range listNodes {
-			if app.act == n {
-				combo = i
+
+		val := ""
+		for i, nd := range listNodes {
+			if app.act == nd {
+				val = listPathes[i]
 			}
 		}
-		if ui.Comp_combo(1, 0, 1, 1, &combo, listPathes, "", true, true) {
-			app.act = listNodes[combo]
+		if ui.Comp_combo(1, 0, 1, 1, &val, listPathes, listPathes, "", true, true) {
+			for i, lp := range listPathes {
+				if val == lp {
+					app.act = listNodes[i]
+					break
+				}
+			}
 		}
 	}
 
@@ -646,24 +636,6 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 	if ui.Comp_buttonLight(4, 0, 1, 1, "→", ui.trns.FORWARD, app.canHistoryForward()) > 0 {
 		app.stepHistoryForward()
 	}
-
-	//list of nodes(if hidden, it can be selected)
-	/*{
-		val := 0
-		options := ""
-		for i, w := range app.act.Subs {
-			options += w.Name + ";"
-			if w.Selected {
-				val = i
-			}
-		}
-		options, _ = strings.CutSuffix(options, ";")
-
-		if ui.Comp_combo(5, 0, 1, 1, &val, options, "", true, true) {
-			app.act.DeselectAll()
-			app.act.Subs[val].Selected = true
-		}
-	}*/
 }
 
 func (app *SAApp) cmpAndAddHistory() {

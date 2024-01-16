@@ -352,7 +352,8 @@ func VmApi_UiCheckbox(instr *VmInstr, st *VmST) SAValue {
 
 func VmApi_UiCombo(instr *VmInstr, st *VmST) SAValue {
 	instr.temp = instr.ExePrm(st, 0)
-	//instr.temp = instr.ExePrm(st, 1) //save options into temp
+	instr.ExePrm(st, 1)
+	instr.ExePrm(st, 2)
 	return instr.temp
 }
 func VmApi_UiDate(instr *VmInstr, st *VmST) SAValue {
