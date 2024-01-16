@@ -37,7 +37,7 @@ func (w *SANode) SARender_Dialog(renderIt bool) bool {
 		}
 
 		if ui.Dialog_start(w.Name) {
-			w.RenderLayout()
+			w.renderLayout()
 			ui.Dialog_end()
 		}
 	}
@@ -430,6 +430,10 @@ func (w *SANode) SARender_Image(renderIt bool) {
 		}
 	}
 
+	if background {
+		w.z_depth = 0.5
+	}
+
 	if showIt {
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
 		{
@@ -504,7 +508,7 @@ func (w *SANode) SARender_Layout(renderIt bool) {
 
 	if showIt {
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-		w.RenderLayout()
+		w.renderLayout()
 		ui.Div_end()
 	}
 }

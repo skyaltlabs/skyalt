@@ -105,6 +105,15 @@ func (app *SAApp) GetJsonPath() string {
 	return app.GetFolderPath() + "app.json"
 }
 
+func (app *SAApp) RenderApp(ide bool) {
+
+	node := app.root
+	if ide {
+		node = app.act
+	}
+	node.renderLayout()
+}
+
 func (app *SAApp) renderIDE(ui *Ui) {
 
 	ui.Div_colMax(1, 100)
@@ -246,7 +255,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 			ui.GetCall().call.data.scrollV.attach = &rowDiv.data.scrollV
 		}
 
-		app.act.RenderLayout()
+		app.RenderApp(true)
 	}
 	ui.Div_end()
 

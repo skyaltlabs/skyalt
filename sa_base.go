@@ -213,7 +213,7 @@ func (base *SABase) drawFrame(ui *Ui) {
 				app.renderIDE(ui)
 				ui.Div_end()
 			} else {
-				app.root.RenderLayout()
+				app.RenderApp(false)
 			}
 
 		}
