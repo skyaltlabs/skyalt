@@ -23,12 +23,34 @@ import (
 	"strings"
 )
 
+//{"fn": "switch"}
+//{"fn": "combo", "prm": "a;b;c", "prm2": "0;1;2"}
+//{"fn": "map", "map": {"column": {"fn":"switch"}, "value": {"fn":"switch"}}}
+
+var SAAttrUi_SWITCH = SAAttrUiValue{Fn: "switch"}
+var SAAttrUi_CHECKBOX = SAAttrUiValue{Fn: "checkbox"}
+var SAAttrUi_DATE = SAAttrUiValue{Fn: "date"}
+var SAAttrUi_COLOR = SAAttrUiValue{Fn: "color"}
+var SAAttrUi_BLOB = SAAttrUiValue{Fn: "blob"}
+
+func SAAttrUi_COMBO(names string, values string) SAAttrUiValue {
+	return SAAttrUiValue{Fn: "combo", Prm: names, Prm2: values}
+}
+
+type SAAttrUiValue struct {
+	Fn   string                   `json:",omitempty"`
+	Prm  string                   `json:",omitempty"` //can be SAAttrUiMap
+	Prm2 string                   `json:",omitempty"`
+	Map  map[string]SAAttrUiValue `json:",omitempty"`
+}
+
 type SANodeAttr struct {
 	node *SANode
 
 	Name    string //output attr start with '_'
 	Value   string `json:",omitempty"` //every(!) value is expression
 	ShowExp bool
+	Ui      SAAttrUiValue `json:",omitempty"`
 
 	defaultValue string
 

@@ -116,20 +116,6 @@ func (instr *VmInstr) LineExtract(line string, value string) string {
 	return line[instr.pos.X:instr.pos.Y]
 }
 
-func (instr *VmInstr) IsFnGui() *VmInstr {
-	if VmCallback_Cmp(instr.fn, VmApi_UiSwitch) ||
-		VmCallback_Cmp(instr.fn, VmApi_UiCheckbox) ||
-		VmCallback_Cmp(instr.fn, VmApi_UiCombo) ||
-		VmCallback_Cmp(instr.fn, VmApi_UiDate) ||
-		VmCallback_Cmp(instr.fn, VmApi_UiColor) {
-
-		if len(instr.prms) >= 1 {
-			return instr.prms[0].value
-		}
-	}
-	return nil
-}
-
 func (instr *VmInstr) isFnAccess() *VmInstr {
 
 	if VmCallback_Cmp(instr.fn, VmBasic_Access) { //access(!)
@@ -203,10 +189,7 @@ func (instr *VmInstr) GetConst() *VmInstr {
 	if acc != nil {
 		return acc.GetConst()
 	}
-	gui := instr.IsFnGui()
-	if gui != nil {
-		return gui.GetConst()
-	}
+
 	return nil
 }
 func (instr *VmInstr) GetConstArray() *VmInstr {
@@ -221,10 +204,7 @@ func (instr *VmInstr) GetConstArray() *VmInstr {
 	if acc != nil {
 		return acc.GetConstArray()
 	}
-	gui := instr.IsFnGui()
-	if gui != nil {
-		return gui.GetConstArray()
-	}
+
 	return nil
 }
 func (instr *VmInstr) GetConstMap() *VmInstr {
@@ -239,10 +219,7 @@ func (instr *VmInstr) GetConstMap() *VmInstr {
 	if acc != nil {
 		return acc.GetConstMap()
 	}
-	gui := instr.IsFnGui()
-	if gui != nil {
-		return gui.GetConstMap()
-	}
+
 	return nil
 }
 
@@ -336,36 +313,6 @@ func VmBasic_Bracket(instr *VmInstr, st *VmST) SAValue {
 
 func VmBasic_Access(instr *VmInstr, st *VmST) SAValue {
 	instr.temp = instr.accessAttr.result
-	return instr.temp
-}
-
-func VmApi_UiSwitch(instr *VmInstr, st *VmST) SAValue {
-	instr.temp = instr.ExePrm(st, 0)
-	return instr.temp
-
-}
-func VmApi_UiCheckbox(instr *VmInstr, st *VmST) SAValue {
-	instr.temp = instr.ExePrm(st, 0)
-	return instr.temp
-
-}
-
-func VmApi_UiCombo(instr *VmInstr, st *VmST) SAValue {
-	instr.temp = instr.ExePrm(st, 0)
-	instr.ExePrm(st, 1)
-	instr.ExePrm(st, 2)
-	return instr.temp
-}
-func VmApi_UiDate(instr *VmInstr, st *VmST) SAValue {
-	instr.temp = instr.ExePrm(st, 0)
-	return instr.temp
-}
-func VmApi_UiColor(instr *VmInstr, st *VmST) SAValue {
-	instr.temp = instr.ExePrm(st, 0)
-	return instr.temp
-}
-func VmApi_UiBlob(instr *VmInstr, st *VmST) SAValue {
-	instr.temp = instr.ExePrm(st, 0)
 	return instr.temp
 }
 

@@ -16,17 +16,19 @@ limitations under the License.
 
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func (w *SANode) ConstBlob() bool {
 
-	tp := int(w.GetAttr("type", "uiCombo(0, \"Database;App\", \"\")").result.Number())
+	tp := int(w.GetAttrUi("type", "0", SAAttrUiValue{Fn: "combo", Prm: "Database;App"}).result.Number())
 
 	pathAttr := w.GetAttr("path", "")
 	instr := pathAttr.instr.GetConst()
 	value := instr.pos_attr.result.String()
 
-	outputAttr := w.GetAttr("_out", "uiBlob(0)")
+	outputAttr := w.GetAttrUi("_out", "", SAAttrUi_BLOB)
 	outputAttr.result.SetBlob(nil) //reset
 
 	if value == "" {

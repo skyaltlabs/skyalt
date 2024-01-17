@@ -736,6 +736,9 @@ func (w *SANode) AddAttr(name string) *SANodeAttr {
 func (w *SANode) GetAttr(name string, value string) *SANodeAttr {
 	return w._getAttr(true, SANodeAttr{Name: name, Value: value})
 }
+func (w *SANode) GetAttrUi(name string, value string, ui SAAttrUiValue) *SANodeAttr {
+	return w._getAttr(true, SANodeAttr{Name: name, Value: value, Ui: ui})
+}
 
 func (w *SANode) GetGrid() OsV4 {
 	return w.GetAttr("grid", "[0, 0, 1, 1]").result.GetV4()
@@ -765,7 +768,7 @@ func (w *SANode) SetGrid(coord OsV4) {
 }
 
 func (w *SANode) GetGridShow() bool {
-	return w.GetAttr("grid_show", "uiSwitch(1)").GetBool()
+	return w.GetAttrUi("grid_show", "1", SAAttrUi_SWITCH).GetBool()
 }
 
 func (w *SANode) Render() {
@@ -892,37 +895,33 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 
 		editable := _SANode_isEditable(attr, instr)
 
-		if VmCallback_Cmp(fn, VmApi_UiSwitch) {
+		if attr.Ui.Fn == SAAttrUi_SWITCH.Fn {
 			if ui.Comp_switch(x, y, w, h, &value, false, "", "", editable) {
 				instr.LineReplace(value)
 			}
-		} else if VmCallback_Cmp(fn, VmApi_UiCheckbox) {
+		} else if attr.Ui.Fn == SAAttrUi_CHECKBOX.Fn {
 			if ui.Comp_checkbox(x, y, w, h, &value, false, "", "", editable) {
 				instr.LineReplace(value)
 			}
-		} else if VmCallback_Cmp(fn, VmApi_UiDate) {
+		} else if attr.Ui.Fn == SAAttrUi_DATE.Fn {
 			ui.Div_start(x, y, w, h)
 			val := int64(instr.pos_attr.result.Number())
 			if ui.Comp_CalendarDataPicker(&val, true, attr.Name, editable) {
 				instr.LineReplace(strconv.Itoa(int(val)))
 			}
 			ui.Div_end()
-		} else if VmCallback_Cmp(fn, VmApi_UiCombo) {
-			if len(attr.instr.prms) >= 3 {
-				options_names := attr.instr.prms[1].value.temp.String()  //instr is first parameter, GuiCombo() api is parent!
-				options_values := attr.instr.prms[2].value.temp.String() //instr is first parameter, GuiCombo() api is parent!
-				if ui.Comp_combo(x, y, w, h, &value, strings.Split(options_names, ";"), strings.Split(options_values, ";"), "", editable, false) {
-					instr.LineReplace(value)
-				}
+		} else if attr.Ui.Fn == "combo" {
+			if ui.Comp_combo(x, y, w, h, &value, strings.Split(attr.Ui.Prm, ";"), strings.Split(attr.Ui.Prm2, ";"), "", editable, false) {
+				instr.LineReplace(value)
 			}
-		} else if VmCallback_Cmp(fn, VmApi_UiColor) {
+		} else if attr.Ui.Fn == SAAttrUi_COLOR.Fn {
 			cd := attr.result.GetCd()
 			if ui.comp_colorPicker(x, y, w, h, &cd, attr.Name, true) {
-				if editable {
-					attr.ReplaceCd(cd)
-				}
+				//if editable {	//...............
+				attr.ReplaceCd(cd)
+				//}
 			}
-		} else if VmCallback_Cmp(fn, VmApi_UiBlob) {
+		} else if attr.Ui.Fn == SAAttrUi_BLOB.Fn {
 			blob := attr.result.Blob()
 			dnm := "blob_" + attr.Name
 			if ui.Comp_buttonIcon(x, y, w, h, InitWinMedia_blob(blob), 0, "", CdPalette_White, true, false) > 0 {
@@ -938,6 +937,8 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 			ui.Div_start(x, y, w, h)
 			{
 				//show first 4, then "others" -> open dialog? .....
+
+				//add param 'ui string' + recursion ..................
 
 				n := attr.result.NumArrayItems()
 
@@ -989,6 +990,8 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 			ui.Div_start(x, y, w, h)
 			{
 				//show first 4, then "others" -> open dialog? .....
+
+				//add param 'ui string' + recursion ..................
 
 				n := attr.result.NumMapItems()
 

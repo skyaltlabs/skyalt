@@ -51,7 +51,7 @@ func (node *SANode) _Sqlite_open(fileAttr *SANodeAttr) *sql.DB {
 
 func (node *SANode) Sqlite_insert() bool {
 
-	triggerAttr := node.GetAttr("trigger", "uiSwitch(0)")
+	triggerAttr := node.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
 	fileAttr := node.GetAttr("file", "")
 	tableAttr := node.GetAttr("table", "") //combo ...
 
@@ -200,7 +200,7 @@ func (node *SANode) Sqlite_select() bool {
 func (node *SANode) Csv_select() bool {
 
 	fileAttr := node.GetAttr("file", "")
-	firstLineHeader := node.GetAttr("first_line_header", "uiSwitch(1)").GetBool()
+	firstLineHeader := node.GetAttrUi("first_line_header", "1", SAAttrUi_SWITCH).GetBool()
 	resultAttr := node.GetAttr("_result", "[]")
 	resultAttr.result.SetBlob(nil) //reset
 

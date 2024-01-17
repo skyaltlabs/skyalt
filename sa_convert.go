@@ -68,7 +68,7 @@ func (node *SANode) SAConvert_GpxToJson() bool {
 
 func (node *SANode) SA_WriteFile() bool {
 
-	triggerAttr := node.GetAttr("trigger", "uiSwitch(0)")
+	triggerAttr := node.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
 	fileAttr := node.GetAttr("file", "")
 	jsonAttr := node.GetAttr("json", "")
 
