@@ -863,6 +863,10 @@ func (w *SANode) renderLayout() {
 	}
 }
 
+func _SANode_isEditable(attr *SANodeAttr, instr *VmInstr) bool {
+	return !attr.IsOutput() && instr != nil && !instr.pos_attr.IsOutput()
+}
+
 func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 
 	if attr.ShowExp {
@@ -886,7 +890,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 			value = attr.result.String()
 		}
 
-		editable := (!attr.IsOutput() && instr != nil && !instr.pos_attr.IsOutput())
+		editable := _SANode_isEditable(attr, instr)
 
 		if VmCallback_Cmp(fn, VmApi_UiSwitch) {
 			if ui.Comp_switch(x, y, w, h, &value, false, "", "", editable) {
@@ -957,7 +961,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 						//value = attr.instr.prms[i].instr.temp.String()	//if attribute is Output then there is no instr
 
 						item_instr := attr.instr.GetConstArrayPrm(i)
-						_, _, _, fnshd, _ := ui.Comp_editbox(i, 0, 1, 1, &value, 2, nil, "", false, false, !attr.IsOutput() && item_instr != nil)
+						_, _, _, fnshd, _ := ui.Comp_editbox(i, 0, 1, 1, &value, 2, nil, "", false, false, _SANode_isEditable(attr, item_instr))
 						if fnshd {
 							attr.ReplaceArrayItemValue(i, value)
 						}
@@ -1010,12 +1014,12 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 						}
 						key_instr, value_instr := attr.instr.GetConstMapPrm(i)
 
-						_, _, _, fnshd1, _ := ui.Comp_editbox(i*3+0, 0, 1, 1, &key, 2, nil, "", false, false, !attr.IsOutput() && key_instr != nil)
+						_, _, _, fnshd1, _ := ui.Comp_editbox(i*3+0, 0, 1, 1, &key, 2, nil, "", false, false, _SANode_isEditable(attr, key_instr))
 						if fnshd1 {
 							attr.ReplaceMapItemKey(i, key)
 						}
 
-						_, _, _, fnshd2, _ := ui.Comp_editbox(i*3+1, 0, 1, 1, &value, 2, nil, "", false, false, !attr.IsOutput() && value_instr != nil)
+						_, _, _, fnshd2, _ := ui.Comp_editbox(i*3+1, 0, 1, 1, &value, 2, nil, "", false, false, _SANode_isEditable(attr, value_instr))
 						if fnshd2 {
 							attr.ReplaceMapItemValue(i, value)
 						}
