@@ -886,7 +886,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 			value = attr.result.String()
 		}
 
-		editable := (!attr.IsOutput() && instr != nil)
+		editable := (!attr.IsOutput() && instr != nil && !instr.pos_attr.IsOutput())
 
 		if VmCallback_Cmp(fn, VmApi_UiSwitch) {
 			if ui.Comp_switch(x, y, w, h, &value, false, "", "", editable) {
@@ -914,7 +914,9 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 		} else if VmCallback_Cmp(fn, VmApi_UiColor) {
 			cd := attr.result.GetCd()
 			if ui.comp_colorPicker(x, y, w, h, &cd, attr.Name, true) {
-				attr.ReplaceCd(cd)
+				if editable {
+					attr.ReplaceCd(cd)
+				}
 			}
 		} else if VmCallback_Cmp(fn, VmApi_UiBlob) {
 			blob := attr.result.Blob()
@@ -1302,7 +1304,7 @@ func (w *SANode) RenderAttrs() {
 					y := 0
 
 					//default
-					if ui.Comp_buttonMenu(0, y, 1, 1, "Reset value to default", "", true, false) > 0 {
+					if ui.Comp_buttonMenu(0, y, 1, 1, "Set default value", "", true, false) > 0 {
 						it.Value = it.defaultValue
 						ui.Dialog_close()
 					}
