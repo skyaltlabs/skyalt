@@ -173,20 +173,9 @@ func (a *SANode) Cmp(b *SANode, historyDiff *bool) bool {
 		*historyDiff = true //no return!
 	}
 
-	if len(a.Cols) != len(b.Cols) {
-		*historyDiff = true //no return!
-	}
-	if len(a.Rows) != len(b.Rows) {
-		*historyDiff = true //no return!
-	}
-
 	if len(a.Attrs) != len(b.Attrs) {
 		return false
 	}
-	if len(a.Subs) != len(b.Subs) {
-		return false
-	}
-
 	for i, itA := range a.Attrs {
 		itB := b.Attrs[i]
 		if !itA.Cmp(itB) {
@@ -194,17 +183,29 @@ func (a *SANode) Cmp(b *SANode, historyDiff *bool) bool {
 		}
 	}
 
-	for i, itA := range a.Cols {
-		if !itA.Cmp(&b.Cols[i]) {
-			*historyDiff = true //no return!
+	if len(a.Cols) == len(b.Cols) {
+		for i, itA := range a.Cols {
+			if !itA.Cmp(&b.Cols[i]) {
+				*historyDiff = true //no return!
+			}
 		}
-	}
-	for i, itA := range a.Rows {
-		if !itA.Cmp(&b.Rows[i]) {
-			*historyDiff = true //no return!
-		}
+	} else {
+		*historyDiff = true //no return!
 	}
 
+	if len(a.Rows) == len(b.Rows) {
+		for i, itA := range a.Rows {
+			if !itA.Cmp(&b.Rows[i]) {
+				*historyDiff = true //no return!
+			}
+		}
+	} else {
+		*historyDiff = true //no return!
+	}
+
+	if len(a.Subs) != len(b.Subs) {
+		return false
+	}
 	for i, itA := range a.Subs {
 		if !itA.Cmp(b.Subs[i], historyDiff) {
 			return false
