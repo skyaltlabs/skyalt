@@ -286,7 +286,7 @@ func (v *SAValue) GetMapKey(key string) *SAValue {
 	return &SAValue{value: ret}
 }
 
-func (A *SAValue) Cmp(B *SAValue) int {
+func (A *SAValue) Cmp(B *SAValue, sameType bool) int {
 	if reflect.TypeOf(A.value) == reflect.TypeOf(B.value) {
 		switch val := A.value.(type) {
 		case float64:
@@ -299,6 +299,10 @@ func (A *SAValue) Cmp(B *SAValue) int {
 			return bytes.Compare(val, B.Blob())
 		}
 	} else {
+		if sameType {
+			return 1 //different
+		}
+
 		if A.IsNumber() || B.IsNumber() {
 			ta := A.Number()
 			tb := B.Number()

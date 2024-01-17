@@ -48,7 +48,7 @@ func VmOp_CmpEq(instr *VmInstr, st *VmST) SAValue {
 	right := instr.ExePrm(st, 1)
 	left := instr.ExePrm(st, 0)
 
-	instr.temp.SetBool(left.Cmp(&right) == 0)
+	instr.temp.SetBool(left.Cmp(&right, true) == 0)
 	return instr.temp
 }
 
@@ -57,7 +57,7 @@ func VmOp_CmpNeq(instr *VmInstr, st *VmST) SAValue {
 	right := instr.ExePrm(st, 1)
 	left := instr.ExePrm(st, 0)
 
-	instr.temp.SetBool(left.Cmp(&right) != 0)
+	instr.temp.SetBool(left.Cmp(&right, true) != 0)
 	return instr.temp
 }
 
@@ -66,7 +66,7 @@ func VmOp_CmpL(instr *VmInstr, st *VmST) SAValue {
 	right := instr.ExePrm(st, 1)
 	left := instr.ExePrm(st, 0)
 
-	instr.temp.SetBool(left.Cmp(&right) < 0)
+	instr.temp.SetBool(left.Cmp(&right, true) < 0)
 	return instr.temp
 }
 func VmOp_CmpH(instr *VmInstr, st *VmST) SAValue {
@@ -74,7 +74,7 @@ func VmOp_CmpH(instr *VmInstr, st *VmST) SAValue {
 	right := instr.ExePrm(st, 1)
 	left := instr.ExePrm(st, 0)
 
-	instr.temp.SetBool(left.Cmp(&right) > 0)
+	instr.temp.SetBool(left.Cmp(&right, true) > 0)
 	return instr.temp
 }
 
@@ -83,7 +83,7 @@ func VmOp_CmpEqL(instr *VmInstr, st *VmST) SAValue {
 	right := instr.ExePrm(st, 1)
 	left := instr.ExePrm(st, 0)
 
-	instr.temp.SetBool(left.Cmp(&right) <= 0)
+	instr.temp.SetBool(left.Cmp(&right, true) <= 0)
 	return instr.temp
 }
 func VmOp_CmpEqH(instr *VmInstr, st *VmST) SAValue {
@@ -91,7 +91,7 @@ func VmOp_CmpEqH(instr *VmInstr, st *VmST) SAValue {
 	right := instr.ExePrm(st, 1)
 	left := instr.ExePrm(st, 0)
 
-	instr.temp.SetBool(left.Cmp(&right) >= 0)
+	instr.temp.SetBool(left.Cmp(&right, true) >= 0)
 	return instr.temp
 }
 
