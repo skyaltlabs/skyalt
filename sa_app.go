@@ -639,13 +639,14 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 }
 
 func (app *SAApp) cmpAndAddHistory() {
-	if len(app.history) > 0 /*&& app.act == app.root.FindMirror(app.history[app.history_pos], app.history_act[app.history_pos])*/ {
+	if len(app.history) > 0 {
 		historyDiff := false
 		exeDiff := !app.root.Cmp(app.history[app.history_pos], &historyDiff)
 		if exeDiff || historyDiff {
 
+			//scroll - update last item in history or add new item
 			rewrite := (app.history_divScroll != nil && app.history_divScroll == app.base.ui.touch.scrollWheel)
-			if OsTime()-app.history_divSroll_time > 1 {
+			if OsTime()-app.history_divSroll_time > 1 { //1sec
 				rewrite = false
 			}
 
