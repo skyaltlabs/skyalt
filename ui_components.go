@@ -442,7 +442,7 @@ func (ui *Ui) Comp_text(x, y, w, h int, label string, alignH int) *UiLayoutDiv {
 	return div
 }
 
-func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, alignH int, selection bool) *UiLayoutDiv {
+func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, alignH int, icon WinMedia, iconMargin float64, selection bool) *UiLayoutDiv {
 	ui.Div_start(x, y, w, h)
 	div := ui.GetCall().call
 
@@ -452,8 +452,9 @@ func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, alignH int, selectio
 	style.label_alignV = 1
 	style.label_alignH = uint8(alignH)
 	style.label_formating = true
+	style.image_margin = iconMargin
 
-	ui.Comp_text_s(&style, label, nil, selection)
+	ui.Comp_text_s(&style, label, &icon, selection)
 
 	ui.Div_end()
 	return div
