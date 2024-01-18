@@ -21,14 +21,26 @@ import (
 	"os"
 )
 
-func (node *SANode) SAExe_IO_write() bool {
+func (node *SANode) SAExe_File_write() bool {
 
 	triggerAttr := node.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
-	fileAttr := node.GetAttr("file", "")
-	jsonAttr := node.GetAttr("json", "")
+
+	tp := node.GetAttrUi("type", "0", SAAttrUiValue{Fn: "combo", Prm: "Database;App;Disk"}).GetInt()
+	pathAttr := node.GetAttr("path", "")
+	dataAttr := node.GetAttr("json", "")
 
 	if triggerAttr.GetBool() {
-		os.WriteFile(fileAttr.result.String(), jsonAttr.result.Blob(), 0644)
+
+		path := pathAttr.GetString()
+		if tp <= 1 {
+			path = OsTrnString(tp == 0, "databases/", "apps/"+node.app.Name+"/") + path
+		}
+
+		err := os.WriteFile(path, dataAttr.GetBlob(), 0644)
+		if err != nil {
+			pathAttr.SetErrorExe(fmt.Sprintf("%v", err))
+			return false
+		}
 
 		triggerAttr.SetExpBool(false)
 	}
@@ -36,27 +48,35 @@ func (node *SANode) SAExe_IO_write() bool {
 	return true
 }
 
-func (w *SANode) SAExe_IO_blob() bool {
+func (node *SANode) SAExe_File_read() bool {
 
-	tp := int(w.GetAttrUi("type", "0", SAAttrUiValue{Fn: "combo", Prm: "Database;App"}).result.Number())
+	tp := node.GetAttrUi("type", "0", SAAttrUiValue{Fn: "combo", Prm: "Database;App;Disk"}).GetInt()
 
-	pathAttr := w.GetAttr("path", "")
-	instr := pathAttr.instr.GetConst()
-	value := instr.pos_attr.result.String()
+	pathAttr := node.GetAttr("path", "")
+	path := pathAttr.GetString()
 
-	outputAttr := w.GetAttrUi("_out", "", SAAttrUi_BLOB)
+	outputAttr := node.GetAttrUi("_out", "", SAAttrUi_BLOB)
 	outputAttr.result.SetBlob(nil) //reset
 
-	if value == "" {
+	if path == "" {
 		pathAttr.SetErrorExe("value is empty")
 		return false
 	}
 
-	url := OsTrnString(tp == 0, "db:", "file:apps/"+w.app.Name+"/") + value
-	m := InitWinMedia_url(url)
-	data, err := m.GetBlob(w.app.base.ui.win.disk)
+	//get data
+	var data []byte
+	var err error
+	if tp <= 1 {
+		url := OsTrnString(tp == 0, "db:", "file:apps/"+node.app.Name+"/") + path
+		m := InitWinMedia_url(url)
+		data, err = m.GetBlob(node.app.base.ui.win.disk)
+	} else {
+		data, err = os.ReadFile(path)
+	}
+
+	//set
 	if err != nil {
-		pathAttr.SetErrorExe(fmt.Sprintf("GetBlob() failed: %v", err))
+		pathAttr.SetErrorExe(fmt.Sprintf("%v", err))
 		return false
 	}
 	outputAttr.result.SetBlob(data)
@@ -64,7 +84,7 @@ func (w *SANode) SAExe_IO_blob() bool {
 	return true
 }
 
-func (w *SANode) SAExe_Medium() bool {
+func (node *SANode) SAExe_Vars() bool {
 	//nothing here, it's all about RenderAttrs()
 	return true
 }

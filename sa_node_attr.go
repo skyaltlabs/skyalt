@@ -99,38 +99,23 @@ func (attr *SANodeAttr) SetExpFloat(value float64) {
 	attr.SetExpString(strconv.FormatFloat(value, 'f', -1, 64))
 }
 
-func (attr *SANodeAttr) _getFinalValue() SAValue {
-	if attr.instr != nil {
-		instr := attr.instr.GetConst()
-		if instr != nil {
-			return instr.pos_attr.result
-		}
-	}
-
-	return SAValue{}
-}
-
 func (attr *SANodeAttr) GetString() string {
-	v := attr._getFinalValue()
-	return v.String()
+	return attr.result.String()
 }
 func (attr *SANodeAttr) GetInt() int {
-	v := attr._getFinalValue()
-	return int(v.Number())
+	return int(attr.result.Number())
 }
 func (attr *SANodeAttr) GetInt64() int64 {
-	v := attr._getFinalValue()
-	return int64(v.Number())
+	return int64(attr.result.Number())
 }
 func (attr *SANodeAttr) GetFloat() float64 {
-	v := attr._getFinalValue()
-	return v.Number()
+	return attr.result.Number()
 }
 func (attr *SANodeAttr) GetBool() bool {
 	return attr.GetInt() != 0
 }
-func (attr *SANodeAttr) GetByte() byte {
-	return byte(attr.GetInt())
+func (attr *SANodeAttr) GetBlob() []byte {
+	return attr.result.Blob()
 }
 
 func (attr *SANodeAttr) CheckForLoopAttr(find *SANodeAttr) {

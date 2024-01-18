@@ -154,13 +154,16 @@ func (w *SANode) SAExe_Render_Switch(renderIt bool) {
 	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	label := w.GetAttr("label", "").GetString()
-	instr := w.GetAttr("value", "").instr.GetConst()
-	value := instr.pos_attr.result.String()
-	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool() && instr != nil
+
+	valueAttr := w.GetAttr("value", "")
+	valueInstr := valueAttr.instr.GetConst()
+	value := valueAttr.GetString()
+
+	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool() && valueInstr != nil
 
 	if showIt {
 		if ui.Comp_switch(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, label, "", enable) {
-			instr.LineReplace(value)
+			valueInstr.LineReplace(value)
 		}
 	}
 }
@@ -174,13 +177,16 @@ func (w *SANode) SAExe_Render_Checkbox(renderIt bool) {
 	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	label := w.GetAttr("label", "").GetString()
-	instr := w.GetAttr("value", "").instr.GetConst()
-	value := instr.pos_attr.result.String()
-	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool() && instr != nil
+
+	valueAttr := w.GetAttr("value", "")
+	valueInstr := valueAttr.instr.GetConst()
+	value := valueAttr.GetString()
+
+	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool() && valueInstr != nil
 
 	if showIt {
 		if ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, label, "", enable) {
-			instr.LineReplace(value)
+			valueInstr.LineReplace(value)
 		}
 	}
 }
@@ -193,16 +199,18 @@ func (w *SANode) SAExe_Render_Combo(renderIt bool) {
 	grid.Size.X = OsMax(grid.Size.X, 1)
 	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
-	instr := w.GetAttr("value", "").instr.GetConst()
-	value := instr.pos_attr.result.String()
-	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool() && instr != nil
+	valueAttr := w.GetAttr("value", "")
+	valueInstr := valueAttr.instr.GetConst()
+	value := valueAttr.GetString()
+
+	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool() && valueInstr != nil
 	options_names := w.GetAttr("options_names", "\"a;b;c\")").GetString()
 	options_values := w.GetAttr("options_values", "\"a;b;c\")").GetString()
 	search := w.GetAttrUi("search", "0", SAAttrUi_SWITCH).GetBool()
 
 	if showIt {
 		if ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, strings.Split(options_names, ";"), strings.Split(options_values, ";"), "", enable, search) {
-			instr.LineReplace(value)
+			valueInstr.LineReplace(value)
 		}
 	}
 }
@@ -215,9 +223,11 @@ func (w *SANode) SAExe_Render_Editbox(renderIt bool) {
 	grid.Size.X = OsMax(grid.Size.X, 1)
 	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
-	instr := w.GetAttr("value", "").instr.GetConst()
-	value := instr.pos_attr.result.String()
-	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool() && instr != nil
+	valueAttr := w.GetAttr("value", "")
+	valueInstr := valueAttr.instr.GetConst()
+	value := valueAttr.GetString()
+
+	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool() && valueInstr != nil
 	tmpToValue := w.GetAttrUi("tempToValue", "0", SAAttrUi_SWITCH).GetBool()
 	precision := w.GetAttr("precision", "2").GetInt()
 	ghost := w.GetAttr("ghost", "").GetString()
@@ -225,7 +235,7 @@ func (w *SANode) SAExe_Render_Editbox(renderIt bool) {
 	if showIt {
 		_, _, chngd, fnshd, _ := ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, precision, nil, ghost, false, tmpToValue, enable)
 		if fnshd || (tmpToValue && chngd) {
-			instr.LineReplace(value)
+			valueInstr.LineReplace(value)
 		}
 	}
 }
@@ -349,7 +359,7 @@ func (w *SANode) SAExe_Render_Image(renderIt bool) {
 	grid.Size.X = OsMax(grid.Size.X, 1)
 	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
-	margin := w.GetAttr("margin", "0").result.Number()
+	margin := w.GetAttr("margin", "0").GetFloat()
 	cd := w.GetAttrUi("cd", "[255, 255, 255, 255]", SAAttrUi_COLOR).result.GetCd()
 	background := w.GetAttrUi("background", "0", SAAttrUi_SWITCH).GetBool()
 
@@ -373,7 +383,7 @@ func (w *SANode) SAExe_Render_Image(renderIt bool) {
 	if showIt {
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
 		{
-			blob := blobAttr.result.Blob()
+			blob := blobAttr.GetBlob()
 			path := InitWinMedia_blob(blob)
 			ui.Paint_file(0, 0, 1, 1, margin, path, cd, alignV, alignH, fill, background)
 		}
@@ -381,7 +391,7 @@ func (w *SANode) SAExe_Render_Image(renderIt bool) {
 	}
 }
 
-func (w *SANode) SAExe_Render_File(renderIt bool) {
+func (w *SANode) SAExe_Render_FileDrop(renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -482,7 +492,7 @@ func (w *SANode) SAExe_Render_Map(renderIt bool) {
 			cam_zoomAttr.SetExpInt(int(cam_zoom))
 
 			//locators
-			locatorsBlob := locatorsAttr.result.Blob()
+			locatorsBlob := locatorsAttr.GetBlob()
 			if len(locatorsBlob) > 0 {
 				var locators []UiCompMapLocator
 				err := json.Unmarshal(locatorsBlob, &locators)
@@ -497,7 +507,7 @@ func (w *SANode) SAExe_Render_Map(renderIt bool) {
 			}
 
 			//paths
-			segmentsBlob := segmentsAttr.result.Blob()
+			segmentsBlob := segmentsAttr.GetBlob()
 			if len(segmentsBlob) > 0 {
 				var segments []UiCompMapSegments
 				err := json.Unmarshal(segmentsBlob, &segments)

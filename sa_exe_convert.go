@@ -17,9 +17,12 @@ limitations under the License.
 package main
 
 import (
+	"bytes"
+	"encoding/csv"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"strings"
 )
 
 type SAExe_ConvertTrkseg struct {
@@ -41,7 +44,7 @@ func (node *SANode) SAExe_Convert_GpxToJson() bool {
 	jsonAttr := node.GetAttr("_json", "")
 	jsonAttr.result.SetBlob(nil) //reset
 
-	gpx := gpxAttr.result.Blob()
+	gpx := gpxAttr.GetBlob()
 	if len(gpx) == 0 {
 		return true //empty in, empty out
 	}
@@ -62,5 +65,62 @@ func (node *SANode) SAExe_Convert_GpxToJson() bool {
 	}
 
 	jsonAttr.result.SetBlob(js)
+	return true
+}
+
+func (node *SANode) SAExe_Convert_CsvToJson() bool {
+
+	csvAttr := node.GetAttr("Csv", "")
+	firstLineHeader := node.GetAttrUi("first_line_header", "1", SAAttrUi_SWITCH).GetBool()
+	resultAttr := node.GetAttr("_result", "[]")
+	resultAttr.result.SetBlob(nil) //reset
+
+	csvBlob := csvAttr.GetBlob()
+	if len(csvBlob) == 0 {
+		return true //empty in, empty out
+	}
+
+	data, err := csv.NewReader(bytes.NewBuffer(csvBlob)).ReadAll()
+	if err != nil {
+		node.SetError(fmt.Sprintf("ReadAll() failed: %v", err))
+	}
+
+	max_cols := 0
+	for _, ln := range data {
+		max_cols = OsMax(max_cols, len(ln))
+	}
+
+	rws := "["
+
+	if max_cols > 0 {
+		//create columns list
+		var columnNames []string
+		if firstLineHeader {
+			columnNames = append(columnNames, data[0]...)
+		}
+		for i := len(columnNames); i < max_cols; i++ {
+			columnNames = append(columnNames, fmt.Sprintf("c%d", i))
+		}
+
+		//lines
+		for i, ln := range data {
+			if firstLineHeader && i == 0 {
+				continue //skip header
+			}
+
+			//items
+			rws += "["
+			for _, str := range ln {
+				rws += "\"" + str + "\","
+			}
+			rws, _ = strings.CutSuffix(rws, ",")
+			rws += "],"
+		}
+	}
+
+	rws, _ = strings.CutSuffix(rws, ",")
+	rws += "]"
+
+	resultAttr.result.SetBlob([]byte(rws))
 	return true
 }

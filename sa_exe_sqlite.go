@@ -19,7 +19,6 @@ package main
 import (
 	"database/sql"
 	"encoding/base64"
-	"encoding/csv"
 	"fmt"
 	"os"
 	"strconv"
@@ -194,77 +193,5 @@ func (node *SANode) SAExe_Sqlite_select() bool {
 	rws += "]"
 
 	rowsAttr.result.SetBlob([]byte(rws))
-	return true
-}
-
-func (node *SANode) SAExe_Csv_select() bool {
-
-	fileAttr := node.GetAttr("file", "")
-	firstLineHeader := node.GetAttrUi("first_line_header", "1", SAAttrUi_SWITCH).GetBool()
-	resultAttr := node.GetAttr("_result", "[]")
-	resultAttr.result.SetBlob(nil) //reset
-
-	file := fileAttr.GetString()
-	if file == "" {
-		fileAttr.SetErrorExe("empty")
-		return false
-	}
-
-	_, err := os.Stat(file)
-	if os.IsNotExist(err) {
-		fileAttr.SetErrorExe(fmt.Sprintf("file(%s) doesn't exist", file))
-		return false
-	}
-
-	f, err := os.Open(file)
-	if err != nil {
-		fileAttr.SetErrorExe(fmt.Sprintf("Open(%s) error: %v", file, err))
-		return false
-	}
-	defer f.Close()
-
-	csv := csv.NewReader(f)
-	data, err := csv.ReadAll()
-	if err != nil {
-		node.SetError(fmt.Sprintf("ReadAll() failed: %v", err))
-	}
-
-	max_cols := 0
-	for _, ln := range data {
-		max_cols = OsMax(max_cols, len(ln))
-	}
-
-	rws := "["
-
-	if max_cols > 0 {
-		//create columns list
-		var columnNames []string
-		if firstLineHeader {
-			columnNames = append(columnNames, data[0]...)
-		}
-		for i := len(columnNames); i < max_cols; i++ {
-			columnNames = append(columnNames, fmt.Sprintf("c%d", i))
-		}
-
-		//lines
-		for i, ln := range data {
-			if firstLineHeader && i == 0 {
-				continue //skip header
-			}
-
-			//items
-			rws += "["
-			for _, str := range ln {
-				rws += "\"" + str + "\","
-			}
-			rws, _ = strings.CutSuffix(rws, ",")
-			rws += "],"
-		}
-	}
-
-	rws, _ = strings.CutSuffix(rws, ",")
-	rws += "]"
-
-	resultAttr.result.SetBlob([]byte(rws))
 	return true
 }
