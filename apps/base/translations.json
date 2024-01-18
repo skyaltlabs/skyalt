@@ -336,45 +336,6 @@
 "BACKWARD.cs": "Zpět",
 
 "FORWARD.en": "Forward",
-"FORWARD.cs": "Vpřed",
-
-"BUTTON.en": "Button",
-"BUTTON.cs": "Tlačítko",
-
-"TEXT.en": "Text",
-"TEXT.cs": "Text",
-
-"CHECKBOX.en": "Checkbox",
-"CHECKBOX.cs": "Zaškrtávátko",
-
-"SWITCH.en": "Switch",
-"SWITCH.cs": "Přepínač",
-
-"EDITBOX.en": "Edit",
-"EDITBOX.cs": "Upravit",
-
-"DIVIDER.en": "Divider",
-"DIVIDER.cs": "Dělitel",
-
-"COMBO.en": "Combo-box",
-"COMBO.cs": "Combo-box",
-
-"COLOR_PALETTE.en": "Color palette",
-"COLOR_PALETTE.cs": "Barevná paleta",
-
-"COLOR.en": "Color",
-"COLOR.cs": "Barva",
-
-"CALENDAR.en": "Calendar",
-"CALENDAR.cs": "Kalendář",
-
-"DATE.en": "Date",
-"DATE.cs": "Datum",
-
-"LAYOUT.en": "Layout",
-"LAYOUT.cs": "Layout",
-
-"MAP.en": "Map",
-"MAP.cs": "Mapa"
+"FORWARD.cs": "Vpřed"
 
 }

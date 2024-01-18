@@ -169,21 +169,6 @@ type UiTranslations struct {
 	RESIZE           string
 	BACKWARD         string
 	FORWARD          string
-
-	BUTTON        string
-	TEXT          string
-	CHECKBOX      string
-	SWITCH        string
-	EDITBOX       string
-	DIVIDER       string
-	COMBO         string
-	COLOR_PALETTE string
-	COLOR         string
-	CALENDAR      string
-	DATE          string
-
-	LAYOUT string
-	MAP    string
 }
 
 func (trns *UiTranslations) Find(name string) string {
