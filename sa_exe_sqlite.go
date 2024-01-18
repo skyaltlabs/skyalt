@@ -26,7 +26,7 @@ import (
 	"strings"
 )
 
-func (node *SANode) _Sqlite_open(fileAttr *SANodeAttr) *sql.DB {
+func (node *SANode) _SAExe_Sqlite_open(fileAttr *SANodeAttr) *sql.DB {
 
 	file := fileAttr.GetString()
 
@@ -49,7 +49,7 @@ func (node *SANode) _Sqlite_open(fileAttr *SANodeAttr) *sql.DB {
 	return db
 }
 
-func (node *SANode) Sqlite_insert() bool {
+func (node *SANode) SAExe_Sqlite_insert() bool {
 
 	triggerAttr := node.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
 	fileAttr := node.GetAttr("file", "")
@@ -57,7 +57,7 @@ func (node *SANode) Sqlite_insert() bool {
 
 	if triggerAttr.GetBool() {
 
-		db := node._Sqlite_open(fileAttr)
+		db := node._SAExe_Sqlite_open(fileAttr)
 		if db == nil {
 			return false
 		}
@@ -82,7 +82,7 @@ func (node *SANode) Sqlite_insert() bool {
 	return true
 }
 
-func (node *SANode) Sqlite_select() bool {
+func (node *SANode) SAExe_Sqlite_select() bool {
 
 	fileAttr := node.GetAttr("file", "")
 	queryAttr := node.GetAttr("query", "")
@@ -92,7 +92,7 @@ func (node *SANode) Sqlite_select() bool {
 	colsAttr := node.GetAttr("_columns", "[]")
 	colsAttr.result.SetBlob(nil) //reset
 
-	db := node._Sqlite_open(fileAttr)
+	db := node._SAExe_Sqlite_open(fileAttr)
 	if db == nil {
 		return false
 	}
@@ -197,7 +197,7 @@ func (node *SANode) Sqlite_select() bool {
 	return true
 }
 
-func (node *SANode) Csv_select() bool {
+func (node *SANode) SAExe_Csv_select() bool {
 
 	fileAttr := node.GetAttr("file", "")
 	firstLineHeader := node.GetAttrUi("first_line_header", "1", SAAttrUi_SWITCH).GetBool()

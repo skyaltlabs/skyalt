@@ -23,7 +23,22 @@ import (
 	"strings"
 )
 
-func (w *SANode) SARender_Dialog(renderIt bool) bool {
+func (w *SANode) SAExe_Render_Layout(renderIt bool) {
+	ui := w.app.base.ui
+	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
+
+	grid := w.GetGrid()
+	grid.Size.X = OsMax(grid.Size.X, 1)
+	grid.Size.Y = OsMax(grid.Size.Y, 1)
+
+	if showIt {
+		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
+		w.renderLayout()
+		ui.Div_end()
+	}
+}
+
+func (w *SANode) SAExe_Render_Dialog(renderIt bool) bool {
 	ui := w.app.base.ui
 	showIt := renderIt && ui != nil
 
@@ -46,7 +61,7 @@ func (w *SANode) SARender_Dialog(renderIt bool) bool {
 	return true
 }
 
-func (w *SANode) SARender_Button(renderIt bool) {
+func (w *SANode) SAExe_Render_Button(renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -114,7 +129,7 @@ func (w *SANode) SARender_Button(renderIt bool) {
 	cl.Value = OsTrnString(clicked, "1", "0")
 }
 
-func (w *SANode) SARender_Text(renderIt bool) {
+func (w *SANode) SAExe_Render_Text(renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -130,7 +145,7 @@ func (w *SANode) SARender_Text(renderIt bool) {
 	}
 }
 
-func (w *SANode) SARender_Switch(renderIt bool) {
+func (w *SANode) SAExe_Render_Switch(renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -150,7 +165,7 @@ func (w *SANode) SARender_Switch(renderIt bool) {
 	}
 }
 
-func (w *SANode) SARender_Checkbox(renderIt bool) {
+func (w *SANode) SAExe_Render_Checkbox(renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -170,7 +185,7 @@ func (w *SANode) SARender_Checkbox(renderIt bool) {
 	}
 }
 
-func (w *SANode) SARender_Combo(renderIt bool) {
+func (w *SANode) SAExe_Render_Combo(renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -192,7 +207,7 @@ func (w *SANode) SARender_Combo(renderIt bool) {
 	}
 }
 
-func (w *SANode) SARender_Editbox(renderIt bool) {
+func (w *SANode) SAExe_Render_Editbox(renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -215,7 +230,7 @@ func (w *SANode) SARender_Editbox(renderIt bool) {
 	}
 }
 
-func (w *SANode) SARender_Divider(renderIt bool) {
+func (w *SANode) SAExe_Render_Divider(renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -235,7 +250,7 @@ func (w *SANode) SARender_Divider(renderIt bool) {
 	}
 }
 
-func (w *SANode) SARender_ColorPalette(renderIt bool) {
+func (w *SANode) SAExe_Render_ColorPalette(renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -257,7 +272,7 @@ func (w *SANode) SARender_ColorPalette(renderIt bool) {
 	}
 }
 
-func (w *SANode) SARender_Color(renderIt bool) {
+func (w *SANode) SAExe_Render_Color(renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -276,7 +291,7 @@ func (w *SANode) SARender_Color(renderIt bool) {
 	}
 }
 
-func (w *SANode) SARender_Calendar(renderIt bool) {
+func (w *SANode) SAExe_Render_Calendar(renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -302,7 +317,7 @@ func (w *SANode) SARender_Calendar(renderIt bool) {
 	}
 }
 
-func (w *SANode) SARender_Date(renderIt bool) {
+func (w *SANode) SAExe_Render_Date(renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -326,7 +341,100 @@ func (w *SANode) SARender_Date(renderIt bool) {
 	}
 }
 
-func (w *SANode) SARender_Map(renderIt bool) {
+func (w *SANode) SAExe_Render_Image(renderIt bool) {
+	ui := w.app.base.ui
+	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
+
+	grid := w.GetGrid()
+	grid.Size.X = OsMax(grid.Size.X, 1)
+	grid.Size.Y = OsMax(grid.Size.Y, 1)
+
+	margin := w.GetAttr("margin", "0").result.Number()
+	cd := w.GetAttrUi("cd", "[255, 255, 255, 255]", SAAttrUi_COLOR).result.GetCd()
+	background := w.GetAttrUi("background", "0", SAAttrUi_SWITCH).GetBool()
+
+	alignV := w.GetAttrUi("alignV", "1", SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
+	alignH := w.GetAttrUi("alignH", "1", SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
+	fill := w.GetAttrUi("fill", "0", SAAttrUi_SWITCH).GetBool()
+
+	blobAttr := w.GetAttrUi("blob", "", SAAttrUi_BLOB)
+
+	if !renderIt {
+		if !blobAttr.result.IsBlob() {
+			blobAttr.SetErrorExe("Not BLOB")
+			return
+		}
+	}
+
+	if background {
+		w.z_depth = 0.5
+	}
+
+	if showIt {
+		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
+		{
+			blob := blobAttr.result.Blob()
+			path := InitWinMedia_blob(blob)
+			ui.Paint_file(0, 0, 1, 1, margin, path, cd, alignV, alignH, fill, background)
+		}
+		ui.Div_end()
+	}
+}
+
+func (w *SANode) SAExe_Render_File(renderIt bool) {
+	ui := w.app.base.ui
+	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
+
+	grid := w.GetGrid()
+	grid.Size.X = OsMax(grid.Size.X, 1)
+	grid.Size.Y = OsMax(grid.Size.Y, 1)
+
+	pathAttr := w.GetAttr("path", "")
+	instr := pathAttr.instr.GetConst()
+	value := instr.pos_attr.result.String()
+
+	outputAttr := w.GetAttrUi("_out", "", SAAttrUi_BLOB)
+
+	if showIt {
+		div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
+		{
+			ui.Div_colMax(0, 100)
+			ui.Div_rowMax(0, 100)
+			ui.Div_start(0, 0, 1, 1)
+			ui.Paint_rect(0, 0, 1, 1, 0.03, OsCd{0, 0, 0, 255}, 0.03)
+			ui.Div_end()
+			ui.Comp_text(0, 0, 1, 1, "Drag file & drop it here", 1)
+
+			_, _, _, fnshd, _ := ui.Comp_editbox(0, 1, 1, 1, &value, 0, nil, "path", false, false, true)
+			if fnshd {
+				instr.LineReplace(value)
+			}
+
+			if div.IsOver(ui) {
+				value = ui.win.io.touch.drop_path //rewrite 'value'!
+				if value != "" {
+					instr.LineReplace(value)
+				}
+			}
+		}
+		ui.Div_end()
+	}
+
+	if !renderIt {
+		outputAttr.result.SetBlob(nil) //reset
+
+		if value != "" {
+			data, err := os.ReadFile(value)
+			if err == nil {
+				outputAttr.result.SetBlob(data)
+			} else {
+				pathAttr.SetErrorExe(fmt.Sprintf("ReadFile(%s) failed: %v", value, err))
+			}
+		}
+	}
+}
+
+func (w *SANode) SAExe_Render_Map(renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -404,113 +512,5 @@ func (w *SANode) SARender_Map(renderIt bool) {
 			}
 			ui.Div_end()
 		}
-	}
-}
-
-func (w *SANode) SARender_Image(renderIt bool) {
-	ui := w.app.base.ui
-	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
-
-	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
-
-	margin := w.GetAttr("margin", "0").result.Number()
-	cd := w.GetAttrUi("cd", "[255, 255, 255, 255]", SAAttrUi_COLOR).result.GetCd()
-	background := w.GetAttrUi("background", "0", SAAttrUi_SWITCH).GetBool()
-
-	alignV := w.GetAttrUi("alignV", "1", SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
-	alignH := w.GetAttrUi("alignH", "1", SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
-	fill := w.GetAttrUi("fill", "0", SAAttrUi_SWITCH).GetBool()
-
-	blobAttr := w.GetAttrUi("blob", "", SAAttrUi_BLOB)
-
-	if !renderIt {
-		if !blobAttr.result.IsBlob() {
-			blobAttr.SetErrorExe("Not BLOB")
-			return
-		}
-	}
-
-	if background {
-		w.z_depth = 0.5
-	}
-
-	if showIt {
-		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-		{
-			blob := blobAttr.result.Blob()
-			path := InitWinMedia_blob(blob)
-			ui.Paint_file(0, 0, 1, 1, margin, path, cd, alignV, alignH, fill, background)
-		}
-		ui.Div_end()
-	}
-}
-
-func (w *SANode) SARender_File(renderIt bool) {
-	ui := w.app.base.ui
-	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
-
-	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
-
-	pathAttr := w.GetAttr("path", "")
-	instr := pathAttr.instr.GetConst()
-	value := instr.pos_attr.result.String()
-
-	outputAttr := w.GetAttrUi("_out", "", SAAttrUi_BLOB)
-
-	if showIt {
-		div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-		{
-			ui.Div_colMax(0, 100)
-			ui.Div_rowMax(0, 100)
-			ui.Div_start(0, 0, 1, 1)
-			ui.Paint_rect(0, 0, 1, 1, 0.03, OsCd{0, 0, 0, 255}, 0.03)
-			ui.Div_end()
-			ui.Comp_text(0, 0, 1, 1, "Drag file & drop it here", 1)
-
-			_, _, _, fnshd, _ := ui.Comp_editbox(0, 1, 1, 1, &value, 0, nil, "path", false, false, true)
-			if fnshd {
-				instr.LineReplace(value)
-			}
-
-			if div.IsOver(ui) {
-				value = ui.win.io.touch.drop_path //rewrite 'value'!
-				if value != "" {
-					instr.LineReplace(value)
-				}
-			}
-		}
-		ui.Div_end()
-	}
-
-	if !renderIt {
-		outputAttr.result.SetBlob(nil) //reset
-
-		if value != "" {
-			data, err := os.ReadFile(value)
-			if err == nil {
-				outputAttr.result.SetBlob(data)
-			} else {
-				pathAttr.SetErrorExe(fmt.Sprintf("ReadFile(%s) failed: %v", value, err))
-			}
-		}
-	}
-}
-
-func (w *SANode) SARender_Layout(renderIt bool) {
-	ui := w.app.base.ui
-	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
-
-	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
-
-	if showIt {
-		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
-		w.renderLayout()
-		ui.Div_end()
 	}
 }

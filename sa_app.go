@@ -675,7 +675,7 @@ func (app *SAApp) addHistory(exeIt bool, rewriteLast bool) {
 		app.history_act[app.history_pos] = cp_act
 	} else {
 
-		if cp_root == nil || cp_act == nil {
+		if cp_root == nil || cp_act == nil { //delete ........
 			fmt.Print("df")
 		}
 

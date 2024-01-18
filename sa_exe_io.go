@@ -18,9 +18,25 @@ package main
 
 import (
 	"fmt"
+	"os"
 )
 
-func (w *SANode) ConstBlob() bool {
+func (node *SANode) SAExe_IO_write() bool {
+
+	triggerAttr := node.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
+	fileAttr := node.GetAttr("file", "")
+	jsonAttr := node.GetAttr("json", "")
+
+	if triggerAttr.GetBool() {
+		os.WriteFile(fileAttr.result.String(), jsonAttr.result.Blob(), 0644)
+
+		triggerAttr.SetExpBool(false)
+	}
+
+	return true
+}
+
+func (w *SANode) SAExe_IO_blob() bool {
 
 	tp := int(w.GetAttrUi("type", "0", SAAttrUiValue{Fn: "combo", Prm: "Database;App"}).result.Number())
 
@@ -48,7 +64,7 @@ func (w *SANode) ConstBlob() bool {
 	return true
 }
 
-func (w *SANode) ConstMedium() bool {
+func (w *SANode) SAExe_Medium() bool {
 	//nothing here, it's all about RenderAttrs()
 	return true
 }

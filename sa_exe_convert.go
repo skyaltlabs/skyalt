@@ -20,14 +20,9 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"os"
 )
 
-type SAConvertGPX struct {
-	Trkseg []SAConvertTrkseg `xml:"trk>trkseg" json:"segments"`
-}
-
-type SAConvertTrkseg struct {
+type SAExe_ConvertTrkseg struct {
 	Trkpt []struct {
 		Lat  float32 `xml:"lat,attr" json:"lat"`
 		Lon  float32 `xml:"lon,attr" json:"lon"`
@@ -36,7 +31,11 @@ type SAConvertTrkseg struct {
 	} `xml:"trkpt"`
 }
 
-func (node *SANode) SAConvert_GpxToJson() bool {
+type SAExe_ConvertGPX struct {
+	Trkseg []SAExe_ConvertTrkseg `xml:"trk>trkseg" json:"segments"`
+}
+
+func (node *SANode) SAExe_Convert_GpxToJson() bool {
 
 	gpxAttr := node.GetAttr("gpx", "")
 	jsonAttr := node.GetAttr("_json", "")
@@ -48,7 +47,7 @@ func (node *SANode) SAConvert_GpxToJson() bool {
 	}
 
 	//gpx -> struct
-	var g SAConvertGPX
+	var g SAExe_ConvertGPX
 	err := xml.Unmarshal(gpx, &g)
 	if err != nil {
 		gpxAttr.SetErrorExe(fmt.Sprintf("Unmarshal() failed: %v", err))
@@ -63,20 +62,5 @@ func (node *SANode) SAConvert_GpxToJson() bool {
 	}
 
 	jsonAttr.result.SetBlob(js)
-	return true
-}
-
-func (node *SANode) SA_WriteFile() bool {
-
-	triggerAttr := node.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
-	fileAttr := node.GetAttr("file", "")
-	jsonAttr := node.GetAttr("json", "")
-
-	if triggerAttr.GetBool() {
-		os.WriteFile(fileAttr.result.String(), jsonAttr.result.Blob(), 0644)
-
-		triggerAttr.SetExpBool(false)
-	}
-
 	return true
 }

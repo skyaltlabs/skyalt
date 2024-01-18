@@ -386,39 +386,39 @@ func (w *SANode) ExecuteGui(renderIt bool) {
 	switch strings.ToLower(w.Exe) {
 
 	case "dialog":
-		w.SARender_Dialog(renderIt)
+		w.SAExe_Render_Dialog(renderIt)
 
 	case "button":
-		w.SARender_Button(renderIt)
+		w.SAExe_Render_Button(renderIt)
 	case "text":
-		w.SARender_Text(renderIt)
+		w.SAExe_Render_Text(renderIt)
 	case "switch":
-		w.SARender_Switch(renderIt)
+		w.SAExe_Render_Switch(renderIt)
 	case "checkbox":
-		w.SARender_Checkbox(renderIt)
+		w.SAExe_Render_Checkbox(renderIt)
 	case "combo":
-		w.SARender_Combo(renderIt)
+		w.SAExe_Render_Combo(renderIt)
 	case "editbox":
-		w.SARender_Editbox(renderIt)
+		w.SAExe_Render_Editbox(renderIt)
 	case "divider":
-		w.SARender_Divider(renderIt)
+		w.SAExe_Render_Divider(renderIt)
 	case "color_palette":
-		w.SARender_ColorPalette(renderIt)
+		w.SAExe_Render_ColorPalette(renderIt)
 	case "color":
-		w.SARender_Color(renderIt)
+		w.SAExe_Render_Color(renderIt)
 	case "calendar":
-		w.SARender_Calendar(renderIt)
+		w.SAExe_Render_Calendar(renderIt)
 	case "date":
-		w.SARender_Date(renderIt)
+		w.SAExe_Render_Date(renderIt)
 	case "map":
-		w.SARender_Map(renderIt)
+		w.SAExe_Render_Map(renderIt)
 	case "image":
-		w.SARender_Image(renderIt)
+		w.SAExe_Render_Image(renderIt)
 	case "file":
-		w.SARender_File(renderIt)
+		w.SAExe_Render_File(renderIt)
 
 	case "layout":
-		w.SARender_Layout(renderIt)
+		w.SAExe_Render_Layout(renderIt)
 	}
 }
 
@@ -429,7 +429,7 @@ func (w *SANode) Execute() bool {
 
 	switch strings.ToLower(w.Exe) {
 	case "sqlite_select":
-		ok = w.Sqlite_select()
+		ok = w.SAExe_Sqlite_select()
 	case "sqlite_insert":
 		//ok = w.Sqlite_insert()	//.......
 	case "sqlite_update":
@@ -440,18 +440,19 @@ func (w *SANode) Execute() bool {
 		//...
 
 	case "csv_select":
-		ok = w.Csv_select()
+		ok = w.SAExe_Csv_select()
 
 	case "gpx_to_json":
-		ok = w.SAConvert_GpxToJson()
+		ok = w.SAExe_Convert_GpxToJson()
 
 	case "write_file":
-		ok = w.SA_WriteFile()
+		ok = w.SAExe_IO_write()
 
 	case "blob":
-		ok = w.ConstBlob()
+		ok = w.SAExe_IO_blob()
+
 	case "medium":
-		ok = w.ConstMedium()
+		ok = w.SAExe_Medium()
 
 	default:
 		if SAApp_IsExternal(w.Exe) {
@@ -460,7 +461,7 @@ func (w *SANode) Execute() bool {
 	}
 
 	w.exeTimeSec = OsTime() - st
-	fmt.Printf("'%s' done in %.2fs\n", w.Name, w.exeTimeSec)
+	//fmt.Printf("'%s' done in %.2fs\n", w.Name, w.exeTimeSec)
 	return ok
 }
 
