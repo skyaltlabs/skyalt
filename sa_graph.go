@@ -501,9 +501,9 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 				ui.Div_end()
 
 				y := 1
-				search := strings.ToLower(gr.node_search)
+				searches := strings.Split(strings.ToLower(gr.node_search), " ")
 				for _, n := range gr.app.act.Subs {
-					if search == "" || strings.Contains(strings.ToLower(n.Name), search) {
+					if gr.node_search == "" || SAApp_IsSearchedName(n.Name, searches) {
 						if ui.Comp_buttonMenu(0, y, 1, 1, n.Name, n.Exe, true, n.Selected) > 0 {
 							n.SelectOnlyThis()
 							gr.autoZoom(true, graphCanvas, ui)

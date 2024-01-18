@@ -399,91 +399,22 @@ func (app *SAApp) History(ui *Ui) {
 	}
 }
 
-var SAStandardPrimitives = []string{"button", "text", "checkbox", "switch", "editbox", "divider", "combo", "color_palette", "color", "calendar", "date", "map", "image", "file"}
-var SAStandardComponents = []string{"layout"}
-var SAStandardBackComp = []string{"dialog"}
-var SAStandardModifiers = []string{"sqlite_select", "sqlite_insert", "sqlite_update", "sqlite_delete", "sqlite_execute", "csv_select", "blob", "medium", "gpx_to_json", "write_file"}
+func (app *SAApp) ComboListOfNodes(x, y, w, h int, act string, ui *Ui) string {
+	//fns_names := app.getListOfNodesTranslated()
+	fns_values := app.base.node_groups.getList()
 
-func SAApp_IsStdPrimitive(name string) bool {
-	for _, fn := range SAStandardPrimitives {
-		if strings.EqualFold(fn, name) {
-			return true
-		}
-	}
-	return false
-}
-func SAApp_IsStdComponent(name string) bool {
-	for _, fn := range SAStandardComponents {
-		if strings.EqualFold(fn, name) {
-			return true
-		}
-	}
-	return false
-}
-func SAApp_IsStdModifier(name string) bool {
-	for _, fn := range SAStandardModifiers {
-		if strings.EqualFold(fn, name) {
-			return true
-		}
-	}
-	return false
+	ui.Comp_combo(x, y, w, h, &act, fns_values, fns_values, "", true, true) //add icons ...
+	return act
 }
 
-func SAApp_IsStdBackComp(name string) bool {
-	for _, fn := range SAStandardBackComp {
-		if strings.EqualFold(fn, name) {
-			return true
+func SAApp_IsSearchedName(name string, search []string) bool {
+	name = strings.ToLower(name)
+	for _, se := range search {
+		if !strings.Contains(name, se) {
+			return false //must has all
 		}
-	}
-	return false
-}
-
-func SAApp_IsExternal(name string) bool {
-	if SAApp_IsStdPrimitive(name) {
-		return false
-	}
-	if SAApp_IsStdComponent(name) {
-		return false
-	}
-	if SAApp_IsStdModifier(name) {
-		return false
-	}
-	if SAApp_IsStdBackComp(name) {
-		return false
 	}
 	return true
-}
-
-func (app *SAApp) getListOfNodes() []string {
-	fns := SAStandardPrimitives
-	fns = append(fns, SAStandardComponents...)
-	fns = append(fns, SAStandardBackComp...)
-	fns = append(fns, SAStandardModifiers...)
-	fns = append(fns, app.base.server.nodes...) //from /nodes dir
-	return fns
-}
-
-func (app *SAApp) getListOfNodesTranslated() []string {
-
-	fnsOrig := app.getListOfNodes()
-
-	var fnsTrns []string
-	for _, nm := range fnsOrig {
-		val := app.base.ui.trns.Find(nm)
-		if val == "" {
-			val = nm
-		}
-		fnsTrns = append(fnsTrns, val)
-	}
-	return fnsTrns
-}
-
-func (app *SAApp) ComboListOfNodes(x, y, w, h int, act string, ui *Ui) string {
-	fns_names := app.getListOfNodesTranslated()
-	fns_values := app.getListOfNodes()
-
-	ui.Comp_combo(x, y, w, h, &act, fns_names, fns_values, "", true, true)
-	return act
 }
 
 func (app *SAApp) drawCreateNode(ui *Ui) {
@@ -495,24 +426,59 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 		ui.Comp_editbox(0, 0, 1, 1, &app.canvas.addnode_search, 0, nil, ui.trns.SEARCH, app.canvas.addnode_search != "", true, true)
 		y++
 
-		keys := &ui.buff.win.io.keys
+		if app.canvas.addnode_search != "" {
 
-		app.canvas.addnode_search = strings.ToLower(app.canvas.addnode_search)
+			//search
+			keys := &ui.buff.win.io.keys
+			searches := strings.Split(strings.ToLower(app.canvas.addnode_search), " ")
+		out1:
+			for _, gr := range app.base.node_groups.groups {
+				for _, fn := range gr.nodes {
+					if app.canvas.addnode_search == "" || SAApp_IsSearchedName(fn, searches) {
+						if keys.enter || ui.Comp_buttonMenuIcon(0, y, 1, 1, fn, gr.icon, 0.2, "", true, false) > 0 {
+							//add new node
+							nw := app.act.AddNode(app.canvas.addGrid, app.canvas.addPos, fn)
+							nw.SelectOnlyThis()
 
-		fns := app.getListOfNodes()
-		search := strings.ToLower(app.canvas.addnode_search)
-		for _, fn := range fns {
-			if search == "" || strings.Contains(strings.ToLower(fn), search) {
-				if keys.enter || ui.Comp_buttonMenu(0, y, 1, 1, fn, "", true, false) > 0 {
-					//add new node
-					nw := app.act.AddNode(app.canvas.addGrid, app.canvas.addPos, fn)
-					nw.SelectOnlyThis()
-
-					ui.Dialog_close()
-					break
+							ui.Dialog_close()
+							break out1
+						}
+						y++
+					}
 				}
+			}
+		} else {
+
+		out2:
+			for _, gr := range app.base.node_groups.groups {
+
+				//folders
+				dnm := "node_group_" + gr.name
+				if ui.Comp_buttonMenuIcon(0, y, 1, 1, gr.name, gr.icon, 0.2, "", true, false) > 0 {
+					ui.Dialog_open(dnm, 1)
+				}
+				ui.Comp_text(1, y, 1, 1, "►", 1)
+
+				if ui.Dialog_start(dnm) {
+					ui.Div_colMax(0, 5)
+
+					for i, fn := range gr.nodes {
+						if ui.Comp_buttonMenuIcon(0, i, 1, 1, fn, gr.icon, 0.2, "", true, false) > 0 {
+							//add new node
+							nw := app.act.AddNode(app.canvas.addGrid, app.canvas.addPos, fn)
+							nw.SelectOnlyThis()
+
+							ui.CloseAll()
+							break out2
+						}
+					}
+
+					ui.Dialog_end()
+				}
+
 				y++
 			}
+
 		}
 
 		if ui.win.io.keys.tab {

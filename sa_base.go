@@ -32,11 +32,15 @@ type SABase struct {
 	exit bool
 
 	server *SANodeServer
+
+	node_groups SANodeGroups
 }
 
 func NewSABase(ui *Ui) (*SABase, error) {
 	base := &SABase{}
 	base.ui = ui
+
+	base.node_groups = InitSANodeGroups()
 
 	//open
 	{

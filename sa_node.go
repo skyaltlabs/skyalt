@@ -353,16 +353,10 @@ func (w *SANode) buildList(list *[]*SANode) {
 }
 
 func (w *SANode) IsGuiLayout() bool {
-	return strings.EqualFold(w.Exe, "layout") || !w.IsGuiPrimitive() //every exe is layout
-}
-func (w *SANode) IsGuiPrimitive() bool {
-	if w.Exe == "" {
-		return true
-	}
-	return SAApp_IsStdPrimitive(w.Exe)
+	return SANodeGroups_HasNodeSub(w.Exe)
 }
 func (w *SANode) CanBeRenderOnCanvas() bool {
-	return (SAApp_IsStdPrimitive(w.Exe) || SAApp_IsStdComponent(w.Exe))
+	return w.app.base.node_groups.IsUI(w.Exe)
 }
 
 func (w *SANode) markUnusedAttrs() {
@@ -414,8 +408,8 @@ func (w *SANode) ExecuteGui(renderIt bool) {
 		w.SAExe_Render_Map(renderIt)
 	case "image":
 		w.SAExe_Render_Image(renderIt)
-	case "file":
-		w.SAExe_Render_File(renderIt)
+	case "file_drop":
+		w.SAExe_Render_FileDrop(renderIt)
 
 	case "layout":
 		w.SAExe_Render_Layout(renderIt)
@@ -439,23 +433,23 @@ func (w *SANode) Execute() bool {
 	case "sqlite_execute":
 		//...
 
-	case "csv_select":
-		ok = w.SAExe_Csv_select()
+	case "csv_to_json":
+		ok = w.SAExe_Convert_CsvToJson()
 
 	case "gpx_to_json":
 		ok = w.SAExe_Convert_GpxToJson()
 
 	case "write_file":
-		ok = w.SAExe_IO_write()
+		ok = w.SAExe_File_write()
 
-	case "blob":
-		ok = w.SAExe_IO_blob()
+	case "read_file":
+		ok = w.SAExe_File_read()
 
-	case "medium":
-		ok = w.SAExe_Medium()
+	case "vars":
+		ok = w.SAExe_Vars()
 
 	default:
-		if SAApp_IsExternal(w.Exe) {
+		if w.app.base.node_groups.FindNode(w.Exe) == nil {
 			ok = w.executeProgram()
 		}
 	}
