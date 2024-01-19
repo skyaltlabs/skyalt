@@ -75,6 +75,15 @@ func (exe *SANodeExe) Tick(app *SAApp) bool {
 			active = true
 
 			if it.IsReadyToBeExe() {
+
+				//execute expression
+				for _, v := range it.Attrs {
+					if v.errExp != nil {
+						continue
+					}
+					v.ExecuteExpression()
+				}
+
 				if !it.Bypass && (!app.IDE || app.EnableExecution) { //ignore in releaseMode
 
 					it.ExecuteGui(false)

@@ -151,7 +151,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 			ui.Paint_tooltip(0, 0, 1, 1, node.progress_desc)
 		}
 
-		ui.Comp_textSelect(0, 0, 1, 1, nm, 1, node.app.base.node_groups.FindNodeIcon(node.Exe), 0.3, false)
+		ui.Comp_textSelect(0, 0, 1, 1, nm, 1, node.app.base.node_groups.FindNodeGroupIcon(node.Exe), 0.3, false)
 	}
 
 	selectRad := ui.CellWidth(roundc * 1.3)

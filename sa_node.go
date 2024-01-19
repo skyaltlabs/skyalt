@@ -334,14 +334,6 @@ func (w *SANode) IsReadyToBeExe() bool {
 		}
 	}
 
-	//execute expression
-	for _, v := range w.Attrs {
-		if v.errExp != nil {
-			continue
-		}
-		v.ExecuteExpression()
-	}
-
 	return true
 }
 
@@ -353,7 +345,7 @@ func (w *SANode) buildList(list *[]*SANode) {
 }
 
 func (w *SANode) IsGuiLayout() bool {
-	return SANodeGroups_HasNodeSub(w.Exe)
+	return SAGroups_HasNodeSub(w.Exe)
 }
 func (w *SANode) CanBeRenderOnCanvas() bool {
 	return w.app.base.node_groups.IsUI(w.Exe)
@@ -377,42 +369,9 @@ func (w *SANode) ExecuteGui(renderIt bool) {
 
 	w.z_depth = 1
 
-	switch strings.ToLower(w.Exe) {
-
-	case "dialog":
-		w.SAExe_Render_Dialog(renderIt)
-
-	case "button":
-		w.SAExe_Render_Button(renderIt)
-	case "text":
-		w.SAExe_Render_Text(renderIt)
-	case "switch":
-		w.SAExe_Render_Switch(renderIt)
-	case "checkbox":
-		w.SAExe_Render_Checkbox(renderIt)
-	case "combo":
-		w.SAExe_Render_Combo(renderIt)
-	case "editbox":
-		w.SAExe_Render_Editbox(renderIt)
-	case "divider":
-		w.SAExe_Render_Divider(renderIt)
-	case "color_palette":
-		w.SAExe_Render_ColorPalette(renderIt)
-	case "color":
-		w.SAExe_Render_Color(renderIt)
-	case "calendar":
-		w.SAExe_Render_Calendar(renderIt)
-	case "date":
-		w.SAExe_Render_Date(renderIt)
-	case "map":
-		w.SAExe_Render_Map(renderIt)
-	case "image":
-		w.SAExe_Render_Image(renderIt)
-	case "file_drop":
-		w.SAExe_Render_FileDrop(renderIt)
-
-	case "layout":
-		w.SAExe_Render_Layout(renderIt)
+	gnd := w.app.base.node_groups.FindNode(w.Exe)
+	if gnd != nil && gnd.render != nil {
+		gnd.render(w, renderIt)
 	}
 }
 
@@ -421,35 +380,11 @@ func (w *SANode) Execute() bool {
 	ok := true
 	st := OsTime()
 
-	switch strings.ToLower(w.Exe) {
-	case "sqlite_select":
-		ok = w.SAExe_Sqlite_select()
-	case "sqlite_insert":
-		//ok = w.Sqlite_insert()	//.......
-	case "sqlite_update":
-		//...
-	case "sqlite_delete":
-		//...
-	case "sqlite_execute":
-		//...
-
-	case "csv_to_json":
-		ok = w.SAExe_Convert_CsvToJson()
-
-	case "gpx_to_json":
-		ok = w.SAExe_Convert_GpxToJson()
-
-	case "write_file":
-		ok = w.SAExe_File_write()
-
-	case "read_file":
-		ok = w.SAExe_File_read()
-
-	case "vars":
-		ok = w.SAExe_Vars()
-
-	default:
-		if w.app.base.node_groups.FindNode(w.Exe) == nil {
+	gnd := w.app.base.node_groups.FindNode(w.Exe)
+	if gnd != nil && gnd.fn != nil {
+		ok = gnd.fn(w)
+	} else {
+		if gnd.render == nil {
 			ok = w.executeProgram()
 		}
 	}

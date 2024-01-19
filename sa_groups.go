@@ -18,77 +18,125 @@ package main
 
 import "strings"
 
-type SANodeGroup struct {
+type SAGroupNode struct {
+	name   string
+	fn     func(node *SANode) bool
+	render func(node *SANode, renderIt bool)
+}
+
+type SAGroup struct {
 	name  string
 	icon  WinMedia
-	nodes []string //add funcs ...........
+	nodes []*SAGroupNode
 }
 
-func (gr *SANodeGroup) Find(name string) bool {
-	for _, fn := range gr.nodes {
-		if strings.EqualFold(fn, name) {
-			return true
+func (gr *SAGroup) Find(name string) *SAGroupNode {
+	for _, nd := range gr.nodes {
+		if strings.EqualFold(nd.name, name) {
+			return nd
 		}
 	}
-	return false
+	return nil
 }
 
-type SANodeGroups struct {
-	groups []*SANodeGroup
-	ui     *SANodeGroup
+type SAGroups struct {
+	groups []*SAGroup
+	ui     *SAGroup
 }
 
-func InitSANodeGroups() SANodeGroups {
-	var grs SANodeGroups
+func InitSAGroups() SAGroups {
+	var grs SAGroups
 
 	path := "file:apps/base/resources/"
 
-	grs.ui = &SANodeGroup{name: "UI", icon: InitWinMedia_url(path + "node_ui.png"), nodes: []string{"layout", "dialog", "button", "text", "checkbox", "switch", "editbox", "divider", "combo", "color_palette", "color", "calendar", "date", "map", "image", "file_drop"}}
+	grs.ui = &SAGroup{name: "UI", icon: InitWinMedia_url(path + "node_ui.png"), nodes: []*SAGroupNode{
+		{name: "layout", render: SAExe_Render_Layout},
+		{name: "dialog", render: SAExe_Render_Dialog},
+		{name: "button", render: SAExe_Render_Button},
+		{name: "text", render: SAExe_Render_Text},
+		{name: "checkbox", render: SAExe_Render_Checkbox},
+		{name: "switch", render: SAExe_Render_Switch},
+		{name: "editbox", render: SAExe_Render_Editbox},
+		{name: "divider", render: SAExe_Render_Divider},
+		{name: "combo", render: SAExe_Render_Combo},
+		{name: "color_palette", render: SAExe_Render_ColorPalette},
+		{name: "color", render: SAExe_Render_Color},
+		{name: "calendar", render: SAExe_Render_Calendar},
+		{name: "date", render: SAExe_Render_Date},
+		{name: "map", render: SAExe_Render_Map},
+		{name: "image", render: SAExe_Render_Image},
+		{name: "file_drop", render: SAExe_Render_FileDrop},
+	}}
 	grs.groups = append(grs.groups, grs.ui)
 
-	grs.groups = append(grs.groups, &SANodeGroup{name: "Variables", icon: InitWinMedia_url(path + "node_vars.png"), nodes: []string{"medium"}})
-	grs.groups = append(grs.groups, &SANodeGroup{name: "File", icon: InitWinMedia_url(path + "node_file.png"), nodes: []string{"read_file", "write_file"}})
-	grs.groups = append(grs.groups, &SANodeGroup{name: "Convert", icon: InitWinMedia_url(path + "node_convert.png"), nodes: []string{"csv_to_json", "gpx_to_json"}})
-	grs.groups = append(grs.groups, &SANodeGroup{name: "SQLite", icon: InitWinMedia_url(path + "node_db.png"), nodes: []string{"sqlite_select", "sqlite_insert", "sqlite_update", "sqlite_delete", "sqlite_execute"}})
+	grs.groups = append(grs.groups, &SAGroup{name: "Variables", icon: InitWinMedia_url(path + "node_vars.png"), nodes: []*SAGroupNode{
+		{name: "vars", fn: SAExe_Vars},
+	}})
+
+	grs.groups = append(grs.groups, &SAGroup{name: "File", icon: InitWinMedia_url(path + "node_file.png"), nodes: []*SAGroupNode{
+		{name: "read_file", fn: SAExe_File_read},
+		{name: "write_file", fn: SAExe_File_write},
+	}})
+	grs.groups = append(grs.groups, &SAGroup{name: "Convert", icon: InitWinMedia_url(path + "node_convert.png"), nodes: []*SAGroupNode{
+		{name: "csv_to_json", fn: SAExe_Convert_CsvToJson},
+		{name: "gpx_to_json", fn: SAExe_Convert_GpxToJson},
+	}})
+	grs.groups = append(grs.groups, &SAGroup{name: "SQLite", icon: InitWinMedia_url(path + "node_db.png"), nodes: []*SAGroupNode{
+		{name: "sqlite_select", fn: SAExe_Sqlite_select},
+		{name: "sqlite_insert", fn: SAExe_Sqlite_insert},
+		//"sqlite_update", "sqlite_delete", "sqlite_execute" .....
+	}})
 
 	//add custom ...
 	//fns = append(fns, app.base.server.nodes...) //from /nodes dir
 
 	return grs
 }
-func SANodeGroups_HasNodeSub(node string) bool {
+func SAGroups_HasNodeSub(node string) bool {
 	return strings.EqualFold(node, "layout") || strings.EqualFold(node, "dialog")
 }
 
-func (grs *SANodeGroups) IsUI(node string) bool {
-	return grs.ui.Find(node)
+func (grs *SAGroups) IsUI(node string) bool {
+	return grs.ui.Find(node) != nil
 }
 
-func (grs *SANodeGroups) FindNode(node string) *SANodeGroup {
+func (grs *SAGroups) FindNode(node string) *SAGroupNode {
+	for _, gr := range grs.groups {
+		nd := gr.Find(node)
+		if nd != nil {
+			return nd
+		}
+	}
+	return nil
+}
+
+func (grs *SAGroups) FindNodeGroup(node string) *SAGroup {
 
 	for _, gr := range grs.groups {
-		if gr.Find(node) {
+		if gr.Find(node) != nil {
 			return gr
 		}
 	}
 
 	return nil
 }
-func (grs *SANodeGroups) FindNodeIcon(node string) WinMedia {
+func (grs *SAGroups) FindNodeGroupIcon(node string) WinMedia {
 
-	gr := grs.FindNode(node)
+	gr := grs.FindNodeGroup(node)
 	if gr != nil {
 		return gr.icon
 	}
 	return WinMedia{}
 }
 
-func (grs *SANodeGroups) getList() []string {
+func (grs *SAGroups) getList() []string {
 
 	var fns []string
 
 	for _, gr := range grs.groups {
-		fns = append(fns, gr.nodes...)
+		for _, nd := range gr.nodes {
+			fns = append(fns, nd.name)
+		}
 	}
 
 	return fns

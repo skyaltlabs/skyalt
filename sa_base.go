@@ -33,14 +33,14 @@ type SABase struct {
 
 	server *SANodeServer
 
-	node_groups SANodeGroups
+	node_groups SAGroups
 }
 
 func NewSABase(ui *Ui) (*SABase, error) {
 	base := &SABase{}
 	base.ui = ui
 
-	base.node_groups = InitSANodeGroups()
+	base.node_groups = InitSAGroups()
 
 	//open
 	{

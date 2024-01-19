@@ -21,7 +21,7 @@ import (
 	"os"
 )
 
-func (node *SANode) SAExe_File_write() bool {
+func SAExe_File_write(node *SANode) bool {
 
 	triggerAttr := node.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
 
@@ -48,7 +48,7 @@ func (node *SANode) SAExe_File_write() bool {
 	return true
 }
 
-func (node *SANode) SAExe_File_read() bool {
+func SAExe_File_read(node *SANode) bool {
 
 	tp := node.GetAttrUi("type", "0", SAAttrUiValue{Fn: "combo", Prm: "Database;App;Disk"}).GetInt()
 
@@ -84,7 +84,7 @@ func (node *SANode) SAExe_File_read() bool {
 	return true
 }
 
-func (node *SANode) SAExe_Vars() bool {
+func SAExe_Vars(node *SANode) bool {
 	//nothing here, it's all about RenderAttrs()
 	return true
 }

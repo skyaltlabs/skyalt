@@ -38,7 +38,7 @@ type SAExe_ConvertGPX struct {
 	Trkseg []SAExe_ConvertTrkseg `xml:"trk>trkseg" json:"segments"`
 }
 
-func (node *SANode) SAExe_Convert_GpxToJson() bool {
+func SAExe_Convert_GpxToJson(node *SANode) bool {
 
 	gpxAttr := node.GetAttr("gpx", "")
 	jsonAttr := node.GetAttr("_json", "")
@@ -68,7 +68,7 @@ func (node *SANode) SAExe_Convert_GpxToJson() bool {
 	return true
 }
 
-func (node *SANode) SAExe_Convert_CsvToJson() bool {
+func SAExe_Convert_CsvToJson(node *SANode) bool {
 
 	csvAttr := node.GetAttr("Csv", "")
 	firstLineHeader := node.GetAttrUi("first_line_header", "1", SAAttrUi_SWITCH).GetBool()

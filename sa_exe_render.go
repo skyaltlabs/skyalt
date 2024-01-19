@@ -23,7 +23,7 @@ import (
 	"strings"
 )
 
-func (w *SANode) SAExe_Render_Layout(renderIt bool) {
+func SAExe_Render_Layout(w *SANode, renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -38,9 +38,9 @@ func (w *SANode) SAExe_Render_Layout(renderIt bool) {
 	}
 }
 
-func (w *SANode) SAExe_Render_Dialog(renderIt bool) bool {
+func SAExe_Render_Dialog(w *SANode, renderIt bool) {
 	ui := w.app.base.ui
-	showIt := renderIt && ui != nil
+	showIt := renderIt && w.CanBeRenderOnCanvas() && ui != nil
 
 	triggerAttr := w.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
 	typeAttr := w.GetAttrUi("type", "0", SAAttrUi_COMBO("Center;Relative", ""))
@@ -57,11 +57,9 @@ func (w *SANode) SAExe_Render_Dialog(renderIt bool) bool {
 			ui.Dialog_end()
 		}
 	}
-
-	return true
 }
 
-func (w *SANode) SAExe_Render_Button(renderIt bool) {
+func SAExe_Render_Button(w *SANode, renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -124,12 +122,14 @@ func (w *SANode) SAExe_Render_Button(renderIt bool) {
 		}
 	}
 
-	w.GetAttrUi("clicked", "0", SAAttrUi_SWITCH).GetBool()
-	cl := w.findAttr("clicked")
-	cl.Value = OsTrnString(clicked, "1", "0")
+	if clicked {
+		fmt.Println("df")
+	}
+
+	w.GetAttrUi("clicked", "0", SAAttrUi_SWITCH).SetExpBool(clicked)
 }
 
-func (w *SANode) SAExe_Render_Text(renderIt bool) {
+func SAExe_Render_Text(w *SANode, renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -145,7 +145,7 @@ func (w *SANode) SAExe_Render_Text(renderIt bool) {
 	}
 }
 
-func (w *SANode) SAExe_Render_Switch(renderIt bool) {
+func SAExe_Render_Switch(w *SANode, renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -168,7 +168,7 @@ func (w *SANode) SAExe_Render_Switch(renderIt bool) {
 	}
 }
 
-func (w *SANode) SAExe_Render_Checkbox(renderIt bool) {
+func SAExe_Render_Checkbox(w *SANode, renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -191,7 +191,7 @@ func (w *SANode) SAExe_Render_Checkbox(renderIt bool) {
 	}
 }
 
-func (w *SANode) SAExe_Render_Combo(renderIt bool) {
+func SAExe_Render_Combo(w *SANode, renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -215,7 +215,7 @@ func (w *SANode) SAExe_Render_Combo(renderIt bool) {
 	}
 }
 
-func (w *SANode) SAExe_Render_Editbox(renderIt bool) {
+func SAExe_Render_Editbox(w *SANode, renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -240,7 +240,7 @@ func (w *SANode) SAExe_Render_Editbox(renderIt bool) {
 	}
 }
 
-func (w *SANode) SAExe_Render_Divider(renderIt bool) {
+func SAExe_Render_Divider(w *SANode, renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -260,7 +260,7 @@ func (w *SANode) SAExe_Render_Divider(renderIt bool) {
 	}
 }
 
-func (w *SANode) SAExe_Render_ColorPalette(renderIt bool) {
+func SAExe_Render_ColorPalette(w *SANode, renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -282,7 +282,7 @@ func (w *SANode) SAExe_Render_ColorPalette(renderIt bool) {
 	}
 }
 
-func (w *SANode) SAExe_Render_Color(renderIt bool) {
+func SAExe_Render_Color(w *SANode, renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -301,7 +301,7 @@ func (w *SANode) SAExe_Render_Color(renderIt bool) {
 	}
 }
 
-func (w *SANode) SAExe_Render_Calendar(renderIt bool) {
+func SAExe_Render_Calendar(w *SANode, renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -327,7 +327,7 @@ func (w *SANode) SAExe_Render_Calendar(renderIt bool) {
 	}
 }
 
-func (w *SANode) SAExe_Render_Date(renderIt bool) {
+func SAExe_Render_Date(w *SANode, renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -351,7 +351,7 @@ func (w *SANode) SAExe_Render_Date(renderIt bool) {
 	}
 }
 
-func (w *SANode) SAExe_Render_Image(renderIt bool) {
+func SAExe_Render_Image(w *SANode, renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -391,7 +391,7 @@ func (w *SANode) SAExe_Render_Image(renderIt bool) {
 	}
 }
 
-func (w *SANode) SAExe_Render_FileDrop(renderIt bool) {
+func SAExe_Render_FileDrop(w *SANode, renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -444,7 +444,7 @@ func (w *SANode) SAExe_Render_FileDrop(renderIt bool) {
 	}
 }
 
-func (w *SANode) SAExe_Render_Map(renderIt bool) {
+func SAExe_Render_Map(w *SANode, renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 

@@ -433,11 +433,11 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 			searches := strings.Split(strings.ToLower(app.canvas.addnode_search), " ")
 		out1:
 			for _, gr := range app.base.node_groups.groups {
-				for _, fn := range gr.nodes {
-					if app.canvas.addnode_search == "" || SAApp_IsSearchedName(fn, searches) {
-						if keys.enter || ui.Comp_buttonMenuIcon(0, y, 1, 1, fn, gr.icon, 0.2, "", true, false) > 0 {
+				for _, nd := range gr.nodes {
+					if app.canvas.addnode_search == "" || SAApp_IsSearchedName(nd.name, searches) {
+						if keys.enter || ui.Comp_buttonMenuIcon(0, y, 1, 1, nd.name, gr.icon, 0.2, "", true, false) > 0 {
 							//add new node
-							nw := app.act.AddNode(app.canvas.addGrid, app.canvas.addPos, fn)
+							nw := app.act.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name)
 							nw.SelectOnlyThis()
 
 							ui.Dialog_close()
@@ -462,10 +462,10 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 				if ui.Dialog_start(dnm) {
 					ui.Div_colMax(0, 5)
 
-					for i, fn := range gr.nodes {
-						if ui.Comp_buttonMenuIcon(0, i, 1, 1, fn, gr.icon, 0.2, "", true, false) > 0 {
+					for i, nd := range gr.nodes {
+						if ui.Comp_buttonMenuIcon(0, i, 1, 1, nd.name, gr.icon, 0.2, "", true, false) > 0 {
 							//add new node
-							nw := app.act.AddNode(app.canvas.addGrid, app.canvas.addPos, fn)
+							nw := app.act.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name)
 							nw.SelectOnlyThis()
 
 							ui.CloseAll()
@@ -595,11 +595,11 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 	ui.Comp_text(2, 0, 1, 1, "Press Alt-key to select nodes", 1)
 
 	//shortcuts
-	if ui.Comp_buttonLight(3, 0, 1, 1, "←", ui.trns.BACKWARD, app.canHistoryBack()) > 0 {
+	if ui.Comp_buttonLight(3, 0, 1, 1, "←", fmt.Sprintf("%s(%d)", ui.trns.BACKWARD, app.history_pos), app.canHistoryBack()) > 0 {
 		app.stepHistoryBack()
 
 	}
-	if ui.Comp_buttonLight(4, 0, 1, 1, "→", ui.trns.FORWARD, app.canHistoryForward()) > 0 {
+	if ui.Comp_buttonLight(4, 0, 1, 1, "→", fmt.Sprintf("%s(%d)", ui.trns.FORWARD, len(app.history)-app.history_pos-1), app.canHistoryForward()) > 0 {
 		app.stepHistoryForward()
 	}
 }
