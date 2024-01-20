@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -574,10 +573,10 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 
 		y++ //space - adjust Div_rowMax()
 
-		if gr.app.exe != nil {
-			done := gr.app.exe.GetStatDone()
-			ui.Comp_text(0, y, 1, 1, OsTrnString(done > 0, fmt.Sprintf("%.0f%%", done*100), "---"), 1)
-		}
+		//if gr.app.exe != nil {
+		//	done := gr.app.exe.GetStatDone()
+		//	ui.Comp_text(0, y, 1, 1, OsTrnString(done > 0, fmt.Sprintf("%.0f%%", done*100), "---"), 1)
+		//}
 
 	}
 	ui.Div_end()
