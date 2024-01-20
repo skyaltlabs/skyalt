@@ -126,7 +126,9 @@ func SAExe_Render_Button(w *SANode, renderIt bool) {
 		fmt.Println("df")
 	}
 
-	w.GetAttrUi("clicked", "0", SAAttrUi_SWITCH).SetExpBool(clicked)
+	if clicked {
+		w.app.clickedAttr = w.GetAttrUi("clicked", "0", SAAttrUi_SWITCH)
+	}
 }
 
 func SAExe_Render_Text(w *SANode, renderIt bool) {

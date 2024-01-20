@@ -60,9 +60,10 @@ type SAApp struct {
 	prior int
 
 	EnableExecution bool
-	exe             *SANodeExe
 
 	iconPath string
+
+	clickedAttr *SANodeAttr
 }
 
 func (a *SAApp) init(base *SABase) {
@@ -111,7 +112,20 @@ func (app *SAApp) RenderApp(ide bool) {
 	if ide {
 		node = app.act
 	}
+
+	//when button is clicked: clicked=1 -> render -> clicked=0
+	if app.clickedAttr != nil {
+		app.clickedAttr.SetExpBool(true)
+		app.Execute()
+		node.renderLayout()
+		app.clickedAttr.SetExpBool(false)
+		app.Execute()
+
+		app.clickedAttr = nil
+	}
+
 	node.renderLayout()
+
 }
 
 func (app *SAApp) renderIDE(ui *Ui) {
@@ -688,28 +702,48 @@ func (app *SAApp) stepHistoryForward() bool {
 	return true
 }
 
-func (app *SAApp) Execute(numThreads int) {
+func (app *SAApp) Execute() {
 
-	if app.exeIt {
-		if app.exe != nil {
-			app.exe.Stop()
-			app.exe = nil
+	app.root.PrepareExe() //.state = WAITING(to be executed)
+
+	app.root.ParseExpresions()
+	app.root.CheckForLoops()
+
+	var list []*SANode
+	app.root.buildList(&list)
+	app.root.markUnusedAttrs()
+
+	active := true
+	for active {
+		active = false
+
+		for _, it := range list {
+
+			if it.state.Load() == SANode_STATE_WAITING {
+				active = true
+
+				if it.IsReadyToBeExe() {
+
+					//execute expression
+					for _, v := range it.Attrs {
+						if v.errExp != nil {
+							continue
+						}
+						v.ExecuteExpression()
+					}
+
+					if !it.Bypass && (!app.IDE || app.EnableExecution) { //ignore in releaseMode
+						it.state.Store(SANode_STATE_RUNNING)
+						it.Execute()
+
+					}
+					it.state.Store(SANode_STATE_DONE) //done
+				}
+			}
 		}
-
-		app.root.PrepareExe() //.state = WAITING(to be executed)
-
-		app.root.ParseExpresions()
-		app.root.CheckForLoops()
-
-		app.exe = NewSANodeExe(app, OsMax(numThreads, 1)) //run
-		app.exeIt = false
 	}
 
-	if app.exe != nil {
-		if !app.exe.Tick(app) {
-			app.exe = nil //done
-		}
-	}
+	app.exeIt = false
 }
 
 func SAApp_getYellow() OsCd {
