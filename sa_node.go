@@ -361,17 +361,13 @@ func (w *SANode) markUnusedAttrs() {
 	}
 }
 
-func (w *SANode) ExecuteGui(renderIt bool) {
-
-	if !renderIt {
-		w.ResetExeErrors()
-	}
+func (w *SANode) ExecuteGui() {
 
 	w.z_depth = 1
 
 	gnd := w.app.base.node_groups.FindNode(w.Exe)
 	if gnd != nil && gnd.render != nil {
-		gnd.render(w, renderIt)
+		gnd.render(w, true)
 	}
 }
 
@@ -381,12 +377,14 @@ func (w *SANode) Execute() bool {
 	st := OsTime()
 
 	gnd := w.app.base.node_groups.FindNode(w.Exe)
-	if gnd != nil && gnd.fn != nil {
-		ok = gnd.fn(w)
-	} else {
-		if gnd.render == nil {
-			ok = w.executeProgram()
+	if gnd != nil {
+		if gnd.fn != nil {
+			ok = gnd.fn(w)
+		} else {
+			gnd.render(w, false)
 		}
+	} else {
+		ok = w.executeProgram()
 	}
 
 	w.exeTimeSec = OsTime() - st
@@ -705,7 +703,7 @@ func (w *SANode) Render() {
 
 	ui := w.app.base.ui
 
-	w.ExecuteGui(true)
+	w.ExecuteGui()
 
 	if w.app.IDE && w.CanBeRenderOnCanvas() {
 
