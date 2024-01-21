@@ -114,7 +114,7 @@ func (attr *SANodeAttr) GetFloat() float64 {
 func (attr *SANodeAttr) GetBool() bool {
 	return attr.GetInt() != 0
 }
-func (attr *SANodeAttr) GetBlob() []byte {
+func (attr *SANodeAttr) GetBlob() OsBlob {
 	return attr.result.Blob()
 }
 

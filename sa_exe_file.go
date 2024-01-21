@@ -36,7 +36,7 @@ func SAExe_File_write(node *SANode) bool {
 			path = OsTrnString(tp == 0, "databases/", "apps/"+node.app.Name+"/") + path
 		}
 
-		err := os.WriteFile(path, dataAttr.GetBlob(), 0644)
+		err := os.WriteFile(path, dataAttr.GetBlob().data, 0644)
 		if err != nil {
 			pathAttr.SetErrorExe(fmt.Sprintf("%v", err))
 			return false

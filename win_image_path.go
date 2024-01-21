@@ -24,8 +24,7 @@ import (
 )
 
 type WinMedia struct {
-	blob      []byte
-	blob_hash OsHash
+	blob OsBlob
 
 	path string
 
@@ -35,10 +34,9 @@ type WinMedia struct {
 	row    int
 }
 
-func InitWinMedia_blob(blob []byte) WinMedia {
+func InitWinMedia_blob(blob OsBlob) WinMedia {
 	var ip WinMedia
 	ip.blob = blob
-	ip.blob_hash, _ = InitOsHash(blob) //err ...
 	return ip
 }
 
@@ -111,7 +109,7 @@ func (ip *WinMedia) GetString() string {
 
 func (a *WinMedia) Cmp(b *WinMedia) bool {
 	if a.IsBlob() && b.IsBlob() {
-		return a.blob_hash.Cmp(&b.blob_hash)
+		return a.blob.CmpHash(&b.blob)
 	}
 	return a.path == b.path && a.table == b.table && a.column == b.column && a.row == b.row
 }
@@ -121,7 +119,7 @@ func (ip *WinMedia) GetBlob(disk *Disk) ([]byte, error) {
 	var err error
 
 	if ip.IsBlob() {
-		return ip.blob, nil
+		return ip.blob.data, nil
 	} else if ip.IsFile() {
 		//file
 		data, err = os.ReadFile(ip.path)

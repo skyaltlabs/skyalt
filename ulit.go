@@ -27,6 +27,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"runtime/pprof"
 	"strconv"
 	"strings"
 	"time"
@@ -893,4 +894,36 @@ func OsText_PrintToRaw(str string) string {
 	v = strings.ReplaceAll(v, "\"", "\\\"")
 
 	return v
+}
+
+func Os_StartProfile(path string) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	pprof.StartCPUProfile(f)
+	return nil
+}
+func Os_StopProfile() {
+	pprof.StopCPUProfile()
+}
+
+type OsBlob struct {
+	data []byte
+	hash OsHash
+}
+
+func InitOsBlob(blob []byte) OsBlob {
+	var b OsBlob
+	b.data = blob
+	b.hash, _ = InitOsHash(blob) //err ...
+	return b
+}
+
+func (b *OsBlob) Len() int {
+	return len(b.data)
+}
+
+func (a *OsBlob) CmpHash(b *OsBlob) bool {
+	return a.hash.Cmp(&b.hash)
 }

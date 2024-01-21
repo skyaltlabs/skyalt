@@ -496,9 +496,9 @@ func SAExe_Render_Map(w *SANode, renderIt bool) {
 
 			//locators
 			locatorsBlob := locatorsAttr.GetBlob()
-			if len(locatorsBlob) > 0 {
+			if locatorsBlob.Len() > 0 {
 				var locators []UiCompMapLocator
-				err := json.Unmarshal(locatorsBlob, &locators)
+				err := json.Unmarshal(locatorsBlob.data, &locators)
 				if err == nil {
 					err = ui.comp_mapLocators(cam_lon, cam_lat, cam_zoom, locators, w.getPath())
 					if err != nil {
@@ -511,9 +511,9 @@ func SAExe_Render_Map(w *SANode, renderIt bool) {
 
 			//paths
 			segmentsBlob := segmentsAttr.GetBlob()
-			if len(segmentsBlob) > 0 {
+			if segmentsBlob.Len() > 0 {
 				var segments []UiCompMapSegments
-				err := json.Unmarshal(segmentsBlob, &segments)
+				err := json.Unmarshal(segmentsBlob.data, &segments)
 				if err == nil {
 					err = ui.comp_mapSegments(cam_lon, cam_lat, cam_zoom, segments)
 					if err != nil {

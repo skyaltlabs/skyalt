@@ -45,13 +45,13 @@ func SAExe_Convert_GpxToJson(node *SANode) bool {
 	jsonAttr.result.SetBlob(nil) //reset
 
 	gpx := gpxAttr.GetBlob()
-	if len(gpx) == 0 {
+	if gpx.Len() == 0 {
 		return true //empty in, empty out
 	}
 
 	//gpx -> struct
 	var g SAExe_ConvertGPX
-	err := xml.Unmarshal(gpx, &g)
+	err := xml.Unmarshal(gpx.data, &g)
 	if err != nil {
 		gpxAttr.SetErrorExe(fmt.Sprintf("Unmarshal() failed: %v", err))
 		return false
@@ -76,11 +76,11 @@ func SAExe_Convert_CsvToJson(node *SANode) bool {
 	resultAttr.result.SetBlob(nil) //reset
 
 	csvBlob := csvAttr.GetBlob()
-	if len(csvBlob) == 0 {
+	if csvBlob.Len() == 0 {
 		return true //empty in, empty out
 	}
 
-	data, err := csv.NewReader(bytes.NewBuffer(csvBlob)).ReadAll()
+	data, err := csv.NewReader(bytes.NewBuffer(csvBlob.data)).ReadAll()
 	if err != nil {
 		node.SetError(fmt.Sprintf("ReadAll() failed: %v", err))
 	}

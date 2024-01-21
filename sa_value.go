@@ -42,7 +42,7 @@ func (v *SAValue) SetString(val string) {
 }
 
 func (v *SAValue) SetBlob(val []byte) {
-	v.value = val
+	v.value = InitOsBlob(val)
 }
 
 func (v *SAValue) SetBool(val bool) {
@@ -60,11 +60,11 @@ func (v *SAValue) StringWithQuotes() string {
 		return "\"" + OsText_PrintToRaw(vv) + "\""
 	case float64:
 		return strconv.FormatFloat(vv, 'f', -1, 64)
-	case []byte:
-		if len(vv) > 0 && (vv[0] == '{' || vv[0] == '[') {
-			return string(vv) //map or array
+	case OsBlob:
+		if len(vv.data) > 0 && (vv.data[0] == '{' || vv.data[0] == '[') {
+			return string(vv.data) //map or array
 		}
-		return "\"" + string(vv) + "\"" //binary/hex
+		return "\"" + string(vv.data) + "\"" //binary/hex
 
 	default:
 		fmt.Println("Warning: Unknown SAValue conversion into String")
@@ -78,8 +78,8 @@ func (v *SAValue) String() string {
 		return vv
 	case float64:
 		return strconv.FormatFloat(vv, 'f', -1, 64)
-	case []byte:
-		return string(vv)
+	case OsBlob:
+		return string(vv.data)
 
 	default:
 		fmt.Println("Warning: Unknown SAValue conversion into String")
@@ -99,14 +99,14 @@ func (v *SAValue) Number() float64 {
 	return 0
 }
 
-func (v *SAValue) Blob() []byte {
+func (v *SAValue) Blob() OsBlob {
 	switch vv := v.value.(type) {
 	case string:
-		return []byte(vv)
-	case []byte:
+		return InitOsBlob([]byte(vv))
+	case OsBlob:
 		return vv
 	}
-	return nil
+	return OsBlob{}
 }
 
 func (v *SAValue) Is() bool {
@@ -115,8 +115,8 @@ func (v *SAValue) Is() bool {
 		return vv != ""
 	case float64:
 		return vv != 0
-	case []byte:
-		return len(vv) > 0
+	case OsBlob:
+		return len(vv.data) > 0
 	}
 	return false
 }
@@ -138,7 +138,7 @@ func (v *SAValue) IsNumber() bool {
 
 func (v *SAValue) IsBlob() bool {
 	switch v.value.(type) {
-	case []byte:
+	case OsBlob:
 		return true
 	}
 	return false
@@ -148,7 +148,7 @@ func (a *SAValue) GetCd() OsCd {
 	var ret OsCd
 
 	var v []byte
-	err := json.Unmarshal(a.Blob(), &v)
+	err := json.Unmarshal(a.Blob().data, &v)
 	if err == nil {
 		if len(v) > 0 {
 			ret.R = v[0]
@@ -171,7 +171,7 @@ func (a *SAValue) GetV4() OsV4 {
 	var ret OsV4
 
 	var v []int
-	err := json.Unmarshal(a.Blob(), &v)
+	err := json.Unmarshal(a.Blob().data, &v)
 	if err == nil {
 		if len(v) > 0 {
 			ret.Start.X = v[0]
@@ -194,14 +194,14 @@ func (a *SAValue) GetV4() OsV4 {
 func (v *SAValue) NumArrayItems() int {
 
 	blob := v.Blob()
-	if len(blob) == 0 {
+	if len(blob.data) == 0 {
 		return 0
 	}
 
 	var arr []interface{}
-	err := json.Unmarshal(blob, &arr)
+	err := json.Unmarshal(blob.data, &arr)
 	if err != nil {
-		fmt.Printf("Warning: Array Unmarshal(%s) failed: %v", string(blob), err)
+		fmt.Printf("Warning: Array Unmarshal(%s) failed: %v", string(blob.data), err)
 		return 0
 	}
 	return len(arr)
@@ -210,14 +210,14 @@ func (v *SAValue) NumArrayItems() int {
 func (v *SAValue) NumMapItems() int {
 
 	blob := v.Blob()
-	if len(blob) == 0 {
+	if len(blob.data) == 0 {
 		return 0
 	}
 
 	var arr map[string]interface{}
-	err := json.Unmarshal(blob, &arr)
+	err := json.Unmarshal(blob.data, &arr)
 	if err != nil {
-		fmt.Printf("Warning: Map Unmarshal(%s) failed: %v", string(blob), err)
+		fmt.Printf("Warning: Map Unmarshal(%s) failed: %v", string(blob.data), err)
 		return 0
 	}
 	return len(arr)
@@ -225,7 +225,7 @@ func (v *SAValue) NumMapItems() int {
 
 func (v *SAValue) GetArrayItem(i int) *SAValue {
 	var arr []interface{}
-	err := json.Unmarshal(v.Blob(), &arr)
+	err := json.Unmarshal(v.Blob().data, &arr)
 	if err != nil {
 		return nil
 	}
@@ -239,7 +239,7 @@ func (v *SAValue) GetArrayItem(i int) *SAValue {
 
 func (v *SAValue) GetMapItem(i int) (string, *SAValue) {
 	var arr map[string]interface{}
-	err := json.Unmarshal(v.Blob(), &arr)
+	err := json.Unmarshal(v.Blob().data, &arr)
 	if err != nil {
 		return "", nil
 	}
@@ -268,7 +268,7 @@ func (v *SAValue) GetMapItem(i int) (string, *SAValue) {
 func (v *SAValue) GetMapKey(key string) *SAValue {
 
 	var arr map[string]interface{}
-	err := json.Unmarshal(v.Blob(), &arr)
+	err := json.Unmarshal(v.Blob().data, &arr)
 	if err != nil {
 		return nil
 	}
@@ -295,8 +295,8 @@ func (A *SAValue) Cmp(B *SAValue, sameType bool) int {
 			return OsTrn(ta > tb, 1, 0) - OsTrn(ta < tb, 1, 0)
 		case string:
 			return strings.Compare(val, B.String())
-		case []byte:
-			return bytes.Compare(val, B.Blob())
+		case OsBlob:
+			return bytes.Compare(val.data, B.Blob().data)
 		}
 	} else {
 		if sameType {
