@@ -122,9 +122,9 @@ func (app *SAApp) RenderApp(ide bool) {
 		app.Execute()
 
 		app.clickedAttr = nil
+	} else {
+		node.renderLayout()
 	}
-
-	node.renderLayout()
 
 }
 
@@ -665,14 +665,16 @@ func (app *SAApp) addHistory(exeIt bool, rewriteLast bool) {
 		app.history_pos++
 	}
 	app.saveIt = true
-	app.exeIt = exeIt //udpate change
+	if exeIt {
+		app.SetExecute()
+	}
 }
 
 func (app *SAApp) recoverHistory() {
 	app.root, _ = app.history[app.history_pos].Copy()
 	app.act = app.root.FindMirror(app.history[app.history_pos], app.history_act[app.history_pos])
 
-	app.exeIt = true //update expressions into 'oldValue'
+	app.SetExecute()
 }
 
 func (app *SAApp) canHistoryBack() bool {
@@ -702,7 +704,13 @@ func (app *SAApp) stepHistoryForward() bool {
 	return true
 }
 
+func (app *SAApp) SetExecute() {
+	app.exeIt = true
+}
+
 func (app *SAApp) Execute() {
+
+	st := OsTime()
 
 	app.root.PrepareExe() //.state = WAITING(to be executed)
 
@@ -744,6 +752,8 @@ func (app *SAApp) Execute() {
 	}
 
 	app.exeIt = false
+
+	fmt.Printf("Executed in %.3f\n", OsTime()-st)
 }
 
 func SAApp_getYellow() OsCd {

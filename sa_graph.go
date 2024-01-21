@@ -531,13 +531,13 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 		if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+OsTrnString(gr.app.EnableExecution, "pause.png", "play.png")), 0.25, "Enable/Disable nodes execution", uint8(OsTrn(gr.app.EnableExecution, int(CdPalette_B), int(CdPalette_E))), true, false) > 0 {
 			gr.app.EnableExecution = !gr.app.EnableExecution
 			if gr.app.EnableExecution {
-				gr.app.exeIt = true
+				gr.app.SetExecute()
 			}
 		}
 		y++
 
 		if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"update.png"), 0.25, "Recompute all nodes", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
-			gr.app.exeIt = true
+			gr.app.SetExecute()
 		}
 		y++
 
