@@ -219,6 +219,8 @@ func UiCalendar_GetYear(unix_sec int64) string {
 func (ui *Ui) Comp_Calendar(value *int64, page *int64, maxColSize, maxRowSize float64) bool {
 
 	old_value := *value
+	old_page := *page
+
 	format := ui.win.io.ini.DateFormat
 
 	ui.Div_colMax(0, maxColSize)
@@ -315,7 +317,7 @@ func (ui *Ui) Comp_Calendar(value *int64, page *int64, maxColSize, maxRowSize fl
 	}
 	ui.Div_end()
 
-	return old_value != *value
+	return old_value != *value || old_page != *page
 }
 
 func (ui *Ui) Comp_CalendarDataPicker(date_unix *int64, show_time bool, dialogName string, enable bool) bool {

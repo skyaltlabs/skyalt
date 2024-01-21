@@ -258,19 +258,22 @@ func (ui *Ui) comp_mapSegments(cam_lon, cam_lat, cam_zoom float64, items []UiCom
 	return nil
 }
 
-func (ui *Ui) comp_map(cam_lon, cam_lat, cam_zoom *float64, file, url, copyright, copyright_url string) error {
+func (ui *Ui) comp_map(cam_lon, cam_lat, cam_zoom *float64, file, url, copyright, copyright_url string) (bool, error) {
+	old_cam_lon := *cam_lon
+	old_cam_lat := *cam_lat
+	old_cam_zoom := *cam_zoom
 
 	*cam_zoom = UiLayoutMap_zoomClamp(*cam_zoom) //check
 
 	db, alreadyOpen, err := ui.win.disk.OpenDb(file)
 	if err != nil {
-		return fmt.Errorf("GetDb(%s) failed: %w", file, err)
+		return false, fmt.Errorf("GetDb(%s) failed: %w", file, err)
 
 	}
 	if !alreadyOpen {
 		_, err = db.Write("CREATE TABLE IF NOT EXISTS tiles (name TEXT, file BLOB);")
 		if err != nil {
-			return fmt.Errorf("CREATE TABLE in db(%s) failed: %w", file, err)
+			return false, fmt.Errorf("CREATE TABLE in db(%s) failed: %w", file, err)
 		}
 	}
 
@@ -331,11 +334,11 @@ func (ui *Ui) comp_map(cam_lon, cam_lat, cam_zoom *float64, file, url, copyright
 						if err == nil {
 							rowid, err = res.LastInsertId()
 							if err != nil {
-								return fmt.Errorf("LastInsertId() failed: %w", err)
+								return false, fmt.Errorf("LastInsertId() failed: %w", err)
 							}
 						}
 					} else {
-						return err
+						return false, err
 					}
 				}
 
@@ -431,5 +434,6 @@ func (ui *Ui) comp_map(cam_lon, cam_lat, cam_zoom *float64, file, url, copyright
 		ui.Comp_buttonText(1, 0, 1, 1, copyright, copyright_url, "", true, false)
 		ui.Div_end()
 	}
-	return nil
+
+	return (old_cam_lon != *cam_lon || old_cam_lat != *cam_lat || old_cam_zoom != *cam_zoom), nil
 }

@@ -123,10 +123,6 @@ func SAExe_Render_Button(w *SANode, renderIt bool) {
 	}
 
 	if clicked {
-		fmt.Println("df")
-	}
-
-	if clicked {
 		w.app.clickedAttr = w.GetAttrUi("clicked", "0", SAAttrUi_SWITCH)
 	}
 }
@@ -320,10 +316,13 @@ func SAExe_Render_Calendar(w *SANode, renderIt bool) {
 			value := valueAttr.GetInt64()
 			page := pageAttr.GetInt64()
 
-			ui.Comp_Calendar(&value, &page, 100, 100)
+			changed := ui.Comp_Calendar(&value, &page, 100, 100)
 
-			valueAttr.SetExpInt(int(value))
-			pageAttr.SetExpInt(int(page))
+			if changed {
+				//set back
+				valueAttr.SetExpInt(int(value))
+				pageAttr.SetExpInt(int(page))
+			}
 		}
 		ui.Div_end()
 	}
@@ -483,15 +482,17 @@ func SAExe_Render_Map(w *SANode, renderIt bool) {
 			cam_lat := cam_latAttr.GetFloat()
 			cam_zoom := cam_zoomAttr.GetFloat()
 
-			err := ui.comp_map(&cam_lon, &cam_lat, &cam_zoom, file, url, copyright, copyright_url)
+			changed, err := ui.comp_map(&cam_lon, &cam_lat, &cam_zoom, file, url, copyright, copyright_url)
 			if err != nil {
 				w.errExe = err
 			}
 
-			//set back
-			cam_lonAttr.SetExpFloat(cam_lon)
-			cam_latAttr.SetExpFloat(cam_lat)
-			cam_zoomAttr.SetExpInt(int(cam_zoom))
+			if changed {
+				//set back
+				cam_lonAttr.SetExpFloat(cam_lon)
+				cam_latAttr.SetExpFloat(cam_lat)
+				cam_zoomAttr.SetExpInt(int(cam_zoom))
+			}
 
 			//locators
 			locatorsBlob := locatorsAttr.GetBlob()
