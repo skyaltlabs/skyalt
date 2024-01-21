@@ -106,9 +106,14 @@ func (instr *VmInstr) LineReplace(value string) {
 		}
 	}
 
-	instr.pos_attr.Value = instr.pos_attr.Value[:instr.pos.X] + value + instr.pos_attr.Value[instr.pos.Y:] //replace
+	newValue := instr.pos_attr.Value[:instr.pos.X] + value + instr.pos_attr.Value[instr.pos.Y:]
 
-	instr.pos_attr.node.app.exeIt = true //update network
+	if newValue != instr.pos_attr.Value {
+		instr.pos_attr.node.app.SetExecute() //update network
+	}
+
+	instr.pos_attr.Value = newValue //replace
+
 	//instr.pos_attr.ParseExpresion()
 	//instr.pos_attr.ExecuteExpression()
 }
