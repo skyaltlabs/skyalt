@@ -286,7 +286,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 
 				rect.Start = rect.Start.Add(appDiv.canvas.Start)
 				ui.buff.AddRect(rect, SAApp_getYellow(), ui.CellWidth(0.03))
-				ui.buff.AddText("+", rect, ui.win.fonts.Get(SKYALT_FONT_PATH), SAApp_getYellow(), ui.win.io.GetDPI()/8, OsV2{1, 1}, nil, true)
+				ui.buff.AddText("+", 0, 0, rect, SAApp_getYellow(), OsV2{1, 1}, true)
 
 				if appDiv.IsTouchEnd(ui) {
 					app.canvas.addGrid = grid

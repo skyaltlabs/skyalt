@@ -280,7 +280,7 @@ func (ui *Ui) UpdateTile(win *Win) bool {
 func (ui *Ui) RenderTile(win *Win) {
 
 	if ui.tile.IsActive(win.io.touch.pos) {
-		err := win.RenderTile(ui.tile.text, ui.tile.coord, ui.tile.priorUp, ui.tile.cd, win.fonts.Get(SKYALT_FONT_PATH))
+		err := win.RenderTile(ui.tile.text, ui.tile.coord, ui.tile.priorUp, ui.tile.cd)
 		if err != nil {
 			fmt.Printf("RenderTile() failed: %v\n", err)
 		}
@@ -362,7 +362,7 @@ func (ui *Ui) EndRender() {
 
 	// tile - redraw If mouse is over tile
 	if ui.tile.IsActive(ui.buff.win.io.touch.pos) {
-		err := ui.buff.win.RenderTile(ui.tile.text, ui.tile.coord, ui.tile.priorUp, ui.tile.cd, ui.buff.win.fonts.Get(SKYALT_FONT_PATH))
+		err := ui.buff.win.RenderTile(ui.tile.text, ui.tile.coord, ui.tile.priorUp, ui.tile.cd)
 		if err != nil {
 			fmt.Printf("RenderTile() failed: %v\n", err)
 		}

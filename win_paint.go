@@ -185,7 +185,7 @@ func (b *WinPaintBuff) AddImage(path WinMedia, coord OsV4, cd OsCd, alignV int, 
 	if !b.skipDraw {
 		img, err := b.win.AddImage(path) //2nd thread => black
 		if err != nil {
-			b.AddText(path.GetString()+" has error", coord, b.win.fonts.Get(SKYALT_FONT_PATH), b.win.io.GetPalette().E, b.win.io.GetDPI()/8, OsV2{1, 1}, nil, true)
+			b.AddText(path.GetString()+" has error", 0, 0, coord, b.win.io.GetPalette().E, OsV2{1, 1}, true)
 			return
 		}
 
@@ -233,32 +233,24 @@ func (b *WinPaintBuff) AddImage(path WinMedia, coord OsV4, cd OsCd, alignV int, 
 	}
 }
 
-func (b *WinPaintBuff) AddText(text string, coord OsV4, font *WinFont, cd OsCd, h int, align OsV2, cds []OsCd, enableFormating bool) {
+func (b *WinPaintBuff) AddText(text string, textH float64, lineH float64, coord OsV4, cd OsCd, align OsV2, enableFormating bool) {
 	if !b.skipDraw {
-		font.Print(text, g_WinFont_DEFAULT_Weight, h, coord, b.getDepth(), align, cd, cds, true, enableFormating, b.win)
+		b.win.DrawText(text, textH, lineH, coord, b.getDepth(), align, cd, enableFormating)
 	}
 }
 
-func (b *WinPaintBuff) AddTextBack(rangee OsV2, text string, coord OsV4, font *WinFont, cd OsCd, h int, align OsV2, underline bool, enableFormating bool) error {
+func (b *WinPaintBuff) AddTextBack(rangee OsV2, text string, textH float64, lineH float64, coord OsV4, cd OsCd, align OsV2, enableFormating bool, underline bool) {
 
 	if rangee.X == rangee.Y {
-		return nil
+		return
 	}
 
-	start, err := font.Start(text, g_WinFont_DEFAULT_Weight, h, coord, align, enableFormating, nil)
-	if err != nil {
-		return fmt.Errorf("Start() failed: %w", err)
-	}
+	start := b.win.GetTextStart(text, textH, lineH, coord, align, cd, enableFormating)
 
 	var rng OsV2
-	rng.X, err = font.GetPxPos(text, g_WinFont_DEFAULT_Weight, h, rangee.X, enableFormating)
-	if err != nil {
-		return fmt.Errorf("GetPxPos(1) failed: %w", err)
-	}
-	rng.Y, err = font.GetPxPos(text, g_WinFont_DEFAULT_Weight, h, rangee.Y, enableFormating)
-	if err != nil {
-		return fmt.Errorf("GetPxPos(2) failed: %w", err)
-	}
+	rng.X = b.win.GetTextSize(rangee.X, text, textH, lineH, cd, enableFormating).X
+	rng.Y = b.win.GetTextSize(rangee.Y, text, textH, lineH, cd, enableFormating).X
+
 	rng.Sort()
 
 	if rng.X != rng.Y {
@@ -266,33 +258,28 @@ func (b *WinPaintBuff) AddTextBack(rangee OsV2, text string, coord OsV4, font *W
 			Y := coord.Start.Y + coord.Size.Y
 			b.AddRect(OsV4{Start: OsV2{start.X + rng.X, Y - 2}, Size: OsV2{rng.Y, 2}}, cd, 0)
 		} else {
+			hPx, _ := b.win.getTextAndLineHight(textH, lineH)
+
 			c := InitOsV4(start.X+rng.X, coord.Start.Y, rng.Y-rng.X, coord.Size.Y)
-			c = c.AddSpaceY((coord.Size.Y-h)/2 - (h / 2)) //smaller height
+			c = c.AddSpaceY((coord.Size.Y-hPx)/2 - (hPx / 2)) //smaller height
 
 			b.AddRect(c, cd, 0)
 		}
 	}
-	return nil
 }
 
-func (b *WinPaintBuff) AddTextCursor(text string, coord OsV4, font *WinFont, cd OsCd, h int, align OsV2, cursorPos int, cell int, enableFormating bool) (OsV4, error) {
+func (b *WinPaintBuff) AddTextCursor(text string, textH float64, lineH float64, coord OsV4, cd OsCd, align OsV2, enableFormating bool, cursorPos int) OsV4 {
 	b.win.cursorEdit = true
 	cd.A = b.win.cursorCdA
 
-	start, err := font.Start(text, g_WinFont_DEFAULT_Weight, h, coord, align, enableFormating, nil)
-	if err != nil {
-		return OsV4{}, fmt.Errorf("TextCursor().Start() failed: %w", err)
-	}
+	start := b.win.GetTextStart(text, textH, lineH, coord, align, cd, enableFormating)
 
-	ex, err := font.GetPxPos(text, g_WinFont_DEFAULT_Weight, h, cursorPos, enableFormating)
-	if err != nil {
-		return OsV4{}, fmt.Errorf("TextCursor().GetPxPos() failed: %w", err)
-	}
+	sz := b.win.GetTextSize(cursorPos, text, textH, lineH, cd, enableFormating)
 
-	cursorQuad := InitOsV4(start.X+ex, coord.Start.Y, OsMax(1, cell/15), coord.Size.Y)
-	cursorQuad = cursorQuad.AddSpaceY((coord.Size.Y-h)/2 - (h / 2)) //smaller height
+	cursorQuad := InitOsV4(start.X+sz.X, coord.Start.Y, OsMax(1, b.win.Cell()/15), coord.Size.Y)
+	cursorQuad = cursorQuad.AddSpaceY((coord.Size.Y-sz.Y)/2 - (sz.Y / 2)) //smaller height
 
 	b.AddRect(cursorQuad, cd, 0)
 
-	return cursorQuad, nil
+	return cursorQuad
 }

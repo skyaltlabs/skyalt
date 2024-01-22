@@ -38,7 +38,7 @@ func OsTicks() int64 {
 }
 
 func OsIsTicksIn(start_ticks int64, delay_ms int) bool {
-	return (start_ticks + int64(delay_ms)) > OsTicks()
+	return OsTicks() < (start_ticks + int64(delay_ms))
 }
 
 func OsTime() float64 {

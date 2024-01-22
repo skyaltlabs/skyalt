@@ -89,7 +89,7 @@ type Win struct {
 
 	images []*WinImage
 
-	fonts *WinFonts
+	gph *WinGph
 
 	particles   *WinParticles
 	startupAnim bool
@@ -106,8 +106,6 @@ func NewWin(disk *Disk) (*Win, error) {
 	win.disk = disk
 
 	win.startupAnim = !OsFileExists(SKYALT_INI_PATH)
-
-	win.fonts = NewWinFonts()
 
 	var err error
 	win.io, err = NewWinIO()
@@ -135,6 +133,8 @@ func NewWin(disk *Disk) (*Win, error) {
 	if err != nil {
 		return nil, fmt.Errorf("gl.Init() failed: %w", err)
 	}
+
+	win.gph = NewWinGph()
 
 	sdl.EventState(sdl.DROPFILE, sdl.ENABLE)
 	sdl.StartTextInput()
@@ -179,7 +179,8 @@ func (win *Win) Destroy() error {
 		sdl.FreeCursor(cur.cursor)
 	}
 
-	win.fonts.Destroy()
+	//win.fonts.Destroy()
+	win.gph.Destroy()
 
 	sdl.GLDeleteContext(win.render)
 
@@ -497,7 +498,6 @@ func (win *Win) Event() (bool, bool, error) {
 }
 
 func (win *Win) Maintenance() {
-
 	for i := len(win.images) - 1; i >= 0; i-- {
 		ok, _ := win.images[i].Maintenance(win)
 		if !ok {
@@ -505,7 +505,7 @@ func (win *Win) Maintenance() {
 		}
 	}
 
-	win.fonts.Maintenance()
+	win.gph.Maintenance()
 }
 
 func (win *Win) needRedraw(inputChanged bool) bool {
@@ -748,9 +748,6 @@ func (win *Win) EndRender(present bool) error {
 
 func (win *Win) renderStats() error {
 
-	font := win.fonts.Get(SKYALT_FONT_PATH)
-	textH := win.io.GetDPI() / 6
-
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 	text := fmt.Sprintf("FPS(worst: %.1f, best: %.1f, avg: %.1f), Memory(%d imgs: %.2fMB, process: %.2fMB), Threads(%d), Net(downloads: %d, errors: %d)",
@@ -759,17 +756,15 @@ func (win *Win) renderStats() error {
 		runtime.NumGoroutine(),
 		OsTrn(win.disk != nil, win.disk.net.num_jobs_done, 0), OsTrn(win.disk != nil, win.disk.net.num_jobs_errors, 0))
 
-	sz, _ := font.GetTextSize(text, g_WinFont_DEFAULT_Weight, textH, int(float32(textH)*1.2), true)
+	cd := OsCd{255, 50, 50, 255}
+	sz := win.GetTextSize(-1, text, 0, 0, cd, true)
 
 	cq := OsV4{win.io.GetCoord().Middle().Sub(sz.MulV(0.5)), sz}
 
 	win.SetClipRect(cq)
 	depth := 990 //...
 	win.DrawRect(cq.Start, cq.End(), depth, win.io.GetPalette().B)
-	err := font.Print(text, g_WinFont_DEFAULT_Weight, textH, cq, depth, OsV2{0, 1}, OsCd{255, 50, 50, 255}, nil, true, true, win)
-	if err != nil {
-		fmt.Printf("Print() failed: %v\n", err)
-	}
+	win.DrawText(text, 0, 0, cq, depth, OsV2{0, 1}, cd, true)
 
 	return nil
 }
@@ -987,6 +982,104 @@ func (win *Win) DrawTriangle(a OsV2, b OsV2, c OsV2, depth int, cd OsCd) {
 	gl.End()
 }
 
+func (win *Win) getTextAndLineHight(textH float64, lineH float64) (int, int) {
+
+	if textH <= 0 {
+		textH = 0.14 // 1/8
+	}
+	if lineH <= 0 {
+		lineH = 0.15
+	}
+
+	tPx := int(float64(win.io.GetDPI()) * textH)
+	lPx := int(float64(win.io.GetDPI()) * lineH)
+
+	return tPx, lPx
+}
+
+func (win *Win) GetFont(path string, textH float64) *WinFont {
+
+	if path == "" {
+		path = "apps/base/resources/arial.ttf"
+	}
+
+	tPx, _ := win.getTextAndLineHight(textH, 0)
+
+	return win.gph.GetFont(path, tPx)
+}
+
+func (win *Win) DrawText(text string, textH float64, lineH float64, coord OsV4, depth int, align OsV2, cd OsCd, enableFormating bool) {
+
+	font := win.GetFont("", textH)
+	if font == nil {
+		return
+	}
+
+	item := win.gph.GetText(font, text, cd, enableFormating)
+	if item != nil {
+		start := win.GetTextStart(text, textH, lineH, coord, align, cd, enableFormating)
+
+		item.item.Draw(OsV4{Start: start, Size: item.item.size}, depth, cd)
+	}
+}
+
+func (win *Win) GetTextSize(cur_pos int, text string, textH float64, lineH float64, cd OsCd, enableFormating bool) OsV2 {
+	font := win.GetFont("", textH)
+	if font == nil {
+		return OsV2{}
+	}
+
+	return win.gph.GetTextSize(font, cur_pos, text, cd, enableFormating)
+}
+
+func (win *Win) GetTextPos(touchPos OsV2, text string, textH float64, lineH float64, coord OsV4, align OsV2, cd OsCd, enableFormating bool) int {
+	font := win.GetFont("", textH)
+	if font == nil {
+		return 0
+	}
+
+	start := win.GetTextStart(text, textH, lineH, coord, align, cd, enableFormating)
+
+	return win.gph.GetTextPos(font, (touchPos.X - start.X), text, cd, enableFormating)
+}
+
+func (win *Win) GetTextStart(text string, textH float64, lineH float64, coord OsV4, align OsV2, cd OsCd, enableFormating bool) OsV2 {
+
+	size := win.GetTextSize(-1, text, textH, lineH, cd, enableFormating)
+
+	start := coord.Start
+
+	if align.X == 0 {
+		// left
+		// pos.x += H / 2
+	} else if align.X == 1 {
+		// center
+		if size.X > coord.Size.X {
+			start.X = coord.Start.X // + H / 2
+		} else {
+			start.X = coord.Middle().X - size.X/2
+		}
+	} else {
+		// right
+		start.X = coord.End().X - size.X
+	}
+
+	// y
+	if size.Y >= coord.Size.Y {
+		start.Y += (coord.Size.Y - size.Y) / 2
+	} else {
+		if align.Y == 0 {
+			start.Y = coord.Start.Y // + H / 2
+		} else if align.Y == 1 {
+			start.Y += (coord.Size.Y - size.Y) / 2
+		} else if align.Y == 2 {
+			start.Y += (coord.Size.Y) - size.Y
+		}
+	}
+
+	return start
+}
+
 func (win *Win) SetTextCursorMove() {
 	win.cursorTimeStart = OsTime()
 	win.cursorTimeEnd = win.cursorTimeStart + 5
@@ -997,18 +1090,15 @@ func (win *Win) Cell() int {
 	return win.io.Cell()
 }
 
-func (win *Win) RenderTile(text string, coord OsV4, priorUp bool, cd OsCd, font *WinFont) error {
+func (win *Win) RenderTile(text string, coord OsV4, priorUp bool, cd OsCd) error {
 	if win == nil {
 		return nil
 	}
 
-	textH := win.io.GetDPI() / 7
-
 	num_lines := strings.Count(text, "\n") + 1
 	cq := coord
-	lineH := int(float32(textH) * 1.7)
-	cq.Size, _ = font.GetTextSize(text, g_WinFont_DEFAULT_Weight, textH, lineH, true)
-	cq = cq.AddSpaceX((lineH - textH) / -2)
+	cq.Size = win.GetTextSize(-1, text, 0, 0, cd, true)
+	cq = cq.AddSpaceX(-win.io.GetDPI() / 10)
 
 	// user can set priority(up, down, etc.) ...
 	cq = OsV4_relativeSurround(coord, cq, OsV4{OsV2{}, OsV2{X: win.io.ini.WinW, Y: win.io.ini.WinH}}, priorUp)
@@ -1018,10 +1108,7 @@ func (win *Win) RenderTile(text string, coord OsV4, priorUp bool, cd OsCd, font 
 	win.DrawRect(cq.Start, cq.End(), depth, win.io.GetPalette().B)
 	win.DrawRect_border(cq.Start, cq.End(), depth, win.io.GetPalette().OnB, 1)
 	cq.Size.Y /= num_lines
-	err := font.Print(text, g_WinFont_DEFAULT_Weight, textH, cq, depth, OsV2{1, 1}, cd, nil, true, true, win)
-	if err != nil {
-		fmt.Printf("Print() failed: %v\n", err)
-	}
+	win.DrawText(text, 0, 0, cq, depth, OsV2{1, 1}, cd, true)
 
-	return err
+	return nil
 }

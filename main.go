@@ -22,6 +22,10 @@ import (
 )
 
 func main() {
+	//Profiling
+	//Os_StartProfile("cpu.prof")
+	//defer Os_StopProfile()
+
 	InitImageGlobal()
 
 	//SDL
