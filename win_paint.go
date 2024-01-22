@@ -173,10 +173,10 @@ func (buf *WinPaintBuff) AddTringle(a OsV2, b OsV2, c OsV2, cd OsCd) {
 	}
 }
 
-func (b *WinPaintBuff) AddCircle(coord OsV4, cd OsCd, thick int) {
+func (b *WinPaintBuff) AddCircle(coord OsV4, cd OsCd, width int) {
 	if !b.skipDraw {
 		p := coord.Middle()
-		b.win.DrawCicle(p, OsV2{coord.Size.X / 2, coord.Size.Y / 2}, b.getDepth(), cd, thick)
+		b.win.DrawCicle(p, OsV2{coord.Size.X / 2, coord.Size.Y / 2}, b.getDepth(), cd, width)
 	}
 }
 

@@ -20,11 +20,11 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"image/draw"
 	"os"
 
 	"github.com/fogleman/gg"
 	"github.com/golang/freetype/truetype"
-	"golang.org/x/image/draw"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 )
@@ -83,9 +83,19 @@ func (ft *WinFont) GetStringSize(str string, enableFormating bool) OsV2 {
 }
 
 func (ft *WinFont) DrawString(str string, cd OsCd, enableFormating bool) *WinGphItemText {
-
 	size := ft.GetStringSize(str, enableFormating)
 	rgba := image.NewRGBA(image.Rect(0, 0, size.X, size.Y))
+
+	//draw with final background & text colors ................
+
+	/*backCd := color.NRGBA{255, 0, 0, 255}
+	for y := 0; y < size.Y; y++ {
+		for x := 0; x < size.X; x++ {
+			rgba.Set(x, y, backCd)
+		}
+	}*/
+
+	var letters []int
 
 	m := ft.face.Metrics()
 	d := &font.Drawer{
@@ -94,8 +104,6 @@ func (ft *WinFont) DrawString(str string, cd OsCd, enableFormating bool) *WinGph
 		Face: ft.face,
 		Dot:  fixed.Point26_6{fixed.Int26_6(0), fixed.Int26_6(m.Ascent)},
 	}
-
-	var letters []int
 
 	prevC := rune(-1)
 	for _, c := range str {
@@ -338,7 +346,9 @@ func (gph *WinGph) GetCircle(size OsV2, cd OsCd, width float64) *WinGphItem {
 	}
 
 	//create
-	dc := gg.NewContext(size.X+2, size.Y+2)
+	size.X += 2
+	size.Y += 2
+	dc := gg.NewContext(size.X, size.Y)
 	dc.SetRGBA255(int(cd.R), int(cd.G), int(cd.B), int(cd.A))
 	dc.DrawEllipse(float64(size.X)/2, float64(size.Y)/2, float64(size.X)/2, float64(size.Y)/2)
 	if width > 0 {

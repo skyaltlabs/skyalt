@@ -678,6 +678,7 @@ func (win *Win) StartRender(clearCd OsCd) error {
 		gl.Hint(gl.LINE_SMOOTH_HINT, gl.NICEST)
 		//gl.Enable(gl.POLYGON_SMOOTH)
 		//gl.Hint(gl.POLYGON_SMOOTH_HINT, gl.NICEST)
+
 		gl.Enable(gl.BLEND)
 		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
@@ -899,23 +900,11 @@ func (win *Win) DrawRectRound(coord OsV4, rad int, depth int, cd OsCd, thick int
 }
 
 func (win *Win) DrawCicle(mid OsV2, rad OsV2, depth int, cd OsCd, thick int) {
-	gl.Color4ub(cd.R, cd.G, cd.B, cd.A)
-	//gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-	if thick > 0 {
-		gl.LineWidth(float32(thick))
-		gl.Begin(gl.LINE_LOOP)
-	} else {
-		gl.Begin(gl.TRIANGLE_FAN)
-		gl.Vertex3f(float32(mid.X), float32(mid.Y), float32(depth)) //center
+	item := win.gph.GetCircle(rad.MulV(2), OsCd{255, 255, 255, 255}, float64(thick))
+	if item != nil {
+		item.Draw(InitOsV4Mid(mid, item.size), depth, cd) //double color ............ maybe text as well .....
 	}
-
-	step := 2 * math.Pi / 100 //quality ...
-	for i := float64(0); i < 2*math.Pi; i += step {
-		gl.Vertex3f(float32(mid.X)+float32(math.Cos(i))*float32(rad.X), float32(mid.Y)+float32(math.Sin(i))*float32(rad.Y), float32(depth))
-	}
-
-	gl.End()
 }
 
 func (win *Win) DrawLine(start OsV2, end OsV2, depth int, thick int, cd OsCd) {
@@ -1015,9 +1004,9 @@ func (win *Win) DrawText(text string, textH float64, lineH float64, coord OsV4, 
 		return
 	}
 
-	item := win.gph.GetText(font, text, cd, enableFormating)
+	item := win.gph.GetText(font, text, OsCd{255, 255, 255, 255}, enableFormating)
 	if item != nil {
-		start := win.GetTextStart(text, textH, lineH, coord, align, cd, enableFormating)
+		start := win.GetTextStart(text, textH, lineH, coord, align, OsCd{255, 255, 255, 255}, enableFormating)
 
 		item.item.Draw(OsV4{Start: start, Size: item.item.size}, depth, cd)
 	}
