@@ -86,7 +86,7 @@ func (ft *WinFont) DrawString(str string, cd OsCd, enableFormating bool) *WinGph
 	size := ft.GetStringSize(str, enableFormating)
 	rgba := image.NewRGBA(image.Rect(0, 0, size.X, size.Y))
 
-	//draw with final background & text colors ................
+	//draw with final background & text colors ................ final quad draw bez nastavení barvy!!! ............
 
 	/*backCd := color.NRGBA{255, 0, 0, 255}
 	for y := 0; y < size.Y; y++ {
@@ -102,7 +102,7 @@ func (ft *WinFont) DrawString(str string, cd OsCd, enableFormating bool) *WinGph
 		Dst:  rgba,
 		Src:  image.NewUniform(color.NRGBA{cd.R, cd.G, cd.B, cd.A}),
 		Face: ft.face,
-		Dot:  fixed.Point26_6{fixed.Int26_6(0), fixed.Int26_6(m.Ascent)},
+		Dot:  fixed.Point26_6{X: fixed.Int26_6(0), Y: fixed.Int26_6(m.Ascent)},
 	}
 
 	prevC := rune(-1)
@@ -271,6 +271,10 @@ func (gph *WinGph) GetText(font *WinFont, text string, cd OsCd, enableFormating 
 		return nil
 	}
 	font.UpdateTick()
+
+	if len(text) > 100 {
+		text = text[:100] //cut it
+	}
 
 	//find
 	for _, it := range gph.texts {
