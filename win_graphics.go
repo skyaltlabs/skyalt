@@ -49,7 +49,7 @@ func NewWinFont(path string, heightPx int) *WinFont {
 		fmt.Printf("truetype.Parse() failed: %v\n", err)
 		return nil
 	}
-	face := truetype.NewFace(ft, &truetype.Options{Size: float64(heightPx)})
+	face := truetype.NewFace(ft, &truetype.Options{Size: float64(heightPx) /*, Hinting: font.HintingFull*/})
 	wf := &WinFont{path: path, heightPx: heightPx, face: face}
 	wf.UpdateTick()
 	return wf
@@ -82,25 +82,37 @@ func (ft *WinFont) GetStringSize(str string, enableFormating bool) OsV2 {
 	return OsV2{int(w >> 6), int(m.Ascent+m.Descent)/64 + 2}
 }
 
-func (ft *WinFont) DrawString(str string, cd OsCd, enableFormating bool) *WinGphItemText {
+func NextPowOf2(n int) int {
+	k := 1
+	for k < n {
+		k = k << 1
+	}
+	return k
+}
+
+func (ft *WinFont) DrawString(str string, frontCd OsCd, enableFormating bool) *WinGphItemText {
 	size := ft.GetStringSize(str, enableFormating)
-	rgba := image.NewRGBA(image.Rect(0, 0, size.X, size.Y))
 
-	//draw with final background & text colors ................ final quad draw bez nastavení barvy!!! ............
+	w := NextPowOf2(size.X)
+	h := NextPowOf2(size.Y)
 
-	/*backCd := color.NRGBA{255, 0, 0, 255}
+	/*rgba := image.NewRGBA(image.Rect(0, 0, size.X, size.Y))
+	bCd := color.NRGBA{255, 255, 255, 0}
 	for y := 0; y < size.Y; y++ {
 		for x := 0; x < size.X; x++ {
-			rgba.Set(x, y, backCd)
+			rgba.Set(x, y, bCd)
 		}
 	}*/
+
+	a := image.NewAlpha(image.Rect(0, 0, w, h))
 
 	var letters []int
 
 	m := ft.face.Metrics()
 	d := &font.Drawer{
-		Dst:  rgba,
-		Src:  image.NewUniform(color.NRGBA{cd.R, cd.G, cd.B, cd.A}),
+		//Dst:  rgba,
+		Dst:  a,
+		Src:  image.NewUniform(color.NRGBA{frontCd.R, frontCd.G, frontCd.B, frontCd.A}),
 		Face: ft.face,
 		Dot:  fixed.Point26_6{X: fixed.Int26_6(0), Y: fixed.Int26_6(m.Ascent)},
 	}
@@ -122,20 +134,29 @@ func (ft *WinFont) DrawString(str string, cd OsCd, enableFormating bool) *WinGph
 		letters = append(letters, int(d.Dot.X>>6))
 	}
 
-	return &WinGphItemText{item: NewWinGphItem2(rgba), font: ft, text: str, cd: cd, enableFormating: enableFormating, letters: letters}
+	return &WinGphItemText{item: NewWinGphItemAlpha(a), size: size, font: ft, text: str, frontCd: frontCd, enableFormating: enableFormating, letters: letters}
 }
 
 type WinGphItem struct {
 	texture      *WinTexture
-	size         OsV2
 	lastDrawTick int64
 }
 
-func NewWinGphItem2(rgba *image.RGBA) *WinGphItem {
-
+func NewWinGphItemAlpha(alpha *image.Alpha) *WinGphItem {
 	it := &WinGphItem{}
-	it.size.X = rgba.Rect.Max.X
-	it.size.Y = rgba.Rect.Max.Y
+
+	var err error
+	it.texture, err = InitWinTextureFromImageAlpha(alpha)
+	if err != nil {
+		fmt.Printf("InitWinTextureFromImageAlpha() failed: %v\n", err)
+		return nil
+	}
+
+	return it
+}
+
+func NewWinGphItemRGBA(rgba *image.RGBA) *WinGphItem {
+	it := &WinGphItem{}
 
 	var err error
 	it.texture, err = InitWinTextureFromImageRGBA(rgba)
@@ -153,7 +174,7 @@ func NewWinGphItem(dc *gg.Context) *WinGphItem {
 		fmt.Printf("Image -> RGBA conversion failed\n")
 		return nil
 	}
-	it := NewWinGphItem2(rgba)
+	it := NewWinGphItemRGBA(rgba)
 	it.lastDrawTick = OsTicks()
 	return it
 }
@@ -165,16 +186,16 @@ func (it *WinGphItem) Destroy() {
 }
 
 func (it *WinGphItem) IsUsed() bool {
-	return OsIsTicksIn(it.lastDrawTick, 10000) //10 sec
+	return OsIsTicksIn(it.lastDrawTick, 5000) //5 sec
 }
 func (it *WinGphItem) UpdateTick() {
 	it.lastDrawTick = OsTicks()
 }
 
-func (it *WinGphItem) Draw(coord OsV4, depth int, cd OsCd) error {
+func (it *WinGphItem) DrawCut(coord OsV4, depth int, cd OsCd) error {
 
 	if it.texture != nil {
-		it.texture.DrawQuad(coord, depth, cd)
+		it.texture.DrawQuadCut(coord, depth, cd)
 	}
 
 	it.UpdateTick()
@@ -183,10 +204,11 @@ func (it *WinGphItem) Draw(coord OsV4, depth int, cd OsCd) error {
 
 type WinGphItemText struct {
 	item *WinGphItem
+	size OsV2
 
 	font            *WinFont
 	text            string
-	cd              OsCd
+	frontCd         OsCd
 	enableFormating bool
 
 	letters []int //aggregated!
@@ -195,7 +217,6 @@ type WinGphItemText struct {
 type WinGphItemCircle struct {
 	item  *WinGphItem
 	size  OsV2
-	cd    OsCd
 	width float64
 }
 
@@ -204,6 +225,9 @@ type WinGph struct {
 
 	texts   []*WinGphItemText
 	circles []*WinGphItemCircle
+
+	texts_num_created int
+	texts_num_remove  int
 }
 
 func NewWinGph() *WinGph {
@@ -244,6 +268,7 @@ func (gph *WinGph) Maintenance() {
 		if !gph.texts[i].item.IsUsed() {
 			gph.texts[i].item.Destroy()
 			gph.texts = append(gph.texts[:i], gph.texts[i+1:]...) //remove
+			gph.texts_num_remove++
 		}
 	}
 
@@ -266,67 +291,68 @@ func (gph *WinGph) GetFont(path string, heightPx int) *WinFont {
 	return it
 }
 
-func (gph *WinGph) GetText(font *WinFont, text string, cd OsCd, enableFormating bool) *WinGphItemText {
+func (gph *WinGph) GetText(font *WinFont, text string, frontCd OsCd, enableFormating bool) *WinGphItemText {
 	if text == "" {
 		return nil
 	}
 	font.UpdateTick()
 
-	if len(text) > 100 {
-		text = text[:100] //cut it
+	if len(text) > 512 {
+		text = text[:512] //cut it
 	}
 
 	//find
 	for _, it := range gph.texts {
-		if it.font == font && it.text == text && it.cd.Cmp(cd) && it.enableFormating == enableFormating {
+		if it.font == font && it.text == text && it.frontCd.Cmp(frontCd) && it.enableFormating == enableFormating {
 			it.item.UpdateTick()
 			return it
 		}
 	}
 
 	//create
-	it := font.DrawString(text, cd, enableFormating)
+	it := font.DrawString(text, frontCd, enableFormating)
 	if it != nil {
 		gph.texts = append(gph.texts, it)
+		gph.texts_num_created++
 	}
 	return it
 }
 
-func (gph *WinGph) GetTextSize(font *WinFont, max_len int, text string, cd OsCd, enableFormating bool) OsV2 {
+func (gph *WinGph) GetTextSize(font *WinFont, max_len int, text string, frontCd OsCd, enableFormating bool) OsV2 {
 	if text == "" {
 		return OsV2{}
 	}
 	font.UpdateTick()
 
-	it := gph.GetText(font, text, cd, enableFormating)
+	it := gph.GetText(font, text, frontCd, enableFormating)
 	if it == nil {
 		return OsV2{0, 0}
 	}
 	it.item.UpdateTick()
 
 	if max_len < 0 || max_len >= len(it.letters) {
-		return it.item.size
+		return it.size
 	}
 
 	i := max_len - 1
 	if i < 0 {
-		return OsV2{0, it.item.size.Y}
+		return OsV2{0, it.size.Y}
 	}
 
 	if i >= len(it.letters) {
 		i = len(it.letters) - 1
 	}
 
-	return OsV2{it.letters[i], it.item.size.Y}
+	return OsV2{it.letters[i], it.size.Y}
 }
 
-func (gph *WinGph) GetTextPos(font *WinFont, px int, text string, cd OsCd, enableFormating bool) int {
+func (gph *WinGph) GetTextPos(font *WinFont, px int, text string, frontCd OsCd, enableFormating bool) int {
 	if text == "" {
 		return 0
 	}
 	font.UpdateTick()
 
-	it := gph.GetText(font, text, cd, enableFormating)
+	it := gph.GetText(font, text, frontCd, enableFormating)
 	if it == nil {
 		return 0
 	}
@@ -340,20 +366,21 @@ func (gph *WinGph) GetTextPos(font *WinFont, px int, text string, cd OsCd, enabl
 	return len(it.letters)
 }
 
-func (gph *WinGph) GetCircle(size OsV2, cd OsCd, width float64) *WinGphItem {
+func (gph *WinGph) GetCircle(size OsV2, width float64) *WinGphItemCircle {
 
 	//find
 	for _, it := range gph.circles {
-		if it.size.Cmp(size) && it.cd.Cmp(cd) && it.width == width {
-			return it.item
+		if it.size.Cmp(size) && it.width == width {
+			return it
 		}
 	}
 
 	//create
-	size.X += 2
-	size.Y += 2
-	dc := gg.NewContext(size.X, size.Y)
-	dc.SetRGBA255(int(cd.R), int(cd.G), int(cd.B), int(cd.A))
+	w := NextPowOf2(size.X)
+	h := NextPowOf2(size.Y)
+
+	dc := gg.NewContext(w, h)
+	dc.SetRGBA255(255, 255, 255, 255)
 	dc.DrawEllipse(float64(size.X)/2, float64(size.Y)/2, float64(size.X)/2, float64(size.Y)/2)
 	if width > 0 {
 		dc.SetLineWidth(width)
@@ -361,12 +388,20 @@ func (gph *WinGph) GetCircle(size OsV2, cd OsCd, width float64) *WinGphItem {
 		dc.Fill()
 	}
 
+	//dc.SavePNG("out.png")
+
+	rect := image.Rect(0, 0, w, h)
+	dst := image.NewAlpha(rect)
+	draw.Draw(dst, rect, dc.Image(), rect.Min, draw.Src)
+
 	//add
-	it := NewWinGphItem(dc)
+	var circle *WinGphItemCircle
+	it := NewWinGphItemAlpha(dst)
 	if it != nil {
-		gph.circles = append(gph.circles, &WinGphItemCircle{item: it, size: size, cd: cd, width: width})
+		circle = &WinGphItemCircle{item: it, size: size, width: width}
+		gph.circles = append(gph.circles, circle)
 	}
-	return it
+	return circle
 }
 
 /*func (gph *WinGph) GetPoly(size OsV2, cd OsCd, width float64) *WinGphItem {

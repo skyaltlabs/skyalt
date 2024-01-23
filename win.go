@@ -681,6 +681,8 @@ func (win *Win) StartRender(clearCd OsCd) error {
 
 		gl.Enable(gl.BLEND)
 		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+		gl.Enable(gl.ALPHA_TEST)
+		gl.ShadeModel(gl.SMOOTH)
 
 		gl.Enable(gl.TEXTURE_2D)
 	}
@@ -751,21 +753,22 @@ func (win *Win) renderStats() error {
 
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
-	text := fmt.Sprintf("FPS(worst: %.1f, best: %.1f, avg: %.1f), Memory(%d imgs: %.2fMB, process: %.2fMB), Threads(%d), Net(downloads: %d, errors: %d)",
+	text := fmt.Sprintf("FPS(worst: %.1f, best: %.1f, avg: %.1f), Memory(%d imgs: %.2fMB, process: %.2fMB), Threads(%d), Net(downloads: %d, errors: %d), Text(live: %d, created: %d, removed: %d)",
 		win.stat.out_worst_fps, win.stat.out_best_fps, win.stat.out_avg_fps,
 		win.NumTextures(), float64(win.GetImagesBytes())/1024/1024, float64(mem.Sys)/1024/1024,
 		runtime.NumGoroutine(),
-		OsTrn(win.disk != nil, win.disk.net.num_jobs_done, 0), OsTrn(win.disk != nil, win.disk.net.num_jobs_errors, 0))
+		OsTrn(win.disk != nil, win.disk.net.num_jobs_done, 0), OsTrn(win.disk != nil, win.disk.net.num_jobs_errors, 0),
+		len(win.gph.texts), win.gph.texts_num_created, win.gph.texts_num_remove)
 
-	cd := OsCd{255, 50, 50, 255}
-	sz := win.GetTextSize(-1, text, 0, 0, cd, true)
+	fCd := OsCd{255, 50, 50, 255}
+	sz := win.GetTextSize(-1, text, 0, 0, fCd, true)
 
 	cq := OsV4{win.io.GetCoord().Middle().Sub(sz.MulV(0.5)), sz}
 
 	win.SetClipRect(cq)
 	depth := 990 //...
 	win.DrawRect(cq.Start, cq.End(), depth, win.io.GetPalette().B)
-	win.DrawText(text, 0, 0, cq, depth, OsV2{0, 1}, cd, true)
+	win.DrawText(text, 0, 0, cq, depth, OsV2{0, 1}, fCd, true)
 
 	return nil
 }
@@ -814,9 +817,6 @@ func (win *Win) DrawRect(start OsV2, end OsV2, depth int, cd OsCd) {
 	if start.X != end.X && start.Y != end.Y {
 		gl.Color4ub(cd.R, cd.G, cd.B, cd.A)
 
-		//gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-		//gl.Disable(gl.POLYGON_SMOOTH) //without, it show transparent diagonal "space"
-
 		gl.Begin(gl.QUADS)
 		{
 			gl.Vertex3f(float32(start.X), float32(start.Y), float32(depth))
@@ -853,10 +853,6 @@ func (win *Win) DrawRectRound(coord OsV4, rad int, depth int, cd OsCd, thick int
 		gl.LineWidth(float32(thick))
 		gl.Begin(gl.LINE_LOOP)
 	} else {
-		//gl.Enable(gl.POLYGON_SMOOTH)
-		//gl.Hint(gl.POLYGON_SMOOTH_HINT, gl.NICEST)
-		//gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-
 		gl.Begin(gl.TRIANGLE_FAN)
 	}
 
@@ -901,9 +897,9 @@ func (win *Win) DrawRectRound(coord OsV4, rad int, depth int, cd OsCd, thick int
 
 func (win *Win) DrawCicle(mid OsV2, rad OsV2, depth int, cd OsCd, thick int) {
 
-	item := win.gph.GetCircle(rad.MulV(2), OsCd{255, 255, 255, 255}, float64(thick))
-	if item != nil {
-		item.Draw(InitOsV4Mid(mid, item.size), depth, cd) //double color ............ maybe text as well .....
+	circle := win.gph.GetCircle(rad.MulV(2), float64(thick))
+	if circle != nil {
+		circle.item.DrawCut(InitOsV4Mid(mid, circle.size), depth, cd)
 	}
 }
 
@@ -997,44 +993,44 @@ func (win *Win) GetFont(path string, textH float64) *WinFont {
 	return win.gph.GetFont(path, tPx)
 }
 
-func (win *Win) DrawText(text string, textH float64, lineH float64, coord OsV4, depth int, align OsV2, cd OsCd, enableFormating bool) {
+func (win *Win) DrawText(text string, textH float64, lineH float64, coord OsV4, depth int, align OsV2, frontCd OsCd, enableFormating bool) {
 
 	font := win.GetFont("", textH)
 	if font == nil {
 		return
 	}
 
-	item := win.gph.GetText(font, text, OsCd{255, 255, 255, 255}, enableFormating)
+	item := win.gph.GetText(font, text, frontCd, enableFormating)
 	if item != nil {
-		start := win.GetTextStart(text, textH, lineH, coord, align, OsCd{255, 255, 255, 255}, enableFormating)
+		start := win.GetTextStart(text, textH, lineH, coord, align, frontCd, enableFormating)
 
-		item.item.Draw(OsV4{Start: start, Size: item.item.size}, depth, cd)
+		item.item.DrawCut(OsV4{Start: start, Size: item.size}, depth, frontCd)
 	}
 }
 
-func (win *Win) GetTextSize(cur_pos int, text string, textH float64, lineH float64, cd OsCd, enableFormating bool) OsV2 {
+func (win *Win) GetTextSize(cur_pos int, text string, textH float64, lineH float64, frontCd OsCd, enableFormating bool) OsV2 {
 	font := win.GetFont("", textH)
 	if font == nil {
 		return OsV2{}
 	}
 
-	return win.gph.GetTextSize(font, cur_pos, text, cd, enableFormating)
+	return win.gph.GetTextSize(font, cur_pos, text, frontCd, enableFormating)
 }
 
-func (win *Win) GetTextPos(touchPos OsV2, text string, textH float64, lineH float64, coord OsV4, align OsV2, cd OsCd, enableFormating bool) int {
+func (win *Win) GetTextPos(touchPos OsV2, text string, textH float64, lineH float64, coord OsV4, align OsV2, frontCd OsCd, enableFormating bool) int {
 	font := win.GetFont("", textH)
 	if font == nil {
 		return 0
 	}
 
-	start := win.GetTextStart(text, textH, lineH, coord, align, cd, enableFormating)
+	start := win.GetTextStart(text, textH, lineH, coord, align, frontCd, enableFormating)
 
-	return win.gph.GetTextPos(font, (touchPos.X - start.X), text, cd, enableFormating)
+	return win.gph.GetTextPos(font, (touchPos.X - start.X), text, frontCd, enableFormating)
 }
 
-func (win *Win) GetTextStart(text string, textH float64, lineH float64, coord OsV4, align OsV2, cd OsCd, enableFormating bool) OsV2 {
+func (win *Win) GetTextStart(text string, textH float64, lineH float64, coord OsV4, align OsV2, frontCd OsCd, enableFormating bool) OsV2 {
 
-	size := win.GetTextSize(-1, text, textH, lineH, cd, enableFormating)
+	size := win.GetTextSize(-1, text, textH, lineH, frontCd, enableFormating)
 
 	start := coord.Start
 
@@ -1079,15 +1075,15 @@ func (win *Win) Cell() int {
 	return win.io.Cell()
 }
 
-func (win *Win) RenderTile(text string, coord OsV4, priorUp bool, cd OsCd) error {
+func (win *Win) RenderTile(text string, coord OsV4, priorUp bool, frontCd OsCd) error {
 	if win == nil {
 		return nil
 	}
 
 	num_lines := strings.Count(text, "\n") + 1
 	cq := coord
-	cq.Size = win.GetTextSize(-1, text, 0, 0, cd, true)
-	cq = cq.AddSpaceX(-win.io.GetDPI() / 10)
+	cq.Size = win.GetTextSize(-1, text, 0, 0, frontCd, true)
+	cq = cq.AddSpace(-win.io.GetDPI() / 20)
 
 	// user can set priority(up, down, etc.) ...
 	cq = OsV4_relativeSurround(coord, cq, OsV4{OsV2{}, OsV2{X: win.io.ini.WinW, Y: win.io.ini.WinH}}, priorUp)
@@ -1097,7 +1093,7 @@ func (win *Win) RenderTile(text string, coord OsV4, priorUp bool, cd OsCd) error
 	win.DrawRect(cq.Start, cq.End(), depth, win.io.GetPalette().B)
 	win.DrawRect_border(cq.Start, cq.End(), depth, win.io.GetPalette().OnB, 1)
 	cq.Size.Y /= num_lines
-	win.DrawText(text, 0, 0, cq, depth, OsV2{1, 1}, cd, true)
+	win.DrawText(text, 0, 0, cq, depth, OsV2{1, 1}, frontCd, true)
 
 	return nil
 }
