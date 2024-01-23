@@ -654,6 +654,7 @@ func (w *SANode) _getAttr(find bool, defValue SANodeAttr) *SANodeAttr {
 	}
 
 	v.defaultValue = defValue.Value //update
+	v.Ui = defValue.Ui
 	v.exeMark = true
 	return v
 }
