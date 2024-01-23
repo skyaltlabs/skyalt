@@ -131,7 +131,7 @@ func (ui *Ui) _compDrawImage(coord OsV4, icon WinMedia, cd OsCd, style *UiComp) 
 
 }
 
-func (ui *Ui) _compDrawText(coord OsV4, value string, valueOrigEdit string, cd OsCd, textH float64, selection bool, editable bool, alignH int, alignV int, formating bool) {
+func (ui *Ui) _compDrawText(coord OsV4, value string, valueOrigEdit string, frontCd OsCd, textH float64, selection bool, editable bool, alignH int, alignV int, formating bool) {
 
 	lv := ui.GetCall()
 
@@ -143,7 +143,7 @@ func (ui *Ui) _compDrawText(coord OsV4, value string, valueOrigEdit string, cd O
 	//one liner
 	active := ui._UiPaint_Text_line(coord, 0, OsV2{utf8.RuneCountInString(value), 0},
 		value, valueOrigEdit,
-		cd,
+		frontCd,
 		textH, 1, 0, 0,
 		"", alignH, alignV,
 		selection, editable, true, formating)
@@ -1164,7 +1164,7 @@ func (ui *Ui) Comp_switch_s(style *UiComp, value bool, label string) bool {
 	midCd, _ := pl.GetCd(CdPalette_B, style.fade, style.enable, inside, active)
 
 	style.cd = CdPalette_B
-	_, labelCd := pl.GetCd(style.cd, style.fade, style.enable, inside, active)
+	_, labelOnCd := pl.GetCd(style.cd, style.fade, style.enable, inside, active)
 
 	mn := ui.CellWidth(0.6)
 	coord := lv.call.canvas
@@ -1176,7 +1176,7 @@ func (ui *Ui) Comp_switch_s(style *UiComp, value bool, label string) bool {
 
 		//text
 		//ui.Paint_textGrid(coordText, pl.GetOnSurface(), style, label, "", "", true, false)
-		ui._compDrawText(coordText, label, "", labelCd, 0, false, false, int(style.label_alignH), int(style.label_alignV), style.label_formating)
+		ui._compDrawText(coordText, label, "", labelOnCd, 0, false, false, int(style.label_alignH), int(style.label_alignV), style.label_formating)
 
 		coord = coordImg
 
