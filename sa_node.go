@@ -799,7 +799,7 @@ func _SANode_isEditable(attr *SANodeAttr, instr *VmInstr) bool {
 	return !attr.IsOutput() && instr != nil && !instr.pos_attr.IsOutput()
 }
 
-func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
+func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, uiVal *SAAttrUiValue, ui *Ui) {
 
 	if attr.ShowExp {
 		ui.Comp_editbox(x, y, w, h, &attr.Value, 2, nil, "", false, false, true) //show whole expression
@@ -824,33 +824,33 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 
 		editable := _SANode_isEditable(attr, instr)
 
-		if attr.Ui.Fn == SAAttrUi_SWITCH.Fn {
+		if uiVal.Fn == SAAttrUi_SWITCH.Fn {
 			if ui.Comp_switch(x, y, w, h, &value, false, "", "", editable) {
 				instr.LineReplace(value)
 			}
-		} else if attr.Ui.Fn == SAAttrUi_CHECKBOX.Fn {
+		} else if uiVal.Fn == SAAttrUi_CHECKBOX.Fn {
 			if ui.Comp_checkbox(x, y, w, h, &value, false, "", "", editable) {
 				instr.LineReplace(value)
 			}
-		} else if attr.Ui.Fn == SAAttrUi_DATE.Fn {
+		} else if uiVal.Fn == SAAttrUi_DATE.Fn {
 			ui.Div_start(x, y, w, h)
 			val := int64(instr.pos_attr.result.Number())
 			if ui.Comp_CalendarDataPicker(&val, true, attr.Name, editable) {
 				instr.LineReplace(strconv.Itoa(int(val)))
 			}
 			ui.Div_end()
-		} else if attr.Ui.Fn == "combo" {
-			if ui.Comp_combo(x, y, w, h, &value, strings.Split(attr.Ui.Prm, ";"), strings.Split(attr.Ui.Prm2, ";"), "", editable, false) {
+		} else if uiVal.Fn == "combo" {
+			if ui.Comp_combo(x, y, w, h, &value, strings.Split(uiVal.Prm, ";"), strings.Split(uiVal.Prm2, ";"), "", editable, false) {
 				instr.LineReplace(value)
 			}
-		} else if attr.Ui.Fn == SAAttrUi_COLOR.Fn {
+		} else if uiVal.Fn == SAAttrUi_COLOR.Fn {
 			cd := attr.result.GetCd()
 			if ui.comp_colorPicker(x, y, w, h, &cd, attr.Name, true) {
 				//if editable {	//...............
 				attr.ReplaceCd(cd)
 				//}
 			}
-		} else if attr.Ui.Fn == SAAttrUi_BLOB.Fn {
+		} else if uiVal.Fn == SAAttrUi_BLOB.Fn {
 			blob := attr.result.Blob()
 			dnm := "blob_" + attr.Name
 			if ui.Comp_buttonIcon(x, y, w, h, InitWinMedia_blob(blob), 0, "", CdPalette_White, true, false) > 0 {
@@ -1180,7 +1180,7 @@ func (w *SANode) RenderAttrs() {
 				ui.Div_end()
 			}
 
-			_SANode_renderAttrValue(x, 0, 1, 1, it, ui)
+			_SANode_renderAttrValue(x, 0, 1, 1, it, &it.Ui, ui)
 			x++
 
 			//error
