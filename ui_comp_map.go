@@ -346,7 +346,7 @@ func (ui *Ui) comp_map(cam_lon, cam_lat, cam_zoom *float64, file, url, copyright
 
 			if rowid > 0 {
 				//extra margin will fix white spaces during zooming
-				ui.Paint_file(tileCoord_sx, tileCoord_sy, tileW, tileH, OsTrnFloat(isZooming, -0.03, 0), InitWinMedia_url(fmt.Sprintf("db:%s:tiles/file/%d", file, rowid)), InitOsCd32(255, 255, 255, 255), 0, 0, false, false)
+				ui.Paint_file(tileCoord_sx, tileCoord_sy, tileW, tileH, OsTrnFloat(isZooming, -0.03, 0), InitWinMedia_url(fmt.Sprintf("db:%s:tiles/file/%d", file, rowid)), InitOsCdWhite(), 0, 0, false, false)
 			}
 
 		}

@@ -513,6 +513,9 @@ type OsCd struct {
 func InitOsCd32(r, g, b, a uint32) OsCd {
 	return OsCd{byte(r), byte(g), byte(b), byte(a)}
 }
+func InitOsCdWhite() OsCd {
+	return InitOsCd32(255, 255, 255, 255)
+}
 
 func (cd OsCd) SetAlpha(a byte) OsCd {
 	cd.A = a
@@ -520,7 +523,7 @@ func (cd OsCd) SetAlpha(a byte) OsCd {
 }
 
 func (cd OsCd) MultAlpha(a byte) OsCd {
-	return cd.Aprox(OsCd{255, 255, 255, 255}, float32(a)/255.0)
+	return cd.Aprox(InitOsCdWhite(), float32(a)/255.0)
 }
 func (a OsCd) Cmp(b OsCd) bool {
 	return a.R == b.R && a.G == b.G && a.B == b.B && a.A == b.A

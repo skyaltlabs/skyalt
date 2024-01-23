@@ -858,7 +858,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, ui *Ui) {
 			if ui.Dialog_start(dnm) {
 				ui.Div_colMax(0, 20)
 				ui.Div_rowMax(0, 20)
-				ui.Comp_image(0, 0, 1, 1, InitWinMedia_blob(blob), InitOsCd32(255, 255, 255, 255), 0, 1, 1, false)
+				ui.Comp_image(0, 0, 1, 1, InitWinMedia_blob(blob), InitOsCdWhite(), 0, 1, 1, false)
 				ui.Dialog_end()
 			}
 		} else if VmCallback_Cmp(fn, VmBasic_InitArray) {

@@ -85,7 +85,7 @@ func (ptcs *WinParticles) Clear() {
 
 func (ptcs *WinParticles) Tick(win *Win) bool {
 	ptcs.Update()
-	_, err := ptcs.Draw(OsCd{255, 255, 255, 255}, win)
+	_, err := ptcs.Draw(InitOsCdWhite(), win)
 	if err != nil {
 		fmt.Printf("Particles.Draw() failed: %v\n", err)
 		return false

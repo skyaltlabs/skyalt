@@ -316,16 +316,16 @@ func InitWinCdPalette_light() WinCdPalette {
 	var pl WinCdPalette
 	//Primary
 	pl.P = InitOsCd32(37, 100, 120, 255)
-	pl.OnP = InitOsCd32(255, 255, 255, 255)
+	pl.OnP = InitOsCdWhite()
 	//Secondary
 	pl.S = InitOsCd32(85, 95, 100, 255)
-	pl.OnS = InitOsCd32(255, 255, 255, 255)
+	pl.OnS = InitOsCdWhite()
 	//Tertiary
 	pl.T = InitOsCd32(90, 95, 115, 255)
-	pl.OnT = InitOsCd32(255, 255, 255, 255)
+	pl.OnT = InitOsCdWhite()
 	//Err
 	pl.E = InitOsCd32(180, 40, 30, 255)
-	pl.OnE = InitOsCd32(255, 255, 255, 255)
+	pl.OnE = InitOsCdWhite()
 	//Surface(background)
 	pl.B = InitOsCd32(230, 235, 240, 255)
 	pl.OnB = InitOsCd32(25, 27, 30, 255)
@@ -385,7 +385,7 @@ func (pl *WinCdPalette) GetCd2(cd OsCd, fade, enable, inside, active bool) OsCd 
 func (pl *WinCdPalette) GetCdI(i uint8) (OsCd, OsCd) {
 	switch i {
 	case CdPalette_White:
-		return InitOsCd32(255, 255, 255, 255), InitOsCd32(0, 0, 0, 255)
+		return InitOsCdWhite(), InitOsCd32(0, 0, 0, 255)
 	case CdPalette_P:
 		return pl.P, pl.OnP
 	case CdPalette_S:
