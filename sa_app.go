@@ -123,7 +123,9 @@ func (app *SAApp) RenderApp(ide bool) {
 
 		app.clickedAttr = nil
 	} else {
+		//st := OsTime()
 		node.renderLayout()
+		//fmt.Println(OsTime() - st)
 	}
 
 }
