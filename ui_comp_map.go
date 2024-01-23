@@ -197,7 +197,6 @@ func (ui *Ui) comp_mapLocators(cam_lon, cam_lat, cam_zoom float64, items []UiCom
 				ui.Dialog_open(dnm, 1)
 			}
 			if ui.Dialog_start(dnm) {
-				//when map is on dialog, this dialog won't show up, wierd ...................
 				ui.Div_colMax(0, 5)
 				ui.Comp_text(0, 0, 1, 1, it.Label, 1)
 				ui.Comp_text(0, 1, 1, 1, fmt.Sprintf("Lon: %.3f", it.Lon), 0)
