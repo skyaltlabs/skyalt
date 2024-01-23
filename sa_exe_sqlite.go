@@ -19,13 +19,14 @@ package main
 import (
 	"database/sql"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
 )
 
-func _SAExe_Sqlite_open(node *SANode, fileAttr *SANodeAttr) *sql.DB {
+func _SAExe_Sqlite_open(node *SANode, fileAttr *SANodeAttr) *DiskDb {
 
 	file := fileAttr.GetString()
 
@@ -40,9 +41,16 @@ func _SAExe_Sqlite_open(node *SANode, fileAttr *SANodeAttr) *sql.DB {
 		return nil
 	}
 
-	db, err := sql.Open("sqlite3", "file:"+file+"?&_journal_mode=WAL")
+	/*db, err := sql.Open("sqlite3", "file:"+file+"?&_journal_mode=WAL")
 	if err != nil {
 		fileAttr.SetErrorExe(fmt.Sprintf("Open(%s) failed: %v", file, err))
+		return nil
+	}
+	return db*/
+
+	db, err := NewDiskDb(file, false, nil)
+	if err != nil {
+		fileAttr.SetErrorExe(err.Error())
 		return nil
 	}
 	return db
@@ -51,29 +59,84 @@ func _SAExe_Sqlite_open(node *SANode, fileAttr *SANodeAttr) *sql.DB {
 func SAExe_Sqlite_insert(node *SANode) bool {
 
 	triggerAttr := node.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
+
 	fileAttr := node.GetAttr("file", "")
-	tableAttr := node.GetAttr("table", "") //combo ...
+
+	db := _SAExe_Sqlite_open(node, fileAttr)
+	if db == nil {
+		return false
+	}
+	defer db.Destroy()
+
+	tbls, err := db.GetTableInfo()
+	if err != nil {
+		fileAttr.SetErrorExe(err.Error())
+		return false
+	}
+
+	var tableList string
+	{
+		for _, tb := range tbls {
+			tableList += tb.Name + ";"
+		}
+		tableList, _ = strings.CutSuffix(tableList, ";")
+	}
+	tableAttr := node.GetAttrUi("table", "", SAAttrUi_COMBO(tableList, tableList))
+
+	table := tableAttr.GetString()
+	if table == "" {
+		tableAttr.SetErrorExe("empty")
+		return false
+	}
+
+	var columnList string
+	{
+		table := tableAttr.GetString()
+		for _, tb := range tbls {
+			if tb.Name == table {
+				for _, cl := range tb.Columns {
+					columnList += cl.Name + ";"
+				}
+				columnList, _ = strings.CutSuffix(columnList, ";")
+			}
+		}
+	}
+
+	valuesAttr := node.GetAttrUi(
+		"values",
+		"[{\"column\": \"a\", \"value\": \"1\"}, {\"column\": \"b\", \"value\": \"2\"}]",
+		SAAttrUiValue{Fn: "map", Map: map[string]SAAttrUiValue{"column": SAAttrUi_COMBO(columnList, columnList), "value": SAAttrUiValue{}}})
 
 	if triggerAttr.GetBool() {
 
-		db := _SAExe_Sqlite_open(node, fileAttr)
-		if db == nil {
+		type Values struct {
+			Column string
+			Value  string
+		}
+		var vals []Values
+		err := json.Unmarshal([]byte(valuesAttr.GetString()), &vals)
+		if err != nil {
+			valuesAttr.SetErrorExe(err.Error())
 			return false
 		}
-		defer db.Close()
 
-		table := tableAttr.GetString()
-		if table == "" {
-			tableAttr.SetErrorExe("empty")
+		var valColumns string
+		var valValues string
+		var valValuesArr []interface{}
+		for _, v := range vals {
+			valColumns += v.Column + ","
+			valValues += "?,"
+			valValuesArr = append(valValuesArr, v.Value)
+		}
+		valColumns, _ = strings.CutSuffix(valColumns, ",")
+		valValues, _ = strings.CutSuffix(valValues, ",")
+
+		query := fmt.Sprintf("INSERT INTO %s(%s) VALUES(%s);", table, valColumns, valValues)
+		_, err = db.Write(query, valValuesArr...)
+		if err != nil {
+			node.SetError(err.Error())
 			return false
 		}
-
-		query := "INSERT INTO" + table
-		//...........
-		//INSERT INTO table_name (column1, column2, column3, ...) VALUES (value1, value2, value3, ...);
-
-		query += ";"
-		db.Exec(query)
 
 		triggerAttr.SetExpBool(false)
 	}
@@ -95,7 +158,7 @@ func SAExe_Sqlite_select(node *SANode) bool {
 	if db == nil {
 		return false
 	}
-	defer db.Close()
+	defer db.Destroy()
 
 	query := queryAttr.GetString()
 	if query == "" {
@@ -103,7 +166,7 @@ func SAExe_Sqlite_select(node *SANode) bool {
 		return false
 	}
 
-	rows, err := db.Query(query)
+	rows, err := db.Read(query)
 	if err != nil {
 		queryAttr.SetErrorExe(fmt.Sprintf("Query() failed: %v", err))
 		return false
