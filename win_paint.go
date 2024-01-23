@@ -233,23 +233,23 @@ func (b *WinPaintBuff) AddImage(path WinMedia, coord OsV4, cd OsCd, alignV int, 
 	}
 }
 
-func (b *WinPaintBuff) AddText(text string, textH float64, lineH float64, coord OsV4, cd OsCd, align OsV2, enableFormating bool) {
+func (b *WinPaintBuff) AddText(text string, textH float64, lineH float64, coord OsV4, frontCd OsCd, align OsV2, enableFormating bool) {
 	if !b.skipDraw {
-		b.win.DrawText(text, textH, lineH, coord, b.getDepth(), align, cd, enableFormating)
+		b.win.DrawText(text, textH, lineH, coord, b.getDepth(), align, frontCd, enableFormating)
 	}
 }
 
-func (b *WinPaintBuff) AddTextBack(rangee OsV2, text string, textH float64, lineH float64, coord OsV4, cd OsCd, align OsV2, enableFormating bool, underline bool) {
+func (b *WinPaintBuff) AddTextBack(rangee OsV2, text string, textH float64, lineH float64, coord OsV4, cd OsCd, frontCd OsCd, align OsV2, enableFormating bool, underline bool) {
 
 	if rangee.X == rangee.Y {
 		return
 	}
 
-	start := b.win.GetTextStart(text, textH, lineH, coord, align, cd, enableFormating)
+	start := b.win.GetTextStart(text, textH, lineH, coord, align, frontCd, enableFormating)
 
 	var rng OsV2
-	rng.X = b.win.GetTextSize(rangee.X, text, textH, lineH, cd, enableFormating).X
-	rng.Y = b.win.GetTextSize(rangee.Y, text, textH, lineH, cd, enableFormating).X
+	rng.X = b.win.GetTextSize(rangee.X, text, textH, lineH, frontCd, enableFormating).X
+	rng.Y = b.win.GetTextSize(rangee.Y, text, textH, lineH, frontCd, enableFormating).X
 
 	rng.Sort()
 
@@ -268,13 +268,13 @@ func (b *WinPaintBuff) AddTextBack(rangee OsV2, text string, textH float64, line
 	}
 }
 
-func (b *WinPaintBuff) AddTextCursor(text string, textH float64, lineH float64, coord OsV4, cd OsCd, align OsV2, enableFormating bool, cursorPos int) OsV4 {
+func (b *WinPaintBuff) AddTextCursor(text string, textH float64, lineH float64, coord OsV4, cd OsCd, frontCd OsCd, align OsV2, enableFormating bool, cursorPos int) OsV4 {
 	b.win.cursorEdit = true
 	cd.A = b.win.cursorCdA
 
-	start := b.win.GetTextStart(text, textH, lineH, coord, align, cd, enableFormating)
+	start := b.win.GetTextStart(text, textH, lineH, coord, align, frontCd, enableFormating)
 
-	sz := b.win.GetTextSize(cursorPos, text, textH, lineH, cd, enableFormating)
+	sz := b.win.GetTextSize(cursorPos, text, textH, lineH, frontCd, enableFormating)
 
 	cursorQuad := InitOsV4(start.X+sz.X, coord.Start.Y, OsMax(1, b.win.Cell()/15), coord.Size.Y)
 	cursorQuad = cursorQuad.AddSpaceY((coord.Size.Y-sz.Y)/2 - (sz.Y / 2)) //smaller height
