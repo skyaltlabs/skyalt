@@ -23,7 +23,7 @@ import (
 
 func main() {
 	//Profiling
-	//Os_StartProfile("cpu.prof")
+	//Os_StartProfile("cpu.prof")	//run "sh perf" to show result
 	//defer Os_StopProfile()
 
 	InitImageGlobal()
