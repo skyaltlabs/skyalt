@@ -889,12 +889,12 @@ func (ui *Ui) Comp_combo_s(style *UiComp, value string, options_names []string, 
 	//dialog
 	if ui.Dialog_start(nmd) {
 		//compute minimum dialog width
-		mx := 0
+		mx := float64(0)
 		for _, opt := range options_names {
-			mx = OsMax(mx, len(opt))
+			sz := ui.win.gph.GetTextSize(ui.win.GetFont("", 0), -1, opt, true)
+			mx = OsMaxFloat(mx, float64(sz.X)/float64(ui.win.Cell())+0.5)
 		}
-
-		ui.Div_colMax(0, OsMaxFloat(5, 1*float64(mx))) //.............
+		ui.Div_colMax(0, OsMaxFloat(3, mx))
 
 		for i, opt := range options_names {
 
