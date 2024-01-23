@@ -65,6 +65,24 @@ func InitWinTextureFromImageRGBA(rgba *image.RGBA) (*WinTexture, error) {
 	return &tex, nil
 }
 
+func InitWinTextureFromImageAlpha(alpha *image.Alpha) (*WinTexture, error) {
+	var tex WinTexture
+
+	gl.GenTextures(1, &tex.id)
+
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, tex.id)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+
+	tex.size = OsV2{alpha.Rect.Size().X, alpha.Rect.Size().Y}
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.ALPHA, int32(tex.size.X), int32(tex.size.Y), 0, gl.ALPHA, gl.UNSIGNED_BYTE, gl.Ptr(alpha.Pix))
+
+	gl.BindTexture(gl.TEXTURE_2D, 0) //UnBind
+
+	return &tex, nil
+}
+
 func InitWinTextureFromImage(img image.Image) (*WinTexture, error) {
 
 	rgba := image.NewRGBA(img.Bounds())
@@ -105,7 +123,7 @@ func (tex *WinTexture) Destroy() {
 	}
 }
 
-func (tex *WinTexture) DrawQuad(coord OsV4, depth int, cd OsCd) {
+func (tex *WinTexture) _drawQuad(coord OsV4, depth int, cd OsCd, uv OsV2f) {
 	gl.Color4ub(cd.R, cd.G, cd.B, cd.A)
 
 	gl.ActiveTexture(gl.TEXTURE0)
@@ -119,16 +137,28 @@ func (tex *WinTexture) DrawQuad(coord OsV4, depth int, cd OsCd) {
 		gl.TexCoord2f(0.0, 0.0)
 		gl.Vertex3f(float32(s.X), float32(s.Y), float32(depth))
 
-		gl.TexCoord2f(1.0, 0.0)
+		gl.TexCoord2f(uv.X, 0.0)
 		gl.Vertex3f(float32(e.X), float32(s.Y), float32(depth))
 
-		gl.TexCoord2f(1.0, 1.0)
+		gl.TexCoord2f(uv.X, uv.Y)
 		gl.Vertex3f(float32(e.X), float32(e.Y), float32(depth))
 
-		gl.TexCoord2f(0.0, 1.0)
+		gl.TexCoord2f(0.0, uv.Y)
 		gl.Vertex3f(float32(s.X), float32(e.Y), float32(depth))
 	}
 	gl.End()
 
 	gl.BindTexture(gl.TEXTURE_2D, 0) //Unbind
+}
+
+func (tex *WinTexture) DrawQuad(coord OsV4, depth int, cd OsCd) {
+	tex._drawQuad(coord, depth, cd, OsV2f{1, 1})
+}
+
+func (tex *WinTexture) DrawQuadCut(coord OsV4, depth int, cd OsCd) {
+	uv := OsV2f{
+		float32(coord.Size.X) / float32(tex.size.X),
+		float32(coord.Size.Y) / float32(tex.size.Y)}
+
+	tex._drawQuad(coord, depth, cd, uv)
 }
