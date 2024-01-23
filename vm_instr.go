@@ -302,7 +302,6 @@ func (instr *VmInstr) ExePrmString(st *VmST, prm_i int) string {
 	return rec.String()
 }
 func (instr *VmInstr) ExePrmNumber(st *VmST, prm_i int) float64 {
-
 	rec := instr.ExePrm(st, prm_i)
 	return rec.Number()
 }
@@ -314,7 +313,8 @@ func VmBasic_Constant(instr *VmInstr, st *VmST) SAValue {
 	return instr.temp
 }
 func VmBasic_Bracket(instr *VmInstr, st *VmST) SAValue {
-	return instr.ExePrm(st, 0)
+	instr.temp = instr.ExePrm(st, 0)
+	return instr.temp
 }
 
 func VmBasic_Access(instr *VmInstr, st *VmST) SAValue {
