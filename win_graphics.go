@@ -90,7 +90,7 @@ func NextPowOf2(n int) int {
 	return k
 }
 
-func (ft *WinFont) DrawString(str string, frontCd OsCd, enableFormating bool) *WinGphItemText {
+func (ft *WinFont) DrawString(str string, enableFormating bool) *WinGphItemText {
 	size := ft.GetStringSize(str, enableFormating)
 
 	w := NextPowOf2(size.X)
@@ -112,7 +112,7 @@ func (ft *WinFont) DrawString(str string, frontCd OsCd, enableFormating bool) *W
 	d := &font.Drawer{
 		//Dst:  rgba,
 		Dst:  a,
-		Src:  image.NewUniform(color.NRGBA{frontCd.R, frontCd.G, frontCd.B, frontCd.A}),
+		Src:  image.NewUniform(color.NRGBA{255, 255, 255, 255}),
 		Face: ft.face,
 		Dot:  fixed.Point26_6{X: fixed.Int26_6(0), Y: fixed.Int26_6(m.Ascent)},
 	}
@@ -134,7 +134,7 @@ func (ft *WinFont) DrawString(str string, frontCd OsCd, enableFormating bool) *W
 		letters = append(letters, int(d.Dot.X>>6))
 	}
 
-	return &WinGphItemText{item: NewWinGphItemAlpha(a), size: size, font: ft, text: str, frontCd: frontCd, enableFormating: enableFormating, letters: letters}
+	return &WinGphItemText{item: NewWinGphItemAlpha(a), size: size, font: ft, text: str, enableFormating: enableFormating, letters: letters}
 }
 
 type WinGphItem struct {
@@ -208,7 +208,6 @@ type WinGphItemText struct {
 
 	font            *WinFont
 	text            string
-	frontCd         OsCd
 	enableFormating bool
 
 	letters []int //aggregated!
@@ -291,7 +290,7 @@ func (gph *WinGph) GetFont(path string, heightPx int) *WinFont {
 	return it
 }
 
-func (gph *WinGph) GetText(font *WinFont, text string, frontCd OsCd, enableFormating bool) *WinGphItemText {
+func (gph *WinGph) GetText(font *WinFont, text string, enableFormating bool) *WinGphItemText {
 	if text == "" {
 		return nil
 	}
@@ -303,14 +302,14 @@ func (gph *WinGph) GetText(font *WinFont, text string, frontCd OsCd, enableForma
 
 	//find
 	for _, it := range gph.texts {
-		if it.font == font && it.text == text && it.frontCd.Cmp(frontCd) && it.enableFormating == enableFormating {
+		if it.font == font && it.text == text && it.enableFormating == enableFormating {
 			it.item.UpdateTick()
 			return it
 		}
 	}
 
 	//create
-	it := font.DrawString(text, frontCd, enableFormating)
+	it := font.DrawString(text, enableFormating)
 	if it != nil {
 		gph.texts = append(gph.texts, it)
 		gph.texts_num_created++
@@ -318,13 +317,13 @@ func (gph *WinGph) GetText(font *WinFont, text string, frontCd OsCd, enableForma
 	return it
 }
 
-func (gph *WinGph) GetTextSize(font *WinFont, max_len int, text string, frontCd OsCd, enableFormating bool) OsV2 {
+func (gph *WinGph) GetTextSize(font *WinFont, max_len int, text string, enableFormating bool) OsV2 {
 	if text == "" {
 		return OsV2{}
 	}
 	font.UpdateTick()
 
-	it := gph.GetText(font, text, frontCd, enableFormating)
+	it := gph.GetText(font, text, enableFormating)
 	if it == nil {
 		return OsV2{0, 0}
 	}
@@ -346,13 +345,13 @@ func (gph *WinGph) GetTextSize(font *WinFont, max_len int, text string, frontCd 
 	return OsV2{it.letters[i], it.size.Y}
 }
 
-func (gph *WinGph) GetTextPos(font *WinFont, px int, text string, frontCd OsCd, enableFormating bool) int {
+func (gph *WinGph) GetTextPos(font *WinFont, px int, text string, enableFormating bool) int {
 	if text == "" {
 		return 0
 	}
 	font.UpdateTick()
 
-	it := gph.GetText(font, text, frontCd, enableFormating)
+	it := gph.GetText(font, text, enableFormating)
 	if it == nil {
 		return 0
 	}

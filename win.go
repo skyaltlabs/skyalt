@@ -761,7 +761,7 @@ func (win *Win) renderStats() error {
 		len(win.gph.texts), win.gph.texts_num_created, win.gph.texts_num_remove)
 
 	fCd := OsCd{255, 50, 50, 255}
-	sz := win.GetTextSize(-1, text, 0, 0, fCd, true)
+	sz := win.GetTextSize(-1, text, 0, 0, true)
 
 	cq := OsV4{win.io.GetCoord().Middle().Sub(sz.MulV(0.5)), sz}
 
@@ -1000,37 +1000,37 @@ func (win *Win) DrawText(text string, textH float64, lineH float64, coord OsV4, 
 		return
 	}
 
-	item := win.gph.GetText(font, text, frontCd, enableFormating)
+	item := win.gph.GetText(font, text, enableFormating)
 	if item != nil {
-		start := win.GetTextStart(text, textH, lineH, coord, align, frontCd, enableFormating)
+		start := win.GetTextStart(text, textH, lineH, coord, align, enableFormating)
 
 		item.item.DrawCut(OsV4{Start: start, Size: item.size}, depth, frontCd)
 	}
 }
 
-func (win *Win) GetTextSize(cur_pos int, text string, textH float64, lineH float64, frontCd OsCd, enableFormating bool) OsV2 {
+func (win *Win) GetTextSize(cur_pos int, text string, textH float64, lineH float64, enableFormating bool) OsV2 {
 	font := win.GetFont("", textH)
 	if font == nil {
 		return OsV2{}
 	}
 
-	return win.gph.GetTextSize(font, cur_pos, text, frontCd, enableFormating)
+	return win.gph.GetTextSize(font, cur_pos, text, enableFormating)
 }
 
-func (win *Win) GetTextPos(touchPos OsV2, text string, textH float64, lineH float64, coord OsV4, align OsV2, frontCd OsCd, enableFormating bool) int {
+func (win *Win) GetTextPos(touchPos OsV2, text string, textH float64, lineH float64, coord OsV4, align OsV2, enableFormating bool) int {
 	font := win.GetFont("", textH)
 	if font == nil {
 		return 0
 	}
 
-	start := win.GetTextStart(text, textH, lineH, coord, align, frontCd, enableFormating)
+	start := win.GetTextStart(text, textH, lineH, coord, align, enableFormating)
 
-	return win.gph.GetTextPos(font, (touchPos.X - start.X), text, frontCd, enableFormating)
+	return win.gph.GetTextPos(font, (touchPos.X - start.X), text, enableFormating)
 }
 
-func (win *Win) GetTextStart(text string, textH float64, lineH float64, coord OsV4, align OsV2, frontCd OsCd, enableFormating bool) OsV2 {
+func (win *Win) GetTextStart(text string, textH float64, lineH float64, coord OsV4, align OsV2, enableFormating bool) OsV2 {
 
-	size := win.GetTextSize(-1, text, textH, lineH, frontCd, enableFormating)
+	size := win.GetTextSize(-1, text, textH, lineH, enableFormating)
 
 	start := coord.Start
 
@@ -1082,7 +1082,7 @@ func (win *Win) RenderTile(text string, coord OsV4, priorUp bool, frontCd OsCd) 
 
 	num_lines := strings.Count(text, "\n") + 1
 	cq := coord
-	cq.Size = win.GetTextSize(-1, text, 0, 0, frontCd, true)
+	cq.Size = win.GetTextSize(-1, text, 0, 0, true)
 	cq = cq.AddSpace(-win.io.GetDPI() / 20)
 
 	// user can set priority(up, down, etc.) ...

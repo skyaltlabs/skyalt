@@ -239,17 +239,17 @@ func (b *WinPaintBuff) AddText(text string, textH float64, lineH float64, coord 
 	}
 }
 
-func (b *WinPaintBuff) AddTextBack(rangee OsV2, text string, textH float64, lineH float64, coord OsV4, cd OsCd, frontCd OsCd, align OsV2, enableFormating bool, underline bool) {
+func (b *WinPaintBuff) AddTextBack(rangee OsV2, text string, textH float64, lineH float64, coord OsV4, cd OsCd, align OsV2, enableFormating bool, underline bool) {
 
 	if rangee.X == rangee.Y {
 		return
 	}
 
-	start := b.win.GetTextStart(text, textH, lineH, coord, align, frontCd, enableFormating)
+	start := b.win.GetTextStart(text, textH, lineH, coord, align, enableFormating)
 
 	var rng OsV2
-	rng.X = b.win.GetTextSize(rangee.X, text, textH, lineH, frontCd, enableFormating).X
-	rng.Y = b.win.GetTextSize(rangee.Y, text, textH, lineH, frontCd, enableFormating).X
+	rng.X = b.win.GetTextSize(rangee.X, text, textH, lineH, enableFormating).X
+	rng.Y = b.win.GetTextSize(rangee.Y, text, textH, lineH, enableFormating).X
 
 	rng.Sort()
 
@@ -268,13 +268,13 @@ func (b *WinPaintBuff) AddTextBack(rangee OsV2, text string, textH float64, line
 	}
 }
 
-func (b *WinPaintBuff) AddTextCursor(text string, textH float64, lineH float64, coord OsV4, cd OsCd, frontCd OsCd, align OsV2, enableFormating bool, cursorPos int) OsV4 {
+func (b *WinPaintBuff) AddTextCursor(text string, textH float64, lineH float64, coord OsV4, cd OsCd, align OsV2, enableFormating bool, cursorPos int) OsV4 {
 	b.win.cursorEdit = true
 	cd.A = b.win.cursorCdA
 
-	start := b.win.GetTextStart(text, textH, lineH, coord, align, frontCd, enableFormating)
+	start := b.win.GetTextStart(text, textH, lineH, coord, align, enableFormating)
 
-	sz := b.win.GetTextSize(cursorPos, text, textH, lineH, frontCd, enableFormating)
+	sz := b.win.GetTextSize(cursorPos, text, textH, lineH, enableFormating)
 
 	cursorQuad := InitOsV4(start.X+sz.X, coord.Start.Y, OsMax(1, b.win.Cell()/15), coord.Size.Y)
 	cursorQuad = cursorQuad.AddSpaceY((coord.Size.Y-sz.Y)/2 - (sz.Y / 2)) //smaller height
