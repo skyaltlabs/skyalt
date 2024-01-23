@@ -149,10 +149,10 @@ func SAExe_Sqlite_select(node *SANode) bool {
 	fileAttr := node.GetAttr("file", "")
 	queryAttr := node.GetAttr("query", "")
 	rowsAttr := node.GetAttr("_rows", "[]")
-	rowsAttr.result.SetBlob(nil) //reset
+	rowsAttr.result.SetBlob([]byte("[]")) //reset
 
 	colsAttr := node.GetAttr("_columns", "[]")
-	colsAttr.result.SetBlob(nil) //reset
+	colsAttr.result.SetBlob([]byte("[]")) //reset
 
 	db := _SAExe_Sqlite_open(node, fileAttr)
 	if db == nil {
