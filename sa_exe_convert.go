@@ -42,7 +42,7 @@ func SAExe_Convert_GpxToJson(node *SANode) bool {
 
 	gpxAttr := node.GetAttr("gpx", "")
 	jsonAttr := node.GetAttr("_json", "")
-	jsonAttr.result.SetBlob([]byte("[]")) //reset
+	jsonAttr.SetOutBlob([]byte("[]")) //reset
 
 	gpx := gpxAttr.GetBlob()
 	if gpx.Len() == 0 {
@@ -64,7 +64,7 @@ func SAExe_Convert_GpxToJson(node *SANode) bool {
 		return false
 	}
 
-	jsonAttr.result.SetBlob(js)
+	jsonAttr.SetOutBlob(js)
 	return true
 }
 
@@ -73,7 +73,7 @@ func SAExe_Convert_CsvToJson(node *SANode) bool {
 	csvAttr := node.GetAttr("Csv", "")
 	firstLineHeader := node.GetAttrUi("first_line_header", "1", SAAttrUi_SWITCH).GetBool()
 	resultAttr := node.GetAttr("_result", "[]")
-	resultAttr.result.SetBlob([]byte("[]")) //reset
+	resultAttr.SetOutBlob([]byte("[]")) //reset
 
 	csvBlob := csvAttr.GetBlob()
 	if csvBlob.Len() == 0 {
@@ -121,6 +121,6 @@ func SAExe_Convert_CsvToJson(node *SANode) bool {
 	rws, _ = strings.CutSuffix(rws, ",")
 	rws += "]"
 
-	resultAttr.result.SetBlob([]byte(rws))
+	resultAttr.SetOutBlob([]byte(rws))
 	return true
 }

@@ -54,7 +54,6 @@ type SANodeAttr struct {
 
 	defaultValue string
 
-	result  SAValue
 	instr   *VmInstr
 	depends []*SANodeAttr
 
@@ -99,23 +98,59 @@ func (attr *SANodeAttr) SetExpFloat(value float64) {
 	attr.SetExpString(strconv.FormatFloat(value, 'f', -1, 64))
 }
 
+func (attr *SANodeAttr) GetResult() *SAValue {
+	if attr.instr == nil {
+		attr.instr = NewVmInstr(VmBasic_Constant, nil, attr)
+	}
+	return &attr.instr.temp
+}
+
 func (attr *SANodeAttr) GetString() string {
-	return attr.result.String()
+	return attr.GetResult().String()
 }
 func (attr *SANodeAttr) GetInt() int {
-	return int(attr.result.Number())
+	return int(attr.GetResult().Number())
 }
 func (attr *SANodeAttr) GetInt64() int64 {
-	return int64(attr.result.Number())
+	return int64(attr.GetResult().Number())
 }
 func (attr *SANodeAttr) GetFloat() float64 {
-	return attr.result.Number()
+	return attr.GetResult().Number()
 }
 func (attr *SANodeAttr) GetBool() bool {
 	return attr.GetInt() != 0
 }
 func (attr *SANodeAttr) GetBlob() OsBlob {
-	return attr.result.Blob()
+	return attr.GetResult().Blob()
+}
+func (attr *SANodeAttr) IsBlob() bool {
+	return attr.GetResult().IsBlob()
+}
+
+func (attr *SANodeAttr) GetCd() OsCd {
+	return attr.GetResult().GetCd()
+}
+func (attr *SANodeAttr) GetV4() OsV4 {
+	return attr.GetResult().GetV4()
+}
+
+func (attr *SANodeAttr) NumMapItems() int {
+	return attr.GetResult().NumMapItems()
+}
+func (attr *SANodeAttr) NumArrayItems() int {
+	return attr.GetResult().NumArrayItems()
+}
+
+func (attr *SANodeAttr) GetArrayItem(i int) *SAValue {
+	return attr.GetResult().GetArrayItem(i)
+}
+
+func (attr *SANodeAttr) GetMapItem(i int) (string, *SAValue) {
+	return attr.GetResult().GetMapItem(i)
+}
+
+func (attr *SANodeAttr) SetOutBlob(blob []byte) {
+	attr.GetResult().SetBlob(blob)
 }
 
 func (attr *SANodeAttr) CheckForLoopAttr(find *SANodeAttr) {
@@ -167,12 +202,8 @@ func (attr *SANodeAttr) ExecuteExpression() {
 		}
 	}
 
-	if attr.instr != nil {
-		st := InitVmST()
-		attr.result = attr.instr.Exe(&st)
-	} else {
-		attr.result.SetString(attr.Value)
-	}
+	st := InitVmST()
+	attr.instr.Exe(&st)
 }
 
 func (a *SANodeAttr) Cmp(b *SANodeAttr) bool {
@@ -216,7 +247,7 @@ func (a *SANodeAttr) ReplaceCd(cd OsCd) {
 		return
 	}
 
-	oldCd := a.result.GetCd()
+	oldCd := a.GetCd()
 
 	if oldCd.A != cd.A {
 		a.ReplaceArrayItemValueInt(3, int(cd.A))
@@ -235,9 +266,9 @@ func (a *SANodeAttr) ReplaceCd(cd OsCd) {
 func (a *SANodeAttr) AddParamsItem(itemVal string, isMap bool) {
 	n := 0
 	if isMap {
-		n = a.result.NumMapItems()
+		n = a.NumMapItems()
 	} else {
-		n = a.result.NumArrayItems()
+		n = a.NumArrayItems()
 	}
 
 	if n > 0 {
@@ -251,9 +282,9 @@ func (a *SANodeAttr) AddParamsItem(itemVal string, isMap bool) {
 func (a *SANodeAttr) RemoveParamsItem(isMap bool) {
 	n := 0
 	if isMap {
-		n = a.result.NumMapItems()
+		n = a.NumMapItems()
 	} else {
-		n = a.result.NumArrayItems()
+		n = a.NumArrayItems()
 	}
 
 	if n > 1 {

@@ -56,7 +56,7 @@ func SAExe_File_read(node *SANode) bool {
 	path := pathAttr.GetString()
 
 	outputAttr := node.GetAttrUi("_out", "", SAAttrUi_BLOB)
-	outputAttr.result.SetBlob(nil) //reset
+	outputAttr.SetOutBlob(nil) //reset
 
 	if path == "" {
 		pathAttr.SetErrorExe("value is empty")
@@ -79,7 +79,7 @@ func SAExe_File_read(node *SANode) bool {
 		pathAttr.SetErrorExe(fmt.Sprintf("%v", err))
 		return false
 	}
-	outputAttr.result.SetBlob(data)
+	outputAttr.SetOutBlob(data)
 
 	return true
 }

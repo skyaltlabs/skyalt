@@ -897,7 +897,6 @@ func (ui *Ui) Comp_combo_s(style *UiComp, value string, options_names []string, 
 		ui.Div_colMax(0, OsMaxFloat(3, mx))
 
 		for i, opt := range options_names {
-
 			var highlight bool
 			if len(options_values) > 0 {
 				highlight = (value == options_values[i])

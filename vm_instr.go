@@ -66,7 +66,9 @@ func NewVmInstr(exe VmInstr_callbackExecute, lexer *VmLexer, pos_attr *SANodeAtt
 	instr.temp = InitSAValue()
 
 	instr.pos_attr = pos_attr
-	instr.pos = OsV2{lexer.start, lexer.end}
+	if lexer != nil {
+		instr.pos = OsV2{lexer.start, lexer.end}
+	}
 
 	return &instr
 }
@@ -318,7 +320,7 @@ func VmBasic_Bracket(instr *VmInstr, st *VmST) SAValue {
 }
 
 func VmBasic_Access(instr *VmInstr, st *VmST) SAValue {
-	instr.temp = instr.accessAttr.result
+	instr.temp = *instr.accessAttr.GetResult()
 	return instr.temp
 }
 

@@ -267,7 +267,7 @@ func SAExe_Render_ColorPalette(w *SANode, renderIt bool) {
 	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	cdAttr := w.GetAttrUi("cd", "[0, 0, 0, 255]", SAAttrUi_COLOR)
-	cd := cdAttr.result.GetCd()
+	cd := cdAttr.GetCd()
 
 	if showIt {
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
@@ -290,7 +290,7 @@ func SAExe_Render_Color(w *SANode, renderIt bool) {
 
 	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool()
 	cdAttr := w.GetAttrUi("cd", "[0, 0, 0, 255]", SAAttrUi_COLOR)
-	cd := cdAttr.result.GetCd()
+	cd := cdAttr.GetCd()
 
 	if showIt {
 		if ui.comp_colorPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &cd, w.getPath(), enable) {
@@ -361,7 +361,7 @@ func SAExe_Render_Image(w *SANode, renderIt bool) {
 	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	margin := w.GetAttr("margin", "0").GetFloat()
-	cd := w.GetAttrUi("cd", "[255, 255, 255, 255]", SAAttrUi_COLOR).result.GetCd()
+	cd := w.GetAttrUi("cd", "[255, 255, 255, 255]", SAAttrUi_COLOR).GetCd()
 	background := w.GetAttrUi("background", "0", SAAttrUi_SWITCH).GetBool()
 
 	alignV := w.GetAttrUi("alignV", "1", SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
@@ -371,7 +371,7 @@ func SAExe_Render_Image(w *SANode, renderIt bool) {
 	blobAttr := w.GetAttrUi("blob", "", SAAttrUi_BLOB)
 
 	if !renderIt {
-		if !blobAttr.result.IsBlob() {
+		if !blobAttr.IsBlob() {
 			blobAttr.SetErrorExe("Not BLOB")
 			return
 		}
@@ -402,7 +402,7 @@ func SAExe_Render_FileDrop(w *SANode, renderIt bool) {
 
 	pathAttr := w.GetAttr("path", "")
 	instr := pathAttr.instr.GetConst()
-	value := instr.pos_attr.result.String()
+	value := instr.pos_attr.GetString()
 
 	outputAttr := w.GetAttrUi("_out", "", SAAttrUi_BLOB)
 
@@ -432,12 +432,12 @@ func SAExe_Render_FileDrop(w *SANode, renderIt bool) {
 	}
 
 	if !renderIt {
-		outputAttr.result.SetBlob(nil) //reset
+		outputAttr.SetOutBlob(nil) //reset
 
 		if value != "" {
 			data, err := os.ReadFile(value)
 			if err == nil {
-				outputAttr.result.SetBlob(data)
+				outputAttr.SetOutBlob(data)
 			} else {
 				pathAttr.SetErrorExe(fmt.Sprintf("ReadFile(%s) failed: %v", value, err))
 			}

@@ -422,7 +422,7 @@ func (w *SANode) executeProgram() bool {
 		src := w.Attrs[i]
 		dst := conn.FindAttr(src.Name)
 		if dst != nil {
-			dst.Value = src.result.String()
+			dst.Value = src.GetString()
 		} else {
 			w.Attrs = append(w.Attrs[:i], w.Attrs[i+1:]...) //remove
 		}
@@ -670,7 +670,7 @@ func (w *SANode) GetAttrUi(name string, value string, ui SAAttrUiValue) *SANodeA
 }
 
 func (w *SANode) GetGrid() OsV4 {
-	return w.GetAttr("grid", "[0, 0, 1, 1]").result.GetV4()
+	return w.GetAttr("grid", "[0, 0, 1, 1]").GetV4()
 }
 
 func (w *SANode) SetGridStart(v OsV2) {
@@ -817,9 +817,9 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, uiVal *SAAttrUiVa
 		instr := attr.instr.GetConst()
 		var value string
 		if instr != nil {
-			value = instr.pos_attr.result.String()
+			value = instr.pos_attr.GetString()
 		} else {
-			value = attr.result.String()
+			value = attr.GetString()
 		}
 
 		editable := _SANode_isEditable(attr, instr)
@@ -834,7 +834,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, uiVal *SAAttrUiVa
 			}
 		} else if uiVal.Fn == SAAttrUi_DATE.Fn {
 			ui.Div_start(x, y, w, h)
-			val := int64(instr.pos_attr.result.Number())
+			val := int64(instr.pos_attr.GetInt64())
 			if ui.Comp_CalendarDataPicker(&val, true, attr.Name, editable) {
 				instr.LineReplace(strconv.Itoa(int(val)))
 			}
@@ -844,14 +844,14 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, uiVal *SAAttrUiVa
 				instr.LineReplace(value)
 			}
 		} else if uiVal.Fn == SAAttrUi_COLOR.Fn {
-			cd := attr.result.GetCd()
+			cd := attr.GetCd()
 			if ui.comp_colorPicker(x, y, w, h, &cd, attr.Name, true) {
 				//if editable {	//...............
 				attr.ReplaceCd(cd)
 				//}
 			}
 		} else if uiVal.Fn == SAAttrUi_BLOB.Fn {
-			blob := attr.result.Blob()
+			blob := attr.GetBlob()
 			dnm := "blob_" + attr.Name
 			if ui.Comp_buttonIcon(x, y, w, h, InitWinMedia_blob(blob), 0, "", CdPalette_White, true, false) > 0 {
 				ui.Dialog_open(dnm, 0)
@@ -869,7 +869,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, uiVal *SAAttrUiVa
 
 				//add param 'ui string' + recursion ..................
 
-				n := attr.result.NumArrayItems()
+				n := attr.NumArrayItems()
 
 				ui.Div_colMax(0, 100)
 				ui.Div_start(0, 0, 1, 1)
@@ -883,7 +883,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, uiVal *SAAttrUiVa
 					}
 
 					for i := 0; i < n; i++ {
-						it := attr.result.GetArrayItem(i)
+						it := attr.GetArrayItem(i)
 						value := ""
 						if it != nil {
 							value = it.String()
@@ -922,7 +922,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, uiVal *SAAttrUiVa
 
 				//add param 'ui string' + recursion ..................
 
-				n := attr.result.NumMapItems()
+				n := attr.NumMapItems()
 
 				ui.Div_colMax(0, 100)
 				ui.Div_start(0, 0, 1, 1)
@@ -938,7 +938,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, uiVal *SAAttrUiVa
 					}
 
 					for i := 0; i < n; i++ {
-						key, it := attr.result.GetMapItem(i)
+						key, it := attr.GetMapItem(i)
 
 						value := ""
 						if it != nil {

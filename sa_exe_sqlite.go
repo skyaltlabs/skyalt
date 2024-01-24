@@ -149,10 +149,10 @@ func SAExe_Sqlite_select(node *SANode) bool {
 	fileAttr := node.GetAttr("file", "")
 	queryAttr := node.GetAttr("query", "")
 	rowsAttr := node.GetAttr("_rows", "[]")
-	rowsAttr.result.SetBlob([]byte("[]")) //reset
+	rowsAttr.SetOutBlob([]byte("[]")) //reset
 
 	colsAttr := node.GetAttr("_columns", "[]")
-	colsAttr.result.SetBlob([]byte("[]")) //reset
+	colsAttr.SetOutBlob([]byte("[]")) //reset
 
 	db := _SAExe_Sqlite_open(node, fileAttr)
 	if db == nil {
@@ -216,7 +216,7 @@ func SAExe_Sqlite_select(node *SANode) bool {
 		cols, _ = strings.CutSuffix(cols, ",")
 		cols += "]"
 
-		colsAttr.result.SetBlob([]byte(cols))
+		colsAttr.SetOutBlob([]byte(cols))
 	}
 
 	rws := "["
@@ -255,6 +255,6 @@ func SAExe_Sqlite_select(node *SANode) bool {
 	rws, _ = strings.CutSuffix(rws, ",")
 	rws += "]"
 
-	rowsAttr.result.SetBlob([]byte(rws))
+	rowsAttr.SetOutBlob([]byte(rws))
 	return true
 }
