@@ -31,7 +31,6 @@ import (
 
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/veandco/go-sdl2/sdl"
-	"github.com/veandco/go-sdl2/ttf"
 )
 
 const SKYALT_INI_PATH = "ini.json"
@@ -40,11 +39,6 @@ func InitSDLGlobal() error {
 	err := sdl.Init(sdl.INIT_EVERYTHING)
 	if err != nil {
 		return fmt.Errorf("sdl.Init() failed: %w", err)
-	}
-
-	err = ttf.Init()
-	if err != nil {
-		return fmt.Errorf("ttf.Init() failed: %w", err)
 	}
 
 	n, err := sdl.GetNumVideoDisplays()
@@ -58,7 +52,6 @@ func InitSDLGlobal() error {
 	return nil
 }
 func DestroySDLGlobal() {
-	ttf.Quit()
 	sdl.Quit()
 }
 
