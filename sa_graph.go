@@ -280,7 +280,7 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 			}
 
 			//keys actions
-			keyAllow = (over && ui.edit.uid == nil)
+			keyAllow = (over && !ui.edit.IsActive())
 			if keyAllow {
 
 				//bypass

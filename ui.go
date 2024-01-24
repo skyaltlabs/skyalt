@@ -34,6 +34,10 @@ type UiLayoutEdit struct {
 	tempToValue bool
 }
 
+func (edit *UiLayoutEdit) IsActive() bool {
+	return edit.uid != nil
+}
+
 type UiLayoutDrag struct {
 	div   *UiLayoutDiv
 	group string
@@ -328,7 +332,7 @@ func (ui *Ui) StartRender() {
 	edit := &ui.edit
 
 	//these need to be ahead of action(for ex: editbox finished in SOFT is too late, need to finished in middle of HARD)
-	if touch.start || touch.end || keys.enter || keys.esc || (keys.hasChanged && edit.uid != nil && edit.tempToValue) /*|| touch.wheel != 0*/ {
+	if touch.start || touch.end || keys.enter || keys.esc || (keys.hasChanged && edit.IsActive() && edit.tempToValue) /*|| touch.wheel != 0*/ {
 		ui.buff.ResetHost()
 	}
 
