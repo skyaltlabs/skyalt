@@ -247,7 +247,7 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 				line.addSyntax_text(firstLex, VmColor_apiDraw())
 			}
 
-			instr = NewVmInstr(api.fn, lexer, line.attr) //lexer.subs[0], lexer.subs[1])
+			instr = NewVmInstr(api.fn, lexer, line.attr)
 			prmsLex := lexer.subs[1]
 			line.setParams(false, prmsLex, instr)
 
