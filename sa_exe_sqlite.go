@@ -111,7 +111,7 @@ func SAExe_Sqlite_insert(node *SANode) bool {
 
 		type Values struct {
 			Column string
-			Value  string
+			Value  interface{}
 		}
 		var vals []Values
 		err := json.Unmarshal([]byte(valuesAttr.GetString()), &vals)
