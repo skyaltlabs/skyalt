@@ -74,6 +74,7 @@ func InitSAGroups() SAGroups {
 	}})
 
 	grs.groups = append(grs.groups, &SAGroup{name: "File", icon: InitWinMedia_url(path + "node_file.png"), nodes: []*SAGroupNode{
+		{name: "read_dir", fn: SAExe_File_dir},
 		{name: "read_file", fn: SAExe_File_read},
 		{name: "write_file", fn: SAExe_File_write},
 	}})

@@ -19,7 +19,45 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 )
+
+func SAExe_File_dir(node *SANode) bool {
+
+	pathAttr := node.GetAttr("path", "")
+	filesAttr := node.GetAttr("_files", "")
+	dirsAttr := node.GetAttr("_dirs", "")
+
+	path := pathAttr.GetString()
+	if path == "" {
+		pathAttr.SetErrorExe("empty")
+		return false
+	}
+	dir, err := os.ReadDir(path)
+	if err != nil {
+		pathAttr.SetErrorExe(err.Error())
+		return false
+	}
+
+	filesStr := "["
+	dirsStr := "["
+	for _, f := range dir {
+		if f.IsDir() {
+			dirsStr += "\"" + f.Name() + "\","
+		} else {
+			filesStr += "\"" + f.Name() + "\","
+		}
+	}
+	filesStr, _ = strings.CutSuffix(filesStr, ",")
+	dirsStr, _ = strings.CutSuffix(dirsStr, ",")
+	filesStr += "]"
+	dirsStr += "]"
+
+	filesAttr.SetOutBlob([]byte(filesStr))
+	dirsAttr.SetOutBlob([]byte(dirsStr))
+
+	return true
+}
 
 func SAExe_File_write(node *SANode) bool {
 
