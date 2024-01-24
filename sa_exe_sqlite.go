@@ -105,7 +105,7 @@ func SAExe_Sqlite_insert(node *SANode) bool {
 	valuesAttr := node.GetAttrUi(
 		"values",
 		"[{\"column\": \"a\", \"value\": \"1\"}, {\"column\": \"b\", \"value\": \"2\"}]",
-		SAAttrUiValue{Fn: "map", Map: map[string]SAAttrUiValue{"column": SAAttrUi_COMBO(columnList, columnList), "value": SAAttrUiValue{}}})
+		SAAttrUiValue{Fn: "map", Height: 5, HideAddDel: true, Map: map[string]SAAttrUiValue{"column": SAAttrUi_COMBO(columnList, columnList), "value": SAAttrUiValue{}}})
 
 	if triggerAttr.GetBool() {
 
