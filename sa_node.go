@@ -861,12 +861,16 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 
 				item_pre_row := (uiVal.Fn == "map")
 				n := instr.NumPrms()
-				var addDelPos OsV2
+				var addDelPos OsV4
 				if n == 0 {
+
+					//empty
 					ui.Div_colMax(0, 100) //key
 					ui.Comp_text(0, 0, 1, 1, "Empty Array []", 0)
-					addDelPos = OsV2{1, 0}
+					addDelPos = InitOsV4(1, 0, 2, 1)
 				} else if item_pre_row {
+
+					//multiple lines
 					ui.Div_colMax(0, 100)
 					for i := 0; i < n; i++ {
 						item_instr := instr.GetConstArrayPrm(i)
@@ -876,10 +880,11 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 					//reorder rows .....
 					//remove row .....
 
-					addDelPos = OsV2{0, n}
+					addDelPos = InitOsV4(0, n, 1, 1)
 				} else {
-					ui.Div_colMax(0, 100)
 
+					//single line
+					ui.Div_colMax(0, 100)
 					ui.DivInfo_set(SA_DIV_SET_scrollHnarrow, 1, 0)
 					ui.Div_row(0, 0.5)
 					ui.Div_rowMax(0, 2)
@@ -892,18 +897,19 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 						item_instr := instr.GetConstArrayPrm(i)
 						_SANode_renderAttrValue(i, 0, 1, 1, nil, item_instr, isOutput, uiVal, ui)
 					}
-					addDelPos = OsV2{n, 0}
+					addDelPos = InitOsV4(n, 0, 2, 1)
 				}
 
 				//+/-
 				if !isOutput {
-					ui.Div_start(addDelPos.X, addDelPos.Y, 1, 1)
+					ui.Div_start(addDelPos.Start.X, addDelPos.Start.Y, addDelPos.Size.X, addDelPos.Size.Y)
 					{
 						if ui.Comp_buttonLight(0, 0, 1, 1, "+", "Add item", true) > 0 {
 							if editable {
 
 								newVal := "0"
 								if uiVal.Fn == "map" {
+									//create new value from map items
 									newVal = "{"
 									for k := range uiVal.Map {
 										newVal += "\"" + k + "\":" + "\"\", "
