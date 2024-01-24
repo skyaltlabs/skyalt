@@ -274,12 +274,13 @@ func (b *WinPaintBuff) AddTextCursor(text string, textH float64, lineH float64, 
 
 	start := b.win.GetTextStart(text, textH, lineH, coord, align, enableFormating)
 
-	sz := b.win.GetTextSize(cursorPos, text, textH, lineH, enableFormating)
+	rngX := b.win.GetTextSize(cursorPos, text, textH, lineH, enableFormating).X
+	hPx, _ := b.win.getTextAndLineHight(textH, lineH)
 
-	cursorQuad := InitOsV4(start.X+sz.X, coord.Start.Y, OsMax(1, b.win.Cell()/15), coord.Size.Y)
-	cursorQuad = cursorQuad.AddSpaceY((coord.Size.Y-sz.Y)/2 - (sz.Y / 2)) //smaller height
+	c := InitOsV4(start.X+rngX, coord.Start.Y, OsMax(1, b.win.Cell()/15), coord.Size.Y)
+	c = c.AddSpaceY((coord.Size.Y-hPx)/2 - (hPx / 2)) //smaller height
 
-	b.AddRect(cursorQuad, cd, 0)
+	b.AddRect(c, cd, 0)
 
-	return cursorQuad
+	return c
 }
