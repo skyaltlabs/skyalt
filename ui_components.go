@@ -137,8 +137,13 @@ func (ui *Ui) _compDrawText(coord OsV4, value string, valueOrigEdit string, fron
 
 	coord = coord.AddSpaceX(ui.CellWidth(0.1))
 
+	crop := lv.call.crop
+	if editable {
+		crop = crop.AddSpaceX(ui.CellWidth(0.1)) //crop rect_border
+	}
+
 	// crop
-	imgRectBackup := ui.buff.AddCrop(lv.call.crop.GetIntersect(coord))
+	imgRectBackup := ui.buff.AddCrop(crop.GetIntersect(coord))
 
 	//one liner
 	active := ui._UiPaint_Text_line(coord, 0, OsV2{utf8.RuneCountInString(value), 0},
@@ -601,11 +606,8 @@ func (ui *Ui) Comp_edit_s(style *UiComp, valueIn string, valueInOrig string, ico
 
 	coord := lv.call.canvas
 	coord = coord.AddSpace(ui.CellWidth(0.03))
-
-	//if style.enable_back || highlight {
 	ui.buff.AddRect(coord, cd, 0)
-	//}
-	//if style.enable_border
+
 	{
 		w := ui.CellWidth(0.03)
 		if active {
@@ -619,8 +621,6 @@ func (ui *Ui) Comp_edit_s(style *UiComp, valueIn string, valueInOrig string, ico
 
 	//ghost
 	if len(edit.last_edit) == 0 && len(ghost) > 0 {
-		//ghostStyle := style
-		//ghostStyle.label_alignH = 1 //center
 		ui._compDrawText(coord, ghost, "", pl.GetGrey(0.7), 0, false, false, 1, int(style.label_alignV), style.label_formating)
 	}
 

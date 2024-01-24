@@ -24,11 +24,8 @@ import (
 
 func (ui *Ui) Paint_textWidth(value string, cursorPos int64, textH float64, enableFormating bool) float64 {
 
-	//font := ui.win.GetFont(fontPath, ui.CellWidth(ratioH))
-	cell := float64(ui.win.Cell())
-
 	px := ui.win.GetTextSize(int(cursorPos), value, textH, 0, enableFormating).X
-	return float64(px) / cell // pixels to cursor
+	return float64(px) / float64(ui.win.Cell()) // pixels to cursor
 }
 
 func (ui *Ui) Paint_textGrid(grid OsV4, frontCd OsCd, style *UiComp, value string, valueOrigEdit string, textH float64, icon *WinMedia, selection bool, editable bool) {
@@ -44,7 +41,12 @@ func (ui *Ui) Paint_textGrid(grid OsV4, frontCd OsCd, style *UiComp, value strin
 	lv.call.data.scrollH.narrow = true
 	lv.call.data.scrollV.show = false
 
-	ui.Div_col(grid.Start.X, OsMaxFloat(ui.DivInfo_get(SA_DIV_GET_layoutWidth, 0), ui.Paint_textWidth(value, -1, textH, style.label_formating))) //+marginX*4+margin*2
+	text_width := ui.Paint_textWidth(value, -1, textH, style.label_formating)
+	if editable {
+		text_width += 2 * 0.1 //because rect_border
+	}
+
+	ui.Div_col(grid.Start.X, OsMaxFloat(ui.DivInfo_get(SA_DIV_GET_layoutWidth, 0), text_width)) //+marginX*4+margin*2
 	ui.Div_row(grid.Start.Y, 0.5)
 	ui.Div_rowMax(grid.Start.Y, 100)
 
@@ -630,13 +632,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4, lineY int, lineEnd OsV2,
 
 	lv := ui.GetCall()
 
-	/*if textHeight <= 0 {
-		textHeight = SKYALT_FONT_HEIGHT
-	}
-	textH := ui.CellWidth(textHeight)*/
 	align := OsV2{int(alignH), int(alignV)}
-	//lineH := coord.Size.Y
-	//font := ui.win.GetFont(font_path)
 	edit := &ui.edit
 	keys := &ui.win.io.keys
 	touch := &ui.win.io.touch
@@ -657,10 +653,6 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4, lineY int, lineEnd OsV2,
 		if (lv.call.IsOver(ui) || lv.call.IsTouchActive(ui)) || edit.setFirstEditbox {
 			ui._UiPaint_TextSelectTouch(value, valueOrigEdit, OsV2{touchPos, lineY}, lineEnd, editable, textH, lineH, margin, marginX, enableFormating)
 		}
-
-		//this_uid = st.stack
-		//edit_uid = edit.uid
-		//active = (edit_uid != nil && edit_uid == this_uid)
 
 		edit.last_edit = value
 		if active {
