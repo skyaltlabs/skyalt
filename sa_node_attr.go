@@ -38,10 +38,12 @@ func SAAttrUi_COMBO(names string, values string) SAAttrUiValue {
 }
 
 type SAAttrUiValue struct {
-	Fn   string                   `json:",omitempty"`
-	Prm  string                   `json:",omitempty"` //can be SAAttrUiMap
-	Prm2 string                   `json:",omitempty"`
-	Map  map[string]SAAttrUiValue `json:",omitempty"`
+	Fn         string                   `json:",omitempty"`
+	Prm        string                   `json:",omitempty"` //can be SAAttrUiMap
+	Prm2       string                   `json:",omitempty"`
+	Map        map[string]SAAttrUiValue `json:",omitempty"`
+	HideAddDel bool
+	Height     int
 }
 
 type SANodeAttr struct {
@@ -128,10 +130,10 @@ func (attr *SANodeAttr) IsBlob() bool {
 }
 
 func (attr *SANodeAttr) GetCd() OsCd {
-	return attr.GetResult().GetCd()
+	return attr.GetResult().Cd()
 }
 func (attr *SANodeAttr) GetV4() OsV4 {
-	return attr.GetResult().GetV4()
+	return attr.GetResult().V4()
 }
 
 func (attr *SANodeAttr) NumMapItems() int {

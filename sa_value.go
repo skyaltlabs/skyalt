@@ -144,7 +144,7 @@ func (v *SAValue) IsBlob() bool {
 	return false
 }
 
-func (a *SAValue) GetCd() OsCd {
+func (a *SAValue) Cd() OsCd {
 	var ret OsCd
 
 	var v []byte
@@ -167,7 +167,7 @@ func (a *SAValue) GetCd() OsCd {
 	return ret
 }
 
-func (a *SAValue) GetV4() OsV4 {
+func (a *SAValue) V4() OsV4 {
 	var ret OsV4
 
 	var v []int

@@ -193,6 +193,15 @@ func (instr *VmInstr) GetConst() *VmInstr {
 	if VmCallback_Cmp(instr.fn, VmBasic_Constant) { //const(!)
 		return instr
 	}
+
+	if VmCallback_Cmp(instr.fn, VmBasic_InitArray) { //const(!)
+		return instr
+	}
+
+	if VmCallback_Cmp(instr.fn, VmBasic_InitMap) { //const(!)
+		return instr
+	}
+
 	acc := instr.isFnAccess()
 	if acc != nil {
 		return acc.GetConst()
