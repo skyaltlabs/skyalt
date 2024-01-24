@@ -229,7 +229,7 @@ func (scroll *UiLayoutScroll) TouchV(packLayout *UiLayoutDiv, ui *Ui) {
 		}
 	}
 
-	if !ui.touch.IsAnyActive() && !win.io.keys.shift {
+	if !ui.edit.IsActive() && !ui.touch.IsAnyActive() && !win.io.keys.shift {
 		if win.io.keys.arrowU && canUp {
 			if scroll.SetWheel(scroll.GetWheel() - win.Cell()) {
 				win.io.keys.arrowU = false
@@ -315,7 +315,7 @@ func (scroll *UiLayoutScroll) TouchH(needShiftWheel bool, packLayout *UiLayoutDi
 		}
 	}
 
-	if !ui.touch.IsAnyActive() && (!needShiftWheel || win.io.keys.shift) {
+	if !ui.edit.IsActive() && !ui.touch.IsAnyActive() && (!needShiftWheel || win.io.keys.shift) {
 		if win.io.keys.arrowL && canLeft {
 			if scroll.SetWheel(scroll.GetWheel() - win.Cell()) {
 				win.io.keys.arrowL = false
