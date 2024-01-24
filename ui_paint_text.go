@@ -205,7 +205,7 @@ func (ui *Ui) _UiPaint_Text_VScrollInto(cursor OsV2, lineH float64) {
 		lv.call.parent.data.scrollV.wheel = OsMax(0, v_pos-v_sz) //SetWheel() has boundary check, which is not good here
 	}
 }
-func (ui *Ui) _UiPaint_Text_HScrollInto(str string, cursor OsV2, textH float64, margin float64, marginX float64, enableFormating bool) error {
+func (ui *Ui) _UiPaint_Text_HScrollInto(str string, cursor OsV2, textH float64, enableFormating bool) error {
 
 	lv := ui.GetCall()
 	if lv.call.parent == nil {
@@ -214,10 +214,8 @@ func (ui *Ui) _UiPaint_Text_HScrollInto(str string, cursor OsV2, textH float64, 
 
 	h_pos := ui.win.GetTextSize(cursor.X, str, textH, 0, enableFormating).X
 
-	h_align := ui.CellWidth(margin + marginX) //margin + marginX
-
 	h_st := lv.call.parent.data.scrollH.GetWheel()
-	h_sz := lv.call.crop.Size.X - 3*h_align
+	h_sz := lv.call.crop.Size.X - ui.CellWidth(2*0.1) //text is shifted 0.1 to left
 	h_en := h_st + h_sz
 
 	if h_pos <= h_st {
@@ -228,7 +226,7 @@ func (ui *Ui) _UiPaint_Text_HScrollInto(str string, cursor OsV2, textH float64, 
 	return nil
 }
 
-func (ui *Ui) _UiPaint_TextSelectTouch(str string, strEditOrig string, touchPos OsV2, lineEnd OsV2, editable bool, textH float64, lineH float64, margin float64, marginX float64, enableFormating bool) {
+func (ui *Ui) _UiPaint_TextSelectTouch(str string, strEditOrig string, touchPos OsV2, lineEnd OsV2, editable bool, textH float64, lineH float64, enableFormating bool) {
 
 	lv := ui.GetCall()
 
@@ -295,7 +293,7 @@ func (ui *Ui) _UiPaint_TextSelectTouch(str string, strEditOrig string, touchPos 
 
 		//scroll
 		ui._UiPaint_Text_VScrollInto(touchPos, lineH)
-		ui._UiPaint_Text_HScrollInto(str, touchPos, textH, margin, marginX, enableFormating)
+		ui._UiPaint_Text_HScrollInto(str, touchPos, textH, enableFormating)
 
 		//root.buff.ResetHost() //SetNoSleep()
 	}
@@ -347,7 +345,7 @@ func (ui *Ui) _UiPaint_getStringSubBytePos(str string) (int, int, int, int) {
 	return x, y, selFirst, selLast
 }
 
-func (ui *Ui) _UiPaint_TextSelectKeys(str string, lineY int, lineEnd OsV2, editable bool, textH float64, lineH float64, margin float64, marginX float64, enableFormating bool) {
+func (ui *Ui) _UiPaint_TextSelectKeys(str string, lineY int, lineEnd OsV2, editable bool, textH float64, lineH float64, enableFormating bool) {
 
 	keys := &ui.win.io.keys
 	edit := &ui.edit
@@ -426,11 +424,11 @@ func (ui *Ui) _UiPaint_TextSelectKeys(str string, lineY int, lineEnd OsV2, edita
 		ui._UiPaint_Text_VScrollInto(newPos, lineH)
 	}
 	if old.X != newPos.X {
-		ui._UiPaint_Text_HScrollInto(str, newPos, textH, margin, marginX, enableFormating)
+		ui._UiPaint_Text_HScrollInto(str, newPos, textH, enableFormating)
 	}
 }
 
-func (ui *Ui) _UiPaint_TextEditKeys(tabIsChar bool, textH float64, lineH float64, margin float64, marginX float64, enableFormating bool) string {
+func (ui *Ui) _UiPaint_TextEditKeys(tabIsChar bool, textH float64, lineH float64, enableFormating bool) string {
 
 	edit := &ui.edit
 	keys := &ui.win.io.keys
@@ -616,7 +614,7 @@ func (ui *Ui) _UiPaint_TextEditKeys(tabIsChar bool, textH float64, lineH float64
 		ui._UiPaint_Text_VScrollInto(newPos, lineH)
 	}
 	if old.X != newPos.X {
-		ui._UiPaint_Text_HScrollInto(str, newPos, textH, margin, marginX, enableFormating)
+		ui._UiPaint_Text_HScrollInto(str, newPos, textH, enableFormating)
 	}
 
 	return edit.temp
@@ -625,7 +623,7 @@ func (ui *Ui) _UiPaint_TextEditKeys(tabIsChar bool, textH float64, lineH float64
 func (ui *Ui) _UiPaint_Text_line(coord OsV4, lineY int, lineEnd OsV2,
 	value string, valueOrigEdit string,
 	frontCd OsCd,
-	textH, lineH, margin, marginX float64,
+	textH, lineH float64,
 	font_path string,
 	alignH, alignV int,
 	selection, editable, tabIsChar, enableFormating bool) bool {
@@ -651,17 +649,17 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4, lineY int, lineEnd OsV2,
 		touchPos := ui.win.GetTextPos(ui.win.io.touch.pos, value, textH, lineH, coord, align, enableFormating)
 
 		if (lv.call.IsOver(ui) || lv.call.IsTouchActive(ui)) || edit.setFirstEditbox {
-			ui._UiPaint_TextSelectTouch(value, valueOrigEdit, OsV2{touchPos, lineY}, lineEnd, editable, textH, lineH, margin, marginX, enableFormating)
+			ui._UiPaint_TextSelectTouch(value, valueOrigEdit, OsV2{touchPos, lineY}, lineEnd, editable, textH, lineH, enableFormating)
 		}
 
 		edit.last_edit = value
 		if active {
 			if lineY == edit.end.Y {
-				ui._UiPaint_TextSelectKeys(value, lineY, lineEnd, editable, textH, lineH, margin, marginX, enableFormating)
+				ui._UiPaint_TextSelectKeys(value, lineY, lineEnd, editable, textH, lineH, enableFormating)
 			}
 
 			if editable {
-				value = ui._UiPaint_TextEditKeys(tabIsChar, textH, lineH, margin, marginX, enableFormating) //rewrite 'str' with temp value
+				value = ui._UiPaint_TextEditKeys(tabIsChar, textH, lineH, enableFormating) //rewrite 'str' with temp value
 
 				//enter or Tab(key) or outside => save
 				isOutside := false

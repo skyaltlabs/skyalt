@@ -149,7 +149,7 @@ func (ui *Ui) _compDrawText(coord OsV4, value string, valueOrigEdit string, fron
 	active := ui._UiPaint_Text_line(coord, 0, OsV2{utf8.RuneCountInString(value), 0},
 		value, valueOrigEdit,
 		frontCd,
-		textH, 1, 0, 0,
+		textH, 1,
 		"", alignH, alignV,
 		selection, editable, true, formating)
 
