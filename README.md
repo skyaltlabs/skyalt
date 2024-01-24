@@ -49,7 +49,7 @@ For endurance, SkyAlt uses only well-known and open formats:
 ## Build
 SkyAlt is written in Go language. You can install golang from here: https://go.dev/doc/install
 
-Dependencies(sqlite,, sdl):
+Dependencies:
 <pre><code>go get github.com/mattn/go-sqlite
 go get github.com/veandco/go-sdl2/sdl
 go get github.com/veandco/go-sdl2/gfx
