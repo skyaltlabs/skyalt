@@ -159,6 +159,7 @@ func NewVmApis() *VmApis {
 	apis._Add(VmApi{0, "if", 3, VmApi_If})
 	apis._Add(VmApi{0, "not", 1, VmApi_Not})
 
+	apis._Add(VmApi{0, "num", 1, VmApi_Num})
 	apis._Add(VmApi{0, "get", 2, VmApi_Get})
 	apis._Add(VmApi{0, "array", 2, VmApi_Array})
 	apis._Add(VmApi{0, "compress", 1, VmApi_Compress})

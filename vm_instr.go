@@ -366,6 +366,13 @@ func VmBasic_InitMap(instr *VmInstr, st *VmST) SAValue {
 	return instr.temp
 }
 
+func VmApi_Num(instr *VmInstr, st *VmST) SAValue {
+	item := instr.ExePrm(st, 0)
+
+	instr.temp.SetInt(OsMax(item.NumArrayItems(), item.NumMapItems()))
+	return instr.temp
+}
+
 func VmApi_Get(instr *VmInstr, st *VmST) SAValue {
 	item := instr.ExePrm(st, 0)
 	key := instr.ExePrm(st, 1) //index or key
