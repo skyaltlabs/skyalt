@@ -150,6 +150,9 @@ func (a OsV2f) Add(b OsV2f) OsV2f {
 func (a OsV2f) Sub(b OsV2f) OsV2f {
 	return OsV2f{a.X - b.X, a.Y - b.Y}
 }
+func (a OsV2f) Mul(b OsV2f) OsV2f {
+	return OsV2f{a.X * b.X, a.Y * b.Y}
+}
 func (a OsV2f) MulV(t float32) OsV2f {
 	return OsV2f{a.X * t, a.Y * t}
 }
