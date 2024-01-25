@@ -891,7 +891,7 @@ func (ui *Ui) Comp_combo_s(style *UiComp, value string, options_names []string, 
 		//compute minimum dialog width
 		mx := float64(0)
 		for _, opt := range options_names {
-			sz := ui.win.gph.GetTextSize(ui.win.GetFont("", 0), -1, opt, true)
+			sz := ui.win.GetTextSize(-1, opt, 0, 0, true)
 			mx = OsMaxFloat(mx, float64(sz.X)/float64(ui.win.Cell())+0.5)
 		}
 		ui.Div_colMax(0, OsMaxFloat(3, mx))
