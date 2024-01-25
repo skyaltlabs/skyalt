@@ -862,13 +862,11 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 				n := instr.NumPrms()
 				var addDelPos OsV4
 				if n == 0 {
-
 					//empty
 					ui.Div_colMax(0, 100) //key
 					ui.Comp_text(0, 0, 1, 1, "Empty Array []", 0)
 					addDelPos = InitOsV4(1, 0, 2, 1)
 				} else if item_pre_row {
-
 					//multiple lines
 					ui.Div_colMax(0, 100)
 					for i := 0; i < n; i++ {
@@ -881,7 +879,6 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 
 					addDelPos = InitOsV4(0, n, 1, 1)
 				} else {
-
 					//single line
 					ui.Div_colMax(0, 100)
 					ui.DivInfo_set(SA_DIV_SET_scrollHnarrow, 1, 0)
@@ -893,7 +890,8 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 					}
 
 					for i := 0; i < n; i++ {
-						item_instr := instr.GetConstArrayPrm(i)
+						//item_instr := instr.GetConstArrayPrm(i)
+						item_instr := instr.prms[i].value
 						_SANode_renderAttrValue(i, 0, 1, 1, nil, item_instr, isOutput, uiVal, ui)
 					}
 					addDelPos = InitOsV4(n, 0, 2, 1)
@@ -954,7 +952,9 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 					}
 
 					for i := 0; i < n; i++ {
-						key_instr, val_instr := instr.GetConstMapPrm(i)
+						key_instr := instr.prms[i].key
+						val_instr := instr.prms[i].value
+						//key_instr, val_instr := instr.GetConstMapPrm(i)
 
 						if showKey {
 							_SANode_renderAttrValue(i*3+0, 0, 1, 1, nil, key_instr, isOutput, &SAAttrUiValue{}, ui) //key
