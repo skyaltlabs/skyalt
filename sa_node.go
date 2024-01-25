@@ -138,6 +138,20 @@ func (w *SANode) SetError(err string) {
 	w.errExe = errors.New(err)
 }
 
+func (a *SANode) Distance(b *SANode) float32 {
+	v := a.Pos.Sub(b.Pos)
+	return v.toV2().Len()
+}
+func (node *SANode) GetDependDistance() float32 {
+	sum := float32(0)
+	for _, attr := range node.Attrs {
+		for _, d := range attr.depends {
+			sum += node.Distance(d.node)
+		}
+	}
+	return sum
+}
+
 func (w *SANode) Save(path string) error {
 	if path == "" {
 		return nil
@@ -835,14 +849,14 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 			if ui.Comp_combo(x, y, w, h, &value, strings.Split(uiVal.Prm, ";"), strings.Split(uiVal.Prm2, ";"), "", editable, false) {
 				instr.LineReplace(value)
 			}
-		} else if uiVal.Fn == SAAttrUi_COLOR.Fn {
+		} else if instr != nil && uiVal.Fn == SAAttrUi_COLOR.Fn {
 			cd := instr.temp.Cd()
 			if ui.comp_colorPicker(x, y, w, h, &cd, "attr_cd", true) {
 				if editable {
 					instr.pos_attr.ReplaceCd(cd)
 				}
 			}
-		} else if uiVal.Fn == SAAttrUi_BLOB.Fn {
+		} else if instr != nil && uiVal.Fn == SAAttrUi_BLOB.Fn {
 			blob := instr.temp.Blob()
 			if ui.Comp_buttonIcon(x, y, w, h, InitWinMedia_blob(blob), 0, "", CdPalette_White, true, false) > 0 {
 				ui.Dialog_open("attr_blob", 0)

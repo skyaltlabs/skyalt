@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"math/rand"
 	"strings"
 )
 
@@ -70,7 +71,60 @@ func _SAGraph_drawConnection(start OsV2, end OsV2, active bool, ui *Ui) {
 	//ui.buff.AddTringle(end, end.Add(OsV2{-t, t}), end.Add(OsV2{t, t}), pl.GetGrey(0.5)) //arrow
 }
 
+func _reorder_layer(nodes_layer []*SANode, max_width int) []float32 {
+
+	best_poses := make([]float32, len(nodes_layer))
+	best_score := float32(-1)
+
+	ids := make([]int, max_width)
+	for i := range ids {
+		ids[i] = i
+	}
+
+	for ii := 0; ii < 1000; ii++ {
+		//prepare random position
+		for s := 0; s < len(ids); s++ {
+			d := rand.Int() % len(ids)
+			ids[s], ids[d] = ids[d], ids[s] //swap
+		}
+
+		//set random positions
+		for i, n := range nodes_layer {
+			n.Pos.X = float32(ids[i])
+		}
+
+		//get score
+		score := float32(0)
+		for _, n := range nodes_layer {
+			score += n.GetDependDistance()
+		}
+
+		//update best
+		if best_score < 0 || score < best_score {
+			p := 0
+			for _, n := range nodes_layer {
+				best_poses[p] = n.Pos.X
+				p++
+			}
+
+			best_score = score
+			if score == 0 {
+				break //1st layer
+			}
+		}
+	}
+
+	//set nodes with best_poses
+	for i, n := range nodes_layer {
+		n.Pos.X = float32(best_poses[i])
+	}
+
+	return best_poses
+}
+
 func (gr *SAGraph) reorder(onlySelected bool, ui *Ui) {
+	x_jump := float32(6)
+	y_jump := float32(6)
 
 	//create list
 	var nodes []*SANode
@@ -93,62 +147,69 @@ func (gr *SAGraph) reorder(onlySelected bool, ui *Ui) {
 		}
 		//set posY
 		for _, n := range nodes {
-			n.Pos.Y = float32(n.sort_depth * 2)
+			n.Pos.Y = float32(n.sort_depth)
 		}
 	}
 	//horizontal
 	{
-		x_jump := float32(6)
-
-		//reset
-		for _, n := range nodes {
-			n.Pos.X = -1
-		}
-
 		//get num layers
-		mx_depth := 0
+		num_depth := 0
 		for _, n := range nodes {
-			mx_depth = OsMax(mx_depth, n.sort_depth)
+			num_depth = OsMax(num_depth, n.sort_depth+1)
 		}
 
-		//init bottom layer(depends go up)
-		var last_layer []*SANode
-		x := float32(0)
-		for _, n := range nodes {
-			if n.sort_depth == mx_depth {
-				n.Pos.X = x
-				x += x_jump
-				last_layer = append(last_layer, n)
+		max_width := 0
+		for depth := 0; depth < num_depth; depth++ {
+			width := 0
+			for _, n := range nodes {
+				if n.sort_depth == depth {
+					width++
+				}
+			}
+			if width > max_width {
+				max_width = width
 			}
 		}
 
-		//order layer by layer
-		for depth := mx_depth; depth >= 1; depth-- {
-			x = float32(0)
+		var best_poses [][]float32
+		best_score := float32(-1)
+		for i := 0; i < 100; i++ {
 
-			//depends
-			var next_layer []*SANode
-			for _, node := range last_layer {
-				for _, attr := range node.Attrs {
-					for _, dp := range attr.depends {
-						if dp.node.sort_depth == depth-1 && dp.node.Pos.X < 0 { //never set
-							dp.node.Pos.X = x
-							x += x_jump
-							next_layer = append(next_layer, dp.node)
-						}
+			poses := make([][]float32, num_depth)
+
+			for depth := 0; depth < num_depth; depth++ {
+
+				var nodes_layer []*SANode
+				for _, n := range nodes {
+					if n.sort_depth == depth {
+						nodes_layer = append(nodes_layer, n)
 					}
 				}
 
+				poses[depth] = _reorder_layer(nodes_layer, max_width)
 			}
-			//no depends
-			for _, node := range nodes {
-				if node.sort_depth == depth-1 && node.Pos.X < 0 { //never set
-					node.Pos.X = x
-					x += x_jump
-					next_layer = append(next_layer, node)
+
+			score := float32(0)
+			for _, n := range nodes {
+				score += n.GetDependDistance()
+			}
+
+			if best_score < 0 || score < best_score {
+				best_poses = poses
+				best_score = score
+			}
+		}
+
+		//set final x poses
+		for depth := 0; depth < num_depth; depth++ {
+			p := 0
+			for _, n := range nodes {
+				if n.sort_depth == depth {
+					n.Pos.X = best_poses[depth][p] * x_jump
+					n.Pos.Y *= y_jump
+					p++
 				}
 			}
-			last_layer = next_layer
 		}
 	}
 }
