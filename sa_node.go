@@ -853,149 +853,145 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 				ui.Comp_image(0, 0, 1, 1, InitWinMedia_blob(blob), InitOsCdWhite(), 0, 1, 1, false)
 				ui.Dialog_end()
 			}
-		} else if instr != nil {
-			if VmCallback_Cmp(instr.fn, VmBasic_InitArray) {
+		} else if instr != nil && VmCallback_Cmp(instr.fn, VmBasic_InitArray) {
+			ui.Div_start(x, y, w, h)
+			{
+				//show first 4, then "others" -> open dialog? .....
 
-				ui.Div_start(x, y, w, h)
-				{
-					//show first 4, then "others" -> open dialog? .....
+				item_pre_row := (uiVal.Fn == "map")
+				n := instr.NumPrms()
+				var addDelPos OsV4
+				if n == 0 {
 
-					item_pre_row := (uiVal.Fn == "map")
-					n := instr.NumPrms()
-					var addDelPos OsV4
-					if n == 0 {
+					//empty
+					ui.Div_colMax(0, 100) //key
+					ui.Comp_text(0, 0, 1, 1, "Empty Array []", 0)
+					addDelPos = InitOsV4(1, 0, 2, 1)
+				} else if item_pre_row {
 
-						//empty
-						ui.Div_colMax(0, 100) //key
-						ui.Comp_text(0, 0, 1, 1, "Empty Array []", 0)
-						addDelPos = InitOsV4(1, 0, 2, 1)
-					} else if item_pre_row {
-
-						//multiple lines
-						ui.Div_colMax(0, 100)
-						for i := 0; i < n; i++ {
-							item_instr := instr.GetConstArrayPrm(i)
-							_SANode_renderAttrValue(0, i, 1, 1, nil, item_instr, isOutput, uiVal, ui)
-						}
-
-						//reorder rows .....
-						//remove row .....
-
-						addDelPos = InitOsV4(0, n, 1, 1)
-					} else {
-
-						//single line
-						ui.Div_colMax(0, 100)
-						ui.DivInfo_set(SA_DIV_SET_scrollHnarrow, 1, 0)
-						ui.Div_row(0, 0.5)
-						ui.Div_rowMax(0, 2)
-
-						for i := 0; i < n; i++ {
-							ui.Div_colMax(i, 100)
-						}
-
-						for i := 0; i < n; i++ {
-							item_instr := instr.GetConstArrayPrm(i)
-							_SANode_renderAttrValue(i, 0, 1, 1, nil, item_instr, isOutput, uiVal, ui)
-						}
-						addDelPos = InitOsV4(n, 0, 2, 1)
-					}
-
-					//+/-
-					if !isOutput {
-						ui.Div_start(addDelPos.Start.X, addDelPos.Start.Y, addDelPos.Size.X, addDelPos.Size.Y)
-						{
-							if ui.Comp_buttonLight(0, 0, 1, 1, "+", "Add item", true) > 0 {
-								if editable {
-
-									newVal := "0"
-									if uiVal.Fn == "map" {
-										//create new value from map items
-										newVal = "{"
-										for k := range uiVal.Map {
-											newVal += "\"" + k + "\":" + "\"\", "
-										}
-										newVal, _ = strings.CutSuffix(newVal, ",")
-										newVal += "}"
-									}
-
-									instr.pos_attr.AddParamsItem(newVal, false)
-								}
-							}
-							if ui.Comp_buttonLight(1, 0, 1, 1, "-", "Remove last item", n > 0) > 0 {
-								if editable {
-									instr.pos_attr.RemoveParamsItem(false)
-								}
-							}
-						}
-						ui.Div_end()
-					}
-
-				}
-				ui.Div_end()
-
-			} else if VmCallback_Cmp(instr.fn, VmBasic_InitMap) {
-				ui.Div_start(x, y, w, h)
-				{
-					//show first 4, then "others" -> open dialog? .....
-
-					n := instr.NumPrms()
-
+					//multiple lines
 					ui.Div_colMax(0, 100)
-					ui.Div_start(0, 0, 1, 1)
+					for i := 0; i < n; i++ {
+						item_instr := instr.GetConstArrayPrm(i)
+						_SANode_renderAttrValue(0, i, 1, 1, nil, item_instr, isOutput, uiVal, ui)
+					}
+
+					//reorder rows .....
+					//remove row .....
+
+					addDelPos = InitOsV4(0, n, 1, 1)
+				} else {
+
+					//single line
+					ui.Div_colMax(0, 100)
+					ui.DivInfo_set(SA_DIV_SET_scrollHnarrow, 1, 0)
+					ui.Div_row(0, 0.5)
+					ui.Div_rowMax(0, 2)
+
+					for i := 0; i < n; i++ {
+						ui.Div_colMax(i, 100)
+					}
+
+					for i := 0; i < n; i++ {
+						item_instr := instr.GetConstArrayPrm(i)
+						_SANode_renderAttrValue(i, 0, 1, 1, nil, item_instr, isOutput, uiVal, ui)
+					}
+					addDelPos = InitOsV4(n, 0, 2, 1)
+				}
+
+				//+/-
+				if !isOutput {
+					ui.Div_start(addDelPos.Start.X, addDelPos.Start.Y, addDelPos.Size.X, addDelPos.Size.Y)
 					{
-						ui.DivInfo_set(SA_DIV_SET_scrollHnarrow, 1, 0)
-						ui.Div_row(0, 0.5)
-						ui.Div_rowMax(0, 2)
+						if ui.Comp_buttonLight(0, 0, 1, 1, "+", "Add item", true) > 0 {
+							if editable {
 
-						showKey := (uiVal.Fn != "map")
+								newVal := "0"
+								if uiVal.Fn == "map" {
+									//create new value from map items
+									newVal = "{"
+									for k := range uiVal.Map {
+										newVal += "\"" + k + "\":" + "\"\", "
+									}
+									newVal, _ = strings.CutSuffix(newVal, ",")
+									newVal += "}"
+								}
 
-						for i := 0; i < n; i++ {
-							ui.Div_colMax(i*3+0, OsTrnFloat(showKey, 100, 2)) //key
-							ui.Div_colMax(i*3+1, 100)                         //value
-							ui.Div_col(i*3+2, 0.2)                            //space
-						}
-
-						for i := 0; i < n; i++ {
-							key_instr, val_instr := instr.GetConstMapPrm(i)
-
-							if showKey {
-								_SANode_renderAttrValue(i*3+0, 0, 1, 1, nil, key_instr, isOutput, &SAAttrUiValue{}, ui) //key
-								_SANode_renderAttrValue(i*3+1, 0, 1, 1, nil, val_instr, isOutput, &SAAttrUiValue{}, ui) //value
-							} else {
-								ui_key := key_instr.temp.String()
-								ui_ui := uiVal.Map[ui_key]
-
-								//drag & drop to re-order .....
-								ui.Comp_text(i*3+0, 0, 1, 1, ui_key, 2)                                       //key
-								_SANode_renderAttrValue(i*3+1, 0, 1, 1, nil, val_instr, isOutput, &ui_ui, ui) //value
+								instr.pos_attr.AddParamsItem(newVal, false)
 							}
 						}
-
-						if n == 0 {
-							ui.Div_colMax(0, 100) //key
-							ui.Comp_text(0, 0, 1, 1, "Empty Map {}", 0)
+						if ui.Comp_buttonLight(1, 0, 1, 1, "-", "Remove last item", n > 0) > 0 {
+							if editable {
+								instr.pos_attr.RemoveParamsItem(false)
+							}
 						}
 					}
 					ui.Div_end()
+				}
 
-					//+/-
-					if !isOutput && !uiVal.HideAddDel {
-						if ui.Comp_buttonLight(1, 0, 1, 1, "+", "Add item", true) > 0 {
-							if editable {
-								newKey := fmt.Sprintf("key_%d", n)
-								instr.pos_attr.AddParamsItem("\""+newKey+"\": 0", true)
-							}
+			}
+			ui.Div_end()
+		} else if instr != nil && VmCallback_Cmp(instr.fn, VmBasic_InitMap) {
+			ui.Div_start(x, y, w, h)
+			{
+				//show first 4, then "others" -> open dialog? .....
+
+				n := instr.NumPrms()
+
+				ui.Div_colMax(0, 100)
+				ui.Div_start(0, 0, 1, 1)
+				{
+					ui.DivInfo_set(SA_DIV_SET_scrollHnarrow, 1, 0)
+					ui.Div_row(0, 0.5)
+					ui.Div_rowMax(0, 2)
+
+					showKey := (uiVal.Fn != "map")
+
+					for i := 0; i < n; i++ {
+						ui.Div_colMax(i*3+0, OsTrnFloat(showKey, 100, 2)) //key
+						ui.Div_colMax(i*3+1, 100)                         //value
+						ui.Div_col(i*3+2, 0.2)                            //space
+					}
+
+					for i := 0; i < n; i++ {
+						key_instr, val_instr := instr.GetConstMapPrm(i)
+
+						if showKey {
+							_SANode_renderAttrValue(i*3+0, 0, 1, 1, nil, key_instr, isOutput, &SAAttrUiValue{}, ui) //key
+							_SANode_renderAttrValue(i*3+1, 0, 1, 1, nil, val_instr, isOutput, &SAAttrUiValue{}, ui) //value
+						} else {
+							ui_key := key_instr.temp.String()
+							ui_ui := uiVal.Map[ui_key]
+
+							//drag & drop to re-order .....
+							ui.Comp_text(i*3+0, 0, 1, 1, ui_key, 2)                                       //key
+							_SANode_renderAttrValue(i*3+1, 0, 1, 1, nil, val_instr, isOutput, &ui_ui, ui) //value
 						}
-						if ui.Comp_buttonLight(2, 0, 1, 1, "-", "Remove last item", n > 0) > 0 {
-							if editable {
-								instr.pos_attr.RemoveParamsItem(true)
-							}
-						}
+					}
+
+					if n == 0 {
+						ui.Div_colMax(0, 100) //key
+						ui.Comp_text(0, 0, 1, 1, "Empty Map {}", 0)
 					}
 				}
 				ui.Div_end()
+
+				//+/-
+				if !isOutput && !uiVal.HideAddDel {
+					if ui.Comp_buttonLight(1, 0, 1, 1, "+", "Add item", true) > 0 {
+						if editable {
+							newKey := fmt.Sprintf("key_%d", n)
+							instr.pos_attr.AddParamsItem("\""+newKey+"\": 0", true)
+						}
+					}
+					if ui.Comp_buttonLight(2, 0, 1, 1, "-", "Remove last item", n > 0) > 0 {
+						if editable {
+							instr.pos_attr.RemoveParamsItem(true)
+						}
+					}
+				}
 			}
+			ui.Div_end()
 		} else {
 			//VmBasic_Constant
 			_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, 2, nil, "", false, false, editable)
@@ -1207,6 +1203,8 @@ func (w *SANode) RenderAttrs() {
 					ui.Paint_tooltip(0, 0, 1, 1, it.errExp.Error())
 					pl := ui.buff.win.io.GetPalette()
 					ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0.03)
+				} else if it.ShowExp {
+					ui.Paint_rect(0, 0, 1, 1, 0, SAApp_getYellow(), 0.03)
 				}
 
 				_SANode_renderAttrValue(0, 0, 1, 1, it, it.instr, it.IsOutput(), &it.Ui, ui)
