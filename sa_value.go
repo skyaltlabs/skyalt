@@ -201,7 +201,7 @@ func (v *SAValue) NumArrayItems() int {
 	var arr []interface{}
 	err := json.Unmarshal(blob.data, &arr)
 	if err != nil {
-		fmt.Printf("Warning: Array Unmarshal(%s) failed: %v", string(blob.data), err)
+		//fmt.Printf("Warning: Array Unmarshal(%s) failed: %v", string(blob.data), err)
 		return 0
 	}
 	return len(arr)
@@ -217,7 +217,7 @@ func (v *SAValue) NumMapItems() int {
 	var arr map[string]interface{}
 	err := json.Unmarshal(blob.data, &arr)
 	if err != nil {
-		fmt.Printf("Warning: Map Unmarshal(%s) failed: %v", string(blob.data), err)
+		//fmt.Printf("Warning: Map Unmarshal(%s) failed: %v", string(blob.data), err)
 		return 0
 	}
 	return len(arr)
