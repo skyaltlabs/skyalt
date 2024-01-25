@@ -193,9 +193,28 @@ func (it *WinGphItem) UpdateTick() {
 }
 
 func (it *WinGphItem) DrawCut(coord OsV4, depth int, cd OsCd) error {
-
 	if it.texture != nil {
-		it.texture.DrawQuadCut(coord, depth, cd)
+		uv := OsV2f{
+			float32(coord.Size.X) / float32(it.texture.size.X),
+			float32(coord.Size.Y) / float32(it.texture.size.Y)}
+		it.texture.DrawQuadUV(coord, depth, cd, OsV2f{}, uv)
+	}
+
+	it.UpdateTick()
+	return nil
+}
+
+func (it *WinGphItem) DrawUV(item_size OsV2, coord OsV4, depth int, cd OsCd, sUV, eUV OsV2f) error {
+	if it.texture != nil {
+		szUv := OsV2f{
+			float32(item_size.X) / float32(it.texture.size.X),
+			float32(item_size.Y) / float32(it.texture.size.Y)}
+
+		//normalize by item_size
+		sUV = sUV.Mul(szUv)
+		eUV = eUV.Mul(szUv)
+
+		it.texture.DrawQuadUV(coord, depth, cd, sUV, eUV)
 	}
 
 	it.UpdateTick()
@@ -217,6 +236,7 @@ type WinGphItemCircle struct {
 	item  *WinGphItem
 	size  OsV2
 	width float64
+	arc   OsV2f
 }
 
 type WinGph struct {
@@ -365,11 +385,11 @@ func (gph *WinGph) GetTextPos(font *WinFont, px int, text string, enableFormatin
 	return len(it.letters)
 }
 
-func (gph *WinGph) GetCircle(size OsV2, width float64) *WinGphItemCircle {
+func (gph *WinGph) GetCircle(size OsV2, width float64, arc OsV2f) *WinGphItemCircle {
 
 	//find
 	for _, it := range gph.circles {
-		if it.size.Cmp(size) && it.width == width {
+		if it.size.Cmp(size) && it.width == width && it.arc.Cmp(arc) {
 			return it
 		}
 	}
@@ -380,9 +400,27 @@ func (gph *WinGph) GetCircle(size OsV2, width float64) *WinGphItemCircle {
 
 	dc := gg.NewContext(w, h)
 	dc.SetRGBA255(255, 255, 255, 255)
-	dc.DrawEllipse(float64(size.X)/2, float64(size.Y)/2, float64(size.X)/2, float64(size.Y)/2)
+
+	rx := float64(size.X) / 2
+	ry := float64(size.Y) / 2
+	sx := rx
+	sy := ry
+
+	rx -= width //can be zero
+	ry -= width
+
+	if arc.X == 0 && arc.Y == 0 {
+		dc.DrawEllipse(sx, sy, rx, ry)
+	} else {
+		dc.NewSubPath()
+		dc.MoveTo(sx, sy) //LineTo
+		dc.DrawEllipticalArc(sx, sx, rx, ry, float64(arc.X), float64(arc.Y))
+		dc.ClosePath()
+	}
+
 	if width > 0 {
 		dc.SetLineWidth(width)
+		dc.Stroke()
 	} else {
 		dc.Fill()
 	}
@@ -397,7 +435,7 @@ func (gph *WinGph) GetCircle(size OsV2, width float64) *WinGphItemCircle {
 	var circle *WinGphItemCircle
 	it := NewWinGphItemAlpha(dst)
 	if it != nil {
-		circle = &WinGphItemCircle{item: it, size: size, width: width}
+		circle = &WinGphItemCircle{item: it, size: size, width: width, arc: arc}
 		gph.circles = append(gph.circles, circle)
 	}
 	return circle
