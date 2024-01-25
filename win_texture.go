@@ -122,8 +122,17 @@ func (tex *WinTexture) Destroy() {
 		gl.DeleteTextures(1, &tex.id)
 	}
 }
+func _WinTexture_drawQuadNoUVs(coord OsV4, depth int) {
+	s := coord.Start
+	e := coord.End()
 
-func (tex *WinTexture) _drawQuad(coord OsV4, depth int, cd OsCd, uv OsV2f) {
+	gl.Vertex3f(float32(s.X), float32(s.Y), float32(depth))
+	gl.Vertex3f(float32(e.X), float32(s.Y), float32(depth))
+	gl.Vertex3f(float32(e.X), float32(e.Y), float32(depth))
+	gl.Vertex3f(float32(s.X), float32(e.Y), float32(depth))
+}
+
+func (tex *WinTexture) DrawQuadUV(coord OsV4, depth int, cd OsCd, sUV, eUV OsV2f) {
 	gl.Color4ub(cd.R, cd.G, cd.B, cd.A)
 
 	gl.ActiveTexture(gl.TEXTURE0)
@@ -134,16 +143,16 @@ func (tex *WinTexture) _drawQuad(coord OsV4, depth int, cd OsCd, uv OsV2f) {
 		s := coord.Start
 		e := coord.End()
 
-		gl.TexCoord2f(0.0, 0.0)
+		gl.TexCoord2f(sUV.X, sUV.Y)
 		gl.Vertex3f(float32(s.X), float32(s.Y), float32(depth))
 
-		gl.TexCoord2f(uv.X, 0.0)
+		gl.TexCoord2f(eUV.X, sUV.Y)
 		gl.Vertex3f(float32(e.X), float32(s.Y), float32(depth))
 
-		gl.TexCoord2f(uv.X, uv.Y)
+		gl.TexCoord2f(eUV.X, eUV.Y)
 		gl.Vertex3f(float32(e.X), float32(e.Y), float32(depth))
 
-		gl.TexCoord2f(0.0, uv.Y)
+		gl.TexCoord2f(sUV.X, eUV.Y)
 		gl.Vertex3f(float32(s.X), float32(e.Y), float32(depth))
 	}
 	gl.End()
@@ -152,13 +161,5 @@ func (tex *WinTexture) _drawQuad(coord OsV4, depth int, cd OsCd, uv OsV2f) {
 }
 
 func (tex *WinTexture) DrawQuad(coord OsV4, depth int, cd OsCd) {
-	tex._drawQuad(coord, depth, cd, OsV2f{1, 1})
-}
-
-func (tex *WinTexture) DrawQuadCut(coord OsV4, depth int, cd OsCd) {
-	uv := OsV2f{
-		float32(coord.Size.X) / float32(tex.size.X),
-		float32(coord.Size.Y) / float32(tex.size.Y)}
-
-	tex._drawQuad(coord, depth, cd, uv)
+	tex.DrawQuadUV(coord, depth, cd, OsV2f{}, OsV2f{1, 1})
 }
