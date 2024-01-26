@@ -78,7 +78,7 @@ func (node *SANode) nodeToPixelsCoord(canvas OsV4, ui *Ui) (OsV4, OsV4) {
 
 	coord := node.parent.nodeToPixels(node.Pos, canvas, ui) //.parent, because it has Cam
 
-	w := 5
+	w := 4
 	h := 1
 
 	cellr := node.parent.cellZoom(ui)
@@ -97,7 +97,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 
 	coord, selCoord := node.nodeToPixelsCoord(lv.call.canvas, ui)
 
-	roundc := 0.3
+	roundc := 0.2
 
 	bck := ui.win.io.ini.Dpi
 	ui.win.io.ini.Dpi = int(float32(ui.win.io.ini.Dpi) * float32(node.parent.Cam_z))
@@ -142,22 +142,23 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 
 	ui.Div_startCoord(0, 0, 1, 1, coord, node.Name)
 	{
-		ui.Div_colMax(0, 100)
+		ui.Div_colMax(0, 1)
+		ui.Div_colMax(1, 100)
 
-		nm := "##" + node.Name
+		nm := node.Name
 		if node.state.Load() != SANode_STATE_DONE {
 			nm += fmt.Sprintf("(%.0f%%)", node.progress*100)
 
 			ui.Paint_tooltip(0, 0, 1, 1, node.progress_desc)
 		}
 
-		ui.Comp_textSelect(0, 0, 1, 1, nm, 1, node.app.base.node_groups.FindNodeGroupIcon(node.Exe), 0.3, false)
+		//ui.Comp_image(0, 0, 1, 1, node.app.base.node_groups.FindNodeGroupIcon(node.Exe), InitOsCdWhite(), 0.3, 1, 1, false)	//icon
+		ui.Comp_textSelect(0, 0, 2, 1, nm, 1, false)
 	}
+	ui.Div_end()
 
 	selectRad := ui.CellWidth(roundc * 1.3)
-
 	ui.win.io.ini.Dpi = bck
-	ui.Div_end()
 
 	//select
 	if (someNodeIsDraged && node.KeyProgessSelection(&ui.win.io.keys)) || (!someNodeIsDraged && node.Selected) {
