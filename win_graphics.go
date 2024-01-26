@@ -632,11 +632,13 @@ func (gph *WinGph) processLetter(text string, orig_prop *WinFontProps, prop *Win
 	return true
 }
 
-func (gph *WinGph) GetStringSize(prop WinFontProps, str string) OsV2 {
+func (gph *WinGph) GetStringSize(prop WinFontProps, str string) (OsV2, fixed.Int26_6) {
 
 	var w fixed.Int26_6 //round to int after!
 	prevCh := rune(-1)
 
+	var maxH int
+	var maxAscent fixed.Int26_6
 	skip := 0
 	act_prop := prop
 	i := 0
@@ -655,15 +657,19 @@ func (gph *WinGph) GetStringSize(prop WinFontProps, str string) OsV2 {
 		w += a
 		prevCh = ch
 
+		m := face.Metrics()
+		maxH = OsMax(maxH, int(m.Ascent+m.Descent)>>6)
+		if m.Ascent > maxAscent {
+			maxAscent = m.Ascent
+		}
 		i++
 	}
 
-	m := gph.GetFont(&act_prop).GetFace(&act_prop).face.Metrics()
-	return OsV2{int(w >> 6), int(m.Ascent+m.Descent)/64 + 2}
+	return OsV2{int(w >> 6), maxH + 2}, maxAscent
 }
 
 func (gph *WinGph) drawString(prop WinFontProps, str string) *WinGphItemText {
-	size := gph.GetStringSize(prop, str)
+	size, maxAscent := gph.GetStringSize(prop, str)
 
 	w := OsNextPowOf2(size.X)
 	h := OsNextPowOf2(size.Y)
@@ -671,14 +677,12 @@ func (gph *WinGph) drawString(prop WinFontProps, str string) *WinGphItemText {
 	a := image.NewAlpha(image.Rect(0, 0, w, h))
 
 	var letters []int
-
-	m := gph.GetFont(&prop).GetFace(&prop).face.Metrics()
 	d := &font.Drawer{
 		//Dst:  rgba,
 		Dst: a,
 		Src: image.NewUniform(color.NRGBA{255, 255, 255, 255}),
 		//Face: ft.face,
-		Dot: fixed.Point26_6{X: fixed.Int26_6(0), Y: fixed.Int26_6(m.Ascent)},
+		Dot: fixed.Point26_6{X: fixed.Int26_6(0), Y: fixed.Int26_6(maxAscent)}, //Y: fixed.Int26_6(size.Y << 6)
 	}
 
 	prevCh := rune(-1)
