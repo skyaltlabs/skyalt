@@ -70,8 +70,8 @@ func (w *SANode) nodeToPixels(p OsV2f, canvas OsV4, ui *Ui) OsV2 {
 	return r.Add(canvas.Start).Add(canvas.Size.MulV(0.5))
 }
 
-func (w *SANode) cellZoom(ui *Ui) int {
-	return int(float32(ui.win.Cell()) * float32(w.Cam_z) * 1)
+func (w *SANode) cellZoom(ui *Ui) float32 {
+	return float32(ui.win.Cell()) * float32(w.Cam_z) * 1
 }
 
 func (node *SANode) nodeToPixelsCoord(canvas OsV4, ui *Ui) (OsV4, OsV4) {
@@ -82,7 +82,7 @@ func (node *SANode) nodeToPixelsCoord(canvas OsV4, ui *Ui) (OsV4, OsV4) {
 	h := 1
 
 	cellr := node.parent.cellZoom(ui)
-	cq := InitOsV4Mid(coord, OsV2{w * cellr, h * cellr})
+	cq := InitOsV4Mid(coord, OsV2{int(float32(w) * cellr), int(float32(h) * cellr)})
 
 	return cq, cq.AddSpace(int(-0.15 * float64(cellr)))
 }
