@@ -931,7 +931,7 @@ func (win *Win) DrawBezier(a OsV2, b OsV2, c OsV2, d OsV2, depth int, thick int,
 		gl.Begin(gl.LINE_STRIP)
 	}
 	{
-		N := float64(20)
+		N := float64(30)
 		div := 1 / N
 		for t := float64(0); t <= 1.001; t += div {
 			af := aa.MulV(float32(math.Pow(t, 3)))
@@ -961,6 +961,8 @@ func (win *Win) DrawText(text string, prop WinFontProps, coord OsV4, depth int, 
 		start := win.GetTextStart(text, prop, coord, align)
 
 		item.item.DrawCut(OsV4{Start: start, Size: item.size}, depth, frontCd)
+
+		//win.DrawRect_border(start, start.Add(item.size), depth, InitOsCd32(255, 0, 0, 255), 1) //debug: draw rect around text
 	}
 }
 
