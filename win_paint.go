@@ -185,7 +185,7 @@ func (b *WinPaintBuff) AddImage(path WinMedia, coord OsV4, cd OsCd, alignV int, 
 	if !b.skipDraw {
 		img, err := b.win.AddImage(path) //2nd thread => black
 		if err != nil {
-			b.AddText(path.GetString()+" has error", 0, 0, coord, b.win.io.GetPalette().E, OsV2{1, 1}, true)
+			b.AddText(path.GetString()+" has error", InitWinFontPropsDef(b.win), coord, b.win.io.GetPalette().E, OsV2{1, 1})
 			return
 		}
 
@@ -233,23 +233,23 @@ func (b *WinPaintBuff) AddImage(path WinMedia, coord OsV4, cd OsCd, alignV int, 
 	}
 }
 
-func (b *WinPaintBuff) AddText(text string, textH float64, lineH float64, coord OsV4, frontCd OsCd, align OsV2, enableFormating bool) {
+func (b *WinPaintBuff) AddText(text string, prop WinFontProps, coord OsV4, frontCd OsCd, align OsV2) {
 	if !b.skipDraw {
-		b.win.DrawText(text, textH, lineH, coord, b.getDepth(), align, frontCd, enableFormating)
+		b.win.DrawText(text, prop, coord, b.getDepth(), align, frontCd)
 	}
 }
 
-func (b *WinPaintBuff) AddTextBack(rangee OsV2, text string, textH float64, lineH float64, coord OsV4, cd OsCd, align OsV2, enableFormating bool, underline bool) {
+func (b *WinPaintBuff) AddTextBack(rangee OsV2, text string, prop WinFontProps, coord OsV4, cd OsCd, align OsV2, underline bool) {
 
 	if rangee.X == rangee.Y {
 		return
 	}
 
-	start := b.win.GetTextStart(text, textH, lineH, coord, align, enableFormating)
+	start := b.win.GetTextStart(text, prop, coord, align)
 
 	var rng OsV2
-	rng.X = b.win.GetTextSize(rangee.X, text, textH, lineH, enableFormating).X
-	rng.Y = b.win.GetTextSize(rangee.Y, text, textH, lineH, enableFormating).X
+	rng.X = b.win.GetTextSize(rangee.X, text, prop).X
+	rng.Y = b.win.GetTextSize(rangee.Y, text, prop).X
 
 	rng.Sort()
 
@@ -258,7 +258,7 @@ func (b *WinPaintBuff) AddTextBack(rangee OsV2, text string, textH float64, line
 			Y := coord.Start.Y + coord.Size.Y
 			b.AddRect(OsV4{Start: OsV2{start.X + rng.X, Y - 2}, Size: OsV2{rng.Y, 2}}, cd, 0)
 		} else {
-			hPx, _ := b.win.getTextAndLineHight(textH, lineH)
+			hPx := int(prop.textH)
 
 			c := InitOsV4(start.X+rng.X, coord.Start.Y, rng.Y-rng.X, coord.Size.Y)
 			c = c.AddSpaceY((coord.Size.Y-hPx)/2 - (hPx / 2)) //smaller height
@@ -268,14 +268,14 @@ func (b *WinPaintBuff) AddTextBack(rangee OsV2, text string, textH float64, line
 	}
 }
 
-func (b *WinPaintBuff) AddTextCursor(text string, textH float64, lineH float64, coord OsV4, cd OsCd, align OsV2, enableFormating bool, cursorPos int) OsV4 {
+func (b *WinPaintBuff) AddTextCursor(text string, prop WinFontProps, coord OsV4, cd OsCd, align OsV2, cursorPos int) OsV4 {
 	b.win.cursorEdit = true
 	cd.A = b.win.cursorCdA
 
-	start := b.win.GetTextStart(text, textH, lineH, coord, align, enableFormating)
+	start := b.win.GetTextStart(text, prop, coord, align)
 
-	rngX := b.win.GetTextSize(cursorPos, text, textH, lineH, enableFormating).X
-	hPx, _ := b.win.getTextAndLineHight(textH, lineH)
+	rngX := b.win.GetTextSize(cursorPos, text, prop).X
+	hPx := int(prop.textH)
 
 	c := InitOsV4(start.X+rngX, coord.Start.Y, OsMax(1, b.win.Cell()/15), coord.Size.Y)
 	c = c.AddSpaceY((coord.Size.Y-hPx)/2 - (hPx / 2)) //smaller height

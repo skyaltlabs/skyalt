@@ -754,14 +754,14 @@ func (win *Win) renderStats() error {
 		len(win.gph.texts), win.gph.texts_num_created, win.gph.texts_num_remove)
 
 	fCd := OsCd{255, 50, 50, 255}
-	sz := win.GetTextSize(-1, text, 0, 0, true)
+	sz := win.GetTextSize(-1, text, InitWinFontPropsDef(win))
 
 	cq := OsV4{win.io.GetCoord().Middle().Sub(sz.MulV(0.5)), sz}
 
 	win.SetClipRect(cq)
 	depth := 990 //...
 	win.DrawRect(cq.Start, cq.End(), depth, win.io.GetPalette().B)
-	win.DrawText(text, 0, 0, cq, depth, OsV2{0, 1}, fCd, true)
+	win.DrawText(text, InitWinFontPropsDef(win), cq, depth, OsV2{0, 1}, fCd)
 
 	return nil
 }
@@ -958,7 +958,7 @@ func (win *Win) DrawTriangle(a OsV2, b OsV2, c OsV2, depth int, cd OsCd) {
 	gl.End()
 }
 
-func (win *Win) getTextAndLineHight(textH float64, lineH float64) (int, int) {
+/*func (win *Win) getTextAndLineHight(prop WinFontProps) (int, int) {
 
 	if textH <= 0 {
 		textH = 0.14 // 1/8
@@ -971,57 +971,60 @@ func (win *Win) getTextAndLineHight(textH float64, lineH float64) (int, int) {
 	lPx := int(float64(win.io.GetDPI()) * lineH)
 
 	return tPx, lPx
-}
+}*/
 
-func (win *Win) GetFont(path string, textH float64) *WinFont {
+/*func (win *Win) GetFont(path string, textH float64) *WinFont {
 
 	if path == "" {
-		path = "apps/base/resources/arial.ttf"
+
+		//co když uvnitř textu budu mít bold a musím načíst jiný path? ..............................
+
+		path = "apps/base/resources/Inter/Inter-Regular.ttf"
 	}
 
 	tPx, _ := win.getTextAndLineHight(textH, 0)
 
 	return win.gph.GetFont(path, tPx)
-}
+}*/
 
-func (win *Win) DrawText(text string, textH float64, lineH float64, coord OsV4, depth int, align OsV2, frontCd OsCd, enableFormating bool) {
+func (win *Win) DrawText(text string, prop WinFontProps, coord OsV4, depth int, align OsV2, frontCd OsCd) {
 
-	font := win.GetFont("", textH)
+	/*font := win.GetFont("", textH)
 	if font == nil {
 		return
-	}
+	}*/
 
-	item := win.gph.GetText(font, text, enableFormating)
+	item := win.gph.GetText(prop, text)
 	if item != nil {
-		start := win.GetTextStart(text, textH, lineH, coord, align, enableFormating)
+		start := win.GetTextStart(text, prop, coord, align)
 
 		item.item.DrawCut(OsV4{Start: start, Size: item.size}, depth, frontCd)
 	}
 }
 
-func (win *Win) GetTextSize(cur_pos int, text string, textH float64, lineH float64, enableFormating bool) OsV2 {
-	font := win.GetFont("", textH)
+func (win *Win) GetTextSize(cur_pos int, text string, prop WinFontProps) OsV2 {
+	/*font := win.GetFont("", textH)
 	if font == nil {
 		return OsV2{}
-	}
+	}*/
 
-	return win.gph.GetTextSize(font, cur_pos, text, enableFormating)
+	return win.gph.GetTextSize(prop, cur_pos, text)
 }
 
-func (win *Win) GetTextPos(touchPos OsV2, text string, textH float64, lineH float64, coord OsV4, align OsV2, enableFormating bool) int {
-	font := win.GetFont("", textH)
+func (win *Win) GetTextPos(touchPos OsV2, text string, prop WinFontProps, coord OsV4, align OsV2) int {
+	/*font := win.GetFont("", textH)
 	if font == nil {
 		return 0
-	}
+	}*/
 
-	start := win.GetTextStart(text, textH, lineH, coord, align, enableFormating)
+	start := win.GetTextStart(text, prop, coord, align)
 
-	return win.gph.GetTextPos(font, (touchPos.X - start.X), text, enableFormating)
+	return win.gph.GetTextPos(prop, (touchPos.X - start.X), text)
 }
 
-func (win *Win) GetTextStart(text string, textH float64, lineH float64, coord OsV4, align OsV2, enableFormating bool) OsV2 {
+func (win *Win) GetTextStart(text string, prop WinFontProps, coord OsV4, align OsV2) OsV2 {
 
-	size := win.GetTextSize(-1, text, textH, lineH, enableFormating)
+	size := win.GetTextSize(-1, text, prop)
 
 	start := coord.Start
 
@@ -1073,7 +1076,7 @@ func (win *Win) RenderTile(text string, coord OsV4, priorUp bool, frontCd OsCd) 
 
 	num_lines := strings.Count(text, "\n") + 1
 	cq := coord
-	cq.Size = win.GetTextSize(-1, text, 0, 0, true)
+	cq.Size = win.GetTextSize(-1, text, InitWinFontPropsDef(win))
 	cq = cq.AddSpace(-win.io.GetDPI() / 20)
 
 	// user can set priority(up, down, etc.) ...
@@ -1084,7 +1087,7 @@ func (win *Win) RenderTile(text string, coord OsV4, priorUp bool, frontCd OsCd) 
 	win.DrawRect(cq.Start, cq.End(), depth, win.io.GetPalette().B)
 	win.DrawRect_border(cq.Start, cq.End(), depth, win.io.GetPalette().OnB, 1)
 	cq.Size.Y /= num_lines
-	win.DrawText(text, 0, 0, cq, depth, OsV2{1, 1}, frontCd, true)
+	win.DrawText(text, InitWinFontPropsDef(win), cq, depth, OsV2{1, 1}, frontCd)
 
 	return nil
 }

@@ -22,6 +22,7 @@ import (
 	"image/color"
 	"image/draw"
 	"os"
+	"strings"
 
 	"github.com/fogleman/gg"
 	"github.com/golang/freetype/truetype"
@@ -29,14 +30,86 @@ import (
 	"golang.org/x/image/math/fixed"
 )
 
-type WinFont struct {
-	path        string
-	heightPx    int
+type WinFontProps struct {
+	weight int
+	textH  int
+	lineH  int
+
+	italic bool
+
+	enableFormating bool
+}
+
+// textH & lineH are in <0-1> range
+func InitWinFontProps(weight int, textH, lineH float64, italic bool, enableFormating bool, win *Win) WinFontProps {
+	if weight <= 0 {
+		weight = 400
+	}
+
+	if textH <= 0 {
+		textH = 0.14 // 1/8
+	}
+	tPx := int(float64(win.io.GetDPI()) * textH)
+
+	if lineH <= 0 {
+		lineH = 1
+	}
+	lPx := int(float64(win.io.GetDPI()) * lineH)
+
+	return WinFontProps{weight: weight, textH: tPx, lineH: lPx, italic: italic, enableFormating: enableFormating}
+}
+
+func InitWinFontPropsHeight(textH float64, win *Win) WinFontProps {
+	return InitWinFontProps(0, textH, 0, false, true, win)
+}
+
+func InitWinFontPropsDef(win *Win) WinFontProps {
+	return InitWinFontProps(0, 0, 0, false, true, win)
+}
+
+func (a *WinFontProps) Cmp(b *WinFontProps) bool {
+	return a.weight == b.weight &&
+		a.textH == b.textH &&
+		a.lineH == b.lineH &&
+		a.italic == b.italic &&
+		a.enableFormating == b.enableFormating
+}
+
+type WinFontFace struct {
 	face        font.Face
 	lastUseTick int64
 }
 
-func NewWinFont(path string, heightPx int) *WinFont {
+func NewWinFontFace(prop *WinFontProps) *WinFontFace {
+
+	var name string
+	switch prop.weight {
+	case 100:
+		name = OsTrnString(!prop.italic, "Inter-Thin", "Inter-ThinItalic")
+	case 200:
+		name = OsTrnString(!prop.italic, "Inter-ExtraLight", "Inter-ExtraLightItalic")
+	case 300:
+		name = OsTrnString(!prop.italic, "Inter-Light", "Inter-LightItalic")
+	case 400:
+		name = OsTrnString(!prop.italic, "Inter-Regular", "Inter-Italic") //default
+	case 500:
+		name = OsTrnString(!prop.italic, "Inter-Medium", "Inter-MediumItalic")
+	case 600:
+		name = OsTrnString(!prop.italic, "Inter-SemiBold", "Inter-SemiBoldItalic")
+	case 700:
+		name = OsTrnString(!prop.italic, "Inter-Bold", "Inter-BoldItalic")
+	case 800:
+		name = OsTrnString(!prop.italic, "Inter-ExtraBold", "Inter-ExtraBoldItalic")
+	case 900:
+		name = OsTrnString(!prop.italic, "Inter-Black", "Inter-BlackItalic")
+	}
+
+	if name == "" {
+		fmt.Printf("Unknown wieght %d\n", prop.weight)
+		return nil
+	}
+
+	path := "apps/base/resources/Inter/" + name + ".ttf"
 
 	fl, err := os.ReadFile(path)
 	if err != nil {
@@ -49,92 +122,80 @@ func NewWinFont(path string, heightPx int) *WinFont {
 		fmt.Printf("truetype.Parse() failed: %v\n", err)
 		return nil
 	}
-	face := truetype.NewFace(ft, &truetype.Options{Size: float64(heightPx) /*, Hinting: font.HintingFull*/})
-	wf := &WinFont{path: path, heightPx: heightPx, face: face}
-	wf.UpdateTick()
-	return wf
+
+	face := truetype.NewFace(ft, &truetype.Options{Size: float64(prop.textH)}) //Hinting: font.HintingFull
+
+	return &WinFontFace{face: face}
+}
+func (ff *WinFontFace) Destroy() {
+	ff.face.Close()
+}
+
+func (ff *WinFontFace) UpdateTick() {
+	ff.lastUseTick = OsTicks()
+}
+func (ff *WinFontFace) IsUsed() bool {
+	return OsIsTicksIn(ff.lastUseTick, 5000) //5 sec
+}
+
+type WinFont struct {
+	faces      [9]*WinFontFace
+	faces_ital [9]*WinFontFace
 }
 
 func (ft *WinFont) Destroy() {
-	ft.face.Close()
-}
-func (ft *WinFont) UpdateTick() {
-	ft.lastUseTick = OsTicks()
-}
-func (it *WinFont) IsUsed() bool {
-	return OsIsTicksIn(it.lastUseTick, 5000) //5 sec
-}
-
-func (ft *WinFont) GetStringSize(str string, enableFormating bool) OsV2 {
-
-	var w fixed.Int26_6 //round to int after!
-	prevC := rune(-1)
-	for _, c := range str {
-		if prevC >= 0 {
-			w += ft.face.Kern(prevC, c)
+	for i, f := range ft.faces {
+		if f != nil {
+			f.Destroy()
+			ft.faces[i] = nil
 		}
-		a, _ := ft.face.GlyphAdvance(c)
-		w += a
-		prevC = c
 	}
-
-	m := ft.face.Metrics()
-	return OsV2{int(w >> 6), int(m.Ascent+m.Descent)/64 + 2}
+	for i, f := range ft.faces_ital {
+		if f != nil {
+			f.Destroy()
+			ft.faces_ital[i] = nil
+		}
+	}
 }
 
-func NextPowOf2(n int) int {
-	k := 1
-	for k < n {
-		k = k << 1
+func (ft *WinFont) GetFace(prop *WinFontProps) *WinFontFace {
+
+	var ret *WinFontFace
+
+	w := (prop.weight / 100) - 1
+	w = OsClamp(w, 0, 8)
+
+	if prop.italic {
+		if ft.faces_ital[w] == nil {
+			ft.faces_ital[w] = NewWinFontFace(prop)
+		}
+		ret = ft.faces_ital[w]
+	} else {
+		if ft.faces[w] == nil {
+			ft.faces[w] = NewWinFontFace(prop)
+		}
+		ret = ft.faces[w]
 	}
-	return k
+
+	ret.UpdateTick()
+
+	return ret
 }
 
-func (ft *WinFont) DrawString(str string, enableFormating bool) *WinGphItemText {
-	size := ft.GetStringSize(str, enableFormating)
-
-	w := NextPowOf2(size.X)
-	h := NextPowOf2(size.Y)
-
-	/*rgba := image.NewRGBA(image.Rect(0, 0, size.X, size.Y))
-	bCd := color.NRGBA{255, 255, 255, 0}
-	for y := 0; y < size.Y; y++ {
-		for x := 0; x < size.X; x++ {
-			rgba.Set(x, y, bCd)
+func (ft *WinFont) Maintenance() {
+	for i := len(ft.faces) - 1; i >= 0; i-- {
+		if ft.faces[i] != nil && !ft.faces[i].IsUsed() {
+			ft.faces[i].Destroy()
+			ft.faces[i] = nil
 		}
-	}*/
-
-	a := image.NewAlpha(image.Rect(0, 0, w, h))
-
-	var letters []int
-
-	m := ft.face.Metrics()
-	d := &font.Drawer{
-		//Dst:  rgba,
-		Dst:  a,
-		Src:  image.NewUniform(color.NRGBA{255, 255, 255, 255}),
-		Face: ft.face,
-		Dot:  fixed.Point26_6{X: fixed.Int26_6(0), Y: fixed.Int26_6(m.Ascent)},
 	}
 
-	prevC := rune(-1)
-	for _, c := range str {
-		if prevC >= 0 {
-			d.Dot.X += d.Face.Kern(prevC, c)
-			letters = append(letters, int(d.Dot.X>>6))
+	for i := len(ft.faces_ital) - 1; i >= 0; i-- {
+		if ft.faces_ital[i] != nil && !ft.faces_ital[i].IsUsed() {
+			ft.faces_ital[i].Destroy()
+			ft.faces_ital[i] = nil
 		}
-		dr, mask, maskp, advance, _ := d.Face.Glyph(d.Dot, c)
-		if !dr.Empty() {
-			draw.DrawMask(d.Dst, dr, d.Src, image.Point{}, mask, maskp, draw.Over)
-		}
-		d.Dot.X += advance
-		prevC = c
 	}
-	if prevC >= 0 {
-		letters = append(letters, int(d.Dot.X>>6))
-	}
-
-	return &WinGphItemText{item: NewWinGphItemAlpha(a), size: size, font: ft, text: str, enableFormating: enableFormating, letters: letters}
 }
 
 type WinGphItem struct {
@@ -225,9 +286,8 @@ type WinGphItemText struct {
 	item *WinGphItem
 	size OsV2
 
-	font            *WinFont
-	text            string
-	enableFormating bool
+	prop WinFontProps
+	text string
 
 	letters []int //aggregated!
 }
@@ -240,7 +300,7 @@ type WinGphItemCircle struct {
 }
 
 type WinGph struct {
-	fonts []*WinFont
+	fonts []*WinFont //array index = textH
 
 	texts   []*WinGphItemText
 	circles []*WinGphItemCircle
@@ -270,10 +330,7 @@ func (gph *WinGph) Destroy() {
 func (gph *WinGph) Maintenance() {
 
 	for i := len(gph.fonts) - 1; i >= 0; i-- {
-		if !gph.fonts[i].IsUsed() {
-			gph.fonts[i].Destroy()
-			gph.fonts = append(gph.fonts[:i], gph.fonts[i+1:]...) //remove
-		}
+		gph.fonts[i].Maintenance()
 	}
 
 	for i := len(gph.circles) - 1; i >= 0; i-- {
@@ -293,57 +350,21 @@ func (gph *WinGph) Maintenance() {
 
 }
 
-func (gph *WinGph) GetFont(path string, heightPx int) *WinFont {
+func (gph *WinGph) GetFont(prop *WinFontProps) *WinFont {
 
-	//find
-	for _, it := range gph.fonts {
-		if it.path == path && it.heightPx == heightPx {
-			return it
-		}
+	for i := len(gph.fonts); i < prop.textH+1; i++ {
+		gph.fonts = append(gph.fonts, &WinFont{})
 	}
 
-	//add
-	it := NewWinFont(path, heightPx)
-	if it != nil {
-		gph.fonts = append(gph.fonts, it)
-	}
-	return it
+	return gph.fonts[prop.textH]
 }
 
-func (gph *WinGph) GetText(font *WinFont, text string, enableFormating bool) *WinGphItemText {
-	if text == "" {
-		return nil
-	}
-	font.UpdateTick()
-
-	if len(text) > 512 {
-		text = text[:512] //cut it
-	}
-
-	//find
-	for _, it := range gph.texts {
-		if it.font == font && it.text == text && it.enableFormating == enableFormating {
-			it.item.UpdateTick()
-			return it
-		}
-	}
-
-	//create
-	it := font.DrawString(text, enableFormating)
-	if it != nil {
-		gph.texts = append(gph.texts, it)
-		gph.texts_num_created++
-	}
-	return it
-}
-
-func (gph *WinGph) GetTextSize(font *WinFont, max_len int, text string, enableFormating bool) OsV2 {
+func (gph *WinGph) GetTextSize(prop WinFontProps, max_len int, text string) OsV2 {
 	if text == "" {
 		return OsV2{}
 	}
-	font.UpdateTick()
 
-	it := gph.GetText(font, text, enableFormating)
+	it := gph.GetText(prop, text)
 	if it == nil {
 		return OsV2{0, 0}
 	}
@@ -365,13 +386,12 @@ func (gph *WinGph) GetTextSize(font *WinFont, max_len int, text string, enableFo
 	return OsV2{it.letters[i], it.size.Y}
 }
 
-func (gph *WinGph) GetTextPos(font *WinFont, px int, text string, enableFormating bool) int {
+func (gph *WinGph) GetTextPos(prop WinFontProps, px int, text string) int {
 	if text == "" {
 		return 0
 	}
-	font.UpdateTick()
 
-	it := gph.GetText(font, text, enableFormating)
+	it := gph.GetText(prop, text)
 	if it == nil {
 		return 0
 	}
@@ -385,6 +405,32 @@ func (gph *WinGph) GetTextPos(font *WinFont, px int, text string, enableFormatin
 	return len(it.letters)
 }
 
+func (gph *WinGph) GetText(prop WinFontProps, text string) *WinGphItemText {
+	if text == "" {
+		return nil
+	}
+
+	if len(text) > 512 {
+		text = text[:512] //cut it
+	}
+
+	//find
+	for _, it := range gph.texts {
+		if it.prop.Cmp(&prop) && it.text == text {
+			it.item.UpdateTick()
+			return it
+		}
+	}
+
+	//create
+	it := gph.drawString(prop, text)
+	if it != nil {
+		gph.texts = append(gph.texts, it)
+		gph.texts_num_created++
+	}
+	return it
+}
+
 func (gph *WinGph) GetCircle(size OsV2, width float64, arc OsV2f) *WinGphItemCircle {
 
 	//find
@@ -395,8 +441,8 @@ func (gph *WinGph) GetCircle(size OsV2, width float64, arc OsV2f) *WinGphItemCir
 	}
 
 	//create
-	w := NextPowOf2(size.X)
-	h := NextPowOf2(size.Y)
+	w := OsNextPowOf2(size.X)
+	h := OsNextPowOf2(size.Y)
 
 	dc := gg.NewContext(w, h)
 	dc.SetRGBA255(255, 255, 255, 255)
@@ -439,6 +485,140 @@ func (gph *WinGph) GetCircle(size OsV2, width float64, arc OsV2f) *WinGphItemCir
 		gph.circles = append(gph.circles, circle)
 	}
 	return circle
+}
+
+func (gph *WinGph) processLetter(text string, orig_prop *WinFontProps, prop *WinFontProps, skip *int) bool {
+
+	if *skip > 0 {
+		*skip -= 1
+		return false
+	}
+
+	//new line = reset
+	if strings.HasPrefix(text, "\n") {
+		prop.weight = orig_prop.weight
+		prop.italic = false
+		prop.textH = orig_prop.textH
+	}
+
+	//bold + italic
+	if strings.HasPrefix(text, "***") || strings.HasPrefix(text, "___") {
+		prop.weight = OsTrn(prop.weight != orig_prop.weight, orig_prop.weight, orig_prop.weight*3/2) //bold
+		prop.italic = !prop.italic
+		*skip = 2
+		return false
+	}
+
+	//bold
+	if strings.HasPrefix(text, "**") {
+		prop.weight = OsTrn(prop.weight != orig_prop.weight, orig_prop.weight, orig_prop.weight*3/2)
+		*skip = 1
+		return false
+	}
+
+	//italic
+	if strings.HasPrefix(text, "__") {
+		prop.italic = !prop.italic
+		*skip = 1
+		return false
+	}
+
+	//smaller
+	if strings.HasPrefix(text, "###") {
+		prop.textH = OsTrn(prop.textH != orig_prop.textH, orig_prop.textH, int(float64(orig_prop.textH)*0.9))
+		*skip = 2
+		return false
+	}
+
+	//taller
+	if strings.HasPrefix(text, "##") {
+		prop.textH = OsTrn(prop.textH != orig_prop.textH, orig_prop.textH, int(float64(orig_prop.textH)*1.2))
+		*skip = 1
+		return false
+	}
+
+	return true
+}
+
+func (gph *WinGph) GetStringSize(prop WinFontProps, str string) OsV2 {
+
+	var w fixed.Int26_6 //round to int after!
+	prevCh := rune(-1)
+
+	skip := 0
+	act_prop := prop
+	i := 0
+	for p, ch := range str {
+		if prop.enableFormating && !gph.processLetter(str[p:], &prop, &act_prop, &skip) {
+			i++
+			continue
+		}
+
+		face := gph.GetFont(&act_prop).GetFace(&act_prop).face
+
+		if prevCh >= 0 {
+			w += face.Kern(prevCh, ch)
+		}
+		a, _ := face.GlyphAdvance(ch)
+		w += a
+		prevCh = ch
+
+		i++
+	}
+
+	m := gph.GetFont(&act_prop).GetFace(&act_prop).face.Metrics()
+	return OsV2{int(w >> 6), int(m.Ascent+m.Descent)/64 + 2}
+}
+
+func (gph *WinGph) drawString(prop WinFontProps, str string) *WinGphItemText {
+	size := gph.GetStringSize(prop, str)
+
+	w := OsNextPowOf2(size.X)
+	h := OsNextPowOf2(size.Y)
+
+	a := image.NewAlpha(image.Rect(0, 0, w, h))
+
+	var letters []int
+
+	m := gph.GetFont(&prop).GetFace(&prop).face.Metrics()
+	d := &font.Drawer{
+		//Dst:  rgba,
+		Dst: a,
+		Src: image.NewUniform(color.NRGBA{255, 255, 255, 255}),
+		//Face: ft.face,
+		Dot: fixed.Point26_6{X: fixed.Int26_6(0), Y: fixed.Int26_6(m.Ascent)},
+	}
+
+	prevCh := rune(-1)
+
+	skip := 0
+	act_prop := prop
+	i := 0
+	for p, ch := range str {
+		if prop.enableFormating && !gph.processLetter(str[p:], &prop, &act_prop, &skip) {
+			i++
+			continue
+		}
+
+		d.Face = gph.GetFont(&act_prop).GetFace(&act_prop).face
+
+		if prevCh >= 0 {
+			d.Dot.X += d.Face.Kern(prevCh, ch)
+			letters = append(letters, int(d.Dot.X>>6))
+		}
+		dr, mask, maskp, advance, _ := d.Face.Glyph(d.Dot, ch)
+		if !dr.Empty() {
+			draw.DrawMask(d.Dst, dr, d.Src, image.Point{}, mask, maskp, draw.Over)
+		}
+		d.Dot.X += advance
+		prevCh = ch
+	}
+
+	if prevCh >= 0 {
+		letters = append(letters, int(d.Dot.X>>6))
+	}
+
+	return &WinGphItemText{item: NewWinGphItemAlpha(a), size: size, prop: prop, text: str, letters: letters}
 }
 
 /*func (gph *WinGph) GetPoly(size OsV2, cd OsCd, width float64) *WinGphItem {

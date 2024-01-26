@@ -22,13 +22,13 @@ import (
 	"unicode/utf8"
 )
 
-func (ui *Ui) Paint_textWidth(value string, cursorPos int64, textH float64, enableFormating bool) float64 {
+func (ui *Ui) Paint_textWidth(value string, cursorPos int64, prop WinFontProps) float64 {
 
-	px := ui.win.GetTextSize(int(cursorPos), value, textH, 0, enableFormating).X
+	px := ui.win.GetTextSize(int(cursorPos), value, prop).X
 	return float64(px) / float64(ui.win.Cell()) // pixels to cursor
 }
 
-func (ui *Ui) Paint_textGrid(grid OsV4, frontCd OsCd, style *UiComp, value string, valueOrigEdit string, textH float64, icon *WinMedia, selection bool, editable bool) {
+func (ui *Ui) Paint_textGrid(grid OsV4, frontCd OsCd, style *UiComp, value string, valueOrigEdit string, prop WinFontProps, icon *WinMedia, selection bool, editable bool) {
 
 	lv := ui.GetCall()
 	if lv.call == nil /*|| lv.call.crop.IsZero()*/ {
@@ -41,7 +41,7 @@ func (ui *Ui) Paint_textGrid(grid OsV4, frontCd OsCd, style *UiComp, value strin
 	lv.call.data.scrollH.narrow = true
 	lv.call.data.scrollV.show = false
 
-	text_width := ui.Paint_textWidth(value, -1, textH, style.label_formating)
+	text_width := ui.Paint_textWidth(value, -1, prop)
 	if editable {
 		text_width += 2 * 0.1 //because rect_border
 	}
@@ -58,7 +58,7 @@ func (ui *Ui) Paint_textGrid(grid OsV4, frontCd OsCd, style *UiComp, value strin
 		ui._compDrawImage(coordImage, *icon, frontCd, style)
 	}
 	if editable || len(value) > 0 {
-		ui._compDrawText(coordText, value, valueOrigEdit, frontCd, 0, selection, editable, int(style.label_alignH), int(style.label_alignV), style.label_formating)
+		ui._compDrawText(coordText, value, valueOrigEdit, frontCd, prop, selection, editable, int(style.label_alignH), int(style.label_alignV))
 	}
 
 	ui.Div_end()
@@ -138,12 +138,12 @@ func _UiPaint_CheckSelectionExplode(str string, start *int, end *int) {
 	}
 }*/
 
-func _UiPaint_CursorPos(str string, curr int, move int, enableFormating bool) int {
+func _UiPaint_CursorPos(str string, curr int, move int, prop WinFontProps) int {
 
 	n := utf8.RuneCountInString(str)
 
 	//raw string
-	if enableFormating {
+	if prop.enableFormating {
 		if move < 0 {
 			curr -= _UiPaint_HashFormatingPreSuf_fix(str[:curr], strings.HasSuffix)
 		}
@@ -185,14 +185,14 @@ func (ui *Ui) _UiPaint_resetKeys(editable bool) {
 	}
 }
 
-func (ui *Ui) _UiPaint_Text_VScrollInto(cursor OsV2, lineH float64) {
+func (ui *Ui) _UiPaint_Text_VScrollInto(cursor OsV2, prop WinFontProps) {
 
 	lv := ui.GetCall()
 	if lv.call.parent == nil {
 		return
 	}
 
-	_, lH := ui.win.getTextAndLineHight(0, lineH)
+	lH := int(prop.lineH)
 	v_pos := cursor.Y * lH
 
 	v_st := lv.call.parent.data.scrollV.GetWheel()
@@ -205,14 +205,14 @@ func (ui *Ui) _UiPaint_Text_VScrollInto(cursor OsV2, lineH float64) {
 		lv.call.parent.data.scrollV.wheel = OsMax(0, v_pos-v_sz) //SetWheel() has boundary check, which is not good here
 	}
 }
-func (ui *Ui) _UiPaint_Text_HScrollInto(str string, cursor OsV2, textH float64, enableFormating bool) error {
+func (ui *Ui) _UiPaint_Text_HScrollInto(str string, cursor OsV2, prop WinFontProps) error {
 
 	lv := ui.GetCall()
 	if lv.call.parent == nil {
 		return nil
 	}
 
-	h_pos := ui.win.GetTextSize(cursor.X, str, textH, 0, enableFormating).X
+	h_pos := ui.win.GetTextSize(cursor.X, str, prop).X
 
 	h_st := lv.call.parent.data.scrollH.GetWheel()
 	h_sz := lv.call.crop.Size.X - ui.CellWidth(2*0.1) //text is shifted 0.1 to left
@@ -226,7 +226,7 @@ func (ui *Ui) _UiPaint_Text_HScrollInto(str string, cursor OsV2, textH float64, 
 	return nil
 }
 
-func (ui *Ui) _UiPaint_TextSelectTouch(str string, strEditOrig string, touchPos OsV2, lineEnd OsV2, editable bool, textH float64, lineH float64, enableFormating bool) {
+func (ui *Ui) _UiPaint_TextSelectTouch(str string, strEditOrig string, touchPos OsV2, lineEnd OsV2, editable bool, prop WinFontProps) {
 
 	lv := ui.GetCall()
 
@@ -292,8 +292,8 @@ func (ui *Ui) _UiPaint_TextSelectTouch(str string, strEditOrig string, touchPos 
 		edit.end = touchPos //set end
 
 		//scroll
-		ui._UiPaint_Text_VScrollInto(touchPos, lineH)
-		ui._UiPaint_Text_HScrollInto(str, touchPos, textH, enableFormating)
+		ui._UiPaint_Text_VScrollInto(touchPos, prop)
+		ui._UiPaint_Text_HScrollInto(str, touchPos, prop)
 
 		//root.buff.ResetHost() //SetNoSleep()
 	}
@@ -345,7 +345,7 @@ func (ui *Ui) _UiPaint_getStringSubBytePos(str string) (int, int, int, int) {
 	return x, y, selFirst, selLast
 }
 
-func (ui *Ui) _UiPaint_TextSelectKeys(str string, lineY int, lineEnd OsV2, editable bool, textH float64, lineH float64, enableFormating bool) {
+func (ui *Ui) _UiPaint_TextSelectKeys(str string, lineY int, lineEnd OsV2, editable bool, prop WinFontProps) {
 
 	keys := &ui.win.io.keys
 	edit := &ui.edit
@@ -382,7 +382,7 @@ func (ui *Ui) _UiPaint_TextSelectKeys(str string, lineY int, lineEnd OsV2, edita
 		ex := e.X
 		if keys.ctrl {
 			if keys.arrowL {
-				p := _UiPaint_CursorPos(str, ex, -1, enableFormating)
+				p := _UiPaint_CursorPos(str, ex, -1, prop)
 				first, _ := _UiPaint_WordPos(str, p)
 				if first == p && p > 0 {
 					first, _ = _UiPaint_WordPos(str, p-1)
@@ -390,7 +390,7 @@ func (ui *Ui) _UiPaint_TextSelectKeys(str string, lineY int, lineEnd OsV2, edita
 				e.X = first
 			}
 			if keys.arrowR {
-				p := _UiPaint_CursorPos(str, ex, +1, enableFormating)
+				p := _UiPaint_CursorPos(str, ex, +1, prop)
 				_, last := _UiPaint_WordPos(str, p)
 				if last == p && p+1 < utf8.RuneCountInString(str) {
 					_, last = _UiPaint_WordPos(str, p+1)
@@ -399,11 +399,11 @@ func (ui *Ui) _UiPaint_TextSelectKeys(str string, lineY int, lineEnd OsV2, edita
 			}
 		} else {
 			if keys.arrowL {
-				p := _UiPaint_CursorPos(str, ex, -1, enableFormating)
+				p := _UiPaint_CursorPos(str, ex, -1, prop)
 				e.X = p
 			}
 			if keys.arrowR {
-				p := _UiPaint_CursorPos(str, ex, +1, enableFormating)
+				p := _UiPaint_CursorPos(str, ex, +1, prop)
 				e.X = p
 			}
 		}
@@ -421,14 +421,14 @@ func (ui *Ui) _UiPaint_TextSelectKeys(str string, lineY int, lineEnd OsV2, edita
 	//scroll
 	newPos := *e
 	if old.Y != newPos.Y {
-		ui._UiPaint_Text_VScrollInto(newPos, lineH)
+		ui._UiPaint_Text_VScrollInto(newPos, prop)
 	}
 	if old.X != newPos.X {
-		ui._UiPaint_Text_HScrollInto(str, newPos, textH, enableFormating)
+		ui._UiPaint_Text_HScrollInto(str, newPos, prop)
 	}
 }
 
-func (ui *Ui) _UiPaint_TextEditKeys(tabIsChar bool, textH float64, lineH float64, enableFormating bool) string {
+func (ui *Ui) _UiPaint_TextEditKeys(tabIsChar bool, prop WinFontProps) string {
 
 	edit := &ui.edit
 	keys := &ui.win.io.keys
@@ -611,10 +611,10 @@ func (ui *Ui) _UiPaint_TextEditKeys(tabIsChar bool, textH float64, lineH float64
 	//scroll
 	newPos := *e
 	if old.Y != newPos.Y {
-		ui._UiPaint_Text_VScrollInto(newPos, lineH)
+		ui._UiPaint_Text_VScrollInto(newPos, prop)
 	}
 	if old.X != newPos.X {
-		ui._UiPaint_Text_HScrollInto(str, newPos, textH, enableFormating)
+		ui._UiPaint_Text_HScrollInto(str, newPos, prop)
 	}
 
 	return edit.temp
@@ -623,10 +623,10 @@ func (ui *Ui) _UiPaint_TextEditKeys(tabIsChar bool, textH float64, lineH float64
 func (ui *Ui) _UiPaint_Text_line(coord OsV4, lineY int, lineEnd OsV2,
 	value string, valueOrigEdit string,
 	frontCd OsCd,
-	textH, lineH float64,
+	prop WinFontProps,
 	font_path string,
 	alignH, alignV int,
-	selection, editable, tabIsChar, enableFormating bool) bool {
+	selection, editable, tabIsChar bool) bool {
 
 	lv := ui.GetCall()
 
@@ -644,22 +644,22 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4, lineY int, lineEnd OsV2,
 		this_uid := lv.call
 		edit_uid := edit.uid
 		active = (edit_uid != nil && edit_uid == this_uid)
-		enableFormating = !editable || !active
+		prop.enableFormating = !editable || !active
 
-		touchPos := ui.win.GetTextPos(ui.win.io.touch.pos, value, textH, lineH, coord, align, enableFormating)
+		touchPos := ui.win.GetTextPos(ui.win.io.touch.pos, value, prop, coord, align)
 
 		if (lv.call.IsOver(ui) || lv.call.IsTouchActive(ui)) || edit.setFirstEditbox {
-			ui._UiPaint_TextSelectTouch(value, valueOrigEdit, OsV2{touchPos, lineY}, lineEnd, editable, textH, lineH, enableFormating)
+			ui._UiPaint_TextSelectTouch(value, valueOrigEdit, OsV2{touchPos, lineY}, lineEnd, editable, prop)
 		}
 
 		edit.last_edit = value
 		if active {
 			if lineY == edit.end.Y {
-				ui._UiPaint_TextSelectKeys(value, lineY, lineEnd, editable, textH, lineH, enableFormating)
+				ui._UiPaint_TextSelectKeys(value, lineY, lineEnd, editable, prop)
 			}
 
 			if editable {
-				value = ui._UiPaint_TextEditKeys(tabIsChar, textH, lineH, enableFormating) //rewrite 'str' with temp value
+				value = ui._UiPaint_TextEditKeys(tabIsChar, prop) //rewrite 'str' with temp value
 
 				//enter or Tab(key) or outside => save
 				isOutside := false
@@ -725,10 +725,10 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4, lineY int, lineEnd OsV2,
 					ex = OsMax(s.X, e.X)
 				}
 
-				ui.buff.AddTextBack(OsV2{sx, ex}, value, textH, lineH, coord, ui.buff.win.io.GetPalette().GetGrey(0.5), align, enableFormating, false)
+				ui.buff.AddTextBack(OsV2{sx, ex}, value, prop, coord, ui.buff.win.io.GetPalette().GetGrey(0.5), align, false)
 			}
 
-			if enableFormating {
+			if prop.enableFormating {
 				_UiPaint_CheckSelectionExplode(value, &edit.start.X, &edit.end.X)
 			}
 		}
@@ -769,7 +769,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4, lineY int, lineEnd OsV2,
 	}*/
 
 	// draw
-	ui.buff.AddText(value, textH, lineH, coord, frontCd, align, enableFormating)
+	ui.buff.AddText(value, prop, coord, frontCd, align)
 
 	if cursorPos.X >= 0 {
 		//cursor moved
@@ -778,7 +778,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4, lineY int, lineEnd OsV2,
 		}
 
 		var err error
-		ui.buff.AddTextCursor(value, textH, lineH, coord, frontCd, align, enableFormating, cursorPos.X)
+		ui.buff.AddTextCursor(value, prop, coord, frontCd, align, cursorPos.X)
 		if err != nil {
 			fmt.Println("Error: VmDraw_Text.PaintTextCursor() failed: %w", err)
 			return false
