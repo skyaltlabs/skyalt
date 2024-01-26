@@ -734,40 +734,6 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4, lineY int, lineEnd OsV2,
 		}
 	}
 
-	/*if syntaxtBack != nil {
-		for _, it := range syntaxtBack.subs {
-			root.ui.PaintTextBack(it, str, coord, font, it.GetColor(), textH, align, false, true)
-		}
-	}
-
-	if syntaxtUnderline != nil {
-		for _, it := range syntaxtUnderline.subs {
-			root.ui.PaintTextBack(it, str, coord, font, it.GetColor(), textH, align, true, true)
-		}
-	}
-
-	if syntaxtLabel != nil {
-		for _, it := range syntaxtLabel.subs {
-			root.ui.PaintTextTile(str, it, it, coord, font, it.GetColor(), textH, align)
-		}
-	}*/
-
-	/*var cds []OsCd
-	if syntaxtText != nil {
-		strN := len(str)
-		cds = root.ui.AllocColors(strN, cd)
-
-		for _, it := range syntaxtText.subs {
-
-			cdIt := it.GetColor()
-			rng := it
-			rng.Sort()
-			for j := rng.X; j < strN && j < rng.Y; j++ {
-				cds[j] = cdIt
-			}
-		}
-	}*/
-
 	// draw
 	ui.buff.AddText(value, prop, coord, frontCd, align)
 
