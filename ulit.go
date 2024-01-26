@@ -114,6 +114,19 @@ func OsMinFloat(x, y float64) float64 {
 	return x
 }
 
+func OsMaxFloat32(x, y float32) float32 {
+	if x < y {
+		return y
+	}
+	return x
+}
+func OsMinFloat32(x, y float32) float32 {
+	if x > y {
+		return y
+	}
+	return x
+}
+
 func OsClampFloat(v, min, max float64) float64 {
 	return OsMinFloat(OsMaxFloat(v, min), max)
 }
@@ -161,6 +174,13 @@ func (a OsV2f) toV2() OsV2 {
 }
 func (a OsV2f) Cmp(b OsV2f) bool {
 	return a.X == b.X && a.Y == b.Y
+}
+func (a OsV2f) Min(b OsV2f) OsV2f {
+	return OsV2f{OsMinFloat32(a.X, b.X), OsMinFloat32(a.Y, b.Y)}
+}
+
+func (a OsV2f) Max(b OsV2f) OsV2f {
+	return OsV2f{OsMaxFloat32(a.X, b.X), OsMaxFloat32(a.Y, b.Y)}
 }
 
 type OsV2 struct {
