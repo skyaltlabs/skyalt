@@ -729,7 +729,7 @@ func (w *SANode) Render() {
 		//draw Select rectangle
 		if w.app.act == w.parent {
 			if w.HasExeError() || w.HasExpError() {
-				pl := ui.buff.win.io.GetPalette()
+				pl := ui.win.io.GetPalette()
 				cd := pl.E
 				cd.A = 150
 
@@ -752,8 +752,8 @@ func (w *SANode) Render() {
 				//resizer
 				s := ui.CellWidth(0.3)
 				en := InitOsV4Mid(div.canvas.End(), OsV2{s, s})
-				if en.Inside(ui.buff.win.io.touch.pos) && ui.buff.win.io.keys.alt {
-					pl := ui.buff.win.io.GetPalette()
+				if en.Inside(ui.win.io.touch.pos) && ui.win.io.keys.alt {
+					pl := ui.win.io.GetPalette()
 					cd = pl.P
 				}
 				ui.buff.AddRect(en, cd, 0)
@@ -1119,7 +1119,7 @@ func (w *SANode) RenderAttrs() {
 	if w.errExe != nil {
 		ui.Div_start(0, y, 1, 1)
 		{
-			pl := ui.buff.win.io.GetPalette()
+			pl := ui.win.io.GetPalette()
 			ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0) //red rect
 		}
 		ui.Div_end()
@@ -1166,7 +1166,7 @@ func (w *SANode) RenderAttrs() {
 			x := 0
 
 			if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/copy.png"), 0.3, ui.trns.COPY, CdPalette_B, true, false) > 0 {
-				keys := &ui.buff.win.io.keys
+				keys := &ui.win.io.keys
 				keys.clipboard = w.Name + "." + it.Name
 			}
 			x++
@@ -1215,7 +1215,7 @@ func (w *SANode) RenderAttrs() {
 
 				if it.errExp != nil {
 					ui.Paint_tooltip(0, 0, 1, 1, it.errExp.Error())
-					pl := ui.buff.win.io.GetPalette()
+					pl := ui.win.io.GetPalette()
 					ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0.03)
 				} else if it.ShowExp {
 					ui.Paint_rect(0, 0, 1, 1, 0, SAApp_getYellow(), 0.03)
@@ -1231,7 +1231,7 @@ func (w *SANode) RenderAttrs() {
 				ui.Div_start(x, 0, 1, 1)
 				{
 					ui.Paint_tooltip(0, 0, 1, 1, it.errExe.Error())
-					pl := ui.buff.win.io.GetPalette()
+					pl := ui.win.io.GetPalette()
 					ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0) //red rect
 				}
 				ui.Div_end()

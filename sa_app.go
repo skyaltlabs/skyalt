@@ -275,8 +275,8 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	}
 	ui.Div_end()
 
-	touch := &ui.buff.win.io.touch
-	keys := &ui.buff.win.io.keys
+	touch := &ui.win.io.touch
+	keys := &ui.win.io.keys
 	//add node
 	if (!ui.touch.IsAnyActive() || ui.touch.canvas == appDiv) && app.canvas.startClick == nil && !keys.alt {
 		touchPos := ui.win.io.touch.pos
@@ -288,7 +288,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 
 				rect.Start = rect.Start.Add(appDiv.canvas.Start)
 				ui.buff.AddRect(rect, SAApp_getYellow(), ui.CellWidth(0.03))
-				ui.buff.AddText("+", InitWinFontPropsDef(ui.buff.win), rect, SAApp_getYellow(), OsV2{1, 1})
+				ui.buff.AddText("+", InitWinFontPropsDef(ui.win), rect, SAApp_getYellow(), OsV2{1, 1})
 
 				if appDiv.IsTouchEnd(ui) {
 					app.canvas.addGrid = grid
@@ -375,7 +375,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 
 	//shortcuts
 	if ui.edit.uid == nil && appDiv.IsOver(ui) {
-		keys := &ui.buff.win.io.keys
+		keys := &ui.win.io.keys
 
 		//bypass
 		if keys.text == "b" {
@@ -399,8 +399,8 @@ func (app *SAApp) History(ui *Ui) {
 	}
 
 	lv := ui.GetCall()
-	touch := &ui.buff.win.io.touch
-	keys := &ui.buff.win.io.keys
+	touch := &ui.win.io.touch
+	keys := &ui.win.io.keys
 
 	if lv.call.IsOver(ui) && ui.win.io.keys.backward {
 		app.stepHistoryBack()
@@ -445,7 +445,7 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 		if app.canvas.addnode_search != "" {
 
 			//search
-			keys := &ui.buff.win.io.keys
+			keys := &ui.win.io.keys
 			searches := strings.Split(strings.ToLower(app.canvas.addnode_search), " ")
 		out1:
 			for _, gr := range app.base.node_groups.groups {
@@ -579,7 +579,7 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 	if ui.Comp_buttonIcon(0, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/levelup.png"), 0.3, "One level up", CdPalette_P, app.act.parent != nil, false) > 0 {
 		app.act = app.act.parent
 	}
-	keys := &ui.buff.win.io.keys
+	keys := &ui.win.io.keys
 	if strings.EqualFold(keys.text, "u") {
 		if app.act.parent != nil {
 			app.act = app.act.parent

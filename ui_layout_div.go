@@ -339,14 +339,14 @@ func (div *UiLayoutDiv) RenderResizeSpliter(ui *Ui) {
 
 	enableInput := div.enableInput
 
-	cell := ui.buff.win.Cell()
-	tpos := div.GetRelativePos(ui.buff.win.io.touch.pos)
+	cell := ui.win.Cell()
+	tpos := div.GetRelativePos(ui.win.io.touch.pos)
 
 	vHighlight := false
 	hHighlight := false
 	col := -1
 	row := -1
-	if enableInput && div.crop.Inside(ui.buff.win.io.touch.pos) {
+	if enableInput && div.crop.Inside(ui.win.io.touch.pos) {
 		col = div.data.cols.IsResizerTouch((tpos.X), cell)
 		row = div.data.rows.IsResizerTouch((tpos.Y), cell)
 
@@ -354,7 +354,7 @@ func (div *UiLayoutDiv) RenderResizeSpliter(ui *Ui) {
 		hHighlight = (row >= 0)
 
 		// start
-		if ui.buff.win.io.touch.start && (vHighlight || hHighlight) {
+		if ui.win.io.touch.start && (vHighlight || hHighlight) {
 			if vHighlight || hHighlight {
 				ui.touch.Set(nil, nil, nil, div)
 			}
@@ -390,7 +390,7 @@ func (div *UiLayoutDiv) RenderResizeSpliter(ui *Ui) {
 				r = float64(tpos.X - div.data.cols.GetResizerPos(int(col)-1, cell))
 			}
 
-			div.SetResizer(int(col), r, true, ui.buff.win)
+			div.SetResizer(int(col), r, true, ui.win)
 		} else {
 			row = div.touchResizeIndex
 			hHighlight = true
@@ -401,16 +401,16 @@ func (div *UiLayoutDiv) RenderResizeSpliter(ui *Ui) {
 				r = float64(tpos.Y - (div.data.rows.GetResizerPos(int(row)-1, cell)))
 			}
 
-			div.SetResizer(int(row), r, false, ui.buff.win)
+			div.SetResizer(int(row), r, false, ui.win)
 		}
 	}
 
 	// draw all(+active)
 	{
-		activeCd, _ := ui.buff.win.io.GetPalette().GetCd(CdPalette_P, false, true, false, false)
+		activeCd, _ := ui.win.io.GetPalette().GetCd(CdPalette_P, false, true, false, false)
 		activeCd.A = 150
 
-		defaultCd := ui.buff.win.io.GetPalette().GetGrey(0.5)
+		defaultCd := ui.win.io.GetPalette().GetGrey(0.5)
 
 		for i := 0; i < div.data.cols.NumInputs(); i++ {
 			if div.data.cols.GetResizeIndex(i) >= 0 {
@@ -436,10 +436,10 @@ func (div *UiLayoutDiv) RenderResizeSpliter(ui *Ui) {
 	// cursor
 	if enableInput {
 		if vHighlight {
-			ui.buff.win.PaintCursor("res_col")
+			ui.win.PaintCursor("res_col")
 		}
 		if hHighlight {
-			ui.buff.win.PaintCursor("res_row")
+			ui.win.PaintCursor("res_row")
 		}
 	}
 }

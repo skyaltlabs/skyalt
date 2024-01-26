@@ -725,7 +725,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4, lineY int, lineEnd OsV2,
 					ex = OsMax(s.X, e.X)
 				}
 
-				ui.buff.AddTextBack(OsV2{sx, ex}, value, prop, coord, ui.buff.win.io.GetPalette().GetGrey(0.5), align, false)
+				ui.buff.AddTextBack(OsV2{sx, ex}, value, prop, coord, ui.win.io.GetPalette().GetGrey(0.5), align, false)
 			}
 
 			if prop.enableFormating {

@@ -19,7 +19,7 @@ package main
 import "fmt"
 
 func Node_connectionCd(ui *Ui) OsCd {
-	pl := ui.buff.win.io.GetPalette()
+	pl := ui.win.io.GetPalette()
 	return pl.GetGrey(0.2)
 }
 
@@ -92,8 +92,8 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 	ui := app.base.ui
 
 	lv := ui.GetCall()
-	touch := &ui.buff.win.io.touch
-	pl := ui.buff.win.io.GetPalette()
+	touch := &ui.win.io.touch
+	pl := ui.win.io.GetPalette()
 
 	coord, selCoord := node.nodeToPixelsCoord(lv.call.canvas, ui)
 
@@ -160,7 +160,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 	ui.Div_end()
 
 	//select
-	if (someNodeIsDraged && node.KeyProgessSelection(&ui.buff.win.io.keys)) || (!someNodeIsDraged && node.Selected) {
+	if (someNodeIsDraged && node.KeyProgessSelection(&ui.win.io.keys)) || (!someNodeIsDraged && node.Selected) {
 		ui.buff.AddRectRound(selCoord, selectRad, SAApp_getYellow(), ui.CellWidth(0.06)) //selected
 	}
 

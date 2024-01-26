@@ -177,7 +177,7 @@ func (ui *Ui) Div_rowResize(pos int, name string, val float64, force bool) (bool
 
 func (ui *Ui) Div_SpacerRow(x, y, w, h int) {
 
-	pl := ui.buff.win.io.GetPalette()
+	pl := ui.win.io.GetPalette()
 
 	ui.Div_start(x, y, w, h)
 	ui.Paint_line(0, 0, 1, 1, 0.01,
@@ -188,7 +188,7 @@ func (ui *Ui) Div_SpacerRow(x, y, w, h int) {
 
 func (ui *Ui) Div_SpacerCol(x, y, w, h int) {
 
-	pl := ui.buff.win.io.GetPalette()
+	pl := ui.win.io.GetPalette()
 
 	ui.Div_start(x, y, w, h)
 	ui.Paint_line(0, 0, 1, 1, 0.01,

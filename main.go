@@ -86,7 +86,7 @@ func main() {
 			return
 		}
 
-		if ui.UpdateTile(ui.buff.win) {
+		if ui.UpdateTile(ui.win) {
 			redraw = true
 		}
 

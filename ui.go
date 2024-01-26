@@ -351,7 +351,7 @@ func (ui *Ui) StartRender() {
 
 	//ui.base_app.Render(true)
 
-	if ui.buff.win.io.touch.start {
+	if ui.win.io.touch.start {
 		ui.touch.Reset()
 	}
 
@@ -359,14 +359,14 @@ func (ui *Ui) StartRender() {
 
 func (ui *Ui) EndRender() {
 
-	if ui.buff.win.io.touch.end {
+	if ui.win.io.touch.end {
 		ui.touch.Reset()
 		ui.drag.group = ""
 	}
 
 	// tile - redraw If mouse is over tile
-	if ui.tile.IsActive(ui.buff.win.io.touch.pos) {
-		err := ui.buff.win.RenderTile(ui.tile.text, ui.tile.coord, ui.tile.priorUp, ui.tile.cd)
+	if ui.tile.IsActive(ui.win.io.touch.pos) {
+		err := ui.win.RenderTile(ui.tile.text, ui.tile.coord, ui.tile.priorUp, ui.tile.cd)
 		if err != nil {
 			fmt.Printf("RenderTile() failed: %v\n", err)
 		}

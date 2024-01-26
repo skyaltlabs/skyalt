@@ -193,7 +193,7 @@ func (scroll *UiLayoutScroll) _GetTempScroll(srcl int, win *Win) int {
 
 func (scroll *UiLayoutScroll) IsMove(packLayout *UiLayoutDiv, ui *Ui, wheel_add int, deep int, onlyH bool) bool {
 
-	inside := packLayout.CropWithScroll(ui.buff.win).Inside(ui.buff.win.io.touch.pos)
+	inside := packLayout.CropWithScroll(ui.win).Inside(ui.win.io.touch.pos)
 	if inside {
 
 		//test childs
@@ -217,7 +217,7 @@ func (scroll *UiLayoutScroll) IsMove(packLayout *UiLayoutDiv, ui *Ui, wheel_add 
 
 func (scroll *UiLayoutScroll) TouchV(packLayout *UiLayoutDiv, ui *Ui) {
 
-	win := ui.buff.win
+	win := ui.win
 
 	canUp := scroll.IsMove(packLayout, ui, -1, 0, false)
 	canDown := scroll.IsMove(packLayout, ui, +1, 0, false)
@@ -303,7 +303,7 @@ func (scroll *UiLayoutScroll) TouchV(packLayout *UiLayoutDiv, ui *Ui) {
 }
 
 func (scroll *UiLayoutScroll) TouchH(needShiftWheel bool, packLayout *UiLayoutDiv, ui *Ui) {
-	win := ui.buff.win
+	win := ui.win
 
 	canLeft := scroll.IsMove(packLayout, ui, -1, 0, win.io.keys.shift)
 	canRight := scroll.IsMove(packLayout, ui, +1, 0, win.io.keys.shift)

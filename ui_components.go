@@ -342,7 +342,7 @@ func (ui *Ui) Comp_button_s(style *UiComp, value string, icon *WinMedia, url str
 		OsUlit_OpenBrowser(url)
 	}
 
-	pl := ui.buff.win.io.GetPalette()
+	pl := ui.win.io.GetPalette()
 	cd, onCd := pl.GetCd(style.cd, style.fade, style.enable, inside, active)
 
 	//coord := st.stack.data.Convert(root.ui.Cell(), grid)
@@ -469,7 +469,7 @@ func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, alignH int, icon Win
 
 func (ui *Ui) Comp_text_s(style *UiComp, value string, icon *WinMedia, selection bool) {
 
-	pl := ui.buff.win.io.GetPalette()
+	pl := ui.win.io.GetPalette()
 	_, onCd := pl.GetCd(style.cd, style.fade, style.enable, false, false)
 
 	//if style.enable_back {
@@ -579,7 +579,7 @@ func (ui *Ui) Comp_edit_s(style *UiComp, valueIn string, valueInOrig string, ico
 	lv.call.data.scrollH.narrow = true
 	lv.call.data.scrollV.show = false
 
-	pl := ui.buff.win.io.GetPalette()
+	pl := ui.win.io.GetPalette()
 	cd, onCd := pl.GetCd(style.cd, style.fade, style.enable, false, false)
 
 	if highlight {
@@ -641,7 +641,7 @@ func (ui *Ui) Comp_progress(style *UiComp, value float64, prec int) int64 {
 
 	value = OsClampFloat(value, 0, 1)
 
-	pl := ui.buff.win.io.GetPalette()
+	pl := ui.win.io.GetPalette()
 	cd, onCd := pl.GetCd(style.cd, style.fade, style.enable, false, false)
 
 	coord := lv.call.canvas
@@ -709,7 +709,7 @@ func (ui *Ui) Comp_slider_s(style *UiComp, value *float64, minValue float64, max
 
 	_, _, inside, active, end := ui._compIsClicked(style.enable)
 
-	pl := ui.buff.win.io.GetPalette()
+	pl := ui.win.io.GetPalette()
 	cd, _ := pl.GetCd(style.cd, style.fade, style.enable, false, false)
 	cdThumb, _ := pl.GetCd(style.cd, style.fade, style.enable, inside, active)
 
@@ -718,7 +718,7 @@ func (ui *Ui) Comp_slider_s(style *UiComp, value *float64, minValue float64, max
 	coord := lv.call.canvas
 	coord = coord.AddSpaceX(radPx)
 
-	rpos := ui.buff.win.io.touch.pos.Sub(coord.Start)
+	rpos := ui.win.io.touch.pos.Sub(coord.Start)
 	touch_x := OsClampFloat(float64(rpos.X)/float64(coord.Size.X), 0, 1)
 
 	if style.enable {
@@ -729,10 +729,10 @@ func (ui *Ui) Comp_slider_s(style *UiComp, value *float64, minValue float64, max
 		if active {
 			*value = minValue + (maxValue-minValue)*touch_x
 		}
-		if !active && inside && ui.buff.win.io.touch.wheel != 0 {
+		if !active && inside && ui.win.io.touch.wheel != 0 {
 			s := maxValue - minValue
-			*value += s / 10 * float64(ui.buff.win.io.touch.wheel)
-			ui.buff.win.io.touch.wheel = 0 //bug: If slider has canvas which can scroll under, it will scroll and slider is ignored ...
+			*value += s / 10 * float64(ui.win.io.touch.wheel)
+			ui.win.io.touch.wheel = 0 //bug: If slider has canvas which can scroll under, it will scroll and slider is ignored ...
 			end = true
 
 			ui.touch.scrollWheel = lv.call
@@ -779,7 +779,7 @@ func (ui *Ui) Comp_slider_s(style *UiComp, value *float64, minValue float64, max
 		}
 	}
 
-	return active, (old_value != *value), (ui.buff.win.io.touch.wheel != 0 || end)
+	return active, (old_value != *value), (ui.win.io.touch.wheel != 0 || end)
 }
 
 func (ui *Ui) Comp_combo_desc(description string, description_alignH int, width float64, x, y, w, h int, value *string, options_names []string, options_values []string, tooltip string, enable bool, search bool) bool {
@@ -859,7 +859,7 @@ func (ui *Ui) Comp_combo_s(style *UiComp, value string, options_names []string, 
 		}
 	}
 
-	pl := ui.buff.win.io.GetPalette()
+	pl := ui.win.io.GetPalette()
 	backCd, _ := pl.GetCd(style.cd, true, style.enable, inside, active) //root.GetCdGrey(0.1)
 	_, onCd := pl.GetCd(style.cd, style.fade, style.enable, inside, active)
 
@@ -897,7 +897,7 @@ func (ui *Ui) Comp_combo_s(style *UiComp, value string, options_names []string, 
 		//compute minimum dialog width
 		mx := float64(0)
 		for _, opt := range options_names {
-			sz := ui.win.GetTextSize(-1, opt, InitWinFontPropsDef(ui.buff.win))
+			sz := ui.win.GetTextSize(-1, opt, InitWinFontPropsDef(ui.win))
 			mx = OsMaxFloat(mx, float64(sz.X)/float64(ui.win.Cell())+0.5)
 		}
 		ui.Div_colMax(0, OsMaxFloat(3, mx))
@@ -1020,7 +1020,7 @@ func (ui *Ui) Comp_checkbox_s(style *UiComp, value float64, label string) float6
 		}
 	}
 
-	pl := ui.buff.win.io.GetPalette()
+	pl := ui.win.io.GetPalette()
 	//backCd := pl.GetCd2(pl.GetGrey(0.1), false, style.enable, inside, active)
 	_, onCd := pl.GetCd(style.cd, style.fade, style.enable, inside, active)
 
@@ -1152,7 +1152,7 @@ func (ui *Ui) Comp_switch_s(style *UiComp, value bool, label string) bool {
 		}
 	}
 
-	pl := ui.buff.win.io.GetPalette()
+	pl := ui.win.io.GetPalette()
 	//backCd := pl.GetCd(style.cd, false)
 	//surfCd := pl.GetSurface()
 	//onSurfCd := pl.GetOnSurface()
