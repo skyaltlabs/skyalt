@@ -298,12 +298,32 @@ type WinGphItemCircle struct {
 	width float64
 	arc   OsV2f
 }
+type WinGphItemPoly struct {
+	item   *WinGphItem
+	points []OsV2f
+	size   OsV2
+	width  float64
+}
+
+func (poly *WinGphItemPoly) CmpPoints(points []OsV2f) bool {
+	if len(poly.points) != len(points) {
+		return false
+	}
+
+	for i, a := range poly.points {
+		if !a.Cmp(points[i]) {
+			return false
+		}
+	}
+	return true
+}
 
 type WinGph struct {
 	fonts []*WinFont //array index = textH
 
 	texts   []*WinGphItemText
 	circles []*WinGphItemCircle
+	polys   []*WinGphItemPoly
 
 	texts_num_created int
 	texts_num_remove  int
@@ -325,6 +345,9 @@ func (gph *WinGph) Destroy() {
 	for _, it := range gph.texts {
 		it.item.Destroy()
 	}
+	for _, it := range gph.polys {
+		it.item.Destroy()
+	}
 }
 
 func (gph *WinGph) Maintenance() {
@@ -337,6 +360,13 @@ func (gph *WinGph) Maintenance() {
 		if !gph.circles[i].item.IsUsed() {
 			gph.circles[i].item.Destroy()
 			gph.circles = append(gph.circles[:i], gph.circles[i+1:]...) //remove
+		}
+	}
+
+	for i := len(gph.polys) - 1; i >= 0; i-- {
+		if !gph.polys[i].item.IsUsed() {
+			gph.polys[i].item.Destroy()
+			gph.polys = append(gph.polys[:i], gph.polys[i+1:]...) //remove
 		}
 	}
 
@@ -487,6 +517,68 @@ func (gph *WinGph) GetCircle(size OsV2, width float64, arc OsV2f) *WinGphItemCir
 	return circle
 }
 
+func (gph *WinGph) GetPoly(points []OsV2f, width float64) *WinGphItemPoly {
+
+	if len(points) == 0 {
+		return nil
+	}
+
+	//find
+	for _, it := range gph.polys {
+		if it.width == width && it.CmpPoints(points) {
+			return it
+		}
+	}
+
+	//get size
+	min := points[0]
+	max := points[0]
+	for _, p := range points {
+		min = min.Min(p)
+		max = max.Max(p)
+	}
+
+	min = min.toV2().toV2f()
+	max = max.toV2().Add(OsV2{1, 1}).toV2f()
+
+	size := max.Sub(min).toV2()
+	if size.X == 0 || size.Y == 0 {
+		return nil
+	}
+	w := OsNextPowOf2(size.X)
+	h := OsNextPowOf2(size.Y)
+
+	//create
+	dc := gg.NewContext(w, h)
+	for _, p := range points {
+		dc.LineTo(float64(p.X-min.X), float64(p.Y-min.Y))
+	}
+	dc.ClosePath()
+
+	if width > 0 {
+		dc.SetLineWidth(width)
+		dc.Stroke()
+	} else {
+		dc.Fill()
+	}
+
+	//dc.SavePNG("out.png")
+
+	rect := image.Rect(0, 0, w, h)
+	dst := image.NewAlpha(rect)
+	draw.Draw(dst, rect, dc.Image(), rect.Min, draw.Src)
+
+	//add
+	var poly *WinGphItemPoly
+	it := NewWinGphItemAlpha(dst)
+	if it != nil {
+		poly = &WinGphItemPoly{item: it, points: points, size: size, width: width}
+		gph.polys = append(gph.polys, poly)
+	}
+	return poly
+
+}
+
 func (gph *WinGph) processLetter(text string, orig_prop *WinFontProps, prop *WinFontProps, skip *int) bool {
 
 	if *skip > 0 {
@@ -620,19 +712,3 @@ func (gph *WinGph) drawString(prop WinFontProps, str string) *WinGphItemText {
 
 	return &WinGphItemText{item: NewWinGphItemAlpha(a), size: size, prop: prop, text: str, letters: letters}
 }
-
-/*func (gph *WinGph) GetPoly(size OsV2, cd OsCd, width float64) *WinGphItem {
-
-	//create
-	dc := gg.NewContext(size.X+2, size.Y+2)
-	dc.MoveTo()
-	//loop
-	{
-		dc.LineTo()
-	}
-	dc.ClosePath()
-	dc.Fill()
-
-	//add
-	//...
-}*/

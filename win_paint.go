@@ -167,9 +167,9 @@ func (buf *WinPaintBuff) AddBezier(a OsV2, b OsV2, c OsV2, d OsV2, cd OsCd, thic
 	}
 }
 
-func (buf *WinPaintBuff) AddTringle(a OsV2, b OsV2, c OsV2, cd OsCd) {
+func (buf *WinPaintBuff) AddPoly(start OsV2, points []OsV2f, cd OsCd, width float64) {
 	if !buf.skipDraw {
-		buf.win.DrawTriangle(a, b, c, buf.getDepth(), cd)
+		buf.win.DrawPoly(start, points, buf.getDepth(), cd, width)
 	}
 }
 

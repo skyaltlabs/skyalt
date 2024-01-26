@@ -947,53 +947,15 @@ func (win *Win) DrawBezier(a OsV2, b OsV2, c OsV2, d OsV2, depth int, thick int,
 	gl.End()
 }
 
-func (win *Win) DrawTriangle(a OsV2, b OsV2, c OsV2, depth int, cd OsCd) {
+func (win *Win) DrawPoly(start OsV2, points []OsV2f, depth int, cd OsCd, width float64) {
 
-	gl.Color4ub(cd.R, cd.G, cd.B, cd.A)
-
-	gl.Begin(gl.TRIANGLES)
-	gl.Vertex3f(float32(a.X), float32(a.Y), float32(depth))
-	gl.Vertex3f(float32(b.X), float32(b.Y), float32(depth))
-	gl.Vertex3f(float32(c.X), float32(c.Y), float32(depth))
-	gl.End()
+	poly := win.gph.GetPoly(points, width)
+	if poly != nil {
+		poly.item.DrawCut(OsV4{Start: start, Size: poly.size}, depth, cd)
+	}
 }
 
-/*func (win *Win) getTextAndLineHight(prop WinFontProps) (int, int) {
-
-	if textH <= 0 {
-		textH = 0.14 // 1/8
-	}
-	if lineH <= 0 {
-		lineH = 0.15
-	}
-
-	tPx := int(float64(win.io.GetDPI()) * textH)
-	lPx := int(float64(win.io.GetDPI()) * lineH)
-
-	return tPx, lPx
-}*/
-
-/*func (win *Win) GetFont(path string, textH float64) *WinFont {
-
-	if path == "" {
-
-		//co když uvnitř textu budu mít bold a musím načíst jiný path? ..............................
-
-		path = "apps/base/resources/Inter/Inter-Regular.ttf"
-	}
-
-	tPx, _ := win.getTextAndLineHight(textH, 0)
-
-	return win.gph.GetFont(path, tPx)
-}*/
-
 func (win *Win) DrawText(text string, prop WinFontProps, coord OsV4, depth int, align OsV2, frontCd OsCd) {
-
-	/*font := win.GetFont("", textH)
-	if font == nil {
-		return
-	}*/
-
 	item := win.gph.GetText(prop, text)
 	if item != nil {
 		start := win.GetTextStart(text, prop, coord, align)
@@ -1003,20 +965,10 @@ func (win *Win) DrawText(text string, prop WinFontProps, coord OsV4, depth int, 
 }
 
 func (win *Win) GetTextSize(cur_pos int, text string, prop WinFontProps) OsV2 {
-	/*font := win.GetFont("", textH)
-	if font == nil {
-		return OsV2{}
-	}*/
-
 	return win.gph.GetTextSize(prop, cur_pos, text)
 }
 
 func (win *Win) GetTextPos(touchPos OsV2, text string, prop WinFontProps, coord OsV4, align OsV2) int {
-	/*font := win.GetFont("", textH)
-	if font == nil {
-		return 0
-	}*/
-
 	start := win.GetTextStart(text, prop, coord, align)
 
 	return win.gph.GetTextPos(prop, (touchPos.X - start.X), text)
