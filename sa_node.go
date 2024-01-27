@@ -920,6 +920,9 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 				if !isOutput {
 					ui.Div_start(addDelPos.Start.X, addDelPos.Start.Y, addDelPos.Size.X, addDelPos.Size.Y)
 					{
+						ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
+						ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
+
 						if ui.Comp_buttonLight(0, 0, 1, 1, "+", "Add item", true) > 0 {
 							if editable {
 
