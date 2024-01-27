@@ -132,6 +132,12 @@ func (attr *SANodeAttr) IsBlob() bool {
 func (attr *SANodeAttr) GetCd() OsCd {
 	return attr.GetResult().Cd()
 }
+func (attr *SANodeAttr) GetV2() OsV2 {
+	return attr.GetResult().V2()
+}
+func (attr *SANodeAttr) GetV2f() OsV2f {
+	return attr.GetResult().V2f()
+}
 func (attr *SANodeAttr) GetV4() OsV4 {
 	return attr.GetResult().V4()
 }

@@ -167,6 +167,37 @@ func (a *SAValue) Cd() OsCd {
 	return ret
 }
 
+func (a *SAValue) V2() OsV2 {
+	var ret OsV2
+
+	var v []int
+	err := json.Unmarshal(a.Blob().data, &v)
+	if err == nil {
+		if len(v) > 0 {
+			ret.X = v[0]
+		}
+		if len(v) > 1 {
+			ret.Y = v[1]
+		}
+	}
+	return ret
+}
+func (a *SAValue) V2f() OsV2f {
+	var ret OsV2f
+
+	var v []float32
+	err := json.Unmarshal(a.Blob().data, &v)
+	if err == nil {
+		if len(v) > 0 {
+			ret.X = v[0]
+		}
+		if len(v) > 1 {
+			ret.Y = v[1]
+		}
+	}
+	return ret
+}
+
 func (a *SAValue) V4() OsV4 {
 	var ret OsV4
 
