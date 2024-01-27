@@ -88,6 +88,7 @@ func NewSANode(app *SAApp, parent *SANode, name string, exe string, grid OsV4, p
 	w.Name = name
 	w.Exe = exe
 	w.Pos = pos
+	w.Cam_z = 1
 
 	if w.CanBeRenderOnCanvas() {
 		w.SetGrid(grid)
@@ -471,6 +472,10 @@ func (w *SANode) FindNode(name string) *SANode {
 func (w *SANode) updateLinks(parent *SANode, app *SAApp) {
 	w.parent = parent
 	w.app = app
+	if w.Cam_z <= 0 {
+		w.Cam_z = 1
+	}
+
 	for _, v := range w.Attrs {
 		v.node = w
 	}
@@ -478,10 +483,10 @@ func (w *SANode) updateLinks(parent *SANode, app *SAApp) {
 	for _, it := range w.Subs {
 		it.updateLinks(w, app)
 	}
+
 }
 
 func (w *SANode) Copy() (*SANode, error) {
-
 	js, err := json.Marshal(w)
 	if err != nil {
 		return nil, err
