@@ -511,7 +511,6 @@ func SAExe_Render_List(w *SANode, renderIt bool) {
 
 	itemsAttr := w.GetAttr("items", "[0, 1, 2, 3, 4, 5]")
 	multiSelect := w.GetAttrUi("multi_select", "1", SAAttrUi_CHECKBOX).GetBool()
-	showRadios := w.GetAttrUi("show_radios", "1", SAAttrUi_CHECKBOX).GetBool()
 	direction := w.GetAttrUi("direction", "0", SAAttrUi_COMBO("Vertical;Horizonal", "")).GetBool()
 	maxItemSize := w.GetAttr("max_item_size", "[100, 1]").GetV2f()
 
@@ -591,7 +590,7 @@ func SAExe_Render_List(w *SANode, renderIt bool) {
 				var isSelected bool
 				var msel_i int
 				if multiSelect {
-					msel_i := sort.SearchInts(multi_selected, i)
+					msel_i = sort.SearchInts(multi_selected, i)
 					isSelected = msel_i < len(multi_selected) && multi_selected[msel_i] == i
 				} else {
 					isSelected = single_selected == i
@@ -605,13 +604,7 @@ func SAExe_Render_List(w *SANode, renderIt bool) {
 					label = strconv.FormatFloat(vv, 'f', -1, 64)
 				}
 
-				clicked := false
-				if showRadios {
-					clicked = ui.Comp_buttonMenu(x, y, 1, 1, label, "", true, isSelected) > 0
-				} else {
-					//bug, sometimes, the click is ignored .................
-					clicked = ui.Comp_buttonMenuIcon(x, y, 1, 1, label, InitWinMedia_url("icon"), 0.3, "", true, isSelected) > 0
-				}
+				clicked := ui.Comp_buttonMenu(x, y, 1, 1, label, "", true, isSelected) > 0
 				if clicked {
 					if multiSelect {
 						if isSelected {
