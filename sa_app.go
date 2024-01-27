@@ -579,10 +579,12 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 	if ui.Comp_buttonIcon(0, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/levelup.png"), 0.3, "One level up", CdPalette_P, app.act.parent != nil, false) > 0 {
 		app.act = app.act.parent
 	}
-	keys := &ui.win.io.keys
-	if strings.EqualFold(keys.text, "u") {
-		if app.act.parent != nil {
-			app.act = app.act.parent
+	if !ui.edit.IsActive() {
+		keys := &ui.win.io.keys
+		if strings.EqualFold(keys.text, "u") {
+			if app.act.parent != nil {
+				app.act = app.act.parent
+			}
 		}
 	}
 
