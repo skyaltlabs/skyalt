@@ -382,6 +382,23 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 					gr.app.act.RemoveSelectedNodes()
 				}
 
+				//level-down
+				if keys.enter {
+					for _, n := range gr.app.act.Subs {
+						if n.Selected && n.IsGuiLayout() {
+							gr.app.act = n //goto layout
+							break
+						}
+					}
+				}
+
+				//level-up
+				if keys.backspace {
+					if gr.app.act.parent != nil {
+						gr.app.act = gr.app.act.parent
+					}
+				}
+
 				//copy
 				if keys.copy {
 					//add selected into list
