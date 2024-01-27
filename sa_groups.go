@@ -66,6 +66,7 @@ func InitSAGroups() SAGroups {
 		{name: "map", render: SAExe_Render_Map},
 		{name: "image", render: SAExe_Render_Image},
 		{name: "file_drop", render: SAExe_Render_FileDrop},
+		{name: "list", render: SAExe_Render_List},
 	}}
 	grs.groups = append(grs.groups, grs.ui)
 

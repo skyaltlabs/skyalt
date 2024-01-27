@@ -20,6 +20,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -68,7 +70,7 @@ func SAExe_Render_Button(w *SANode, renderIt bool) {
 	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool()
-	tp := w.GetAttrUi("type", "0", SAAttrUi_COMBO("Classic;Light;Menu;Segments", "")).GetInt()
+	tp := w.GetAttrUi("type", "0", SAAttrUi_COMBO("Classic;Light;Menu", "")).GetInt()
 	label := w.GetAttr("label", "").GetString()
 
 	clicked := false
@@ -90,35 +92,6 @@ func SAExe_Render_Button(w *SANode, renderIt bool) {
 				sel := w.findAttr("selected")
 				sel.SetExpBool(!selected)
 			}
-		}
-
-	case 3:
-		labels := label
-		butts := strings.Split(labels, ";")
-		selected := w.GetAttr("selected", "").GetInt()
-
-		if showIt {
-			ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
-			{
-				for i := range butts {
-					ui.Div_colMax(i*2+0, 100)
-					if i+1 < len(butts) {
-						ui.Div_col(i*2+1, 0.1)
-					}
-				}
-				for i, it := range butts {
-					clicked = ui.Comp_buttonText(i*2+0, 0, 1, 1, it, "", "", enable, selected == i) > 0
-					if clicked {
-						sel := w.findAttr("selected")
-						sel.SetExpInt(i)
-					}
-					if i+1 < len(butts) {
-						ui.Div_SpacerCol(i*2+1, 0, 1, 1)
-					}
-				}
-				//ui.Paint_rect(0, 0, 1, 1, 0, ui.buff.win.io.GetPalette().GetGrey(0.5), 0.03)
-			}
-			ui.Div_end()
 		}
 	}
 
@@ -525,5 +498,145 @@ func SAExe_Render_Map(w *SANode, renderIt bool) {
 			}
 			ui.Div_end()
 		}
+	}
+}
+
+func SAExe_Render_List(w *SANode, renderIt bool) {
+	ui := w.app.base.ui
+	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
+
+	grid := w.GetGrid()
+	grid.Size.X = OsMax(grid.Size.X, 1)
+	grid.Size.Y = OsMax(grid.Size.Y, 1)
+
+	itemsAttr := w.GetAttr("items", "[0, 1, 2, 3, 4, 5]")
+	multiSelect := w.GetAttrUi("multi_select", "1", SAAttrUi_CHECKBOX).GetBool()
+	showRadios := w.GetAttrUi("show_radios", "1", SAAttrUi_CHECKBOX).GetBool()
+	direction := w.GetAttrUi("direction", "0", SAAttrUi_COMBO("Vertical;Horizonal", "")).GetBool()
+	maxItemSize := w.GetAttr("max_item_size", "[100, 1]").GetV2f()
+
+	single_selectedAttr := w.GetAttr("single_selected", "-1")   //input, but can replace(instr)
+	multi_selectedAttr := w.GetAttr("multi_selected", "[2, 3]") //input, but can replace(instr)
+
+	var items []interface{}
+	err := json.Unmarshal(itemsAttr.GetBlob().data, &items)
+	if err != nil {
+		itemsAttr.SetErrorExe(err.Error())
+		return
+	}
+
+	var single_selected int
+	var multi_selected []int
+	if multiSelect {
+		err = json.Unmarshal(multi_selectedAttr.GetBlob().data, &multi_selected)
+		if err != nil {
+			multi_selectedAttr.SetErrorExe(err.Error())
+			return
+		}
+		sort.Ints(multi_selected)
+	} else {
+		single_selected = single_selectedAttr.GetInt()
+	}
+
+	if showIt {
+		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
+
+		var num_rows, num_cols int
+		if !direction {
+			lay_cols := float64(ui.GetCall().call.canvas.Size.X) / float64(ui.win.Cell())
+			maxItemSize.X = OsMinFloat32(maxItemSize.X, float32(lay_cols))
+
+			num_cols = int(lay_cols / float64(maxItemSize.X))
+			num_cols = OsMax(num_cols, 1)
+			num_rows = OsRoundUp(float64(len(items)) / float64(num_cols))
+
+			//vertical
+			for i := 0; i < num_cols; i++ {
+				ui.Div_col(i, float64(maxItemSize.X))
+				ui.Div_colMax(i, 100)
+			}
+			for i := 0; i < num_rows; i++ {
+				ui.Div_row(i, float64(maxItemSize.Y))
+			}
+		} else {
+			lay_rows := float64(ui.GetCall().call.canvas.Size.Y) / float64(ui.win.Cell())
+			maxItemSize.Y = OsMinFloat32(maxItemSize.Y, float32(lay_rows))
+			num_rows = int(float64(lay_rows) / float64(maxItemSize.Y))
+			num_rows = OsMax(num_rows, 1)
+
+			lay_cols := float64(ui.GetCall().call.canvas.Size.X) / float64(ui.win.Cell())
+			num_cols = int(float64(lay_cols) / float64(maxItemSize.X))
+
+			mx_rows := OsRoundUp(float64(len(items)) / float64(num_rows))
+			num_cols = OsMax(num_cols, mx_rows)
+
+			//horizontal
+			for i := 0; i < num_cols; i++ {
+				ui.Div_col(i, float64(maxItemSize.X))
+			}
+			for i := 0; i < num_rows; i++ {
+				ui.Div_row(i, float64(maxItemSize.Y))
+				ui.Div_rowMax(i, 100)
+			}
+		}
+
+		i := 0
+		for y := 0; y < num_rows; y++ {
+			for x := 0; x < num_cols; x++ {
+
+				if i >= len(items) {
+					break
+				}
+
+				var isSelected bool
+				var msel_i int
+				if multiSelect {
+					msel_i := sort.SearchInts(multi_selected, i)
+					isSelected = msel_i < len(multi_selected) && multi_selected[msel_i] == i
+				} else {
+					isSelected = single_selected == i
+				}
+
+				label := ""
+				switch vv := items[i].(type) {
+				case string:
+					label = vv
+				case float64:
+					label = strconv.FormatFloat(vv, 'f', -1, 64)
+				}
+
+				clicked := false
+				if showRadios {
+					clicked = ui.Comp_buttonMenu(x, y, 1, 1, label, "", true, isSelected) > 0
+				} else {
+					//bug, sometimes, the click is ignored .................
+					clicked = ui.Comp_buttonMenuIcon(x, y, 1, 1, label, InitWinMedia_url("icon"), 0.3, "", true, isSelected) > 0
+				}
+				if clicked {
+					if multiSelect {
+						if isSelected {
+							multi_selected = append(multi_selected[:msel_i], multi_selected[msel_i+1:]...) //remove
+						} else {
+							multi_selected = append(multi_selected, i) //add
+							sort.Ints(multi_selected)
+						}
+
+						str := "["
+						for _, s := range multi_selected {
+							str += strconv.Itoa(s) + ","
+						}
+						str, _ = strings.CutSuffix(str, ",")
+						str += "]"
+						multi_selectedAttr.SetExpString(str) //bug: replace adds quotes .........
+					} else {
+						single_selectedAttr.SetExpInt(OsTrn(isSelected, -1, i))
+					}
+				}
+
+				i++
+			}
+		}
+
+		ui.Div_end()
 	}
 }
