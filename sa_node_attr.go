@@ -84,20 +84,20 @@ func (attr *SANodeAttr) SetErrorExe(err string) {
 	attr.errExe = errors.New(err)
 }
 
-func (attr *SANodeAttr) SetExpString(value string) {
+func (attr *SANodeAttr) SetExpString(value string, mapOrArray bool) {
 	instr := attr.instr.GetConst()
 	if instr != nil { //editable
-		instr.LineReplace(value)
+		instr.LineReplace(value, mapOrArray)
 	}
 }
 func (attr *SANodeAttr) SetExpInt(value int) {
-	attr.SetExpString(strconv.Itoa(value))
+	attr.SetExpString(strconv.Itoa(value), false)
 }
 func (attr *SANodeAttr) SetExpBool(value bool) {
-	attr.SetExpString(OsTrnString(value, "1", "0"))
+	attr.SetExpString(OsTrnString(value, "1", "0"), false)
 }
 func (attr *SANodeAttr) SetExpFloat(value float64) {
-	attr.SetExpString(strconv.FormatFloat(value, 'f', -1, 64))
+	attr.SetExpString(strconv.FormatFloat(value, 'f', -1, 64), false)
 }
 
 func (attr *SANodeAttr) GetResult() *SAValue {
@@ -224,7 +224,7 @@ func (a *SANodeAttr) ReplaceArrayItemValue(prm_i int, value string) {
 	}
 	instr := a.instr.GetConstArrayPrm(prm_i)
 	if instr != nil {
-		instr.LineReplace(value)
+		instr.LineReplace(value, false)
 	}
 }
 func (a *SANodeAttr) ReplaceArrayItemValueInt(prm_i int, value int) {
@@ -237,7 +237,7 @@ func (a *SANodeAttr) ReplaceMapItemValue(prm_i int, value string) {
 	}
 	_, instr := a.instr.GetConstMapPrm(prm_i)
 	if instr != nil {
-		instr.LineReplace(value)
+		instr.LineReplace(value, false)
 	}
 }
 func (a *SANodeAttr) ReplaceMapItemKey(prm_i int, key string) {
@@ -246,7 +246,7 @@ func (a *SANodeAttr) ReplaceMapItemKey(prm_i int, key string) {
 	}
 	key_instr, _ := a.instr.GetConstMapPrm(prm_i)
 	if key_instr != nil {
-		key_instr.LineReplace(key)
+		key_instr.LineReplace(key, false)
 	}
 }
 

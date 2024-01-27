@@ -94,7 +94,7 @@ func (instr *VmInstr) IsRunning(st *VmST) bool {
 	return st.running
 }
 
-func (instr *VmInstr) LineReplace(value string) {
+func (instr *VmInstr) LineReplace(value string, mapOrArray bool) {
 	if instr == nil {
 		return
 	}
@@ -103,7 +103,7 @@ func (instr *VmInstr) LineReplace(value string) {
 		value = OsText_PrintToRaw(value)
 
 		_, err := strconv.ParseFloat(value, 64)
-		if err != nil {
+		if err != nil && !mapOrArray {
 			value = "\"" + value + "\""
 		}
 	}

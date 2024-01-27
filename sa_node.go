@@ -837,22 +837,22 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 
 		if uiVal.Fn == SAAttrUi_SWITCH.Fn {
 			if ui.Comp_switch(x, y, w, h, &value, false, "", "", editable) {
-				instr.LineReplace(value)
+				instr.LineReplace(value, false)
 			}
 		} else if uiVal.Fn == SAAttrUi_CHECKBOX.Fn {
 			if ui.Comp_checkbox(x, y, w, h, &value, false, "", "", editable) {
-				instr.LineReplace(value)
+				instr.LineReplace(value, false)
 			}
 		} else if uiVal.Fn == SAAttrUi_DATE.Fn {
 			ui.Div_start(x, y, w, h)
 			val := int64(instr.temp.Number())
 			if ui.Comp_CalendarDataPicker(&val, true, "attr_calendar", editable) {
-				instr.LineReplace(strconv.Itoa(int(val)))
+				instr.LineReplace(strconv.Itoa(int(val)), false)
 			}
 			ui.Div_end()
 		} else if uiVal.Fn == "combo" {
 			if ui.Comp_combo(x, y, w, h, &value, strings.Split(uiVal.Prm, ";"), strings.Split(uiVal.Prm2, ";"), "", editable, false) {
-				instr.LineReplace(value)
+				instr.LineReplace(value, false)
 			}
 		} else if instr != nil && uiVal.Fn == SAAttrUi_COLOR.Fn {
 			cd := instr.temp.Cd()
@@ -1018,7 +1018,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 			//VmBasic_Constant
 			_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, 2, nil, "", false, false, editable)
 			if fnshd {
-				instr.LineReplace(value)
+				instr.LineReplace(value, false)
 			}
 		}
 

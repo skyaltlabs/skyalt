@@ -134,7 +134,7 @@ func SAExe_Render_Switch(w *SANode, renderIt bool) {
 
 	if showIt {
 		if ui.Comp_switch(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, label, "", enable) {
-			valueInstr.LineReplace(value)
+			valueInstr.LineReplace(value, false)
 		}
 	}
 }
@@ -157,7 +157,7 @@ func SAExe_Render_Checkbox(w *SANode, renderIt bool) {
 
 	if showIt {
 		if ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, label, "", enable) {
-			valueInstr.LineReplace(value)
+			valueInstr.LineReplace(value, false)
 		}
 	}
 }
@@ -181,7 +181,7 @@ func SAExe_Render_Combo(w *SANode, renderIt bool) {
 
 	if showIt {
 		if ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, strings.Split(options_names, ";"), strings.Split(options_values, ";"), "", enable, search) {
-			valueInstr.LineReplace(value)
+			valueInstr.LineReplace(value, false)
 		}
 	}
 }
@@ -206,7 +206,7 @@ func SAExe_Render_Editbox(w *SANode, renderIt bool) {
 	if showIt {
 		_, _, chngd, fnshd, _ := ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, precision, nil, ghost, false, tmpToValue, enable)
 		if fnshd || (tmpToValue && chngd) {
-			valueInstr.LineReplace(value)
+			valueInstr.LineReplace(value, false)
 		}
 	}
 }
@@ -391,13 +391,13 @@ func SAExe_Render_FileDrop(w *SANode, renderIt bool) {
 
 			_, _, _, fnshd, _ := ui.Comp_editbox(0, 1, 1, 1, &value, 0, nil, "path", false, false, true)
 			if fnshd {
-				instr.LineReplace(value)
+				instr.LineReplace(value, false)
 			}
 
 			if div.IsOver(ui) {
 				value = ui.win.io.touch.drop_path //rewrite 'value'!
 				if value != "" {
-					instr.LineReplace(value)
+					instr.LineReplace(value, false)
 				}
 			}
 		}
@@ -582,7 +582,6 @@ func SAExe_Render_List(w *SANode, renderIt bool) {
 		i := 0
 		for y := 0; y < num_rows; y++ {
 			for x := 0; x < num_cols; x++ {
-
 				if i >= len(items) {
 					break
 				}
@@ -620,7 +619,7 @@ func SAExe_Render_List(w *SANode, renderIt bool) {
 						}
 						str, _ = strings.CutSuffix(str, ",")
 						str += "]"
-						multi_selectedAttr.SetExpString(str) //bug: replace adds quotes .........
+						multi_selectedAttr.SetExpString(str, true)
 					} else {
 						single_selectedAttr.SetExpInt(OsTrn(isSelected, -1, i))
 					}
