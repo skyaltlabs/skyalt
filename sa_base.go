@@ -33,6 +33,10 @@ type SABase struct {
 
 	server *SANodeServer
 
+	mic         *WinMic
+	mic_actived bool
+	mic_data    []int16
+
 	node_groups SAGroups
 }
 
@@ -65,6 +69,11 @@ func NewSABase(ui *Ui) (*SABase, error) {
 		return nil, fmt.Errorf("NewNodeServer() failed: %w", err)
 	}
 
+	base.mic, err = NewWinMic()
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	base.Refresh()
 
 	return base, nil
@@ -72,6 +81,10 @@ func NewSABase(ui *Ui) (*SABase, error) {
 
 func (base *SABase) Destroy() {
 	base.Save()
+
+	if base.mic != nil {
+		base.mic.Destroy()
+	}
 
 	//close & save apps
 	for _, a := range base.Apps {
@@ -104,7 +117,6 @@ func (base *SABase) Save() {
 			}
 		}
 	}
-
 }
 
 func (base *SABase) getPath() string {
@@ -164,29 +176,65 @@ func (base *SABase) Refresh() {
 	//refresh server nodes list ...
 }
 
-func (base *SABase) Render(ui *Ui) bool {
+func (base *SABase) tickMick() {
+	if base.mic == nil {
+		return
+	}
+
+	if base.ui.win.io.ini.MicOff {
+		base.mic.SetEnable(false) //turn it OFF
+		return
+	}
+
+	//on/off
+	base.mic.SetEnable(base.mic_actived) //turn it ON
+	base.mic_actived = false             //reset for other tick
+
+	//data
+	base.mic_data = nil //clean
+	if base.mic.IsPlaying() {
+		base.mic_data = base.mic.Get()
+
+		if len(base.mic_data) > 0 {
+			app := base.GetApp()
+			if app != nil {
+				app.SetExecute()
+			}
+		}
+	}
+}
+
+func (base *SABase) Render() bool {
+
+	base.tickMick()
+
 	base.HasApp() //fix range
 
-	ui.renderStart(0, 0, 1, 1, true)
+	base.ui.renderStart(0, 0, 1, 1, true)
 
 	//hard/soft render ...
-	base.drawFrame(ui)
+	base.drawFrame()
 
-	ui.renderEnd(true)
+	base.ui.renderEnd(true)
 
 	return !base.exit
 }
 
-func (base *SABase) drawFrame(ui *Ui) {
-
+func (base *SABase) GetApp() *SAApp {
 	app := base.Apps[base.Selected]
 	if app.root == nil {
 		app.root, _ = NewSANodeRoot("apps/"+app.Name+"/app.json", app) //err ...
 	}
+	return app
+}
+
+func (base *SABase) drawFrame() {
+	app := base.GetApp()
 	if app.act == nil {
 		app.act = app.root
 	}
 
+	ui := base.ui
 	icon_rad := 1.7
 
 	ui.Div_rowMax(0, 100)
@@ -197,7 +245,7 @@ func (base *SABase) drawFrame(ui *Ui) {
 	}
 
 	ui.Div_start(0, 0, 1, 1)
-	base.drawLauncher(app, ui, icon_rad)
+	base.drawLauncher(app, icon_rad)
 	ui.Div_end()
 
 	if base.HasApp() {
