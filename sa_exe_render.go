@@ -540,31 +540,37 @@ func SAExe_Render_List(w *SANode, renderIt bool) {
 	if showIt {
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
 
+		lv := ui.GetCall().call
+		canvas_w := float32(OsMax(0, lv.canvas.Size.X-lv.data.scrollV._GetWidth(ui.win)))
+		canvas_h := float32(OsMax(0, lv.canvas.Size.Y-lv.data.scrollV._GetWidth(ui.win)))
+
 		var num_rows, num_cols int
 		if !direction {
-			lay_cols := float64(ui.GetCall().call.canvas.Size.X) / float64(ui.win.Cell())
+			lay_cols := canvas_w / float32(ui.win.Cell())
 			maxItemSize.X = OsMinFloat32(maxItemSize.X, float32(lay_cols))
 
-			num_cols = int(lay_cols / float64(maxItemSize.X))
+			num_cols = int(lay_cols / float32(maxItemSize.X))
 			num_cols = OsMax(num_cols, 1)
 			num_rows = OsRoundUp(float64(len(items)) / float64(num_cols))
 
 			//vertical
 			for i := 0; i < num_cols; i++ {
-				ui.Div_col(i, float64(maxItemSize.X))
+				if maxItemSize.X < lay_cols {
+					ui.Div_col(i, float64(maxItemSize.X))
+				}
 				ui.Div_colMax(i, 100)
 			}
 			for i := 0; i < num_rows; i++ {
 				ui.Div_row(i, float64(maxItemSize.Y))
 			}
 		} else {
-			lay_rows := float64(ui.GetCall().call.canvas.Size.Y) / float64(ui.win.Cell())
+			lay_rows := canvas_h / float32(ui.win.Cell())
 			maxItemSize.Y = OsMinFloat32(maxItemSize.Y, float32(lay_rows))
 			num_rows = int(float64(lay_rows) / float64(maxItemSize.Y))
 			num_rows = OsMax(num_rows, 1)
 
-			lay_cols := float64(ui.GetCall().call.canvas.Size.X) / float64(ui.win.Cell())
-			num_cols = int(float64(lay_cols) / float64(maxItemSize.X))
+			lay_cols := canvas_w / float32(ui.win.Cell())
+			num_cols = int(lay_cols / float32(maxItemSize.X))
 
 			mx_rows := OsRoundUp(float64(len(items)) / float64(num_rows))
 			num_cols = OsMax(num_cols, mx_rows)
@@ -574,7 +580,9 @@ func SAExe_Render_List(w *SANode, renderIt bool) {
 				ui.Div_col(i, float64(maxItemSize.X))
 			}
 			for i := 0; i < num_rows; i++ {
-				ui.Div_row(i, float64(maxItemSize.Y))
+				if maxItemSize.Y < lay_rows {
+					ui.Div_row(i, float64(maxItemSize.Y))
+				}
 				ui.Div_rowMax(i, 100)
 			}
 		}
