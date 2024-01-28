@@ -77,11 +77,15 @@
 
 "SHOW_STATS.en": "Show statistics", 
 "SHOW_STATS.cs": "Zobrazovat statistiku",
+
 "SHOW_GRID.en": "Show grid", 
 "SHOW_GRID.cs": "Zobrazovat mřížku",
 
 "ONLINE.en": "Internet connection", 
 "ONLINE.cs": "Internetové připojení",
+
+"MICROPHONE.en": "Microphone", 
+"MICROPHONE.cs": "Mikrofón",
 
 "LANGUAGE.en": "Language", 
 "LANGUAGE.cs": "Jazyk",
