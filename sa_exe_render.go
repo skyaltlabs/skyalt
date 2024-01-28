@@ -17,6 +17,8 @@ limitations under the License.
 package main
 
 import (
+	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -639,4 +641,49 @@ func SAExe_Render_List(w *SANode, renderIt bool) {
 
 		ui.Div_end()
 	}
+}
+
+func SAExe_Render_Microphone(w *SANode, renderIt bool) {
+	ui := w.app.base.ui
+	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
+
+	grid := w.GetGrid()
+	grid.Size.X = OsMax(grid.Size.X, 1)
+	grid.Size.Y = OsMax(grid.Size.Y, 1)
+
+	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool()
+
+	activeAttr := w.GetAttrUi("active", "0", SAAttrUi_SWITCH)
+	audioAttr := w.GetAttr("_audio", "")
+	audioAttr.SetOutBlob(nil) //reset
+
+	if showIt {
+		active := activeAttr.GetBool()
+		cd := CdPalette_B
+		if active {
+			cd = CdPalette_P
+		}
+		if ui.Comp_buttonIcon(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, InitWinMedia_url("file:apps/base/resources/mic.png"), 0.3, "Enable/Disable audio recording", cd, enable, active) > 0 {
+			active = !active
+			activeAttr.SetExpBool(active)
+		}
+
+		if active {
+			if w.app.base.ui.win.io.ini.MicOff {
+				audioAttr.SetErrorExe("Microphone is disabled in SkyAlt Settings")
+				return
+			}
+
+			w.app.base.mic_actived = true
+
+			buf := new(bytes.Buffer)
+			err := binary.Write(buf, binary.LittleEndian, w.app.base.mic_data)
+			if err == nil {
+				audioAttr.SetOutBlob(buf.Bytes())
+			}
+
+			ui.buff.ResetHost() //no sleep - is it working? .....
+		}
+	}
+
 }
