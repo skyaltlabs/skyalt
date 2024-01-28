@@ -59,6 +59,7 @@ type UiTranslations struct {
 	THREADS    string
 	SHOW_STATS string
 	ONLINE     string
+	MICROPHONE string
 	SHOW_GRID  string
 	LANGUAGE   string
 	LANGUAGES  string

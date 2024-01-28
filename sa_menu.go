@@ -253,7 +253,10 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 		ui.Comp_switch(1, y, 1, 1, &ini.Grid, false, ui.trns.SHOW_GRID, "", true)
 		y++
 
-		ui.Comp_switch(1, y, 1, 1, &ini.Offline, true, ui.trns.ONLINE, "", true)
+		ui.Comp_switch(1, y, 1, 1, &ini.Offline, true, ui.trns.ONLINE, "", true) //reverseValue=true
+		y++
+
+		ui.Comp_switch(1, y, 1, 1, &ini.MicOff, true, ui.trns.MICROPHONE, "", true) //reverseValue=true
 		y++
 
 		ui.Dialog_end()
@@ -261,7 +264,9 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 
 }
 
-func (base *SABase) drawLauncher(app *SAApp, ui *Ui, icon_rad float64) {
+func (base *SABase) drawLauncher(app *SAApp, icon_rad float64) {
+
+	ui := app.base.ui
 
 	ui.Paint_rect(0, 0, 1, 1, 0, ui.win.io.GetPalette().GetGrey(0.7), 0)
 

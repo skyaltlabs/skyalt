@@ -102,7 +102,6 @@ type WinIni struct {
 	Threads int
 
 	DateFormat string
-	//TimeZone   int
 
 	Fullscreen bool
 	Stats      bool
@@ -115,6 +114,7 @@ type WinIni struct {
 	CustomPalette WinCdPalette
 
 	Offline bool
+	MicOff  bool
 }
 
 type WinIO struct {
