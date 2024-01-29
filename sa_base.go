@@ -33,9 +33,10 @@ type SABase struct {
 
 	server *SANodeServer
 
-	mic         *WinMic
-	mic_actived bool
-	mic_data    []int16
+	mic                   *WinMic
+	mic_actived           bool
+	mic_actived_last_tick int64
+	mic_data              []int16
 
 	node_groups SAGroups
 }
@@ -67,11 +68,6 @@ func NewSABase(ui *Ui) (*SABase, error) {
 	base.server, err = NewSANodeServer("nodes", 4567)
 	if err != nil {
 		return nil, fmt.Errorf("NewNodeServer() failed: %w", err)
-	}
-
-	base.mic, err = NewWinMic()
-	if err != nil {
-		fmt.Println(err)
 	}
 
 	base.Refresh()
@@ -177,12 +173,34 @@ func (base *SABase) Refresh() {
 }
 
 func (base *SABase) tickMick() {
-	if base.mic == nil {
+
+	if base.ui.win.io.ini.MicOff {
+		if base.mic != nil {
+			base.mic.Destroy()
+			base.mic = nil
+		}
 		return
 	}
 
-	if base.ui.win.io.ini.MicOff {
-		base.mic.SetEnable(false) //turn it OFF
+	if base.mic_actived {
+		if base.mic == nil {
+			//create
+			var err error
+			base.mic, err = NewWinMic()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+		}
+		base.mic_actived_last_tick = OsTicks()
+	} else {
+
+		if !OsIsTicksIn(base.mic_actived_last_tick, 2000) && base.mic != nil {
+			if base.mic != nil {
+				base.mic.Destroy()
+				base.mic = nil
+			}
+		}
 		return
 	}
 
