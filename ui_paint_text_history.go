@@ -58,7 +58,7 @@ func (his *UiPaintTextHistory) Add(value UiPaintTextHistoryItem) bool {
 	return true
 }
 func (his *UiPaintTextHistory) AddWithTimeOut(value UiPaintTextHistoryItem) bool {
-	if !OsIsTicksIn(his.lastAddTicks, 1000) {
+	if !OsIsTicksIn(his.lastAddTicks, 500) {
 		return his.Add(value)
 	}
 	return false
