@@ -21,18 +21,12 @@ import (
 )
 
 type WinPaintBuff struct {
-	win     *Win
-	winRect OsV2
+	win *Win
 
 	crop OsV4
 
-	skipDraw bool //not needed? ...
-
 	depth       int
 	dialogs_max int
-
-	hosts_iter      int
-	lastReset_ticks int64
 }
 
 const WinPaintBuff_MAX_ITER = 2
@@ -46,28 +40,7 @@ func NewWinPaintBuff(win *Win) *WinPaintBuff {
 func (b *WinPaintBuff) Destroy() {
 }
 
-func (b *WinPaintBuff) ResetHost() { // rename to redraw ...
-	b.hosts_iter = 0
-	b.lastReset_ticks = OsTicks()
-}
-
-func (b *WinPaintBuff) IsHostHard() bool {
-	return b.hosts_iter < WinPaintBuff_MAX_ITER
-}
-
-func (b *WinPaintBuff) IncHost() bool {
-	old := b.hosts_iter
-	b.hosts_iter++
-	return old < WinPaintBuff_MAX_ITER+1 //one more than IsHostHard(), because 2x HARD(2nd draw into buffer) + 1x SOFT(render on screen)
-}
-
-func (b *WinPaintBuff) IsHostRender() bool {
-	return b.hosts_iter == WinPaintBuff_MAX_ITER-1
-}
-
 func (b *WinPaintBuff) Prepare(crop OsV4, drawBack bool) {
-	b.skipDraw = false
-
 	b.AddCrop(crop)
 
 	if drawBack {
@@ -79,26 +52,22 @@ func (b *WinPaintBuff) Prepare(crop OsV4, drawBack bool) {
 func (b *WinPaintBuff) DialogStart(crop OsV4) error {
 	b.crop = crop
 
-	if !b.skipDraw {
-		b.depth = (b.depth + 100) - ((b.depth + 100) % 100)
+	b.depth = (b.depth + 100) - ((b.depth + 100) % 100)
 
-		b.dialogs_max++
+	b.dialogs_max++
 
-		//dialog's background
-		b.AddCrop(crop)
-		b.AddRect(crop, b.win.io.GetPalette().B, 0)
-	}
+	//dialog's background
+	b.AddCrop(crop)
+	b.AddRect(crop, b.win.io.GetPalette().B, 0)
 
 	return nil
 }
 
 func (b *WinPaintBuff) DialogEnd() error {
-	if !b.skipDraw {
-		if b.depth > 0 {
-			b.depth = (b.depth - 100) - ((b.depth - 100) % 100)
+	if b.depth > 0 {
+		b.depth = (b.depth - 100) - ((b.depth - 100) % 100)
 
-			b.depth += 10 //items or are depth=110
-		}
+		b.depth += 10 //items or are depth=110
 	}
 
 	return nil
@@ -122,9 +91,7 @@ func (b *WinPaintBuff) FinalDraw() error {
 
 func (b *WinPaintBuff) AddCrop(crop OsV4) OsV4 {
 
-	if !b.skipDraw {
-		b.win.SetClipRect(crop)
-	}
+	b.win.SetClipRect(crop)
 
 	ret := b.crop
 	b.crop = crop
@@ -136,107 +103,91 @@ func (b *WinPaintBuff) getDepth() int {
 }
 
 func (b *WinPaintBuff) AddRect(coord OsV4, cd OsCd, thick int) {
-	if !b.skipDraw {
-		start := coord.Start
-		end := coord.End()
-		if thick == 0 {
-			b.win.DrawRect(start, end, b.getDepth(), cd)
-		} else {
-			b.win.DrawRect_border(start, end, b.getDepth(), cd, thick)
-		}
+	start := coord.Start
+	end := coord.End()
+	if thick == 0 {
+		b.win.DrawRect(start, end, b.getDepth(), cd)
+	} else {
+		b.win.DrawRect_border(start, end, b.getDepth(), cd, thick)
 	}
+
 }
 func (b *WinPaintBuff) AddRectRound(coord OsV4, rad int, cd OsCd, thick int) {
-	if !b.skipDraw {
-		b.win.DrawRectRound(coord, rad, b.getDepth(), cd, thick)
-	}
+	b.win.DrawRectRound(coord, rad, b.getDepth(), cd, thick)
 }
 
 func (b *WinPaintBuff) AddLine(start OsV2, end OsV2, cd OsCd, thick int) {
-	if !b.skipDraw {
-		v := end.Sub(start)
-		if !v.IsZero() {
-			b.win.DrawLine(start, end, b.getDepth(), thick, cd)
-		}
+	v := end.Sub(start)
+	if !v.IsZero() {
+		b.win.DrawLine(start, end, b.getDepth(), thick, cd)
 	}
 }
 
 func (buf *WinPaintBuff) AddBezier(a OsV2, b OsV2, c OsV2, d OsV2, cd OsCd, thick int, dash bool) {
-	if !buf.skipDraw {
-		buf.win.DrawBezier(a, b, c, d, buf.getDepth(), thick, cd, dash)
-	}
+	buf.win.DrawBezier(a, b, c, d, buf.getDepth(), thick, cd, dash)
 }
 
 func (buf *WinPaintBuff) AddPoly(start OsV2, points []OsV2f, cd OsCd, width float64) {
-	if !buf.skipDraw {
-		buf.win.DrawPoly(start, points, buf.getDepth(), cd, width)
-	}
+	buf.win.DrawPoly(start, points, buf.getDepth(), cd, width)
 }
 
 func (b *WinPaintBuff) AddCircle(coord OsV4, cd OsCd, width int) {
-	if !b.skipDraw {
-		p := coord.Middle()
-		b.win.DrawCicle(p, OsV2{coord.Size.X / 2, coord.Size.Y / 2}, b.getDepth(), cd, width)
-	}
+	p := coord.Middle()
+	b.win.DrawCicle(p, OsV2{coord.Size.X / 2, coord.Size.Y / 2}, b.getDepth(), cd, width)
 }
 
 func (b *WinPaintBuff) AddImage(path WinMedia, coord OsV4, cd OsCd, alignV int, alignH int, fill bool, background bool) {
-
-	if !b.skipDraw {
-		img, err := b.win.AddImage(path) //2nd thread => black
-		if err != nil {
-			b.AddText(path.GetString()+" has error", InitWinFontPropsDef(b.win), coord, b.win.io.GetPalette().E, OsV2{1, 1})
-			return
-		}
-
-		if img == nil {
-			return //image is empty
-		}
-
-		origSize := img.origSize
-
-		//position
-		var q OsV4
-		{
-			if !fill {
-				rect_size := OsV2_InRatio(coord.Size, origSize)
-				q = OsV4_center(coord, rect_size)
-			} else {
-				q.Start = coord.Start
-				q.Size = OsV2_OutRatio(coord.Size, origSize)
-			}
-
-			if alignH == 0 {
-				q.Start.X = coord.Start.X
-			} else if alignH == 1 {
-				q.Start.X = OsV4_centerFull(coord, q.Size).Start.X
-			} else if alignH == 2 {
-				q.Start.X = coord.End().X - q.Size.X
-			}
-
-			if alignV == 0 {
-				q.Start.Y = coord.Start.Y
-			} else if alignV == 1 {
-				q.Start.Y = OsV4_centerFull(coord, q.Size).Start.Y
-			} else if alignV == 2 {
-				q.Start.Y = coord.End().Y - q.Size.Y
-			}
-		}
-
-		//draw image
-		imgRectBackup := b.AddCrop(b.crop.GetIntersect(coord))
-		err = img.Draw(q, b.getDepth()-OsTrn(background, 1, 0), cd)
-		if err != nil {
-			fmt.Printf("Draw() failed: %v\n", err)
-		}
-		b.AddCrop(imgRectBackup)
+	img, err := b.win.AddImage(path) //2nd thread => black
+	if err != nil {
+		b.AddText(path.GetString()+" has error", InitWinFontPropsDef(b.win), coord, b.win.io.GetPalette().E, OsV2{1, 1})
+		return
 	}
+
+	if img == nil {
+		return //image is empty
+	}
+
+	origSize := img.origSize
+
+	//position
+	var q OsV4
+	{
+		if !fill {
+			rect_size := OsV2_InRatio(coord.Size, origSize)
+			q = OsV4_center(coord, rect_size)
+		} else {
+			q.Start = coord.Start
+			q.Size = OsV2_OutRatio(coord.Size, origSize)
+		}
+
+		if alignH == 0 {
+			q.Start.X = coord.Start.X
+		} else if alignH == 1 {
+			q.Start.X = OsV4_centerFull(coord, q.Size).Start.X
+		} else if alignH == 2 {
+			q.Start.X = coord.End().X - q.Size.X
+		}
+
+		if alignV == 0 {
+			q.Start.Y = coord.Start.Y
+		} else if alignV == 1 {
+			q.Start.Y = OsV4_centerFull(coord, q.Size).Start.Y
+		} else if alignV == 2 {
+			q.Start.Y = coord.End().Y - q.Size.Y
+		}
+	}
+
+	//draw image
+	imgRectBackup := b.AddCrop(b.crop.GetIntersect(coord))
+	err = img.Draw(q, b.getDepth()-OsTrn(background, 1, 0), cd)
+	if err != nil {
+		fmt.Printf("Draw() failed: %v\n", err)
+	}
+	b.AddCrop(imgRectBackup)
 }
 
 func (b *WinPaintBuff) AddText(text string, prop WinFontProps, coord OsV4, frontCd OsCd, align OsV2) {
-	if !b.skipDraw {
-		b.win.DrawText(text, prop, coord, b.getDepth(), align, frontCd)
-	}
+	b.win.DrawText(text, prop, coord, b.getDepth(), align, frontCd)
 }
 
 func (b *WinPaintBuff) AddTextBack(rangee OsV2, text string, prop WinFontProps, coord OsV4, cd OsCd, align OsV2, underline bool) {

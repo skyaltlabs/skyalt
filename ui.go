@@ -292,7 +292,6 @@ func (ui *Ui) RenderTile(win *Win) {
 }
 
 func (ui *Ui) StartRender() {
-
 	winRect, _ := ui.win.GetScreenCoord()
 	ui.GetBaseDialog().base.canvas = winRect
 	ui.GetBaseDialog().base.crop = winRect
@@ -307,54 +306,11 @@ func (ui *Ui) StartRender() {
 	ui.ResetStack()
 
 	lv := ui.GetCall()
-	//root.buff.Reset(st.stack.canvas, true) //background
-	//st.buff.Reset(st.stack.canvas) //background
 	ui.buff.Prepare(lv.call.canvas, true)
-
-	//text/editbox touch_selection bug ..............................
-	//table(range) scroll bug ...
-
-	//db changed ...
-	/*{
-		dbChanged := false
-		for _, db := range root.dbs {
-			if db.lastWriteTicks > ui.buff.lastReset_ticks {
-				dbChanged = true
-			}
-		}
-		if dbChanged {
-			ui.buff.ResetHost()
-		}
-	}*/
-
-	touch := &ui.win.io.touch
-	keys := &ui.win.io.keys
-	edit := &ui.edit
-
-	//these need to be ahead of action(for ex: editbox finished in SOFT is too late, need to finished in middle of HARD)
-	if touch.start || touch.end || keys.enter || keys.esc || (keys.hasChanged && edit.IsActive() && edit.tempToValue) /*|| touch.wheel != 0*/ {
-		ui.buff.ResetHost()
-	}
-
-	/*if root.ui.io.keys.hasChanged {
-		root.buff.ResetHost()
-	}*/
-
-	/*if root.layTouch.IsAnyActive() && !OsIsTicksIn(root.buff.lastReset_ticks, 250) { //maybe 250ms should be in settings(ini) ...
-		root.buff.ResetHost()
-	}*/
-
-	if !ui.buff.winRect.Cmp(winRect.Size) {
-		ui.buff.ResetHost()
-		ui.buff.winRect = winRect.Size
-	}
-
-	//ui.base_app.Render(true)
 
 	if ui.win.io.touch.start {
 		ui.touch.Reset()
 	}
-
 }
 
 func (ui *Ui) EndRender() {
@@ -373,6 +329,5 @@ func (ui *Ui) EndRender() {
 	}
 
 	ui.Maintenance()
-	//root.ui.Draw()
 	ui.buff.FinalDraw()
 }
