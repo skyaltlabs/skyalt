@@ -34,9 +34,8 @@ type SABase struct {
 	server *SANodeServer
 
 	mic                   *WinMic
-	mic_actived           bool
 	mic_actived_last_tick int64
-	mic_data              []float32
+	mic_nodes             []*SANode
 
 	node_groups SAGroups
 }
@@ -172,6 +171,10 @@ func (base *SABase) Refresh() {
 	//refresh server nodes list ...
 }
 
+func (base *SABase) AddMicNode(node *SANode) {
+	base.mic_nodes = append(base.mic_nodes, node)
+}
+
 func (base *SABase) tickMick() {
 
 	if base.ui.win.io.ini.MicOff {
@@ -182,7 +185,8 @@ func (base *SABase) tickMick() {
 		return
 	}
 
-	if base.mic_actived {
+	mic_active := len(base.mic_nodes) > 0
+	if mic_active {
 		if base.mic == nil {
 			//create
 			var err error
@@ -194,7 +198,6 @@ func (base *SABase) tickMick() {
 		}
 		base.mic_actived_last_tick = OsTicks()
 	} else {
-
 		if !OsIsTicksIn(base.mic_actived_last_tick, 2000) && base.mic != nil {
 			if base.mic != nil {
 				base.mic.Destroy()
@@ -205,20 +208,14 @@ func (base *SABase) tickMick() {
 	}
 
 	//on/off
-	base.mic.SetEnable(base.mic_actived) //turn it ON
-	base.mic_actived = false             //reset for other tick
+	base.mic.SetEnable(mic_active) //turn it ON
 
-	//data
-	base.mic_data = nil //clean
 	if base.mic.IsPlaying() {
-		base.mic_data = base.mic.Get()
-
-		if len(base.mic_data) > 0 {
-			app := base.GetApp()
-			if app != nil {
-				app.SetExecute()
-			}
+		mic_data := base.mic.Get()
+		for _, nd := range base.mic_nodes {
+			nd.temp_mic_data = append(nd.temp_mic_data, mic_data...)
 		}
+		base.mic_nodes = nil //reset for other tick
 	}
 }
 

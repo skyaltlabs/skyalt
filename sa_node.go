@@ -79,6 +79,8 @@ type SANode struct {
 	z_depth float64
 
 	sort_depth int //hierarchy
+
+	temp_mic_data []float32
 }
 
 func NewSANode(app *SAApp, parent *SANode, name string, exe string, grid OsV4, pos OsV2f) *SANode {

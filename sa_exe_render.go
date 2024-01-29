@@ -654,36 +654,44 @@ func SAExe_Render_Microphone(w *SANode, renderIt bool) {
 	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool()
 
 	activeAttr := w.GetAttrUi("active", "0", SAAttrUi_SWITCH)
-	audioAttr := w.GetAttr("_audio", "")
-	audioAttr.SetOutBlob(nil) //reset
+	outAttr := w.GetAttr("_out", "")
 
+	outAttr.SetOutBlob(nil) //empty
+
+	active := activeAttr.GetBool()
 	if showIt {
-		active := activeAttr.GetBool()
 		cd := CdPalette_B
 		if active {
 			cd = CdPalette_P
 		}
 		if ui.Comp_buttonIcon(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, InitWinMedia_url("file:apps/base/resources/mic.png"), 0.3, "Enable/Disable audio recording", cd, enable, active) > 0 {
+			if !active {
+				//reset
+				w.temp_mic_data = nil
+				outAttr.SetOutBlob(nil)
+			}
+
 			active = !active
 			activeAttr.SetExpBool(active)
 		}
 
 		if active {
 			if w.app.base.ui.win.io.ini.MicOff {
-				audioAttr.SetErrorExe("Microphone is disabled in SkyAlt Settings")
+				outAttr.SetErrorExe("Microphone is disabled in SkyAlt Settings")
 				return
 			}
 
-			w.app.base.mic_actived = true
-
-			buf := new(bytes.Buffer)
-			err := binary.Write(buf, binary.LittleEndian, w.app.base.mic_data)
-			if err == nil {
-				audioAttr.SetOutBlob(buf.Bytes())
-			}
-
-			ui.win.SetRedraw() //no sleep
+			w.app.base.AddMicNode(w)
 		}
 	}
 
+	if !active { //keep output nil, when recording
+
+		//set output - convert []float32 -> []byte
+		buf := new(bytes.Buffer)
+		err := binary.Write(buf, binary.LittleEndian, w.temp_mic_data)
+		if err == nil {
+			outAttr.SetOutBlob(buf.Bytes())
+		}
+	}
 }
