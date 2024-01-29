@@ -95,7 +95,7 @@ func (ui *Ui) Paint_file(x, y, w, h float64, margin float64, path WinMedia, cd O
 
 func (ui *Ui) Paint_tooltipDiv(div *UiLayoutDiv, x, y, w, h float64, text string) bool {
 
-	if div == nil || div.crop.IsZero() {
+	if div == nil || div.crop.IsZero() || ui.touch.IsAnyActive() {
 		return false
 	}
 
