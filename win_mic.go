@@ -34,15 +34,15 @@ type WinMic struct {
 }
 
 var audio_mu sync.Mutex
-var audio_data []int16
+var audio_data []float32
 
 //export WinMic_OnAudio
 func WinMic_OnAudio(userdata unsafe.Pointer, _stream *C.Uint8, _length C.int) {
-	length := int(_length) / 2 //2 because it's int16
+	length := int(_length) / 4 //6 because it's float32
 	header := unsafe.Slice(_stream, length)
-	buf := *(*[]int16)(unsafe.Pointer(&header))
+	buf := *(*[]float32)(unsafe.Pointer(&header))
 
-	audioSamples := make([]int16, length)
+	audioSamples := make([]float32, length)
 	copy(audioSamples, buf)
 
 	audio_mu.Lock()
@@ -54,8 +54,8 @@ func NewWinMic() (*WinMic, error) {
 	mic := &WinMic{}
 
 	var spec sdl.AudioSpec
-	spec.Freq = 44100
-	spec.Format = sdl.AUDIO_S16 //little-endian byte order
+	spec.Freq = 16000           //44100
+	spec.Format = sdl.AUDIO_F32 //little-endian byte order
 	spec.Channels = 1
 	spec.Samples = 4096 //512?
 	spec.Callback = sdl.AudioCallback(C.WinMic_OnAudio)
@@ -88,8 +88,8 @@ func (mic *WinMic) IsPlaying() bool {
 	return sdl.GetAudioDeviceStatus(mic.device) == sdl.AUDIO_PLAYING
 }
 
-func (mic *WinMic) Get() []int16 {
-	var ret []int16
+func (mic *WinMic) Get() []float32 {
+	var ret []float32
 
 	audio_mu.Lock()
 	ret = audio_data
@@ -117,7 +117,7 @@ func (mic *WinMic) Get() []int16 {
 			mx = OsMax(mx, int(v))
 		}
 		if len(data) > 0 {
-			amp := float64(mx) / 32767
+			amp := float64(mx) / 32767	//bug: 32767 is for int16, not float32
 			dB := 20 * math.Log10(amp)
 
 			fmt.Println(amp, dB, mic.IsPlaying())

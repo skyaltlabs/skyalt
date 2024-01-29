@@ -36,7 +36,7 @@ type SABase struct {
 	mic                   *WinMic
 	mic_actived           bool
 	mic_actived_last_tick int64
-	mic_data              []int16
+	mic_data              []float32
 
 	node_groups SAGroups
 }
