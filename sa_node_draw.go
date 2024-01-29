@@ -150,6 +150,8 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 			nm += fmt.Sprintf("(%.0f%%)", node.progress*100)
 
 			ui.Paint_tooltip(0, 0, 1, 1, node.progress_desc)
+		} else {
+			ui.Paint_tooltip(0, 0, 1, 1, fmt.Sprintf("Type: %s, Executed in %.3f", node.Exe, node.exeTimeSec))
 		}
 
 		//ui.Comp_image(0, 0, 1, 1, node.app.base.node_groups.FindNodeGroupIcon(node.Exe), InitOsCdWhite(), 0.3, 1, 1, false)	//icon
