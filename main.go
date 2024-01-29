@@ -94,7 +94,7 @@ func main() {
 			win.StartRender(OsCd{220, 220, 220, 255})
 
 			ui.StartRender()
-			if !base.Render(ui) {
+			if !base.Render() {
 				run = false
 			}
 			ui.EndRender()
