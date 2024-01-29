@@ -682,7 +682,7 @@ func SAExe_Render_Microphone(w *SANode, renderIt bool) {
 				audioAttr.SetOutBlob(buf.Bytes())
 			}
 
-			ui.buff.ResetHost() //no sleep - is it working? .....
+			ui.win.SetRedraw() //no sleep
 		}
 	}
 
