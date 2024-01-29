@@ -402,12 +402,14 @@ func (app *SAApp) History(ui *Ui) {
 	touch := &ui.win.io.touch
 	keys := &ui.win.io.keys
 
-	if lv.call.IsOver(ui) && ui.win.io.keys.backward {
-		app.stepHistoryBack()
+	if !ui.edit.IsActive() {
+		if lv.call.IsOver(ui) && ui.win.io.keys.backward {
+			app.stepHistoryBack()
 
-	}
-	if lv.call.IsOver(ui) && ui.win.io.keys.forward {
-		app.stepHistoryForward()
+		}
+		if lv.call.IsOver(ui) && ui.win.io.keys.forward {
+			app.stepHistoryForward()
+		}
 	}
 
 	if touch.end || keys.hasChanged || app.base.ui.touch.scrollWheel != nil || touch.drop_path != "" {
