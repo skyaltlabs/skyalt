@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"math"
@@ -944,6 +945,10 @@ func InitOsBlob(blob []byte) OsBlob {
 	b.data = blob
 	b.hash, _ = InitOsHash(blob) //err ...
 	return b
+}
+
+func (b *OsBlob) Hex() string {
+	return hex.EncodeToString(b.data)
 }
 
 func (b *OsBlob) Len() int {
