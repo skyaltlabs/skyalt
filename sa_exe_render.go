@@ -17,14 +17,14 @@ limitations under the License.
 package main
 
 import (
-	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/go-audio/wav"
 )
 
 func SAExe_Render_Layout(w *SANode, renderIt bool) {
@@ -653,6 +653,11 @@ func SAExe_Render_Microphone(w *SANode, renderIt bool) {
 
 	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool()
 
+	pathAttr := w.GetAttr("path", "")
+	if pathAttr.GetString() == "" {
+		pathAttr.SetErrorExe("empty")
+	}
+
 	activeAttr := w.GetAttrUi("active", "0", SAAttrUi_SWITCH)
 	outAttr := w.GetAttr("_out", "")
 
@@ -664,12 +669,31 @@ func SAExe_Render_Microphone(w *SANode, renderIt bool) {
 		if active {
 			cd = CdPalette_P
 		}
+
 		if ui.Comp_buttonIcon(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, InitWinMedia_url("file:apps/base/resources/mic.png"), 0.3, "Enable/Disable audio recording", cd, enable, active) > 0 {
-			if !active {
-				//reset
-				w.temp_mic_data = nil
-				outAttr.SetOutBlob(nil)
+			if active {
+
+				file, err := os.Create(pathAttr.GetString())
+				if err != nil {
+					pathAttr.SetErrorExe(err.Error())
+					return
+				}
+				defer file.Close()
+
+				buff := w.temp_mic_data
+				enc := wav.NewEncoder(file, buff.Format.SampleRate, buff.SourceBitDepth, buff.Format.NumChannels, 1)
+				defer enc.Close()
+
+				err = enc.Write(&buff)
+				if err != nil {
+					pathAttr.SetErrorExe(err.Error())
+					return
+				}
 			}
+
+			//reset
+			w.temp_mic_data.Data = nil
+			outAttr.SetOutBlob(nil)
 
 			active = !active
 			activeAttr.SetExpBool(active)
@@ -686,12 +710,12 @@ func SAExe_Render_Microphone(w *SANode, renderIt bool) {
 	}
 
 	if !active { //keep output nil, when recording
-
-		//set output - convert []float32 -> []byte
-		buf := new(bytes.Buffer)
-		err := binary.Write(buf, binary.LittleEndian, w.temp_mic_data)
-		if err == nil {
-			outAttr.SetOutBlob(buf.Bytes())
+		//read wav
+		data, err := os.ReadFile(pathAttr.GetString())
+		if err != nil {
+			pathAttr.SetErrorExe(err.Error())
+			return
 		}
+		outAttr.SetOutBlob(data)
 	}
 }
