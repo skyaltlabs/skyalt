@@ -25,6 +25,7 @@ import (
 	"sync"
 	"unsafe"
 
+	"github.com/go-audio/audio"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -33,31 +34,37 @@ type WinMic struct {
 	device sdl.AudioDeviceID
 }
 
+// int32, but values are in range of int16
+var audio_data = audio.IntBuffer{Data: nil, SourceBitDepth: 16, Format: &audio.Format{NumChannels: 1, SampleRate: 44100}}
+
 var audio_mu sync.Mutex
-var audio_data []float32
 
 //export WinMic_OnAudio
 func WinMic_OnAudio(userdata unsafe.Pointer, _stream *C.Uint8, _length C.int) {
-	length := int(_length) / 4 //6 because it's float32
+	length := int(_length) / (audio_data.SourceBitDepth / 8)
 	header := unsafe.Slice(_stream, length)
-	buf := *(*[]float32)(unsafe.Pointer(&header))
+	src_buf := *(*[]int16)(unsafe.Pointer(&header))
 
-	audioSamples := make([]float32, length)
-	copy(audioSamples, buf)
+	dst := make([]int, length) //int32, but values are in range of int16
+	for i, v := range src_buf {
+		dst[i] = int(v) //v=int16t, which is saved into int32(audio.IntBuffer is always []int32)
+	}
 
 	audio_mu.Lock()
-	audio_data = append(audio_data, audioSamples...)
+	audio_data.Data = append(audio_data.Data, dst...)
 	audio_mu.Unlock()
 }
 
 func NewWinMic() (*WinMic, error) {
 	mic := &WinMic{}
 
+	audio_data = audio.IntBuffer{Data: nil, SourceBitDepth: 16, Format: &audio.Format{NumChannels: 1, SampleRate: 44100}}
+
 	var spec sdl.AudioSpec
-	spec.Freq = 16000           //44100
-	spec.Format = sdl.AUDIO_F32 //little-endian byte order
-	spec.Channels = 1
-	spec.Samples = 4096 //512?
+	spec.Freq = int32(audio_data.Format.SampleRate)
+	spec.Format = sdl.AUDIO_S16 //audio_data.SourceBitDepth!!!
+	spec.Channels = uint8(audio_data.Format.NumChannels)
+	spec.Samples = 4096
 	spec.Callback = sdl.AudioCallback(C.WinMic_OnAudio)
 	//spec.UserData = unsafe.Pointer(mic)	//creates panic. needs to be C.malloc()
 
@@ -79,7 +86,11 @@ func (mic *WinMic) Destroy() {
 func (mic *WinMic) SetEnable(record_now bool) {
 	sdl.PauseAudioDevice(mic.device, !record_now)
 
-	if !record_now {
+	//BUG: when mic is enabled, it has ~2s warmup, when audio has alot of noise .........
+
+	if record_now {
+		sdl.ClearQueuedAudio(mic.device) //is this useful?
+	} else {
 		mic.Get() //clean buffer
 	}
 }
@@ -88,41 +99,13 @@ func (mic *WinMic) IsPlaying() bool {
 	return sdl.GetAudioDeviceStatus(mic.device) == sdl.AUDIO_PLAYING
 }
 
-func (mic *WinMic) Get() []float32 {
-	var ret []float32
+func (mic *WinMic) Get() audio.IntBuffer {
+	var ret audio.IntBuffer
 
 	audio_mu.Lock()
 	ret = audio_data
-	audio_data = nil
+	audio_data.Data = nil
 	audio_mu.Unlock()
 
 	return ret
 }
-
-/*func WinMic_test() {
-	mic, err := NewWinMic()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer mic.Destroy()
-
-	mic.SetEnable(true)
-
-	for {
-		data := mic.Get()
-
-		mx := 1 //-32767
-		for _, v := range data {
-			mx = OsMax(mx, int(v))
-		}
-		if len(data) > 0 {
-			amp := float64(mx) / 32767	//bug: 32767 is for int16, not float32
-			dB := 20 * math.Log10(amp)
-
-			fmt.Println(amp, dB, mic.IsPlaying())
-		}
-	}
-}*/
-
-//https://github.com/veandco/go-sdl2-examples/blob/master/examples/recording-audio/recording-audio.go

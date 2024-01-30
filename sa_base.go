@@ -38,6 +38,8 @@ type SABase struct {
 	mic_nodes             []*SANode
 
 	node_groups SAGroups
+
+	service_whisper *SAService_Whisper
 }
 
 func NewSABase(ui *Ui) (*SABase, error) {
@@ -45,6 +47,8 @@ func NewSABase(ui *Ui) (*SABase, error) {
 	base.ui = ui
 
 	base.node_groups = InitSAGroups()
+
+	base.service_whisper = NewSAService_Whisper()
 
 	//open
 	{
@@ -75,6 +79,9 @@ func NewSABase(ui *Ui) (*SABase, error) {
 }
 
 func (base *SABase) Destroy() {
+
+	base.service_whisper.Destroy()
+
 	base.Save()
 
 	if base.mic != nil {
@@ -213,7 +220,9 @@ func (base *SABase) tickMick() {
 	if base.mic.IsPlaying() {
 		mic_data := base.mic.Get()
 		for _, nd := range base.mic_nodes {
-			nd.temp_mic_data = append(nd.temp_mic_data, mic_data...)
+			nd.temp_mic_data.SourceBitDepth = mic_data.SourceBitDepth
+			nd.temp_mic_data.Format = mic_data.Format
+			nd.temp_mic_data.Data = append(nd.temp_mic_data.Data, mic_data.Data...)
 		}
 		base.mic_nodes = nil //reset for other tick
 	}

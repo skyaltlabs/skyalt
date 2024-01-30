@@ -25,6 +25,8 @@ import (
 	"strconv"
 	"strings"
 	"sync/atomic"
+
+	"github.com/go-audio/audio"
 )
 
 type SANodeColRow struct {
@@ -80,7 +82,7 @@ type SANode struct {
 
 	sort_depth int //hierarchy
 
-	temp_mic_data []float32
+	temp_mic_data audio.IntBuffer
 }
 
 func NewSANode(app *SAApp, parent *SANode, name string, exe string, grid OsV4, pos OsV2f) *SANode {
