@@ -87,7 +87,11 @@ func InitSAGroups() SAGroups {
 	grs.groups = append(grs.groups, &SAGroup{name: "SQLite", icon: InitWinMedia_url(path + "node_db.png"), nodes: []*SAGroupNode{
 		{name: "sqlite_select", fn: SAExe_Sqlite_select},
 		{name: "sqlite_insert", fn: SAExe_Sqlite_insert},
-		//"sqlite_update", "sqlite_delete", "sqlite_execute" .....
+		//"sqlite_update", "sqlite_delete", "sqlite_execute" ........
+	}})
+
+	grs.groups = append(grs.groups, &SAGroup{name: "Neural networks", icon: InitWinMedia_url(path + "node_nn.png"), nodes: []*SAGroupNode{
+		{name: "nn_whisper", fn: SAExe_NN_whisper},
 	}})
 
 	//add custom ...
