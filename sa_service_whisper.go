@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"runtime"
 
 	whisper "github.com/ggerganov/whisper.cpp/bindings/go"
@@ -33,22 +34,17 @@ type SAService_WhisperToken struct {
 }
 
 type SAService_WhisperModel struct {
-	path  string
-	model *whisper.Context
-
-	//save into 'cache.json' ...
-	//key can be 'model_hexHash' ...
-
-	cache map[[OsHash_SIZE]byte]string //key = blob.hash, value = JSON
+	parent *SAService_Whisper
+	path   string
+	model  *whisper.Context
 
 	que []OsBlob
 }
 
-func NewSAService_WhisperModel(path string) *SAService_WhisperModel {
+func NewSAService_WhisperModel(path string, parent *SAService_Whisper) *SAService_WhisperModel {
 	wm := &SAService_WhisperModel{}
-
+	wm.parent = parent
 	wm.path = path
-	wm.cache = make(map[[32]byte]string)
 
 	wm.model = whisper.Whisper_init(path) //BUG: prints info ...
 	if wm.model == nil {
@@ -60,11 +56,6 @@ func NewSAService_WhisperModel(path string) *SAService_WhisperModel {
 
 func (wm *SAService_WhisperModel) Destroy() {
 	wm.model.Whisper_free()
-}
-
-func (wm *SAService_WhisperModel) FindCache(blob OsBlob) (string, bool) {
-	str, found := wm.cache[blob.hash.h]
-	return str, found
 }
 
 func (wm *SAService_WhisperModel) AddQue(blob OsBlob) {
@@ -134,33 +125,66 @@ func (wm *SAService_WhisperModel) process(blob OsBlob) error {
 		return err
 	}
 
-	//add into cache
-	wm.cache[blob.hash.h] = string(js)
-
+	wm.parent.addCache(wm.path, blob, string(js))
 	return nil
 }
 
 func (wm *SAService_WhisperModel) Main() {
 
-	//locking ....
+	//locking read que ....
 	for _, q := range wm.que {
-		wm.process(q)
+		err := wm.process(q)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 
 }
 
 type SAService_Whisper struct {
 	models []*SAService_WhisperModel
+
+	cache map[string]string //key = blob.hash, value = JSON
+
+}
+
+func SAService_Whisper_cachePath() string {
+	return "models/whisper/cache.json"
 }
 
 func NewSAService_Whisper() *SAService_Whisper {
 	wh := &SAService_Whisper{}
+
+	wh.cache = make(map[string]string)
+
+	js, _ := os.ReadFile(SAService_Whisper_cachePath())
+	if len(js) > 0 {
+		err := json.Unmarshal(js, &wh.cache)
+		if err != nil {
+			fmt.Printf("NewSAService_Whisper() failed: %v\n", err)
+		}
+	}
+
 	return wh
 }
 func (wh *SAService_Whisper) Destroy() {
+
+	js, err := json.Marshal(wh.cache)
+	if err == nil {
+		os.WriteFile(SAService_Whisper_cachePath(), js, 0644)
+	}
+
 	for _, wm := range wh.models {
 		wm.Destroy()
 	}
+}
+
+func (wh *SAService_Whisper) findCache(model string, blob OsBlob) (string, bool) {
+	str, found := wh.cache[model+blob.Hex()]
+	return str, found
+}
+func (wh *SAService_Whisper) addCache(model string, blob OsBlob, value string) {
+	wh.cache[model+blob.Hex()] = value
 }
 
 func (wh *SAService_Whisper) FindOrAddModel(path string) *SAService_WhisperModel {
@@ -172,23 +196,23 @@ func (wh *SAService_Whisper) FindOrAddModel(path string) *SAService_WhisperModel
 	}
 
 	//add
-	wm := NewSAService_WhisperModel(path)
+	wm := NewSAService_WhisperModel(path, wh)
 	wh.models = append(wh.models, wm)
 
 	return wm
 }
 
-func (wh *SAService_Whisper) Translate(model string, blob OsBlob) (string, bool, error) {
+func (wh *SAService_Whisper) Translate(model string, blob OsBlob) (string, float64, bool, error) {
+	//find blob
+	str, found := wh.findCache(model, blob)
+	if found {
+		return str, 1, true, nil
+	}
+
 	//find or load model
 	wm := wh.FindOrAddModel(model)
 	if wm == nil {
-		return "", false, errors.New("Model can't be load")
-	}
-
-	//find blob
-	str, found := wm.FindCache(blob)
-	if found {
-		return str, true, nil
+		return "", 0, false, errors.New("model can't be load")
 	}
 
 	//add blob to que
@@ -196,80 +220,5 @@ func (wh *SAService_Whisper) Translate(model string, blob OsBlob) (string, bool,
 
 	wm.Main()
 
-	return "", false, nil
+	return "", 0.5, false, nil
 }
-
-/*func find_voice_down(data []float32) int {
-
-	vad_thold := 0.6
-	freq_thold := 100.0
-
-	step := int(0.5 * 16000) //0.5 sec
-	N := OsRoundUp(float64(len(data)) / float64(step))
-
-	last_pos := -1
-	for i := 0; i < N; i++ {
-		var d []float32
-		if i+1 < N {
-			d = data[i*step : (i+1)*step]
-		} else {
-			d = data[i*step:] //rest
-		}
-
-		if vad_simple(d, 16000, step/2, vad_thold, freq_thold, false) {
-			last_pos = i * step
-			fmt.Println("Pause", float64(i*step)/16000, "sec")
-		}
-	}
-
-	return last_pos
-}
-
-// voice activity detection
-func vad_simple(pcmf32 []float32, sample_rate int, n_samples_last int, vad_thold float64, freq_thold float64, verbose bool) bool {
-	n_samples := len(pcmf32)
-	//n_samples_last := sample_rate * last_ms / 1000
-
-	if n_samples_last >= n_samples {
-		return false // not enough samples - assume no speech
-	}
-
-	if freq_thold > 0.0 {
-		high_pass_filter(pcmf32, freq_thold, sample_rate)
-	}
-
-	energy_all := 0.0
-	energy_last := 0.0
-
-	for i := 0; i < n_samples; i++ {
-		energy_all += math.Abs(float64(pcmf32[i]))
-
-		if i >= n_samples-n_samples_last {
-			energy_last += math.Abs(float64(pcmf32[i]))
-		}
-	}
-
-	energy_all /= float64(n_samples)
-	energy_last /= float64(n_samples_last)
-
-	if verbose {
-		fmt.Printf("energy_all: %f, energy_last: %f, vad_thold: %f, freq_thold: %f\n", energy_all, energy_last, vad_thold, freq_thold)
-	}
-
-	if energy_last > vad_thold*energy_all {
-		return false //started talking?
-	}
-
-	return true //stoped talking?
-}
-func high_pass_filter(data []float32, cutoff float64, sample_rate int) {
-	rc := 1.0 / (2.0 * math.Pi * cutoff)
-	dt := 1.0 / float64(sample_rate)
-	alpha := float32(dt / (rc + dt))
-
-	y := data[0]
-	for i := 1; i < len(data); i++ {
-		y = alpha * (y + data[i] - data[i-1])
-		data[i] = y
-	}
-}*/
