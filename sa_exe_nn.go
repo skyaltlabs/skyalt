@@ -41,7 +41,7 @@ func SAExe_NN_whisper_cpp(node *SANode) bool {
 	return true
 }
 
-func SAExe_NN_llama(node *SANode) bool {
+func SAExe_NN_llama_cpp(node *SANode) bool {
 	modelAttr := node.GetAttr("model", "\"models/llama-2-7b.Q5_K_M.gguf\"")
 	textAttr := node.GetAttr("text", "\"This is a conversation between User and Llama, a friendly chatbot. Llama is helpful, kind, honest, good at writing, and never fails to answer any requests immediately and with precision.\n\nUser: How Are you doing?\nLlama:\"") //blob
 	_textAttr := node.GetAttr("_text", "")
@@ -52,7 +52,7 @@ func SAExe_NN_llama(node *SANode) bool {
 		return false
 	}
 
-	str, progress, done, err := node.app.base.service_llama.Complete(modelAttr.GetString(), textAttr.GetBlob())
+	str, progress, done, err := node.app.base.service_llama_cpp.Complete(modelAttr.GetString(), textAttr.GetBlob())
 	if err != nil {
 		node.SetError(err.Error())
 		return false

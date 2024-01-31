@@ -92,7 +92,7 @@ func InitSAGroups() SAGroups {
 
 	grs.groups = append(grs.groups, &SAGroup{name: "Neural networks", icon: InitWinMedia_url(path + "node_nn.png"), nodes: []*SAGroupNode{
 		{name: "nn_whisper_cpp", fn: SAExe_NN_whisper_cpp},
-		{name: "nn_llama", fn: SAExe_NN_llama},
+		{name: "nn_llama_cpp", fn: SAExe_NN_llama_cpp},
 	}})
 
 	//add custom ...

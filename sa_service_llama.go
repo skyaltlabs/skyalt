@@ -27,25 +27,25 @@ import (
 	"time"
 )
 
-type SAServiceLLamaQue struct {
+type SAServiceLLamaCppQue struct {
 	model string
 	blob  OsBlob
 }
 
-type SAServiceLLama struct {
+type SAServiceLLamaCpp struct {
 	addr string //http://127.0.0.1:8080/
 
 	mu    sync.Mutex
-	que   []SAServiceLLamaQue
+	que   []SAServiceLLamaCppQue
 	cache map[string]string //results
 }
 
-func SAServiceLLama_cachePath() string {
+func SAServiceLLamaCpp_cachePath() string {
 	return "services/llama/cache.json"
 }
 
-func NewSAServiceLLama(addr string) *SAServiceLLama {
-	wh := &SAServiceLLama{}
+func NewSAServiceLLamaCpp(addr string) *SAServiceLLamaCpp {
+	wh := &SAServiceLLamaCpp{}
 
 	wh.addr = addr
 
@@ -53,11 +53,11 @@ func NewSAServiceLLama(addr string) *SAServiceLLama {
 
 	//load cache
 	{
-		js, _ := os.ReadFile(SAServiceLLama_cachePath())
+		js, _ := os.ReadFile(SAServiceLLamaCpp_cachePath())
 		if len(js) > 0 {
 			err := json.Unmarshal(js, &wh.cache)
 			if err != nil {
-				fmt.Printf("NewSAServiceLLama() failed: %v\n", err)
+				fmt.Printf("NewSAServiceLLamaCpp() failed: %v\n", err)
 			}
 		}
 	}
@@ -66,31 +66,31 @@ func NewSAServiceLLama(addr string) *SAServiceLLama {
 
 	return wh
 }
-func (wh *SAServiceLLama) Destroy() {
+func (wh *SAServiceLLamaCpp) Destroy() {
 
 	//wait for tick() thread to finish? ...
 
 	js, err := json.Marshal(wh.cache)
 	if err == nil {
-		os.WriteFile(SAServiceLLama_cachePath(), js, 0644)
+		os.WriteFile(SAServiceLLamaCpp_cachePath(), js, 0644)
 	}
 }
 
-func (wh *SAServiceLLama) findCache(model string, blob OsBlob) (string, bool) {
+func (wh *SAServiceLLamaCpp) findCache(model string, blob OsBlob) (string, bool) {
 	wh.mu.Lock()
 	defer wh.mu.Unlock()
 
 	str, found := wh.cache[model+blob.hash.Hex()]
 	return str, found
 }
-func (wh *SAServiceLLama) addCache(model string, blob OsBlob, value string) {
+func (wh *SAServiceLLamaCpp) addCache(model string, blob OsBlob, value string) {
 	wh.mu.Lock()
 	defer wh.mu.Unlock()
 
 	wh.cache[model+blob.hash.Hex()] = value
 }
 
-func (wh *SAServiceLLama) addQue(model string, blob OsBlob) {
+func (wh *SAServiceLLamaCpp) addQue(model string, blob OsBlob) {
 	wh.mu.Lock()
 	defer wh.mu.Unlock()
 
@@ -102,18 +102,18 @@ func (wh *SAServiceLLama) addQue(model string, blob OsBlob) {
 	}
 
 	//find
-	wh.que = append(wh.que, SAServiceLLamaQue{model: model, blob: blob})
+	wh.que = append(wh.que, SAServiceLLamaCppQue{model: model, blob: blob})
 }
-func (wh *SAServiceLLama) getFirstQue() (SAServiceLLamaQue, bool) {
+func (wh *SAServiceLLamaCpp) getFirstQue() (SAServiceLLamaCppQue, bool) {
 	wh.mu.Lock()
 	defer wh.mu.Unlock()
 
 	if len(wh.que) > 0 {
 		return wh.que[0], true //found
 	}
-	return SAServiceLLamaQue{}, false //not found
+	return SAServiceLLamaCppQue{}, false //not found
 }
-func (wh *SAServiceLLama) removeFirstQue() {
+func (wh *SAServiceLLamaCpp) removeFirstQue() {
 	wh.mu.Lock()
 	defer wh.mu.Unlock()
 
@@ -122,7 +122,7 @@ func (wh *SAServiceLLama) removeFirstQue() {
 	}
 }
 
-func (wh *SAServiceLLama) Complete(model string, blob OsBlob) (string, float64, bool, error) {
+func (wh *SAServiceLLamaCpp) Complete(model string, blob OsBlob) (string, float64, bool, error) {
 	//find blob
 	str, found := wh.findCache(model, blob)
 	if found {
@@ -133,7 +133,7 @@ func (wh *SAServiceLLama) Complete(model string, blob OsBlob) (string, float64, 
 	return "", 0.5, false, nil
 }
 
-func (wh *SAServiceLLama) tick() {
+func (wh *SAServiceLLamaCpp) tick() {
 	for {
 		que, ok := wh.getFirstQue()
 		if ok {
@@ -153,10 +153,11 @@ func (wh *SAServiceLLama) tick() {
 	}
 }
 
-func (wh *SAServiceLLama) complete(blob OsBlob) (string, error) {
+func (wh *SAServiceLLamaCpp) complete(blob OsBlob) (string, error) {
 
 	aa := OsText_PrintToRaw(string(blob.data))
 
+	//stream = true ............
 	jsonBody := fmt.Sprintf(`{
 		"stream": false,
 		"n_predict": 400,
