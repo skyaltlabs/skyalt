@@ -40,6 +40,7 @@ type SABase struct {
 	node_groups SAGroups
 
 	service_whisper *SAServiceWhisper
+	service_llama   *SAServiceLLama
 }
 
 func NewSABase(ui *Ui) (*SABase, error) {
@@ -48,7 +49,8 @@ func NewSABase(ui *Ui) (*SABase, error) {
 
 	base.node_groups = InitSAGroups()
 
-	base.service_whisper = NewSAServiceWhisper("http://127.0.0.1:8080/")
+	base.service_whisper = NewSAServiceWhisper("http://127.0.0.1:8090/")
+	base.service_llama = NewSAServiceLLama("http://127.0.0.1:8091/")
 
 	//open
 	{
@@ -81,6 +83,7 @@ func NewSABase(ui *Ui) (*SABase, error) {
 func (base *SABase) Destroy() {
 
 	base.service_whisper.Destroy()
+	base.service_llama.Destroy()
 
 	base.Save()
 
