@@ -28,27 +28,27 @@ import (
 	"time"
 )
 
-type SAService_WhisperQue struct {
+type SAServiceWhisperQue struct {
 	model string
 	blob  OsBlob
 }
 
-type SAService_Whisper struct {
+type SAServiceWhisper struct {
 	addr string //http://127.0.0.1:8080/
 
 	mu    sync.Mutex
-	que   []SAService_WhisperQue
+	que   []SAServiceWhisperQue
 	cache map[string]string //results
 
 	last_setModel string
 }
 
-func SAService_Whisper_cachePath() string {
+func SAServiceWhisper_cachePath() string {
 	return "services/whisper/cache.json"
 }
 
-func NewSAService_Whisper(addr string) *SAService_Whisper {
-	wh := &SAService_Whisper{}
+func NewSAServiceWhisper(addr string) *SAServiceWhisper {
+	wh := &SAServiceWhisper{}
 
 	wh.addr = addr
 
@@ -56,11 +56,11 @@ func NewSAService_Whisper(addr string) *SAService_Whisper {
 
 	//load cache
 	{
-		js, _ := os.ReadFile(SAService_Whisper_cachePath())
+		js, _ := os.ReadFile(SAServiceWhisper_cachePath())
 		if len(js) > 0 {
 			err := json.Unmarshal(js, &wh.cache)
 			if err != nil {
-				fmt.Printf("NewSAService_Whisper() failed: %v\n", err)
+				fmt.Printf("NewSAServiceWhisper() failed: %v\n", err)
 			}
 		}
 	}
@@ -69,31 +69,31 @@ func NewSAService_Whisper(addr string) *SAService_Whisper {
 
 	return wh
 }
-func (wh *SAService_Whisper) Destroy() {
+func (wh *SAServiceWhisper) Destroy() {
 
 	//wait for tick() thread to finish? ...
 
 	js, err := json.Marshal(wh.cache)
 	if err == nil {
-		os.WriteFile(SAService_Whisper_cachePath(), js, 0644)
+		os.WriteFile(SAServiceWhisper_cachePath(), js, 0644)
 	}
 }
 
-func (wh *SAService_Whisper) findCache(model string, blob OsBlob) (string, bool) {
+func (wh *SAServiceWhisper) findCache(model string, blob OsBlob) (string, bool) {
 	wh.mu.Lock()
 	defer wh.mu.Unlock()
 
 	str, found := wh.cache[model+blob.hash.Hex()]
 	return str, found
 }
-func (wh *SAService_Whisper) addCache(model string, blob OsBlob, value string) {
+func (wh *SAServiceWhisper) addCache(model string, blob OsBlob, value string) {
 	wh.mu.Lock()
 	defer wh.mu.Unlock()
 
 	wh.cache[model+blob.hash.Hex()] = value
 }
 
-func (wh *SAService_Whisper) addQue(model string, blob OsBlob) {
+func (wh *SAServiceWhisper) addQue(model string, blob OsBlob) {
 	wh.mu.Lock()
 	defer wh.mu.Unlock()
 
@@ -105,18 +105,18 @@ func (wh *SAService_Whisper) addQue(model string, blob OsBlob) {
 	}
 
 	//find
-	wh.que = append(wh.que, SAService_WhisperQue{model: model, blob: blob})
+	wh.que = append(wh.que, SAServiceWhisperQue{model: model, blob: blob})
 }
-func (wh *SAService_Whisper) getFirstQue() (SAService_WhisperQue, bool) {
+func (wh *SAServiceWhisper) getFirstQue() (SAServiceWhisperQue, bool) {
 	wh.mu.Lock()
 	defer wh.mu.Unlock()
 
 	if len(wh.que) > 0 {
 		return wh.que[0], true //found
 	}
-	return SAService_WhisperQue{}, false //not found
+	return SAServiceWhisperQue{}, false //not found
 }
-func (wh *SAService_Whisper) removeFirstQue() {
+func (wh *SAServiceWhisper) removeFirstQue() {
 	wh.mu.Lock()
 	defer wh.mu.Unlock()
 
@@ -125,7 +125,7 @@ func (wh *SAService_Whisper) removeFirstQue() {
 	}
 }
 
-func (wh *SAService_Whisper) Translate(model string, blob OsBlob) (string, float64, bool, error) {
+func (wh *SAServiceWhisper) Translate(model string, blob OsBlob) (string, float64, bool, error) {
 	//find blob
 	str, found := wh.findCache(model, blob)
 	if found {
@@ -136,7 +136,7 @@ func (wh *SAService_Whisper) Translate(model string, blob OsBlob) (string, float
 	return "", 0.5, false, nil
 }
 
-func (wh *SAService_Whisper) tick() {
+func (wh *SAServiceWhisper) tick() {
 	for {
 		que, ok := wh.getFirstQue()
 		if ok {
@@ -166,7 +166,7 @@ func (wh *SAService_Whisper) tick() {
 	}
 }
 
-func (wh *SAService_Whisper) setModel(model string) error {
+func (wh *SAServiceWhisper) setModel(model string) error {
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
@@ -198,7 +198,7 @@ func (wh *SAService_Whisper) setModel(model string) error {
 	return nil
 }
 
-func (wh *SAService_Whisper) translate(blob OsBlob) (string, error) {
+func (wh *SAServiceWhisper) translate(blob OsBlob) (string, error) {
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
