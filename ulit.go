@@ -870,6 +870,10 @@ func (h *OsHash) GetInt64() int64 {
 	return int64(binary.LittleEndian.Uint64(h.h[:]))
 }
 
+func (h *OsHash) Hex() string {
+	return hex.EncodeToString(h.h[:])
+}
+
 type OsFileList struct {
 	Name  string
 	IsDir bool
