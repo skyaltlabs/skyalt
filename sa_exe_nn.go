@@ -17,11 +17,10 @@ limitations under the License.
 package main
 
 func SAExe_NN_whisper(node *SANode) bool {
-	modelAttr := node.GetAttr("model", "\"models/whisper/ggml-tiny.en.bin\"")
+	modelAttr := node.GetAttr("model", "\"models/ggml-tiny.en.bin\"")
 	audioAttr := node.GetAttr("audio", "") //blob
-
-	textProgressAttr := node.GetAttr("_text_progress", "")
 	textAttr := node.GetAttr("_text", "")
+	doneAttr := node.GetAttr("_done", "0")
 
 	if modelAttr.GetString() == "" {
 		modelAttr.SetErrorExe("empty")
@@ -36,13 +35,8 @@ func SAExe_NN_whisper(node *SANode) bool {
 
 	node.progress = progress
 
-	if done {
-		textAttr.SetOutBlob([]byte(str))
-		textProgressAttr.SetOutBlob([]byte(str))
-	} else {
-		textAttr.SetOutBlob(nil)
-		textProgressAttr.SetOutBlob([]byte(str))
-	}
+	doneAttr.SetOutBlob([]byte(OsTrnString(done, "1", "0")))
+	textAttr.SetOutBlob([]byte(str))
 
 	return true
 }

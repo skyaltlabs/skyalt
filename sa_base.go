@@ -48,7 +48,7 @@ func NewSABase(ui *Ui) (*SABase, error) {
 
 	base.node_groups = InitSAGroups()
 
-	base.service_whisper = NewSAService_Whisper()
+	base.service_whisper = NewSAService_Whisper("http://127.0.0.1:8080/")
 
 	//open
 	{
