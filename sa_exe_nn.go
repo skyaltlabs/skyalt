@@ -16,7 +16,7 @@ limitations under the License.
 
 package main
 
-func SAExe_NN_whisper(node *SANode) bool {
+func SAExe_NN_whisper_cpp(node *SANode) bool {
 	modelAttr := node.GetAttr("model", "\"models/ggml-tiny.en.bin\"")
 	audioAttr := node.GetAttr("audio", "") //blob
 	_textAttr := node.GetAttr("_text", "")
@@ -27,7 +27,7 @@ func SAExe_NN_whisper(node *SANode) bool {
 		return false
 	}
 
-	str, progress, done, err := node.app.base.service_whisper.Translate(modelAttr.GetString(), audioAttr.GetBlob())
+	str, progress, done, err := node.app.base.service_whisper_cpp.Translate(modelAttr.GetString(), audioAttr.GetBlob())
 	if err != nil {
 		node.SetError(err.Error())
 		return false

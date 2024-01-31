@@ -28,27 +28,27 @@ import (
 	"time"
 )
 
-type SAServiceWhisperQue struct {
+type SAServiceWhisperCppQue struct {
 	model string
 	blob  OsBlob
 }
 
-type SAServiceWhisper struct {
+type SAServiceWhisperCpp struct {
 	addr string //http://127.0.0.1:8080/
 
 	mu    sync.Mutex
-	que   []SAServiceWhisperQue
+	que   []SAServiceWhisperCppQue
 	cache map[string]string //results
 
 	last_setModel string
 }
 
-func SAServiceWhisper_cachePath() string {
+func SAServiceWhisperCpp_cachePath() string {
 	return "services/whisper/cache.json"
 }
 
-func NewSAServiceWhisper(addr string) *SAServiceWhisper {
-	wh := &SAServiceWhisper{}
+func NewSAServiceWhisperCpp(addr string) *SAServiceWhisperCpp {
+	wh := &SAServiceWhisperCpp{}
 
 	wh.addr = addr
 
@@ -56,11 +56,11 @@ func NewSAServiceWhisper(addr string) *SAServiceWhisper {
 
 	//load cache
 	{
-		js, _ := os.ReadFile(SAServiceWhisper_cachePath())
+		js, _ := os.ReadFile(SAServiceWhisperCpp_cachePath())
 		if len(js) > 0 {
 			err := json.Unmarshal(js, &wh.cache)
 			if err != nil {
-				fmt.Printf("NewSAServiceWhisper() failed: %v\n", err)
+				fmt.Printf("NewSAServiceWhisperCpp() failed: %v\n", err)
 			}
 		}
 	}
@@ -69,31 +69,31 @@ func NewSAServiceWhisper(addr string) *SAServiceWhisper {
 
 	return wh
 }
-func (wh *SAServiceWhisper) Destroy() {
+func (wh *SAServiceWhisperCpp) Destroy() {
 
 	//wait for tick() thread to finish? ...
 
 	js, err := json.Marshal(wh.cache)
 	if err == nil {
-		os.WriteFile(SAServiceWhisper_cachePath(), js, 0644)
+		os.WriteFile(SAServiceWhisperCpp_cachePath(), js, 0644)
 	}
 }
 
-func (wh *SAServiceWhisper) findCache(model string, blob OsBlob) (string, bool) {
+func (wh *SAServiceWhisperCpp) findCache(model string, blob OsBlob) (string, bool) {
 	wh.mu.Lock()
 	defer wh.mu.Unlock()
 
 	str, found := wh.cache[model+blob.hash.Hex()]
 	return str, found
 }
-func (wh *SAServiceWhisper) addCache(model string, blob OsBlob, value string) {
+func (wh *SAServiceWhisperCpp) addCache(model string, blob OsBlob, value string) {
 	wh.mu.Lock()
 	defer wh.mu.Unlock()
 
 	wh.cache[model+blob.hash.Hex()] = value
 }
 
-func (wh *SAServiceWhisper) addQue(model string, blob OsBlob) {
+func (wh *SAServiceWhisperCpp) addQue(model string, blob OsBlob) {
 	wh.mu.Lock()
 	defer wh.mu.Unlock()
 
@@ -105,18 +105,18 @@ func (wh *SAServiceWhisper) addQue(model string, blob OsBlob) {
 	}
 
 	//find
-	wh.que = append(wh.que, SAServiceWhisperQue{model: model, blob: blob})
+	wh.que = append(wh.que, SAServiceWhisperCppQue{model: model, blob: blob})
 }
-func (wh *SAServiceWhisper) getFirstQue() (SAServiceWhisperQue, bool) {
+func (wh *SAServiceWhisperCpp) getFirstQue() (SAServiceWhisperCppQue, bool) {
 	wh.mu.Lock()
 	defer wh.mu.Unlock()
 
 	if len(wh.que) > 0 {
 		return wh.que[0], true //found
 	}
-	return SAServiceWhisperQue{}, false //not found
+	return SAServiceWhisperCppQue{}, false //not found
 }
-func (wh *SAServiceWhisper) removeFirstQue() {
+func (wh *SAServiceWhisperCpp) removeFirstQue() {
 	wh.mu.Lock()
 	defer wh.mu.Unlock()
 
@@ -125,7 +125,7 @@ func (wh *SAServiceWhisper) removeFirstQue() {
 	}
 }
 
-func (wh *SAServiceWhisper) Translate(model string, blob OsBlob) (string, float64, bool, error) {
+func (wh *SAServiceWhisperCpp) Translate(model string, blob OsBlob) (string, float64, bool, error) {
 	//find blob
 	str, found := wh.findCache(model, blob)
 	if found {
@@ -136,7 +136,7 @@ func (wh *SAServiceWhisper) Translate(model string, blob OsBlob) (string, float6
 	return "", 0.5, false, nil
 }
 
-func (wh *SAServiceWhisper) tick() {
+func (wh *SAServiceWhisperCpp) tick() {
 	for {
 		que, ok := wh.getFirstQue()
 		if ok {
@@ -153,7 +153,7 @@ func (wh *SAServiceWhisper) tick() {
 			//translace
 			str, err := wh.translate(que.blob)
 			if err != nil {
-				fmt.Println("setModel() error:", err.Error())
+				fmt.Println("translate() error:", err.Error())
 				wh.removeFirstQue()
 				continue
 			}
@@ -166,7 +166,7 @@ func (wh *SAServiceWhisper) tick() {
 	}
 }
 
-func (wh *SAServiceWhisper) setModel(model string) error {
+func (wh *SAServiceWhisperCpp) setModel(model string) error {
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
@@ -198,7 +198,7 @@ func (wh *SAServiceWhisper) setModel(model string) error {
 	return nil
 }
 
-func (wh *SAServiceWhisper) translate(blob OsBlob) (string, error) {
+func (wh *SAServiceWhisperCpp) translate(blob OsBlob) (string, error) {
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
@@ -210,8 +210,8 @@ func (wh *SAServiceWhisper) translate(blob OsBlob) (string, error) {
 			return "", fmt.Errorf("CreateFormFile() failed: %w", err)
 		}
 		part.Write(blob.data)
-		writer.WriteField("temperature", "0.0")
-		writer.WriteField("temperature_inc", "0.2")
+		//writer.WriteField("temperature", "0.0")
+		//writer.WriteField("temperature_inc", "0.2")
 		writer.WriteField("response_format", "verbose_json")
 	}
 	writer.Close()
