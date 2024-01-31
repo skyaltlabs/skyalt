@@ -44,7 +44,7 @@ type SAServiceWhisperCpp struct {
 }
 
 func SAServiceWhisperCpp_cachePath() string {
-	return "services/whisper/cache.json"
+	return "services/whisper.cpp/cache.json"
 }
 
 func NewSAServiceWhisperCpp(addr string) *SAServiceWhisperCpp {

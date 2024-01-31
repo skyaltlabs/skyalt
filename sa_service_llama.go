@@ -41,7 +41,7 @@ type SAServiceLLamaCpp struct {
 }
 
 func SAServiceLLamaCpp_cachePath() string {
-	return "services/llama/cache.json"
+	return "services/llama.cpp/cache.json"
 }
 
 func NewSAServiceLLamaCpp(addr string) *SAServiceLLamaCpp {
