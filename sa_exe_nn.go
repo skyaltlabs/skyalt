@@ -19,7 +19,7 @@ package main
 func SAExe_NN_whisper(node *SANode) bool {
 	modelAttr := node.GetAttr("model", "\"models/ggml-tiny.en.bin\"")
 	audioAttr := node.GetAttr("audio", "") //blob
-	textAttr := node.GetAttr("_text", "")
+	_textAttr := node.GetAttr("_text", "")
 	doneAttr := node.GetAttr("_done", "0")
 
 	if modelAttr.GetString() == "" {
@@ -36,7 +36,32 @@ func SAExe_NN_whisper(node *SANode) bool {
 	node.progress = progress
 
 	doneAttr.SetOutBlob([]byte(OsTrnString(done, "1", "0")))
-	textAttr.SetOutBlob([]byte(str))
+	_textAttr.SetOutBlob([]byte(str))
+
+	return true
+}
+
+func SAExe_NN_llama(node *SANode) bool {
+	modelAttr := node.GetAttr("model", "\"models/llama-2-7b.Q5_K_M.gguf\"")
+	textAttr := node.GetAttr("text", "\"This is a conversation between User and Llama, a friendly chatbot. Llama is helpful, kind, honest, good at writing, and never fails to answer any requests immediately and with precision.\n\nUser: How Are you doing?\nLlama:\"") //blob
+	_textAttr := node.GetAttr("_text", "")
+	doneAttr := node.GetAttr("_done", "0")
+
+	if modelAttr.GetString() == "" {
+		modelAttr.SetErrorExe("empty")
+		return false
+	}
+
+	str, progress, done, err := node.app.base.service_llama.Complete(modelAttr.GetString(), textAttr.GetBlob())
+	if err != nil {
+		node.SetError(err.Error())
+		return false
+	}
+
+	node.progress = progress
+
+	doneAttr.SetOutBlob([]byte(OsTrnString(done, "1", "0")))
+	_textAttr.SetOutBlob([]byte(str))
 
 	return true
 }
