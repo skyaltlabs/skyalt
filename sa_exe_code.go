@@ -29,25 +29,25 @@ func SAExe_Code_python(node *SANode) bool {
 
 	codeAttr := node.GetAttr("code", "")
 
+	//check code
 	code := codeAttr.GetString()
 	if code == "" {
 		codeAttr.SetErrorExe("empty")
 		return false
 	}
-
 	if strings.Contains(strings.ToLower(code), "import") {
 		codeAttr.SetErrorExe("Code contains 'import' keyword")
 		return false
 	}
 
+	//set attributes to json
 	attrsList := make(map[string]interface{})
 	for _, a := range node.Attrs {
-		if a.Name == "code" {
+		if a.Name == "code" || a.IsOutput() {
 			continue //skip
 		}
 		attrsList[a.Name] = a.GetResult().value
 	}
-
 	type Pyth struct {
 		Code  string                 `json:"code"`
 		Attrs map[string]interface{} `json:"attrs"`
@@ -57,8 +57,8 @@ func SAExe_Code_python(node *SANode) bool {
 		node.SetError("Marshal() failed: " + err.Error())
 		return false
 	}
-	//jsonBody := `{"code": "_out = x + y", "attrs": {"x":4, "y":6}}`
 
+	//send code and attributes
 	body := bytes.NewReader([]byte(jsonBody))
 	req, err := http.NewRequest(http.MethodPost, "http://localhost:8092", body)
 	if err != nil {
@@ -66,13 +66,13 @@ func SAExe_Code_python(node *SANode) bool {
 		return false
 	}
 	req.Header.Add("Content-Type", "application/json")
-
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
 		return false
 	}
 
+	//recv json
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		node.SetError("ReadAll() failed: " + err.Error())
@@ -84,6 +84,7 @@ func SAExe_Code_python(node *SANode) bool {
 		return false
 	}
 
+	//unpacked json
 	type Ret struct {
 		Attrs map[string]interface{}
 		Err   string
@@ -95,11 +96,11 @@ func SAExe_Code_python(node *SANode) bool {
 		node.SetError("Unmarshal() failed: " + err.Error())
 		return false
 	}
-
 	if out.Err != "" {
 		codeAttr.SetErrorExe(out.Err)
 	}
 
+	//set values into output attributes
 	for name, value := range out.Attrs {
 		if !strings.HasPrefix(name, "_") {
 			continue //skip
@@ -108,15 +109,23 @@ func SAExe_Code_python(node *SANode) bool {
 		attr := node.GetAttr(name, "")
 		switch vv := value.(type) {
 		case string:
-			attr.SetExpString(vv, false)
+			attr.GetResult().SetString(vv)
 		case float64:
-			attr.SetExpFloat(vv)
+			attr.GetResult().SetNumber(vv)
 		case int:
-			attr.SetExpInt(vv)
+			attr.GetResult().SetNumber(float64(vv))
 		default:
 			fmt.Println("Unsupported format")
 		}
-		attr.exeMark = false
+	}
+
+	//remove un-used(attr.exeMark==false) outputs attributes
+	for i := len(node.Attrs) - 1; i >= 0; i-- {
+		if node.Attrs[i].IsOutput() {
+			if !node.Attrs[i].exeMark {
+				node.Attrs = append(node.Attrs[:i], node.Attrs[i+1:]...) //remove
+			}
+		}
 	}
 
 	return true
