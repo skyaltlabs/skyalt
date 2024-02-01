@@ -472,7 +472,7 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 					if app.canvas.addnode_search == "" || SAApp_IsSearchedName(nd.name, searches) {
 						if keys.enter || ui.Comp_buttonMenuIcon(0, y, 1, 1, nd.name, gr.icon, 0.2, "", true, false) > 0 {
 							//add new node
-							nw := app.act.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name)
+							nw := app.act.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name, nd.name)
 							nw.SelectOnlyThis()
 
 							ui.Dialog_close()
@@ -500,7 +500,7 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 					for i, nd := range gr.nodes {
 						if ui.Comp_buttonMenuIcon(0, i, 1, 1, nd.name, gr.icon, 0.2, "", true, false) > 0 {
 							//add new node
-							nw := app.act.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name)
+							nw := app.act.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name, nd.name)
 							nw.SelectOnlyThis()
 
 							ui.CloseAll()
@@ -786,4 +786,77 @@ func (app *SAApp) Execute() {
 
 func SAApp_getYellow() OsCd {
 	return OsCd{204, 204, 0, 255} //...
+}
+
+func (app *SAApp) ImportCode(code string) {
+	lines := strings.Split(code, "\n")
+
+	ops := *app.ops
+	ops.ops = append(ops.ops, VmOp{100, false, "=", nil})
+
+	for i, ln := range lines {
+		if ln == "" {
+			continue //skip empty
+		}
+
+		lex, err := ParseLine(ln, 0, &ops)
+		if err != nil {
+			fmt.Printf("Line(%d: %s) has parsing error: %v\n", i, ln, err)
+			continue
+		}
+
+		if len(lex.subs) >= 3 &&
+			lex.subs[0].tp == VmLexerWord &&
+			lex.subs[1].tp == VmLexerOp &&
+			lex.subs[1].GetString(ln) == "=" &&
+			lex.subs[2].tp == VmLexerWord &&
+			lex.subs[3].tp == VmLexerBracketRound {
+
+			nd := app.root.AddNode(OsV4{}, OsV2f{}, lex.subs[0].GetString(ln), lex.subs[2].GetString(ln)) //grid ... pos ...
+
+			//parameters
+			prms := lex.subs[3]
+			prm_i := 0
+			for {
+				prm := prms.ExtractParam(prm_i)
+				if prm == nil {
+					break
+				}
+
+				if len(prm.subs) >= 3 && prm.subs[0].tp == VmLexerWord && prm.subs[1].tp == VmLexerDiv {
+					attr := nd.AddAttr(prm.subs[0].GetString(ln))
+					attr.Value = ln[:prm.subs[1].end]
+				} else {
+					fmt.Printf("Line(%d: %s) has param(%d) error\n", i, ln, prm_i)
+				}
+
+				prm_i++
+			}
+		} else {
+			fmt.Printf("Line(%d: %s) has base error\n", i, ln)
+		}
+	}
+}
+
+func (app *SAApp) ExportCode() string {
+	str := ""
+
+	for _, nd := range app.root.Subs {
+		//params
+		params := ""
+		for _, attr := range nd.Attrs {
+			if !attr.IsOutput() {
+				params += fmt.Sprintf("%s:%s,", attr.Name, OsTrnString(attr.Value == "", `""`, attr.Value))
+			}
+		}
+		params, _ = strings.CutSuffix(params, ",")
+
+		//whole line
+		str += fmt.Sprintf("%s=%s(%s)\n", nd.Name, nd.Exe, params)
+
+		//nd.Subs? ...
+	}
+	str, _ = strings.CutSuffix(str, "\n")
+
+	return str
 }

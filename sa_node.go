@@ -566,8 +566,8 @@ func (w *SANode) CheckUniqueName() {
 	}
 }
 
-func (w *SANode) AddNode(grid OsV4, pos OsV2f, exe string) *SANode {
-	nw := NewSANode(w.app, w, exe, exe, grid, pos)
+func (w *SANode) AddNode(grid OsV4, pos OsV2f, name string, exe string) *SANode {
+	nw := NewSANode(w.app, w, name, exe, grid, pos)
 	w.Subs = append(w.Subs, nw)
 	nw.CheckUniqueName()
 	return nw

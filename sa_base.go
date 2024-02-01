@@ -253,7 +253,7 @@ func (base *SABase) Render() bool {
 func (base *SABase) GetApp() *SAApp {
 	app := base.Apps[base.Selected]
 	if app.root == nil {
-		app.root, _ = NewSANodeRoot("apps/"+app.Name+"/app.json", app) //err ...
+		app.root, _ = NewSANodeRoot(app.GetJsonPath(), app) //err ...
 	}
 	return app
 }
