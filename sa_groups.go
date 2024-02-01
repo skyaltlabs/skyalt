@@ -95,8 +95,9 @@ func InitSAGroups() SAGroups {
 		{name: "nn_llama_cpp", fn: SAExe_NN_llama_cpp},
 	}})
 
-	//add custom ...
-	//fns = append(fns, app.base.server.nodes...) //from /nodes dir
+	grs.groups = append(grs.groups, &SAGroup{name: "Coding", icon: InitWinMedia_url(path + "node_code.png"), nodes: []*SAGroupNode{
+		{name: "code_python", fn: SAExe_Code_python},
+	}})
 
 	return grs
 }
