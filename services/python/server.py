@@ -1,5 +1,7 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import sys, traceback
 import json
+
 
 class MyHandler(BaseHTTPRequestHandler):
     def do_POST(self):
@@ -11,13 +13,33 @@ class MyHandler(BaseHTTPRequestHandler):
 
         code = received_json['code']
         attrs = received_json['attrs']
+        errStr = ""
+        
+        try:
+            exec(code, {}, attrs)
+        except SyntaxError as err:
+            error_class = err.__class__.__name__
+            detail = err.args[0]
+            line_number = err.lineno
+            errStr = "%s at line %d: %s" % (error_class, line_number, detail)
+            print(err)
+        except Exception as err:
+            error_class = err.__class__.__name__
+            detail = err.args[0]
+            cl, exc, tb = sys.exc_info()
+            line_number = traceback.extract_tb(tb)[-1][1]
+            errStr = "%s at line %d: %s" % (error_class, line_number, detail)
+            print(err)
 
-        exec(code, {}, attrs)
+        res = {}
+        res['attrs'] = attrs
+        res['err'] = errStr
+        js = json.dumps(res)
 
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
         self.end_headers()
-        self.wfile.write(bytes(json.dumps(attrs), "utf8"))
+        self.wfile.write(bytes(js, "utf8"))
 
 def run(server_class=HTTPServer, handler_class=MyHandler):
     server_address = ('', 8092)

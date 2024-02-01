@@ -57,7 +57,7 @@ func SAExe_Code_python(node *SANode) bool {
 		node.SetError("Marshal() failed: " + err.Error())
 		return false
 	}
-	//jsonBody := `{"code": "out = x + y", "attrs": {"x":4, "y":6}}`
+	//jsonBody := `{"code": "_out = x + y", "attrs": {"x":4, "y":6}}`
 
 	body := bytes.NewReader([]byte(jsonBody))
 	req, err := http.NewRequest(http.MethodPost, "http://localhost:8092", body)
@@ -84,17 +84,27 @@ func SAExe_Code_python(node *SANode) bool {
 		return false
 	}
 
-	outputs := make(map[string]interface{})
-	err = json.Unmarshal(resBody, &outputs)
+	type Ret struct {
+		Attrs map[string]interface{}
+		Err   string
+	}
+	var out Ret
+	out.Attrs = make(map[string]interface{})
+	err = json.Unmarshal(resBody, &out)
 	if err != nil {
 		node.SetError("Unmarshal() failed: " + err.Error())
 		return false
 	}
 
-	for name, value := range outputs {
-		if strings.EqualFold(name, "code") {
+	if out.Err != "" {
+		codeAttr.SetErrorExe(out.Err)
+	}
+
+	for name, value := range out.Attrs {
+		if !strings.HasPrefix(name, "_") {
 			continue //skip
 		}
+
 		attr := node.GetAttr(name, "")
 		switch vv := value.(type) {
 		case string:
@@ -106,6 +116,7 @@ func SAExe_Code_python(node *SANode) bool {
 		default:
 			fmt.Println("Unsupported format")
 		}
+		attr.exeMark = false
 	}
 
 	return true
