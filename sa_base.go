@@ -41,6 +41,7 @@ type SABase struct {
 
 	service_whisper_cpp *SAServiceWhisperCpp
 	service_llama_cpp   *SAServiceLLamaCpp
+	service_python      *SAServicePython
 }
 
 func NewSABase(ui *Ui) (*SABase, error) {
@@ -51,6 +52,7 @@ func NewSABase(ui *Ui) (*SABase, error) {
 
 	base.service_whisper_cpp = NewSAServiceWhisperCpp("http://127.0.0.1:8090/")
 	base.service_llama_cpp = NewSAServiceLLamaCpp("http://127.0.0.1:8091/")
+	base.service_python = NewSAServicePython("http://127.0.0.1:8092/")
 
 	//open
 	{
@@ -84,6 +86,7 @@ func (base *SABase) Destroy() {
 
 	base.service_whisper_cpp.Destroy()
 	base.service_llama_cpp.Destroy()
+	base.service_python.Destroy()
 
 	base.Save()
 

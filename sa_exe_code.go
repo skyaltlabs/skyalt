@@ -17,11 +17,7 @@ limitations under the License.
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"strings"
 )
 
@@ -48,60 +44,20 @@ func SAExe_Code_python(node *SANode) bool {
 		}
 		attrsList[a.Name] = a.GetResult().value
 	}
-	type Pyth struct {
-		Code  string                 `json:"code"`
-		Attrs map[string]interface{} `json:"attrs"`
-	}
-	jsonBody, err := json.Marshal(Pyth{Code: code, Attrs: attrsList})
-	if err != nil {
-		node.SetError("Marshal() failed: " + err.Error())
-		return false
-	}
 
-	//send code and attributes
-	body := bytes.NewReader([]byte(jsonBody))
-	req, err := http.NewRequest(http.MethodPost, "http://localhost:8092", body)
+	//run python on service server
+	outAttrs, errStr, err := node.app.base.service_python.Exec(code, attrsList)
 	if err != nil {
-		node.SetError("NewRequest() failed: " + err.Error())
+		codeAttr.SetErrorExe(err.Error())
 		return false
 	}
-	req.Header.Add("Content-Type", "application/json")
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
+	if errStr != "" {
+		codeAttr.SetErrorExe(errStr)
 		return false
-	}
-
-	//recv json
-	resBody, err := io.ReadAll(res.Body)
-	if err != nil {
-		node.SetError("ReadAll() failed: " + err.Error())
-		return false
-	}
-
-	if res.StatusCode != 200 {
-		node.SetError(fmt.Sprintf("Server return StatusCode: %d", res.StatusCode))
-		return false
-	}
-
-	//unpacked json
-	type Ret struct {
-		Attrs map[string]interface{}
-		Err   string
-	}
-	var out Ret
-	out.Attrs = make(map[string]interface{})
-	err = json.Unmarshal(resBody, &out)
-	if err != nil {
-		node.SetError("Unmarshal() failed: " + err.Error())
-		return false
-	}
-	if out.Err != "" {
-		codeAttr.SetErrorExe(out.Err)
 	}
 
 	//set values into output attributes
-	for name, value := range out.Attrs {
+	for name, value := range outAttrs {
 		if !strings.HasPrefix(name, "_") {
 			continue //skip
 		}
