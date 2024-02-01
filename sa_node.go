@@ -356,10 +356,14 @@ func (w *SANode) IsReadyToBeExe() bool {
 	return true
 }
 
-func (w *SANode) buildList(list *[]*SANode) {
-	*list = append(*list, w)
+func (w *SANode) buildSubList(list *[]*SANode) {
 	for _, it := range w.Subs {
-		it.buildList(list)
+
+		*list = append(*list, it)
+
+		if !SAGroups_IsNodeFor(it.Exe) {
+			it.buildSubList(list)
+		}
 	}
 }
 
@@ -403,64 +407,12 @@ func (w *SANode) Execute() bool {
 			gnd.render(w, false)
 		}
 	} else {
-		ok = w.executeProgram()
+		fmt.Printf("Unknown node: %s", w.Exe)
+		ok = false
 	}
 
 	w.exeTimeSec = OsTime() - st
 	//fmt.Printf("'%s' done in %.2fs\n", w.Name, w.exeTimeSec)
-	return ok
-}
-
-func (w *SANode) executeProgram() bool {
-
-	fmt.Println("execute:", w.Name)
-
-	w.errExe = nil
-	w.progress = 0
-	w.progress_desc = ""
-
-	conn := w.app.base.server.Start(w.Exe)
-	if conn == nil {
-		w.errExe = fmt.Errorf("can't find node program(%s)", w.Exe)
-		return false
-	}
-
-	conn.Lock()
-	defer conn.Unlock()
-
-	//add/update attributes
-	for _, v := range conn.Attrs {
-		v.Error = ""
-
-		a := w.GetAttr(v.Name, v.Value)
-		a.errExe = nil
-	}
-
-	//set/remove attributes
-	for i := len(w.Attrs) - 1; i >= 0; i-- {
-		src := w.Attrs[i]
-		dst := conn.FindAttr(src.Name)
-		if dst != nil {
-			dst.Value = src.GetString()
-		} else {
-			w.Attrs = append(w.Attrs[:i], w.Attrs[i+1:]...) //remove
-		}
-	}
-
-	//execute
-	ok := conn.Run(w)
-
-	//copy back
-	for _, v := range conn.Attrs {
-		a := w.GetAttr(v.Name, v.Value)
-		a.Value = v.Value
-		a.errExe = nil
-		if v.Error != "" {
-			a.errExe = errors.New(v.Error)
-		}
-	}
-
-	fmt.Println(w.Name, "done")
 	return ok
 }
 

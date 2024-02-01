@@ -714,18 +714,7 @@ func (app *SAApp) SetExecute() {
 	app.exeIt = true
 }
 
-func (app *SAApp) Execute() {
-
-	st := OsTime()
-
-	app.root.PrepareExe() //.state = WAITING(to be executed)
-
-	app.root.ParseExpresions()
-	app.root.CheckForLoops()
-
-	var list []*SANode
-	app.root.buildList(&list)
-	app.root.markUnusedAttrs()
+func (app *SAApp) ExecuteList(list []*SANode) {
 
 	active := true
 	for active {
@@ -756,6 +745,22 @@ func (app *SAApp) Execute() {
 			}
 		}
 	}
+}
+
+func (app *SAApp) Execute() {
+
+	st := OsTime()
+
+	app.root.PrepareExe() //.state = WAITING(to be executed)
+
+	app.root.ParseExpresions()
+	app.root.CheckForLoops()
+
+	var list []*SANode
+	app.root.buildSubList(&list)
+	app.root.markUnusedAttrs()
+
+	app.ExecuteList(list)
 
 	app.exeIt = false
 
