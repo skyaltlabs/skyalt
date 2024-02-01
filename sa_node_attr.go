@@ -125,6 +125,12 @@ func (attr *SANodeAttr) GetBool() bool {
 func (attr *SANodeAttr) GetBlob() OsBlob {
 	return attr.GetResult().Blob()
 }
+func (attr *SANodeAttr) IsText() bool {
+	return attr.GetResult().IsText()
+}
+func (attr *SANodeAttr) IsNumber() bool {
+	return attr.GetResult().IsNumber()
+}
 func (attr *SANodeAttr) IsBlob() bool {
 	return attr.GetResult().IsBlob()
 }
