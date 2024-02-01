@@ -67,6 +67,35 @@ func SAExe_For(node *SANode) bool {
 	return true
 }
 
+// add some arrow(special style & color) in graph, which show that this node can modify other node .......
+func SAExe_SetAttribute(node *SANode) bool {
+
+	triggerAttr := node.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
+
+	nodeAttr := node.GetAttr("node", "")
+	attrAttr := node.GetAttr("attr", "")
+	value := node.GetAttr("value", "").GetString()
+
+	nd := node.parent.FindNode(nodeAttr.GetString())
+	if nd == nil {
+		nodeAttr.SetErrorExe("Not exist")
+		return false
+	}
+
+	attr := nd.findAttr(attrAttr.GetString())
+	if attr == nil {
+		attrAttr.SetErrorExe("Not exist")
+		return false
+	}
+
+	if triggerAttr.GetBool() {
+		node.app.AddSetAttr(attr, value)
+		triggerAttr.SetExpBool(false)
+	}
+
+	return true
+}
+
 //neukládat jako JSON(ponechat save()), ale jako lines: ... kam dát Node.Pos,Bypass? ..............................
 //edit = editbox(grid:[0, 0, 1, 1], grid_show:1, value:"hello")
 //text = text(grid:[1, 2, 1, 1], grid_show:1, value: edit.value & "hi")

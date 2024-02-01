@@ -34,6 +34,11 @@ type SACanvas struct {
 	addnode_search string
 }
 
+type SASetAttr struct {
+	attr  *SANodeAttr
+	value string
+}
+
 type SAApp struct {
 	base *SABase
 
@@ -64,6 +69,7 @@ type SAApp struct {
 	iconPath string
 
 	clickedAttr *SANodeAttr
+	setAttrs    []SASetAttr
 }
 
 func (a *SAApp) init(base *SABase) {
@@ -106,6 +112,10 @@ func (app *SAApp) GetJsonPath() string {
 	return app.GetFolderPath() + "app.json"
 }
 
+func (a *SAApp) AddSetAttr(attr *SANodeAttr, value string) {
+	a.setAttrs = append(a.setAttrs, SASetAttr{attr: attr, value: value})
+}
+
 func (app *SAApp) RenderApp(ide bool) {
 
 	node := app.root
@@ -128,6 +138,13 @@ func (app *SAApp) RenderApp(ide bool) {
 		//fmt.Println(OsTime() - st)
 	}
 
+	if len(app.setAttrs) > 0 {
+		for _, st := range app.setAttrs {
+			st.attr.SetExpString(st.value, false)
+		}
+		app.setAttrs = nil
+		app.Execute()
+	}
 }
 
 func (app *SAApp) renderIDE(ui *Ui) {
