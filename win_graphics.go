@@ -47,14 +47,14 @@ func InitWinFontProps(weight int, textH, lineH float64, italic bool, enableForma
 	}
 
 	if textH <= 0 {
-		textH = 0.14 // 1/8
+		textH = 0.35
 	}
-	tPx := int(float64(win.io.GetDPI()) * textH)
+	tPx := int(float64(win.Cell()) * textH)
 
 	if lineH <= 0 {
 		lineH = 1
 	}
-	lPx := int(float64(win.io.GetDPI()) * lineH)
+	lPx := int(float64(win.Cell()) * lineH)
 
 	return WinFontProps{weight: weight, textH: tPx, lineH: lPx, italic: italic, enableFormating: enableFormating}
 }
