@@ -667,8 +667,8 @@ func (w *SANode) SetGridSize(v OsV2) {
 	attr.ReplaceArrayItemValueInt(2, v.X) //w
 }
 func (w *SANode) SetGrid(coord OsV4) {
-	w.SetGridStart(coord.Start)
 	w.SetGridSize(coord.Size)
+	w.SetGridStart(coord.Start)
 }
 
 func (w *SANode) GetGridShow() bool {
