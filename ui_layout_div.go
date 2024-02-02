@@ -71,8 +71,12 @@ func (div *UiLayoutDiv) CropWithScroll(win *Win) OsV4 {
 	if div.data.scrollH.Is() {
 		ret.Size.Y += div.data.scrollH._GetWidth(win)
 	}
+
+	if div.parent != nil {
+		ret = ret.GetIntersect(div.parent.crop)
+	}
+
 	return ret
-	//return OsV4{Start: div.canvas.Start, Size: OsV2{X: div.data.scrollH.screen_height, Y: div.data.scrollV.screen_height}}
 }
 
 func (div *UiLayoutDiv) Print(newLine bool) {
