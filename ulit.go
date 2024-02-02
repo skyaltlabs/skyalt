@@ -170,6 +170,9 @@ func (a OsV2f) Mul(b OsV2f) OsV2f {
 func (a OsV2f) MulV(t float32) OsV2f {
 	return OsV2f{a.X * t, a.Y * t}
 }
+func (a OsV2f) DivV(t float32) OsV2f {
+	return a.MulV(1 / t)
+}
 func (a OsV2f) toV2() OsV2 {
 	return OsV2{int(a.X), int(a.Y)}
 }
