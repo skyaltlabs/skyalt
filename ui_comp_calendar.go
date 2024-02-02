@@ -353,7 +353,7 @@ func (ui *Ui) Comp_CalendarDataPicker(date_unix *int64, show_time bool, dialogNa
 	if show_time {
 		tm := SA_InfoGetDateFromTime(*date_unix)
 		val := fmt.Sprintf("%d:%d:%d", tm.Hour, tm.Minute, tm.Second)
-		_, _, _, fnshd, _ := ui.Comp_editbox(2, 0, 1, 1, &val, 0, nil, ui.trns.TIME, false, true, enable)
+		_, _, _, fnshd, _ := ui.Comp_editbox(2, 0, 1, 1, &val, 0, nil, ui.trns.TIME, false, true, false, enable)
 		if fnshd {
 
 			var h, m, s int

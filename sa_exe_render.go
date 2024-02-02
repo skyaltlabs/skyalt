@@ -112,9 +112,15 @@ func SAExe_Render_Text(w *SANode, renderIt bool) {
 
 	label := w.GetAttr("label", "").GetString()
 	align := w.GetAttrUi("align", "0", SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
+	selection := w.GetAttrUi("selection", "1", SAAttrUi_SWITCH).GetBool()
+	multi_line := w.GetAttrUi("multi_line", "0", SAAttrUi_SWITCH).GetBool()
 
 	if showIt {
-		ui.Comp_text(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, align)
+		if multi_line {
+			ui.Comp_textSelectMulti(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, align, selection)
+		} else {
+			ui.Comp_textSelect(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, align, selection)
+		}
 	}
 }
 
@@ -204,9 +210,10 @@ func SAExe_Render_Editbox(w *SANode, renderIt bool) {
 	tmpToValue := w.GetAttrUi("tempToValue", "0", SAAttrUi_SWITCH).GetBool()
 	precision := w.GetAttr("precision", "2").GetInt()
 	ghost := w.GetAttr("ghost", "").GetString()
+	multi_line := w.GetAttrUi("multi_line", "0", SAAttrUi_SWITCH).GetBool()
 
 	if showIt {
-		_, _, chngd, fnshd, _ := ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, precision, nil, ghost, false, tmpToValue, enable)
+		_, _, chngd, fnshd, _ := ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, precision, nil, ghost, false, tmpToValue, multi_line, enable)
 		if fnshd || (tmpToValue && chngd) {
 			valueInstr.LineReplace(value, false)
 		}
@@ -391,7 +398,7 @@ func SAExe_Render_FileDrop(w *SANode, renderIt bool) {
 			ui.Div_end()
 			ui.Comp_text(0, 0, 1, 1, "Drag file & drop it here", 1)
 
-			_, _, _, fnshd, _ := ui.Comp_editbox(0, 1, 1, 1, &value, 0, nil, "path", false, false, true)
+			_, _, _, fnshd, _ := ui.Comp_editbox(0, 1, 1, 1, &value, 0, nil, "path", false, false, false, true)
 			if fnshd {
 				instr.LineReplace(value, false)
 			}
