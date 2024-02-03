@@ -69,7 +69,7 @@ func (py *SAServicePython) Exec(code string, attrsList map[string]interface{}) (
 	}
 
 	if res.StatusCode != 200 {
-		return nil, "", fmt.Errorf("Server return StatusCode: %d", res.StatusCode)
+		return nil, "", fmt.Errorf("server return StatusCode: %d", res.StatusCode)
 
 	}
 
