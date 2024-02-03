@@ -212,6 +212,8 @@ func SAExe_Render_Editbox(w *SANode, renderIt bool) {
 	ghost := w.GetAttr("ghost", "").GetString()
 	multi_line := w.GetAttrUi("multi_line", "0", SAAttrUi_SWITCH).GetBool()
 
+	//temp, tempChanged? ...
+
 	if showIt {
 		_, _, chngd, fnshd, _ := ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, precision, nil, ghost, false, tmpToValue, multi_line, enable)
 		if fnshd || (tmpToValue && chngd) {
@@ -677,7 +679,7 @@ func SAExe_Render_Microphone(w *SANode, renderIt bool) {
 			cd = CdPalette_P
 		}
 
-		if ui.Comp_buttonIcon(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, InitWinMedia_url("file:apps/base/resources/mic.png"), 0.3, "Enable/Disable audio recording", cd, enable, active) > 0 {
+		if ui.Comp_buttonIcon(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, InitWinMedia_url("file:apps/base/resources/mic.png"), 0.15, "Enable/Disable audio recording", cd, enable, active) > 0 {
 			if active {
 
 				file, err := os.Create(pathAttr.GetString())
