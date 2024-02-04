@@ -576,6 +576,9 @@ func InitOsCd32(r, g, b, a uint32) OsCd {
 func InitOsCdWhite() OsCd {
 	return InitOsCd32(255, 255, 255, 255)
 }
+func InitOsCdBlack() OsCd {
+	return InitOsCd32(0, 0, 0, 255)
+}
 
 func (cd OsCd) SetAlpha(a byte) OsCd {
 	cd.A = a
