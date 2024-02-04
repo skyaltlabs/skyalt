@@ -199,7 +199,7 @@ func (ui *Ui) GetTextDate(unix_sec int64) string {
 }
 func UiCalendar_GetTextTime(unix_sec int64) string {
 	d := SA_InfoGetDateFromTime(unix_sec)
-	return fmt.Sprintf("%d:%d", d.Hour, d.Minute)
+	return fmt.Sprintf("%.02d:%.02d", d.Hour, d.Minute)
 }
 
 func (ui *Ui) GetTextDateTime(unix_sec int64) string {
