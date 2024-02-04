@@ -29,7 +29,9 @@ func (ui *Ui) comp_dirPicker(x, y, w, h int, path *string, pathTemp *string, sel
 	ui.Div_colMax(0, 100)
 	ui.Div_rowMax(0, 100)
 
-	if ui.Comp_buttonError(0, 0, 1, 1, *path, "Select file/folder", !OsFileExists(*path), enable) > 0 {
+	exist := OsTrnBool(selectFile, OsFileExists(*path), OsFolderExists(*path))
+
+	if ui.Comp_buttonError(0, 0, 1, 1, *path, "Select file/folder", !exist, enable) > 0 {
 		ui.Dialog_open(dialogName, 1)
 		*pathTemp = *path
 	}
@@ -37,7 +39,7 @@ func (ui *Ui) comp_dirPicker(x, y, w, h int, path *string, pathTemp *string, sel
 
 	dialogOpen := ui.Dialog_start(dialogName)
 	if dialogOpen {
-		if ui.comp_dir(pathTemp) {
+		if ui.comp_dir(pathTemp, selectFile) {
 			*path = *pathTemp
 		}
 
@@ -47,7 +49,7 @@ func (ui *Ui) comp_dirPicker(x, y, w, h int, path *string, pathTemp *string, sel
 	return origPath != *path
 }
 
-func (ui *Ui) comp_dir(path *string) bool {
+func (ui *Ui) comp_dir(path *string, selectFile bool) bool {
 	ok := false
 
 	directory := filepath.Dir(*path)
@@ -108,15 +110,19 @@ func (ui *Ui) comp_dir(path *string) bool {
 			return false
 		}
 
-		for i, f := range dir {
+		y := 0
+		for _, f := range dir {
 			isDir := f.IsDir()
+			if !selectFile && !isDir {
+				continue //skip files when picking folder
+			}
 
 			iconFile := OsTrnString(isDir, "folder.png", "file.png")
 			inf, _ := f.Info()
 
 			selected := (directory + "/" + f.Name()) == *path
 
-			if ui.Comp_buttonMenuIcon(0, i, 1, 1, f.Name(), InitWinMedia_url("file:apps/base/resources/"+iconFile), 0.2, "", true, selected) > 0 {
+			if ui.Comp_buttonMenuIcon(0, y, 1, 1, f.Name(), InitWinMedia_url("file:apps/base/resources/"+iconFile), 0.2, "", true, selected) > 0 {
 				if isDir {
 					directory = directory + "/" + f.Name()
 					*path = directory + "/"
@@ -125,8 +131,9 @@ func (ui *Ui) comp_dir(path *string) bool {
 				}
 			}
 
-			ui.Comp_text(1, i, 1, 1, fmt.Sprintf("%d Bytes", inf.Size()), 0)
-			ui.Comp_text(2, i, 1, 1, ui.GetTextDateTime(inf.ModTime().Unix()), 0)
+			ui.Comp_text(1, y, 1, 1, fmt.Sprintf("%d Bytes", inf.Size()), 0)
+			ui.Comp_text(2, y, 1, 1, ui.GetTextDateTime(inf.ModTime().Unix()), 0)
+			y++
 		}
 
 	}
