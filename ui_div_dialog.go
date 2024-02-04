@@ -23,13 +23,10 @@ func (ui *Ui) Dialog_close() {
 }
 
 func (ui *Ui) Dialog_end() {
-
-	//fmt.Println(OsTime() - a)
-
 	lv := ui.GetCall()
 
 	//close dialog
-	if lv.call.enableInput {
+	if lv.call.enableInput && !ui.touch.IsScrollOrResizeActive() {
 		winRect, _ := ui.win.GetScreenCoord()
 		outside := winRect.Inside(ui.win.io.touch.pos) && !lv.base.canvas.Inside(ui.win.io.touch.pos)
 		if (ui.win.io.touch.end && outside) || ui.win.io.keys.esc {
@@ -45,10 +42,6 @@ func (ui *Ui) Dialog_end() {
 	if err != nil {
 		lv.call.data.app.AddLogErr(err)
 	}
-	/*err := ui.buff.EndLevel()
-	if err != nil {
-		app.AddLogErr(err)
-	}*/
 
 	err = ui.EndCall()
 	if err != nil {
