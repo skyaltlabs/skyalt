@@ -43,7 +43,6 @@ type SAAttrUiValue struct {
 	Prm2       string                   `json:",omitempty"`
 	Map        map[string]SAAttrUiValue `json:",omitempty"`
 	HideAddDel bool
-	Height     int
 }
 
 type SANodeAttr struct {

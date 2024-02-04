@@ -105,33 +105,35 @@ func SAExe_Sqlite_insert(node *SANode) bool {
 	valuesAttr := node.GetAttrUi(
 		"values",
 		"[{\"column\": \"a\", \"value\": \"1\"}, {\"column\": \"b\", \"value\": \"2\"}]",
-		SAAttrUiValue{Fn: "map", Height: 5, HideAddDel: true, Map: map[string]SAAttrUiValue{"column": SAAttrUi_COMBO(columnList, columnList), "value": {}}})
+		SAAttrUiValue{Fn: "map", HideAddDel: true, Map: map[string]SAAttrUiValue{"column": SAAttrUi_COMBO(columnList, columnList), "value": {}}})
+
+	type Values struct {
+		Column string
+		Value  interface{}
+	}
+	var vals []Values
+	err = json.Unmarshal([]byte(valuesAttr.GetString()), &vals)
+	if err != nil {
+		valuesAttr.SetErrorExe(err.Error())
+		return false
+	}
+
+	var valColumns string
+	var valValues string
+	var valValuesArr []interface{}
+	for _, v := range vals {
+		valColumns += v.Column + ","
+		valValues += "?,"
+		valValuesArr = append(valValuesArr, v.Value)
+	}
+	valColumns, _ = strings.CutSuffix(valColumns, ",")
+	valValues, _ = strings.CutSuffix(valValues, ",")
+
+	query := fmt.Sprintf("INSERT INTO %s(%s) VALUES(%s);", table, valColumns, valValues)
+
+	node.GetAttr("_query", "").SetOutBlob([]byte(query)) //show final query
 
 	if triggerAttr.GetBool() {
-
-		type Values struct {
-			Column string
-			Value  interface{}
-		}
-		var vals []Values
-		err := json.Unmarshal([]byte(valuesAttr.GetString()), &vals)
-		if err != nil {
-			valuesAttr.SetErrorExe(err.Error())
-			return false
-		}
-
-		var valColumns string
-		var valValues string
-		var valValuesArr []interface{}
-		for _, v := range vals {
-			valColumns += v.Column + ","
-			valValues += "?,"
-			valValuesArr = append(valValuesArr, v.Value)
-		}
-		valColumns, _ = strings.CutSuffix(valColumns, ",")
-		valValues, _ = strings.CutSuffix(valValues, ",")
-
-		query := fmt.Sprintf("INSERT INTO %s(%s) VALUES(%s);", table, valColumns, valValues)
 		_, err = db.Write(query, valValuesArr...)
 		if err != nil {
 			node.SetError(err.Error())

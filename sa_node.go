@@ -770,6 +770,28 @@ func (w *SANode) renderLayout() {
 	}
 }
 
+func _SANode_renderAttrValueHeight(attr *SANodeAttr, attr_instr *VmInstr, uiVal *SAAttrUiValue) int {
+	height := 1
+
+	if !attr.ShowExp {
+		if attr_instr == nil {
+			return height
+		}
+
+		instr := attr_instr.GetConst()
+
+		if instr != nil && VmCallback_Cmp(instr.fn, VmBasic_InitArray) {
+			item_pre_row := (uiVal.Fn == "map")
+			n := instr.NumPrms()
+			if item_pre_row {
+				height = OsMax(height, n+1) //+1 => (add/sub row)
+			}
+		}
+	}
+
+	return height
+}
+
 func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmInstr, isOutput bool, uiVal *SAAttrUiValue, ui *Ui) {
 
 	if attr != nil && attr.ShowExp {
@@ -977,7 +999,6 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 				instr.LineReplace(value, false)
 			}
 		}
-
 	}
 }
 
@@ -1104,11 +1125,8 @@ func (w *SANode) RenderAttrs() {
 	}
 
 	for i, it := range w.Attrs {
-
-		h := OsMax(1, it.Ui.Height)
-		if it.ShowExp {
-			h = 1
-		}
+		h := _SANode_renderAttrValueHeight(it, it.instr, &it.Ui)
+		h = OsMin(h, 5)
 
 		ui.Div_start(0, y, 1, h)
 		{
@@ -1268,7 +1286,7 @@ func (w *SANode) RenderAttrs() {
 
 		}
 		ui.Div_end()
-		y++
+		y += h
 	}
 }
 
