@@ -845,6 +845,14 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 					instr.pos_attr.ReplaceCd(cd)
 				}
 			}
+		} else if uiVal.Fn == SAAttrUi_DIR.Fn {
+			if ui.comp_dirPicker(x, y, w, h, &value, &attr.node.app.base.tempFilePath, false, "attr_file", editable) {
+				instr.LineReplace(value, false)
+			}
+		} else if uiVal.Fn == SAAttrUi_FILE.Fn {
+			if ui.comp_dirPicker(x, y, w, h, &value, &attr.node.app.base.tempFilePath, true, "attr_file", editable) {
+				instr.LineReplace(value, false)
+			}
 		} else if instr != nil && uiVal.Fn == SAAttrUi_BLOB.Fn {
 			blob := instr.temp.Blob()
 			if ui.Comp_buttonIcon(x, y, w, h, InitWinMedia_blob(blob), 0, "", CdPalette_White, true, false) > 0 {

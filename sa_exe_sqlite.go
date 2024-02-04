@@ -61,7 +61,7 @@ func SAExe_Sqlite_insert(node *SANode) bool {
 
 	triggerAttr := node.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
 
-	fileAttr := node.GetAttr("file", "")
+	fileAttr := node.GetAttrUi("file", "", SAAttrUi_FILE)
 
 	db := _SAExe_Sqlite_open(node, fileAttr)
 	if db == nil {
@@ -148,7 +148,7 @@ func SAExe_Sqlite_insert(node *SANode) bool {
 
 func SAExe_Sqlite_select(node *SANode) bool {
 
-	fileAttr := node.GetAttr("file", "")
+	fileAttr := node.GetAttrUi("file", "", SAAttrUi_FILE)
 	queryAttr := node.GetAttr("query", "")
 	rowsAttr := node.GetAttr("_rows", "[]")
 	rowsAttr.SetOutBlob([]byte("[]")) //reset

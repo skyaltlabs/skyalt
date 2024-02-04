@@ -25,7 +25,7 @@ import (
 func SAExe_File_dir(node *SANode) bool {
 
 	pathAttr := node.GetAttr("path", "")
-	filesAttr := node.GetAttr("_files", "")
+	filesAttr := node.GetAttrUi("_files", "", SAAttrUi_DIR)
 	dirsAttr := node.GetAttr("_dirs", "")
 
 	path := pathAttr.GetString()
@@ -64,7 +64,7 @@ func SAExe_File_write(node *SANode) bool {
 	triggerAttr := node.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
 
 	tp := node.GetAttrUi("type", "0", SAAttrUiValue{Fn: "combo", Prm: "Database;App;Disk"}).GetInt()
-	pathAttr := node.GetAttr("path", "")
+	pathAttr := node.GetAttrUi("path", "", SAAttrUi_FILE)
 	dataAttr := node.GetAttr("json", "")
 
 	if triggerAttr.GetBool() {
@@ -90,7 +90,7 @@ func SAExe_File_read(node *SANode) bool {
 
 	tp := node.GetAttrUi("type", "0", SAAttrUiValue{Fn: "combo", Prm: "Database;App;Disk"}).GetInt()
 
-	pathAttr := node.GetAttr("path", "")
+	pathAttr := node.GetAttrUi("path", "", SAAttrUi_FILE)
 	path := pathAttr.GetString()
 
 	outputAttr := node.GetAttrUi("_out", "", SAAttrUi_BLOB)
