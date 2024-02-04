@@ -29,7 +29,6 @@ type DiskDb struct {
 	db *sql.DB
 	//tx *sql.Tx
 
-	//cache          []*DiskDbCache
 	lastWriteTicks int64
 	lastReadTicks  int64
 }
