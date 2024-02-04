@@ -313,11 +313,6 @@ func (base *SABase) drawLauncher(app *SAApp, icon_rad float64) {
 		y := 0
 		for i, app := range base.Apps {
 
-			nm := app.Name
-			if len(nm) > 3 {
-				nm = nm[:3]
-			}
-
 			var click int
 
 			//drag & drop(under button)
@@ -354,8 +349,12 @@ func (base *SABase) drawLauncher(app *SAApp, icon_rad float64) {
 					ui.Div_SpacerRow(0, 3, 1, 1)
 				}
 				if app.iconPath != "" {
-					click = ui.Comp_buttonIcon(0, buttY, 1, 1, InitWinMedia_url(app.iconPath), 0.4, nm, CdPalette_P, true, base.Selected == i)
+					click = ui.Comp_buttonIcon(0, buttY, 1, 1, InitWinMedia_url(app.iconPath), 0.4, app.Name, CdPalette_P, true, base.Selected == i)
 				} else {
+					nm := app.Name
+					if len(nm) > 3 {
+						nm = nm[:3]
+					}
 					click = ui.Comp_buttonText(0, buttY, 1, 1, nm, "", "", true, base.Selected == i)
 				}
 			}
