@@ -32,8 +32,6 @@ func SAExe_Render_Layout(w *SANode, renderIt bool) {
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
 	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	if showIt {
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
@@ -68,8 +66,6 @@ func SAExe_Render_Button(w *SANode, renderIt bool) {
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
 	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool()
 	tp := w.GetAttrUi("type", "0", SAAttrUi_COMBO("Classic;Light;Menu", "")).GetInt()
@@ -107,8 +103,6 @@ func SAExe_Render_Text(w *SANode, renderIt bool) {
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
 	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	label := w.GetAttr("label", "").GetString()
 	align := w.GetAttrUi("align", "0", SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
@@ -130,8 +124,6 @@ func SAExe_Render_Switch(w *SANode, renderIt bool) {
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
 	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	label := w.GetAttr("label", "").GetString()
 
@@ -153,8 +145,6 @@ func SAExe_Render_Checkbox(w *SANode, renderIt bool) {
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
 	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	label := w.GetAttr("label", "").GetString()
 
@@ -176,8 +166,6 @@ func SAExe_Render_Combo(w *SANode, renderIt bool) {
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
 	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	valueAttr := w.GetAttr("value", "")
 	valueInstr := valueAttr.instr.GetConst()
@@ -200,8 +188,6 @@ func SAExe_Render_Editbox(w *SANode, renderIt bool) {
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
 	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	valueAttr := w.GetAttr("value", "")
 	valueInstr := valueAttr.instr.GetConst()
@@ -229,8 +215,6 @@ func SAExe_Render_Divider(w *SANode, renderIt bool) {
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
 	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	tp := w.GetAttrUi("type", "0", SAAttrUi_COMBO("Column;Row", "")).GetInt()
 
@@ -249,8 +233,6 @@ func SAExe_Render_ColorPalette(w *SANode, renderIt bool) {
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
 	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	cdAttr := w.GetAttrUi("cd", "[0, 0, 0, 255]", SAAttrUi_COLOR)
 	cd := cdAttr.GetCd()
@@ -271,8 +253,6 @@ func SAExe_Render_Color(w *SANode, renderIt bool) {
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
 	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool()
 	cdAttr := w.GetAttrUi("cd", "[0, 0, 0, 255]", SAAttrUi_COLOR)
@@ -290,8 +270,6 @@ func SAExe_Render_Calendar(w *SANode, renderIt bool) {
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
 	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	valueAttr := w.GetAttrUi("value", "0", SAAttrUi_DATE)
 	pageAttr := w.GetAttrUi("page", "0", SAAttrUi_DATE)
@@ -319,8 +297,6 @@ func SAExe_Render_Date(w *SANode, renderIt bool) {
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
 	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool()
 	valueAttr := w.GetAttrUi("value", "0", SAAttrUi_DATE)
@@ -343,8 +319,6 @@ func SAExe_Render_Image(w *SANode, renderIt bool) {
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
 	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	margin := w.GetAttr("margin", "0").GetFloat()
 	cd := w.GetAttrUi("cd", "[255, 255, 255, 255]", SAAttrUi_COLOR).GetCd()
@@ -383,8 +357,6 @@ func SAExe_Render_FileDrop(w *SANode, renderIt bool) {
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
 	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	pathAttr := w.GetAttr("path", "")
 	instr := pathAttr.instr.GetConst()
@@ -436,8 +408,6 @@ func SAExe_Render_Map(w *SANode, renderIt bool) {
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
 	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	file := w.GetAttr("file", "\"maps/osm\"").GetString()
 	url := w.GetAttr("url", "\"https://tile.openstreetmap.org/{z}/{x}/{y}.png\"").GetString()
@@ -519,8 +489,6 @@ func SAExe_Render_List(w *SANode, renderIt bool) {
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
 	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	itemsAttr := w.GetAttr("items", "[0, 1, 2, 3, 4, 5]")
 	multiSelect := w.GetAttrUi("multi_select", "1", SAAttrUi_CHECKBOX).GetBool()
@@ -659,8 +627,6 @@ func SAExe_Render_Microphone(w *SANode, renderIt bool) {
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
 	grid := w.GetGrid()
-	grid.Size.X = OsMax(grid.Size.X, 1)
-	grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool()
 

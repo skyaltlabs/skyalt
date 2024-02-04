@@ -645,7 +645,14 @@ func (w *SANode) GetAttrUi(name string, value string, ui SAAttrUiValue) *SANodeA
 }
 
 func (w *SANode) GetGrid() OsV4 {
-	return w.GetAttr("grid", "[0, 0, 1, 1]").GetV4()
+	grid := w.GetAttr("grid", "[0, 0, 1, 1]").GetV4()
+
+	//check
+	grid.Size.X = OsMax(grid.Size.X, 1)
+	grid.Size.Y = OsMax(grid.Size.Y, 1)
+
+	return grid
+
 }
 
 func (w *SANode) SetGridStart(v OsV2) {
@@ -684,7 +691,6 @@ func (w *SANode) Render() {
 	if w.app.IDE && w.CanBeRenderOnCanvas() {
 
 		grid := w.GetGrid()
-		grid.Size.X = OsMax(grid.Size.X, 1)
 		grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 		//draw Select rectangle
