@@ -186,6 +186,24 @@ func (ui *Ui) Comp_button(x, y, w, h int, label string, tooltip string, enable b
 	return 0
 }
 
+func (ui *Ui) Comp_buttonError(x, y, w, h int, label string, tooltip string, isError bool, enable bool) int {
+	ui.Div_start(x, y, w, h)
+
+	style := ui._buttonBasicStyle(enable, tooltip)
+	if isError {
+		style.cd = CdPalette_E
+	}
+	click, rclick := ui.Comp_button_s(&style, label, nil, "", 1, false)
+
+	ui.Div_end()
+	if rclick > 0 {
+		return 2
+	} else if click > 0 {
+		return 1
+	}
+	return 0
+}
+
 func (ui *Ui) Comp_buttonIcon(x, y, w, h int, icon WinMedia, icon_margin float64, tooltip string, cd uint8, enable bool, selected bool) int {
 	ui.Div_start(x, y, w, h)
 
