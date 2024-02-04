@@ -114,12 +114,13 @@ func SAExe_Render_Text(w *SANode, renderIt bool) {
 	align := w.GetAttrUi("align", "0", SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
 	selection := w.GetAttrUi("selection", "1", SAAttrUi_SWITCH).GetBool()
 	multi_line := w.GetAttrUi("multi_line", "0", SAAttrUi_SWITCH).GetBool()
+	drawBorder := w.GetAttrUi("draw_border", "1", SAAttrUi_SWITCH).GetBool()
 
 	if showIt {
 		if multi_line {
-			ui.Comp_textSelectMulti(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, align, selection)
+			ui.Comp_textSelectMulti(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, align, selection, drawBorder)
 		} else {
-			ui.Comp_textSelect(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, align, selection)
+			ui.Comp_textSelect(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, align, selection, drawBorder)
 		}
 	}
 }
@@ -721,10 +722,14 @@ func SAExe_Render_Microphone(w *SANode, renderIt bool) {
 
 	if !active { //keep output nil, when recording
 		//read wav
-		data, err := os.ReadFile(pathAttr.GetString())
-		if err != nil {
-			pathAttr.SetErrorExe(err.Error())
-			return
+		var data []byte
+		if OsFileExists(pathAttr.GetString()) {
+			var err error
+			data, err = os.ReadFile(pathAttr.GetString())
+			if err != nil {
+				pathAttr.SetErrorExe(err.Error())
+				return
+			}
 		}
 		outAttr.SetOutBlob(data)
 	}

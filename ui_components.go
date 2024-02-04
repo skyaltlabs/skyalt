@@ -434,7 +434,7 @@ func (ui *Ui) Comp_text(x, y, w, h int, label string, alignH int) *UiLayoutDiv {
 	return div
 }
 
-func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, alignH int, selection bool) *UiLayoutDiv {
+func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, alignH int, selection bool, drawBorder bool) *UiLayoutDiv {
 	ui.Div_start(x, y, w, h)
 	div := ui.GetCall().call
 
@@ -447,10 +447,15 @@ func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, alignH int, selectio
 
 	ui.Comp_text_s(&style, label, nil, selection, false)
 
+	if drawBorder {
+		pl := ui.win.io.GetPalette()
+		ui.Paint_rect(0, 0, 1, 1, 0, pl.OnB, 0.03)
+	}
+
 	ui.Div_end()
 	return div
 }
-func (ui *Ui) Comp_textSelectMulti(x, y, w, h int, label string, alignH int, selection bool) *UiLayoutDiv {
+func (ui *Ui) Comp_textSelectMulti(x, y, w, h int, label string, alignH int, selection bool, drawBorder bool) *UiLayoutDiv {
 	ui.Div_start(x, y, w, h)
 	div := ui.GetCall().call
 
@@ -462,6 +467,11 @@ func (ui *Ui) Comp_textSelectMulti(x, y, w, h int, label string, alignH int, sel
 	style.label_formating = true
 
 	ui.Comp_text_s(&style, label, nil, selection, true)
+
+	if drawBorder {
+		pl := ui.win.io.GetPalette()
+		ui.Paint_rect(0, 0, 1, 1, 0, pl.OnB, 0.03)
+	}
 
 	ui.Div_end()
 	return div
