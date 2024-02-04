@@ -29,6 +29,8 @@ type SABase struct {
 	Selected   int
 	NewAppName string
 
+	tempFilePath string
+
 	exit bool
 
 	server *SANodeServer
