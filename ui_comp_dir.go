@@ -69,11 +69,17 @@ func (ui *Ui) comp_dir(path *string, selectFile bool) bool {
 	//header
 	ui.Div_start(0, 0, 1, 1)
 	{
-		ui.Div_colMax(2, 15)
-		ui.Div_colMax(3, 3)
+		ui.Div_colMax(3, 15)
+		ui.Div_colMax(4, 3)
+
+		//root
+		if ui.Comp_buttonText(0, 0, 1, 1, "/", "Root directory", "", true, false) > 0 {
+			directory = ""
+			*path = directory + "/"
+		}
 
 		//home
-		if ui.Comp_buttonIcon(0, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/home.png"), 0.3, "Home directory", CdPalette_P, true, false) > 0 {
+		if ui.Comp_buttonIcon(1, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/home.png"), 0.3, "Home directory", CdPalette_P, true, false) > 0 {
 			dir, err := os.UserHomeDir()
 			if err == nil {
 				directory = dir
@@ -82,16 +88,18 @@ func (ui *Ui) comp_dir(path *string, selectFile bool) bool {
 		}
 
 		//level-up
-		if ui.Comp_buttonIcon(1, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/levelup.png"), 0.3, "Jump into parent directory", CdPalette_P, true, false) > 0 {
+		if ui.Comp_buttonIcon(2, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/levelup.png"), 0.3, "Jump into parent directory", CdPalette_P, directory != "/", false) > 0 {
 			directory = filepath.Dir(directory)
-			*path = directory + "/"
+			if directory != "/" {
+				*path = directory + "/"
+			}
 		}
 
 		//path
-		ui.Comp_editbox(2, 0, 1, 1, path, 0, 0, nil, "", false, false, false, true)
+		ui.Comp_editbox(3, 0, 1, 1, path, 0, 0, nil, "", false, false, false, true)
 
 		//open
-		if ui.Comp_button(3, 0, 1, 1, "Select", "", true) > 0 {
+		if ui.Comp_button(4, 0, 1, 1, "Select", "", true) > 0 {
 			ok = true
 			ui.Dialog_close()
 		}
@@ -124,10 +132,16 @@ func (ui *Ui) comp_dir(path *string, selectFile bool) bool {
 
 			if ui.Comp_buttonMenuIcon(0, y, 1, 1, f.Name(), InitWinMedia_url("file:apps/base/resources/"+iconFile), 0.2, "", true, selected) > 0 {
 				if isDir {
-					directory = directory + "/" + f.Name()
+					if directory != "/" {
+						directory += "/"
+					}
+					directory += f.Name()
 					*path = directory + "/"
 				} else {
-					*path = directory + "/" + f.Name()
+					if directory != "/" {
+						directory += "/"
+					}
+					*path = directory + f.Name()
 				}
 			}
 
