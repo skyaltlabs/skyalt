@@ -137,7 +137,7 @@ func (ui *Ui) renderGrid() {
 
 		py = start.Y
 		for y, row := range lv.call.data.rows.outputs {
-			ui.buff.AddText(fmt.Sprintf("[%d, %d]", x, y), InitWinFontPropsDef(ui.win), OsV4{OsV2{px, py}, OsV2{int(col), int(row)}}, cd, OsV2{1, 1})
+			ui.buff.AddText(fmt.Sprintf("[%d, %d]", x, y), InitWinFontPropsDef(ui.win), OsV4{OsV2{px, py}, OsV2{int(col), int(row)}}, cd, OsV2{1, 1}, 0, 1)
 			py += int(row)
 		}
 

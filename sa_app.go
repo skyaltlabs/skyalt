@@ -305,7 +305,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 
 				rect.Start = rect.Start.Add(appDiv.canvas.Start)
 				ui.buff.AddRect(rect, SAApp_getYellow(), ui.CellWidth(0.03))
-				ui.buff.AddText("+", InitWinFontPropsDef(ui.win), rect, SAApp_getYellow(), OsV2{1, 1})
+				ui.buff.AddText("+", InitWinFontPropsDef(ui.win), rect, SAApp_getYellow(), OsV2{1, 1}, 0, 1)
 
 				if appDiv.IsTouchEnd(ui) {
 					app.canvas.addGrid = grid
@@ -458,7 +458,7 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 		ui.Div_colMax(0, 5)
 
 		y := 0
-		ui.Comp_editbox(0, 0, 1, 1, &app.canvas.addnode_search, 0, nil, ui.trns.SEARCH, app.canvas.addnode_search != "", true, false, true)
+		ui.Comp_editbox(0, 0, 1, 1, &app.canvas.addnode_search, 0, 0, nil, ui.trns.SEARCH, app.canvas.addnode_search != "", true, false, true)
 		y++
 
 		if app.canvas.addnode_search != "" {
@@ -558,15 +558,15 @@ func _SAApp_drawColsRowsDialog(name string, items *[]SANodeColRow, i int, ui *Ui
 		}
 		ui.Div_end()
 
-		_, _, _, fnshd1, _ := ui.Comp_editbox_desc(ui.trns.MIN, 0, 2, 0, 1, 1, 1, &(*items)[i].Min, 1, nil, "", false, false, false, true)
-		_, _, _, fnshd2, _ := ui.Comp_editbox_desc(ui.trns.MAX, 0, 2, 0, 2, 1, 1, &(*items)[i].Max, 1, nil, "", false, false, false, true)
+		_, _, _, fnshd1, _ := ui.Comp_editbox_desc(ui.trns.MIN, 0, 2, 0, 1, 1, 1, &(*items)[i].Min, 1, 0, nil, "", false, false, false, true)
+		_, _, _, fnshd2, _ := ui.Comp_editbox_desc(ui.trns.MAX, 0, 2, 0, 2, 1, 1, &(*items)[i].Max, 1, 0, nil, "", false, false, false, true)
 
 		ui.Div_start(0, 3, 1, 1)
 		{
 			ui.Div_colMax(0, 100)
 			ui.Div_colMax(1, 100)
 
-			_, _, _, fnshd3, _ := ui.Comp_editbox_desc(ui.trns.RESIZE, 0, 2, 0, 0, 1, 1, &(*items)[i].ResizeName, 1, nil, "Name", false, false, false, true)
+			_, _, _, fnshd3, _ := ui.Comp_editbox_desc(ui.trns.RESIZE, 0, 2, 0, 0, 1, 1, &(*items)[i].ResizeName, 1, 0, nil, "Name", false, false, false, true)
 			ui.Comp_text(1, 0, 1, 1, strconv.FormatFloat((*items)[i].Resize, 'f', 2, 64), 0)
 
 			if fnshd1 || fnshd2 || fnshd3 {

@@ -206,6 +206,7 @@ func SAExe_Render_Editbox(w *SANode, renderIt bool) {
 	valueInstr := valueAttr.instr.GetConst()
 	value := valueAttr.GetString()
 
+	align := w.GetAttrUi("align", "0", SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
 	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool() && valueInstr != nil
 	tmpToValue := w.GetAttrUi("tempToValue", "0", SAAttrUi_SWITCH).GetBool()
 	precision := w.GetAttr("precision", "2").GetInt()
@@ -215,7 +216,7 @@ func SAExe_Render_Editbox(w *SANode, renderIt bool) {
 	//temp, tempChanged? ...
 
 	if showIt {
-		_, _, chngd, fnshd, _ := ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, precision, nil, ghost, false, tmpToValue, multi_line, enable)
+		_, _, chngd, fnshd, _ := ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, precision, align, nil, ghost, false, tmpToValue, multi_line, enable)
 		if fnshd || (tmpToValue && chngd) {
 			valueInstr.LineReplace(value, false)
 		}
@@ -400,7 +401,7 @@ func SAExe_Render_FileDrop(w *SANode, renderIt bool) {
 			ui.Div_end()
 			ui.Comp_text(0, 0, 1, 1, "Drag file & drop it here", 1)
 
-			_, _, _, fnshd, _ := ui.Comp_editbox(0, 1, 1, 1, &value, 0, nil, "path", false, false, false, true)
+			_, _, _, fnshd, _ := ui.Comp_editbox(0, 1, 1, 1, &value, 0, 0, nil, "path", false, false, false, true)
 			if fnshd {
 				instr.LineReplace(value, false)
 			}

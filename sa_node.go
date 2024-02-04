@@ -773,7 +773,7 @@ func (w *SANode) renderLayout() {
 func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmInstr, isOutput bool, uiVal *SAAttrUiValue, ui *Ui) {
 
 	if attr != nil && attr.ShowExp {
-		ui.Comp_editbox(x, y, w, h, &attr.Value, 2, nil, "", false, false, false, true) //show whole expression
+		ui.Comp_editbox(x, y, w, h, &attr.Value, 2, 0, nil, "", false, false, false, true) //show whole expression
 	} else {
 
 		if attr_instr == nil {
@@ -972,7 +972,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 			ui.Div_end()
 		} else {
 			//VmBasic_Constant
-			_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, 2, nil, "", false, false, false, editable)
+			_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, 2, 0, nil, "", false, false, false, editable)
 			if fnshd {
 				instr.LineReplace(value, false)
 			}
@@ -1028,7 +1028,7 @@ func (w *SANode) RenderAttrs() {
 
 		//Name
 		oldName := w.Name
-		_, _, _, fnshd, _ := ui.Comp_editbox_desc(ui.trns.NAME, 2, 2, 1, 0, 1, 1, &w.Name, 0, nil, ui.trns.NAME, false, false, false, true)
+		_, _, _, fnshd, _ := ui.Comp_editbox_desc(ui.trns.NAME, 2, 2, 1, 0, 1, 1, &w.Name, 0, 0, nil, ui.trns.NAME, false, false, false, true)
 		if fnshd && w.parent != nil {
 			w.CheckUniqueName()
 
@@ -1144,7 +1144,7 @@ func (w *SANode) RenderAttrs() {
 				}
 				if ui.Dialog_start(dnm) {
 					ui.Div_colMax(0, 5)
-					ui.Comp_editbox(0, 0, 1, 1, &it.Name, 0, nil, "Name", false, false, false, true)
+					ui.Comp_editbox(0, 0, 1, 1, &it.Name, 0, 0, nil, "Name", false, false, false, true)
 					it.CheckUniqueName()
 					ui.Dialog_end()
 				}
