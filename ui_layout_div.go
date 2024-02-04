@@ -61,7 +61,6 @@ func (div *UiLayoutDiv) UseAll() {
 }
 
 func (div *UiLayoutDiv) CropWithScroll(win *Win) OsV4 {
-
 	ret := div.crop
 
 	if div.data.scrollV.Is() {
@@ -90,7 +89,6 @@ func (div *UiLayoutDiv) Print(newLine bool) {
 }
 
 func (div *UiLayoutDiv) GetParent(deep int) *UiLayoutDiv {
-
 	act := div
 	for deep > 0 && act != nil {
 		act = act.parent
@@ -129,7 +127,6 @@ func (div *UiLayoutDiv) ComputeHash() uint64 {
 }
 
 func NewUiLayoutPack(parent *UiLayoutDiv, name string, grid OsV4, app *UiLayoutApp) *UiLayoutDiv {
-
 	var div UiLayoutDiv
 
 	div.name = name
@@ -145,7 +142,6 @@ func NewUiLayoutPack(parent *UiLayoutDiv, name string, grid OsV4, app *UiLayoutA
 }
 
 func (div *UiLayoutDiv) ClearChilds() {
-
 	for _, it := range div.childs {
 		it.Destroy()
 	}
@@ -153,13 +149,11 @@ func (div *UiLayoutDiv) ClearChilds() {
 }
 
 func (div *UiLayoutDiv) Destroy() {
-
 	div.ClearChilds()
 	div.data.Close()
 }
 
 func (div *UiLayoutDiv) FindOrCreate(name string, grid OsV4, app *UiLayoutApp) *UiLayoutDiv {
-
 	//finds
 	for _, it := range div.childs {
 		if strings.EqualFold(it.name, name) && it.grid.Cmp(grid) && it.data.app == app {
@@ -340,7 +334,6 @@ func (div *UiLayoutDiv) RenderResizeDraw(layoutScreen OsV4, i int, cd OsCd, vert
 }
 
 func (div *UiLayoutDiv) RenderResizeSpliter(ui *Ui) {
-
 	enableInput := div.enableInput
 
 	cell := ui.win.Cell()
@@ -500,7 +493,6 @@ func (div *UiLayoutDiv) FindBaseApp() *UiLayoutDiv {
 }
 
 func (div *UiLayoutDiv) FindHash(hash uint64) *UiLayoutDiv {
-
 	if div.data.hash == hash {
 		return div
 	}
@@ -523,7 +515,6 @@ func (div *UiLayoutDiv) FindUid(uid float64) *UiLayoutDiv {
 }
 
 func (div *UiLayoutDiv) GetCloseCell(touchPos OsV2) OsV4 {
-
 	rpos := div.GetRelativePos(touchPos)
 
 	var grid OsV4
