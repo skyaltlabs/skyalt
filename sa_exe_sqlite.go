@@ -48,7 +48,8 @@ func _SAExe_Sqlite_open(node *SANode, fileAttr *SANodeAttr) *DiskDb {
 	}
 	return db*/
 
-	db, err := NewDiskDb(file, false, nil)
+	db, _, err := node.app.base.ui.win.disk.OpenDb(file)
+	//db, err := NewDiskDb(file, false, nil)
 	if err != nil {
 		fileAttr.SetErrorExe(err.Error())
 		return nil
@@ -66,7 +67,6 @@ func SAExe_Sqlite_insert(node *SANode) bool {
 	if db == nil {
 		return false
 	}
-	defer db.Destroy()
 
 	tbls, err := db.GetTableInfo()
 	if err != nil {
@@ -158,7 +158,6 @@ func SAExe_Sqlite_select(node *SANode) bool {
 	if db == nil {
 		return false
 	}
-	defer db.Destroy()
 
 	query := queryAttr.GetString()
 	if query == "" {
