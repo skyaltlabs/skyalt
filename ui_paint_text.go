@@ -421,7 +421,10 @@ func (ui *Ui) _UiPaint_TextSelectKeys(text string, lines []int, editable bool, p
 		if keys.shift {
 			keys.clipboard = _UiPaint_RemoveFormating(text)
 		} else {
-			keys.clipboard = text[*s:*e]
+			firstCur := OsTrn(*s < *e, *s, *e)
+			lastCur := OsTrn(*s > *e, *s, *e)
+
+			keys.clipboard = text[firstCur:lastCur]
 		}
 	}
 
@@ -497,32 +500,32 @@ func (ui *Ui) _UiPaint_TextEditKeys(text string, lines []int, tabIsChar bool, en
 	e := &edit.end
 	old := *e
 
-	firstCursor := OsTrn(*s < *e, *s, *e)
-	lastCursor := OsTrn(*s > *e, *s, *e)
+	firstCur := OsTrn(*s < *e, *s, *e)
+	lastCur := OsTrn(*s > *e, *s, *e)
 
 	//cut/paste(copy() is in selectKeys)
 	if keys.cut {
 		//remove
-		text = text[:*s] + text[*e:]
+		text = text[:firstCur] + text[lastCur:]
 		edit.temp = text
 
 		//select
-		*s = firstCursor
-		*e = firstCursor
+		*s = firstCur
+		*e = firstCur
 	} else if keys.paste {
 		//remove old selection
 		if *s != *e {
-			text = text[:*s] + text[*e:]
+			text = text[:firstCur] + text[lastCur:]
 		}
 
 		//insert
 		cb := keys.clipboard
-		text = text[:*s] + cb + text[*e:]
+		text = text[:firstCur] + cb + text[firstCur:]
 		edit.temp = text
 
-		firstCursor += len(cb)
-		*s = firstCursor
-		*e = firstCursor
+		firstCur += len(cb)
+		*s = firstCur
+		*e = firstCur
 	}
 
 	//insert text
@@ -537,17 +540,18 @@ func (ui *Ui) _UiPaint_TextEditKeys(text string, lines []int, tabIsChar bool, en
 	if len(txt) > 0 {
 		//remove old selection
 		if *s != *e {
-			text = text[:*s] + text[*e:]
+			text = text[:firstCur] + text[lastCur:]
+			*e = *s
 		}
 
 		//insert
-		text = text[:*s] + txt + text[*e:]
+		text = text[:firstCur] + txt + text[firstCur:]
 		edit.temp = text
 
 		//cursor
-		firstCursor += len(txt)
-		*s = firstCursor
-		*e = firstCursor
+		firstCur += len(txt)
+		*s = firstCur
+		*e = firstCur
 
 		//reset
 		keys.text = ""
@@ -556,40 +560,35 @@ func (ui *Ui) _UiPaint_TextEditKeys(text string, lines []int, tabIsChar bool, en
 	//delete/backspace
 	if *s != *e {
 		if keys.delete || keys.backspace {
-			sx := *s
-			ex := *e
-			if sx > ex {
-				sx, ex = ex, sx //swap
-			}
 
 			//remove
-			text = text[:sx] + text[ex:]
+			text = text[:firstCur] + text[lastCur:]
 			edit.temp = text
 
 			//cursor
-			*s = firstCursor
-			*e = firstCursor
+			*s = firstCur
+			*e = firstCur
 		}
 	} else {
 		if keys.backspace {
 			//remove
 			if *s > 0 {
 				//removes one letter
-				p := _UiPaint_CursorMoveLR(text, *s, -1, prop)
-				text = text[:p] + text[*s:]
+				p := _UiPaint_CursorMoveLR(text, firstCur, -1, prop)
+				text = text[:p] + text[firstCur:]
 				edit.temp = text
 
 				//cursor
-				firstCursor = p
-				*s = firstCursor
-				*e = firstCursor
+				firstCur = p
+				*s = firstCur
+				*e = firstCur
 			}
 		} else if keys.delete {
 			//remove
 			if *s < len(text) {
 				//removes one letter
-				p := _UiPaint_CursorMoveLR(text, *s, +1, prop)
-				text = text[:*s] + text[p:]
+				p := _UiPaint_CursorMoveLR(text, firstCur, +1, prop)
+				text = text[:firstCur] + text[p:]
 				edit.temp = text
 			}
 		}
@@ -600,25 +599,25 @@ func (ui *Ui) _UiPaint_TextEditKeys(text string, lines []int, tabIsChar bool, en
 		if *s != *e {
 			if multi_line {
 				if keys.arrowU {
-					firstCursor = _UiPaint_CursorMoveU(text, lines, *e)
-					*s = firstCursor
-					*e = firstCursor
+					firstCur = _UiPaint_CursorMoveU(text, lines, *e)
+					*s = firstCur
+					*e = firstCur
 				}
 				if keys.arrowD {
-					firstCursor = _UiPaint_CursorMoveD(text, lines, *e)
-					*s = firstCursor
-					*e = firstCursor
+					firstCur = _UiPaint_CursorMoveD(text, lines, *e)
+					*s = firstCur
+					*e = firstCur
 				}
 			}
 
 			if keys.arrowL {
 				//from select -> single start
-				*s = firstCursor
-				*e = firstCursor
+				*s = firstCur
+				*e = firstCur
 			} else if keys.arrowR {
 				//from select -> single end
-				*s = lastCursor
-				*e = lastCursor
+				*s = lastCur
+				*e = lastCur
 			}
 		} else {
 			if keys.ctrl {
@@ -669,21 +668,21 @@ func (ui *Ui) _UiPaint_TextEditKeys(text string, lines []int, tabIsChar bool, en
 		//home/end
 		if keys.home {
 			if multi_line {
-				firstCursor, _ = _UiPaint_CursorLineRange(lines, *e) //line start
+				firstCur, _ = _UiPaint_CursorLineRange(lines, *e) //line start
 			} else {
-				firstCursor = 0
+				firstCur = 0
 			}
-			*s = firstCursor
-			*e = firstCursor
+			*s = firstCur
+			*e = firstCur
 		} else if keys.end {
 			if multi_line {
-				_, firstCursor = _UiPaint_CursorLineRange(lines, *e) //line start
+				_, firstCur = _UiPaint_CursorLineRange(lines, *e) //line start
 			} else {
-				firstCursor = len(text)
+				firstCur = len(text)
 			}
 
-			*s = firstCursor
-			*e = firstCursor
+			*s = firstCur
+			*e = firstCur
 		}
 	}
 
