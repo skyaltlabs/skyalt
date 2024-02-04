@@ -20,16 +20,13 @@ import (
 	"math"
 	"slices"
 	"strconv"
-	"unicode/utf8"
 )
 
 type UiComp struct {
-	enable bool
-	shape  uint8 //0=rect, 1=sphere
-	cd     uint8
-	fade   bool
-	//enable_back     bool
-	//enable_border   bool
+	enable          bool
+	shape           uint8 //0=rect, 1=sphere
+	cd              uint8
+	fade            bool
 	label_alignV    uint8
 	label_alignH    uint8
 	label_formating bool
@@ -97,10 +94,6 @@ func (ui *Ui) _compGetTextImageCoord(coord OsV4, image_width float64, imageAlign
 }
 
 func (ui *Ui) _compDrawShape(coord OsV4, shape uint8, cd OsCd, margin float64, border float64) OsV4 {
-	//
-	//st := root.ui.GetStack()
-	//coord := st.stack.canvas
-
 	b := ui.CellWidth(border)
 	m := ui.CellWidth(margin)
 	coord = coord.Inner(m, m, m, m)
@@ -117,41 +110,39 @@ func (ui *Ui) _compDrawShape(coord OsV4, shape uint8, cd OsCd, margin float64, b
 }
 
 func (ui *Ui) _compDrawImage(coord OsV4, icon WinMedia, cd OsCd, style *UiComp) {
-
 	lv := ui.GetCall()
 
 	m := ui.CellWidth(style.image_margin)
 	coord = coord.Inner(m, m, m, m)
 
-	//style.image_fill = true
-
 	imgRectBackup := ui.buff.AddCrop(lv.call.crop.GetIntersect(coord))
 	ui.buff.AddImage(icon, coord, cd, int(style.image_alignV), int(style.image_alignH), style.image_fill, false)
 	ui.buff.AddCrop(imgRectBackup)
-
 }
 
-func (ui *Ui) _compDrawText(coord OsV4, value string, valueOrigEdit string, frontCd OsCd, prop WinFontProps, selection bool, editable bool, alignH int, alignV int) {
+func (ui *Ui) _compDrawText(coord OsV4,
+	value string, valueOrigEdit string,
+	frontCd OsCd, prop WinFontProps,
+	selection bool, editable bool, alignH int, alignV int, multi_line bool) {
 
 	lv := ui.GetCall()
 
-	coord = coord.AddSpaceX(ui.CellWidth(0.1))
+	coord = coord.AddSpace(ui.CellWidth(0.1))
 
 	crop := lv.call.crop
 	if editable {
-		crop = crop.AddSpaceX(ui.CellWidth(0.1)) //crop rect_border
+		crop = crop.AddSpace(ui.CellWidth(0.1)) //crop rect_border
 	}
 
 	// crop
 	imgRectBackup := ui.buff.AddCrop(crop.GetIntersect(coord))
 
-	//one liner
-	active := ui._UiPaint_Text_line(coord, 0, OsV2{utf8.RuneCountInString(value), 0},
+	active := ui._UiPaint_Text_line(coord,
 		value, valueOrigEdit,
 		frontCd,
 		prop,
 		"", alignH, alignV,
-		selection, editable, true)
+		selection, editable, true, multi_line)
 
 	if active {
 		ui._UiPaint_resetKeys(false)
@@ -345,13 +336,7 @@ func (ui *Ui) Comp_button_s(style *UiComp, value string, icon *WinMedia, url str
 	pl := ui.win.io.GetPalette()
 	cd, onCd := pl.GetCd(style.cd, style.fade, style.enable, inside, active)
 
-	//coord := st.stack.data.Convert(root.ui.Cell(), grid)
-	//coord.Start = st.stack.canvas.Start.Add(coord.Start)
 	coord := lv.call.canvas
-
-	//if selectedMenu {
-	//	drawBorder = true
-	//}
 
 	if drawBack == 0 {
 		if style.cd != CdPalette_B {
@@ -400,7 +385,7 @@ func (ui *Ui) Comp_button_s(style *UiComp, value string, icon *WinMedia, url str
 	if len(value) > 0 {
 		prop := InitWinFontPropsDef(ui.win)
 		prop.enableFormating = style.label_formating
-		ui._compDrawText(coordText, value, "", onCd, prop, false, false, int(style.label_alignH), int(style.label_alignV))
+		ui._compDrawText(coordText, value, "", onCd, prop, false, false, int(style.label_alignH), int(style.label_alignV), true)
 	}
 
 	if style.enable {
@@ -487,23 +472,16 @@ func (ui *Ui) Comp_text_s(style *UiComp, value string, icon *WinMedia, selection
 	pl := ui.win.io.GetPalette()
 	_, onCd := pl.GetCd(style.cd, style.fade, style.enable, false, false)
 
-	//if style.enable_back {
-	//ui.buff.AddRect(st.stack.canvas, cd, 0)
-	//}
-	//if style.enable_border {
-	//ui.buff.AddRect(st.stack.canvas, pl.GetGrey(0.8), ui.CellWidth(0.03))
-	//}
-
 	if style.enable {
 		if len(style.tooltip) > 0 {
 			ui.Paint_tooltip(0, 0, 1, 1, style.tooltip)
 		}
 	}
 
-	ui.Paint_textGrid(InitOsV4(0, 0, 1, 1), onCd, style, value, "", InitWinFontPropsDef(ui.win), icon, selection, false)
+	ui.Paint_textGrid(onCd, style, value, "", InitWinFontPropsDef(ui.win), icon, selection, false, multi_line)
 }
 
-func (ui *Ui) Comp_editbox_desc(description string, description_alignH int, width float64, x, y, w, h int, valueIn interface{}, value_precision int, icon *WinMedia, ghost string, highlight bool, tempToValue bool, multi_line bool, enable bool) (string, bool, bool, bool, *UiLayoutDiv) {
+func (ui *Ui) Comp_editbox_desc(description string, description_alignH int, width float64, x, y, w, h int, valueIn interface{}, value_precision int, alignH int, icon *WinMedia, ghost string, highlight bool, tempToValue bool, multi_line bool, enable bool) (string, bool, bool, bool, *UiLayoutDiv) {
 	ui.Div_start(x, y, w, h)
 
 	xx := 0
@@ -519,14 +497,14 @@ func (ui *Ui) Comp_editbox_desc(description string, description_alignH int, widt
 		ui.Comp_text(0, 0, 1, 1, description, description_alignH)
 	}
 
-	editedValue, active, changed, finished, div := ui.Comp_editbox(xx, 0, 1, 1, valueIn, value_precision, icon, ghost, highlight, tempToValue, multi_line, enable)
+	editedValue, active, changed, finished, div := ui.Comp_editbox(xx, 0, 1, 1, valueIn, value_precision, alignH, icon, ghost, highlight, tempToValue, multi_line, enable)
 
 	ui.Div_end()
 
 	return editedValue, active, changed, finished, div
 }
 
-func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, value_precision int, icon *WinMedia, ghost string, highlight bool, tempToValue bool, multi_line bool, enable bool) (string, bool, bool, bool, *UiLayoutDiv) {
+func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, value_precision int, alignH int, icon *WinMedia, ghost string, highlight bool, tempToValue bool, multi_line bool, enable bool) (string, bool, bool, bool, *UiLayoutDiv) {
 
 	ui.Div_start(x, y, w, h)
 	div := ui.GetCall().call
@@ -555,10 +533,10 @@ func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, value_precision 
 	var style UiComp
 	style.enable = enable
 	style.cd = CdPalette_B
-	style.label_alignH = 0
 	style.label_alignV = 1
+	style.label_alignH = uint8(alignH)
 
-	editedValue, active, changed, finished := ui.Comp_edit_s(&style, value, value, icon, ghost, highlight, tempToValue)
+	editedValue, active, changed, finished := ui.Comp_edit_s(&style, value, value, icon, ghost, highlight, tempToValue, multi_line)
 
 	if finished || tempToValue {
 		switch v := valueIn.(type) {
@@ -587,12 +565,9 @@ func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, value_precision 
 
 	return editedValue, active, changed, finished, div
 }
-func (ui *Ui) Comp_edit_s(style *UiComp, valueIn string, valueInOrig string, icon *WinMedia, ghost string, highlight bool, tempToValue bool) (string, bool, bool, bool) {
+func (ui *Ui) Comp_edit_s(style *UiComp, valueIn string, valueInOrig string, icon *WinMedia, ghost string, highlight bool, tempToValue bool, multi_line bool) (string, bool, bool, bool) {
 
 	lv := ui.GetCall()
-
-	lv.call.data.scrollH.narrow = true
-	lv.call.data.scrollV.show = false
 
 	pl := ui.win.io.GetPalette()
 	cd, onCd := pl.GetCd(style.cd, style.fade, style.enable, false, false)
@@ -604,7 +579,7 @@ func (ui *Ui) Comp_edit_s(style *UiComp, valueIn string, valueInOrig string, ico
 	edit := &ui.edit
 
 	inDiv := lv.call.FindOrCreate("", InitOsV4(0, 0, 1, 1), ui.GetLastApp())
-	this_uid := inDiv //.Hash()
+	this_uid := inDiv
 	edit_uid := edit.uid
 	active := (edit_uid != nil && edit_uid == this_uid)
 
@@ -634,11 +609,11 @@ func (ui *Ui) Comp_edit_s(style *UiComp, valueIn string, valueInOrig string, ico
 
 	prop := InitWinFontPropsDef(ui.win)
 	prop.enableFormating = style.label_formating
-	ui.Paint_textGrid(InitOsV4(0, 0, 1, 1), onCd, style, value, valueInOrig, prop, icon, true, true)
+	ui.Paint_textGrid(onCd, style, value, valueInOrig, prop, icon, true, true, multi_line)
 
 	//ghost
 	if len(edit.last_edit) == 0 && len(ghost) > 0 {
-		ui._compDrawText(coord, ghost, "", pl.GetGrey(0.7), prop, false, false, 1, int(style.label_alignV))
+		ui._compDrawText(coord, ghost, "", pl.GetGrey(0.7), prop, false, false, 1, int(style.label_alignV), false)
 	}
 
 	if style.enable {
@@ -670,7 +645,7 @@ func (ui *Ui) Comp_progress(style *UiComp, value float64, prec int) int64 {
 	//ui.Paint_textGrid(coord, onCd, style, strconv.FormatFloat(value*100, 'f', prec, 64)+"%", "", "", true, false)
 	prop := InitWinFontPropsDef(ui.win)
 	prop.enableFormating = style.label_formating
-	ui._compDrawText(coord, strconv.FormatFloat(value*100, 'f', prec, 64)+"%", "", onCd, prop, true, false, int(style.label_alignH), int(style.label_alignV))
+	ui._compDrawText(coord, strconv.FormatFloat(value*100, 'f', prec, 64)+"%", "", onCd, prop, true, false, int(style.label_alignH), int(style.label_alignV), false)
 
 	if style.enable {
 		if len(style.tooltip) > 0 {
@@ -902,9 +877,9 @@ func (ui *Ui) Comp_combo_s(style *UiComp, value string, options_names []string, 
 		}
 		prop := InitWinFontPropsDef(ui.win)
 		prop.enableFormating = style.label_formating
-		ui._compDrawText(coord, label, "", onCd, prop, false, false, int(style.label_alignH), int(style.label_alignV))
+		ui._compDrawText(coord, label, "", onCd, prop, false, false, int(style.label_alignH), int(style.label_alignV), false)
 		style.label_alignH = 2
-		ui._compDrawText(coord.AddSpace(ui.CellWidth(0.1)), "▼", "", onCd, prop, false, false, int(style.label_alignH), int(style.label_alignV))
+		ui._compDrawText(coord.AddSpace(ui.CellWidth(0.1)), "▼", "", onCd, prop, false, false, int(style.label_alignH), int(style.label_alignV), false)
 	}
 
 	//dialog
@@ -1036,7 +1011,6 @@ func (ui *Ui) Comp_checkbox_s(style *UiComp, value float64, label string) float6
 	}
 
 	pl := ui.win.io.GetPalette()
-	//backCd := pl.GetCd2(pl.GetGrey(0.1), false, style.enable, inside, active)
 	_, onCd := pl.GetCd(style.cd, style.fade, style.enable, inside, active)
 
 	mn := ui.CellWidth(0.5)
@@ -1050,10 +1024,9 @@ func (ui *Ui) Comp_checkbox_s(style *UiComp, value float64, label string) float6
 		ui.buff.AddRect(coordImg, onCd, ui.CellWidth(0.03)) //border
 
 		//text
-		//ui.Paint_textGrid(InitOsQuad(1, 0, 1, 1), pl.GetOnSurface(), style, label, "", "", true, false)
 		prop := InitWinFontPropsDef(ui.win)
 		prop.enableFormating = style.label_formating
-		ui._compDrawText(coordText, label, "", onCd, prop, false, false, int(style.label_alignH), int(style.label_alignV))
+		ui._compDrawText(coordText, label, "", onCd, prop, false, false, int(style.label_alignH), int(style.label_alignV), true)
 
 		coord = coordImg
 
@@ -1168,18 +1141,12 @@ func (ui *Ui) Comp_switch_s(style *UiComp, value bool, label string) bool {
 	}
 
 	pl := ui.win.io.GetPalette()
-	//backCd := pl.GetCd(style.cd, false)
-	//surfCd := pl.GetSurface()
-	//onSurfCd := pl.GetOnSurface()
-	//onCd := pl.GetCd(style.cd, true)
-
 	if !value {
 		style.cd = CdPalette_B
 	}
 
 	backCd, _ := pl.GetCd(style.cd, style.fade, style.enable, inside, active)
 	if !value {
-		//backCd = OsCd_Aprox(backCd, pl.GetSurface(), 0.3)
 		backCd = pl.GetCd2(pl.GetGrey(0.3), false, style.enable, inside, active)
 	}
 
@@ -1197,10 +1164,9 @@ func (ui *Ui) Comp_switch_s(style *UiComp, value bool, label string) bool {
 		coordImg = OsV4_centerFull(coordImg, OsV2{int(float32(mn) * 1.7), mn})
 
 		//text
-		//ui.Paint_textGrid(coordText, pl.GetOnSurface(), style, label, "", "", true, false)
 		prop := InitWinFontPropsDef(ui.win)
 		prop.enableFormating = style.label_formating
-		ui._compDrawText(coordText, label, "", labelOnCd, prop, false, false, int(style.label_alignH), int(style.label_alignV))
+		ui._compDrawText(coordText, label, "", labelOnCd, prop, false, false, int(style.label_alignH), int(style.label_alignV), true)
 
 		coord = coordImg
 

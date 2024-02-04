@@ -27,7 +27,7 @@ type UiLayoutEdit struct {
 	setFirstEditbox, tab bool
 
 	temp, orig string
-	start, end OsV2
+	start, end int
 
 	last_edit string //for every SA_Editbox call
 

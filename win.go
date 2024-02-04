@@ -761,7 +761,7 @@ func (win *Win) renderStats() error {
 	win.SetClipRect(cq)
 	depth := 990 //...
 	win.DrawRect(cq.Start, cq.End(), depth, win.io.GetPalette().B)
-	win.DrawText(text, InitWinFontPropsDef(win), cq, depth, OsV2{0, 1}, fCd)
+	win.DrawText(text, InitWinFontPropsDef(win), cq, depth, OsV2{0, 1}, fCd, 0, 1)
 
 	return nil
 }
@@ -955,10 +955,11 @@ func (win *Win) DrawPoly(start OsV2, points []OsV2f, depth int, cd OsCd, width f
 	}
 }
 
-func (win *Win) DrawText(text string, prop WinFontProps, coord OsV4, depth int, align OsV2, frontCd OsCd) {
-	item := win.gph.GetText(prop, text)
+func (win *Win) DrawText(ln string, prop WinFontProps, coord OsV4, depth int, align OsV2, frontCd OsCd, yLine, numLines int) {
+	item := win.gph.GetText(prop, ln)
 	if item != nil {
-		start := win.GetTextStart(text, prop, coord, align)
+		start := win.GetTextStart(ln, prop, coord, align, numLines)
+		start.Y += yLine * prop.lineH
 
 		item.item.DrawCut(OsV4{Start: start, Size: item.size}, depth, frontCd)
 
@@ -966,49 +967,34 @@ func (win *Win) DrawText(text string, prop WinFontProps, coord OsV4, depth int, 
 	}
 }
 
-func (win *Win) GetTextSize(cur_pos int, text string, prop WinFontProps) OsV2 {
-	return win.gph.GetTextSize(prop, cur_pos, text)
+func (win *Win) GetTextSize(cur_pos int, ln string, prop WinFontProps) OsV2 {
+	return win.gph.GetTextSize(prop, cur_pos, ln)
 }
 
-func (win *Win) GetTextPos(touchPos OsV2, text string, prop WinFontProps, coord OsV4, align OsV2) int {
-	start := win.GetTextStart(text, prop, coord, align)
+func (win *Win) GetTextPos(touchPx int, ln string, prop WinFontProps, coord OsV4, align OsV2) int {
+	start := win.GetTextStart(ln, prop, coord, align, 1)
 
-	return win.gph.GetTextPos(prop, (touchPos.X - start.X), text)
+	return win.gph.GetTextPos(prop, (touchPx - start.X), ln)
 }
 
-func (win *Win) GetTextStart(text string, prop WinFontProps, coord OsV4, align OsV2) OsV2 {
+func (win *Win) GetTextStartLine(ln string, prop WinFontProps, coord OsV4, align OsV2, numLines int) OsV2 {
+	lnSize := win.GetTextSize(-1, ln, prop)
+	size := OsV2{lnSize.X, numLines * prop.lineH}
+	return coord.Align(size, align)
+}
 
-	size := win.GetTextSize(-1, text, prop)
+func (win *Win) GetTextStart(ln string, prop WinFontProps, coord OsV4, align OsV2, numLines int) OsV2 {
 
-	start := coord.Start
+	//lineH
+	lnSize := win.GetTextSize(-1, ln, prop)
+	size := OsV2{lnSize.X, numLines * prop.lineH}
+	start := coord.Align(size, align)
 
-	if align.X == 0 {
-		// left
-		// pos.x += H / 2
-	} else if align.X == 1 {
-		// center
-		if size.X > coord.Size.X {
-			start.X = coord.Start.X // + H / 2
-		} else {
-			start.X = coord.Middle().X - size.X/2
-		}
-	} else {
-		// right
-		start.X = coord.End().X - size.X
-	}
-
-	// y
-	if size.Y >= coord.Size.Y {
-		start.Y += (coord.Size.Y - size.Y) / 2
-	} else {
-		if align.Y == 0 {
-			start.Y = coord.Start.Y // + H / 2
-		} else if align.Y == 1 {
-			start.Y += (coord.Size.Y - size.Y) / 2
-		} else if align.Y == 2 {
-			start.Y += (coord.Size.Y) - size.Y
-		}
-	}
+	//letters
+	coord.Start = start
+	coord.Size.X = size.X
+	coord.Size.Y = prop.lineH
+	start = coord.Align(lnSize, align)
 
 	return start
 }
@@ -1041,7 +1027,7 @@ func (win *Win) RenderTile(text string, coord OsV4, priorUp bool, frontCd OsCd) 
 	win.DrawRect(cq.Start, cq.End(), depth, win.io.GetPalette().B)
 	win.DrawRect_border(cq.Start, cq.End(), depth, win.io.GetPalette().OnB, 1)
 	cq.Size.Y /= num_lines
-	win.DrawText(text, InitWinFontPropsDef(win), cq, depth, OsV2{1, 1}, frontCd)
+	win.DrawText(text, InitWinFontPropsDef(win), cq, depth, OsV2{1, 1}, frontCd, 0, 1)
 
 	return nil
 }
