@@ -622,6 +622,103 @@ func SAExe_Render_List(w *SANode, renderIt bool) {
 	}
 }
 
+func SAExe_Render_Table(w *SANode, renderIt bool) {
+	ui := w.app.base.ui
+	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
+
+	grid := w.GetGrid()
+
+	resizable := w.GetAttrUi("resizable", "0", SAAttrUi_SWITCH).GetBool()
+	columnsAttr := w.GetAttr("columns", `["a", "b"]`)
+	rowsAttr := w.GetAttr("rows", `[{"a":1, "b":2}, {"a":10, "b":20}, {"a":100, "b":200}]`)
+
+	if showIt {
+		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
+
+		//rows
+		var rows []map[string]interface{}
+		err := json.Unmarshal([]byte(rowsAttr.GetString()), &rows)
+		if err != nil {
+			rowsAttr.SetErrorExe(err.Error())
+		}
+
+		//columns
+		var columnNames []string
+		if columnsAttr.GetString() != "" {
+			err := json.Unmarshal([]byte(columnsAttr.GetString()), &columnNames)
+			if err != nil {
+				columnsAttr.SetErrorExe(err.Error())
+			}
+		} else {
+			if len(rows) > 0 {
+				for key := range rows[0] {
+					columnNames = append(columnNames, key)
+				}
+			}
+		}
+		sort.Strings(columnNames)
+
+		for c, name := range columnNames {
+			if resizable {
+				ui.Div_colResize(1+c, name, 4, false)
+			} else {
+				ui.Div_colMax(1+c, 100)
+			}
+		}
+		ui.Div_col(1+len(columnNames), 0.5) //extra empty
+
+		ui.Div_rowMax(1, 100)
+
+		//show columns
+		ui.Comp_text(0, 0, 1, 1, "#", 1)
+		for c, col := range columnNames {
+			ui.Comp_buttonLight(1+c, 0, 1, 1, col, "", true)
+		}
+
+		parentId := ui.DivInfo_get(SA_DIV_GET_uid, 0)
+		ui.Div_start(0, 1, 1+len(columnNames)+1, 1)
+		{
+			//copy cols from parent
+			ui.DivInfo_set(SA_DIV_SET_copyCols, parentId, 0)
+			ui.DivInfo_set(SA_DIV_SET_scrollOnScreen, 1, 0)
+			ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
+
+			//visible rows
+			lv := ui.GetCall()
+			row_st := lv.call.data.scrollV.GetWheel() / ui.win.Cell()
+			row_en := row_st + OsRoundUp(float64(lv.call.crop.Size.Y)/float64(ui.win.Cell()))
+			if len(rows) > 0 {
+				ui.Div_row(len(rows)-1, 1) //set last
+			}
+
+			//show rows(only visible)
+			for r := row_st; r <= row_en && r < len(rows); r++ {
+
+				ui.Comp_text(0, r, 1, 1, strconv.Itoa(r), 1) //row #
+
+				for c, col := range columnNames {
+					item := rows[r][col]
+					switch vv := item.(type) {
+					case int:
+						ui.Comp_text(1+c, r, 1, 1, strconv.Itoa(vv), 1) //+1 => header
+					case float64:
+						ui.Comp_text(1+c, r, 1, 1, strconv.FormatFloat(vv, 'f', -1, 64), 1)
+					case string:
+						ui.Comp_text(1+c, r, 1, 1, vv, 1)
+					}
+				}
+			}
+		}
+		ui.Div_end()
+
+		//rect around
+		pl := ui.win.io.GetPalette()
+		ui.Paint_rect(0, 0, 1, 1, 0, pl.P, 0.03)
+
+		ui.Div_end()
+	}
+}
+
 func SAExe_Render_Microphone(w *SANode, renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
