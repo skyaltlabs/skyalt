@@ -35,6 +35,7 @@ type DiskDb struct {
 
 func NewDiskDb(path string, inMemory bool, disk *Disk) (*DiskDb, error) {
 	var db DiskDb
+	db.path = path
 	db.disk = disk
 	db.inMemory = inMemory
 
