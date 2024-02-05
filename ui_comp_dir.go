@@ -20,9 +20,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
-func (ui *Ui) comp_dirPicker(x, y, w, h int, path *string, selectFile bool, enable bool) bool {
+func (ui *Ui) comp_dirPicker(x, y, w, h int, path *string, selectFile bool, dialogName string, enable bool) bool {
 	origPath := *path
 
 	ui.Div_start(x, y, w, h)
@@ -32,12 +33,12 @@ func (ui *Ui) comp_dirPicker(x, y, w, h int, path *string, selectFile bool, enab
 	exist := OsTrnBool(selectFile, OsFileExists(*path), OsFolderExists(*path))
 
 	if ui.Comp_buttonError(0, 0, 1, 1, *path, "Select file/folder", !exist, enable) > 0 {
-		ui.Dialog_open("dir_picker", 1)
+		ui.Dialog_open(dialogName, 1)
 		ui.dir = UiDir{tempPath: *path} //reset
 	}
 	ui.Div_end()
 
-	dialogOpen := ui.Dialog_start("dir_picker")
+	dialogOpen := ui.Dialog_start(dialogName)
 	if dialogOpen {
 		if ui.comp_dir(selectFile) {
 			*path = ui.dir.tempPath
@@ -118,11 +119,16 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 			return false
 		}
 
+		searches := strings.Split(strings.ToLower(ui.dir.search), " ")
 		y := 0
 		for _, f := range dir {
 			isDir := f.IsDir()
 			if !selectFile && !isDir {
 				continue //skip files when picking folder
+			}
+
+			if ui.dir.search != "" && !SAApp_IsSearchedName(f.Name(), searches) {
+				continue
 			}
 
 			iconFile := OsTrnString(isDir, "folder.png", "file.png")
@@ -213,7 +219,7 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 		}
 
 		//search
-		ui.Comp_editbox(3, 0, 1, 1, &ui.dir.search, 0, 0, nil, "Search", false, false, false, true) //highlight ..............
+		ui.Comp_editbox(3, 0, 1, 1, &ui.dir.search, 0, 0, nil, "Search", ui.dir.search != "", true, false, true)
 	}
 	ui.Div_end()
 
