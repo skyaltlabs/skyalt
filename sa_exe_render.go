@@ -248,7 +248,7 @@ func SAExe_Render_ColorPalette(w *SANode, renderIt bool) {
 	}
 }
 
-func SAExe_Render_Color(w *SANode, renderIt bool) {
+func SAExe_Render_ColorPicker(w *SANode, renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
 
@@ -263,6 +263,36 @@ func SAExe_Render_Color(w *SANode, renderIt bool) {
 			cdAttr.ReplaceCd(cd)
 		}
 	}
+}
+
+func _SAExe_Render_FileAndDirPicker(selectFile bool, w *SANode, renderIt bool) {
+	ui := w.app.base.ui
+	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
+
+	grid := w.GetGrid()
+
+	uiV := SAAttrUi_DIR
+	if selectFile {
+		uiV = SAAttrUi_FILE
+	}
+
+	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool()
+	pathAttr := w.GetAttrUi("path", "", uiV)
+	path := pathAttr.GetString()
+
+	if showIt {
+		if ui.comp_dirPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &path, selectFile, enable) {
+			pathAttr.SetExpString(path, false)
+		}
+	}
+}
+
+func SAExe_Render_FilePicker(w *SANode, renderIt bool) {
+	_SAExe_Render_FileAndDirPicker(true, w, renderIt)
+}
+
+func SAExe_Render_FolderPicker(w *SANode, renderIt bool) {
+	_SAExe_Render_FileAndDirPicker(false, w, renderIt)
 }
 
 func SAExe_Render_Calendar(w *SANode, renderIt bool) {
