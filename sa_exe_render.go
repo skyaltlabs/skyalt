@@ -70,6 +70,7 @@ func SAExe_Render_Button(w *SANode, renderIt bool) {
 	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool()
 	tp := w.GetAttrUi("type", "0", SAAttrUi_COMBO("Classic;Light;Menu", "")).GetInt()
 	label := w.GetAttr("label", "").GetString()
+	clickedAttr := w.GetAttrUi("clicked", "0", SAAttrUi_SWITCH)
 
 	clicked := false
 	switch tp {
@@ -94,7 +95,8 @@ func SAExe_Render_Button(w *SANode, renderIt bool) {
 	}
 
 	if clicked {
-		w.app.clickedAttr = w.GetAttrUi("clicked", "0", SAAttrUi_SWITCH)
+		clickedAttr.SetExpBool(true)
+		clickedAttr.exePostExpSet = "0"
 	}
 }
 

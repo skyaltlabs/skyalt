@@ -64,6 +64,8 @@ type SANodeAttr struct {
 	errExe error
 
 	exeMark bool
+
+	exePostExpSet string //empty = ignore
 }
 
 func (attr *SANodeAttr) IsOutput() bool {

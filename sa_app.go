@@ -68,8 +68,7 @@ type SAApp struct {
 
 	iconPath string
 
-	clickedAttr *SANodeAttr
-	setAttrs    []SASetAttr
+	setAttrs []SASetAttr
 }
 
 func (a *SAApp) init(base *SABase) {
@@ -123,20 +122,7 @@ func (app *SAApp) RenderApp(ide bool) {
 		node = app.act
 	}
 
-	//when button is clicked: clicked=1 -> render -> clicked=0
-	if app.clickedAttr != nil {
-		app.clickedAttr.SetExpBool(true)
-		app.Execute()
-		node.renderLayout()
-		app.clickedAttr.SetExpBool(false)
-		app.Execute()
-
-		app.clickedAttr = nil
-	} else {
-		//st := OsTime()
-		node.renderLayout()
-		//fmt.Println(OsTime() - st)
-	}
+	node.renderLayout()
 
 	if len(app.setAttrs) > 0 {
 		for _, st := range app.setAttrs {
@@ -778,6 +764,8 @@ func (app *SAApp) Execute() {
 	app.root.markUnusedAttrs()
 
 	app.ExecuteList(list)
+
+	app.root.PostExe()
 
 	app.exeIt = false
 
