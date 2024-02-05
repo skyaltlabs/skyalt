@@ -241,10 +241,10 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 			y++
 		}
 
-		ui.Comp_editbox_desc(ui.trns.DPI, 0, 4, 1, y, 1, 2, &ini.Dpi, 0, 0, nil, "", false, false, false, true)
+		ui.Comp_editbox_desc(ui.trns.DPI, 0, 4, 1, y, 1, 2, &ini.Dpi, 0, OsV2{0, 1}, nil, "", false, false, false, true)
 		y += 2
 
-		ui.Comp_editbox_desc(ui.trns.THREADS, 0, 4, 1, y, 1, 2, &ini.Threads, 0, 0, nil, "", false, false, false, true)
+		ui.Comp_editbox_desc(ui.trns.THREADS, 0, 4, 1, y, 1, 2, &ini.Threads, 0, OsV2{0, 1}, nil, "", false, false, false, true)
 		y += 2
 
 		ui.Comp_switch(1, y, 1, 1, &ini.Stats, false, ui.trns.SHOW_STATS, "", true)
@@ -394,7 +394,7 @@ func (base *SABase) drawLauncher(app *SAApp, icon_rad float64) {
 			if ui.Dialog_start(renameDialog) {
 				ui.Div_colMax(0, 5)
 
-				ui.Comp_editbox(0, 0, 1, 1, &base.NewAppName, 0, 0, nil, "", false, true, false, true)
+				ui.Comp_editbox(0, 0, 1, 1, &base.NewAppName, 0, OsV2{0, 1}, nil, "", false, true, false, true)
 				if ui.Comp_button(0, 1, 1, 1, ui.trns.RENAME, "", base.NewAppName != "") > 0 {
 					if OsFileRename(app.GetFolderPath(), SAApp_GetNewFolderPath(base.NewAppName)) == nil {
 						app.Name = base.NewAppName
@@ -428,7 +428,7 @@ func (base *SABase) drawLauncher(app *SAApp, icon_rad float64) {
 			if ui.Dialog_start("new_app") {
 				ui.Div_colMax(0, 10)
 
-				ui.Comp_editbox(0, 0, 1, 1, &base.NewAppName, 0, 0, nil, "", false, false, false, true)
+				ui.Comp_editbox(0, 0, 1, 1, &base.NewAppName, 0, OsV2{0, 1}, nil, "", false, false, false, true)
 
 				if ui.Comp_button(0, 1, 1, 1, ui.trns.CREATE_APP, "", true) > 0 {
 					OsFolderCreate("apps/" + base.NewAppName)

@@ -155,7 +155,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 		}
 
 		//ui.Comp_image(0, 0, 1, 1, node.app.base.node_groups.FindNodeGroupIcon(node.Exe), InitOsCdWhite(), 0.3, 1, 1, false)	//icon
-		ui.Comp_textSelect(0, 0, 2, 1, nm, 1, false, false)
+		ui.Comp_textSelect(0, 0, 2, 1, nm, OsV2{1, 1}, false, false)
 	}
 	ui.Div_end()
 

@@ -598,7 +598,7 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 					}
 
 					ui.Div_colMax(0, 100)
-					ui.Comp_editbox(0, 0, 1, 1, &gr.node_search, 0, 0, nil, ui.trns.SEARCH, gr.node_search != "", true, false, true)
+					ui.Comp_editbox(0, 0, 1, 1, &gr.node_search, 0, OsV2{0, 1}, nil, ui.trns.SEARCH, gr.node_search != "", true, false, true)
 					if ui.Comp_buttonText(1, 0, 1, 1, "X", "", ui.trns.CLOSE, true, false) > 0 {
 						gr.showNodeList = false //hide
 					}

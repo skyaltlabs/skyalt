@@ -105,16 +105,17 @@ func SAExe_Render_Text(w *SANode, renderIt bool) {
 	grid := w.GetGrid()
 
 	label := w.GetAttr("label", "").GetString()
-	align := w.GetAttrUi("align", "0", SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
+	align_h := w.GetAttrUi("align_h", "0", SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
+	align_v := w.GetAttrUi("align_v", "1", SAAttrUi_COMBO("Top;Center;Bottom", "")).GetInt()
 	selection := w.GetAttrUi("selection", "1", SAAttrUi_SWITCH).GetBool()
 	multi_line := w.GetAttrUi("multi_line", "0", SAAttrUi_SWITCH).GetBool()
 	drawBorder := w.GetAttrUi("draw_border", "1", SAAttrUi_SWITCH).GetBool()
 
 	if showIt {
 		if multi_line {
-			ui.Comp_textSelectMulti(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, align, selection, drawBorder)
+			ui.Comp_textSelectMulti(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, OsV2{align_h, align_v}, selection, drawBorder)
 		} else {
-			ui.Comp_textSelect(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, align, selection, drawBorder)
+			ui.Comp_textSelect(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, OsV2{align_h, align_v}, selection, drawBorder)
 		}
 	}
 }
@@ -193,7 +194,8 @@ func SAExe_Render_Editbox(w *SANode, renderIt bool) {
 	valueInstr := valueAttr.instr.GetConst()
 	value := valueAttr.GetString()
 
-	align := w.GetAttrUi("align", "0", SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
+	align_h := w.GetAttrUi("align_h", "0", SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
+	align_v := w.GetAttrUi("align_v", "1", SAAttrUi_COMBO("Top;Center;Bottom", "")).GetInt()
 	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool() && valueInstr != nil
 	tmpToValue := w.GetAttrUi("tempToValue", "0", SAAttrUi_SWITCH).GetBool()
 	precision := w.GetAttr("precision", "2").GetInt()
@@ -203,7 +205,7 @@ func SAExe_Render_Editbox(w *SANode, renderIt bool) {
 	//temp, tempChanged? ...
 
 	if showIt {
-		_, _, chngd, fnshd, _ := ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, precision, align, nil, ghost, false, tmpToValue, multi_line, enable)
+		_, _, chngd, fnshd, _ := ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, precision, OsV2{align_h, align_v}, nil, ghost, false, tmpToValue, multi_line, enable)
 		if fnshd || (tmpToValue && chngd) {
 			valueInstr.LineReplace(value, false)
 		}
@@ -404,7 +406,7 @@ func SAExe_Render_FileDrop(w *SANode, renderIt bool) {
 			ui.Div_end()
 			ui.Comp_text(0, 0, 1, 1, "Drag file & drop it here", 1)
 
-			_, _, _, fnshd, _ := ui.Comp_editbox(0, 1, 1, 1, &value, 0, 0, nil, "path", false, false, false, true)
+			_, _, _, fnshd, _ := ui.Comp_editbox(0, 1, 1, 1, &value, 0, OsV2{0, 1}, nil, "path", false, false, false, true)
 			if fnshd {
 				instr.LineReplace(value, false)
 			}

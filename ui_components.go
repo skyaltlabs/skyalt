@@ -452,15 +452,15 @@ func (ui *Ui) Comp_text(x, y, w, h int, label string, alignH int) *UiLayoutDiv {
 	return div
 }
 
-func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, alignH int, selection bool, drawBorder bool) *UiLayoutDiv {
+func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, align OsV2, selection bool, drawBorder bool) *UiLayoutDiv {
 	ui.Div_start(x, y, w, h)
 	div := ui.GetCall().call
 
 	var style UiComp
 	style.enable = true
 	style.cd = CdPalette_B
-	style.label_alignV = 1
-	style.label_alignH = uint8(alignH)
+	style.label_alignV = uint8(align.Y)
+	style.label_alignH = uint8(align.X)
 	style.label_formating = true
 
 	ui.Comp_text_s(&style, label, nil, selection, false)
@@ -473,15 +473,15 @@ func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, alignH int, selectio
 	ui.Div_end()
 	return div
 }
-func (ui *Ui) Comp_textSelectMulti(x, y, w, h int, label string, alignH int, selection bool, drawBorder bool) *UiLayoutDiv {
+func (ui *Ui) Comp_textSelectMulti(x, y, w, h int, label string, align OsV2, selection bool, drawBorder bool) *UiLayoutDiv {
 	ui.Div_start(x, y, w, h)
 	div := ui.GetCall().call
 
 	var style UiComp
 	style.enable = true
 	style.cd = CdPalette_B
-	style.label_alignV = 1
-	style.label_alignH = uint8(alignH)
+	style.label_alignV = uint8(align.Y)
+	style.label_alignH = uint8(align.X)
 	style.label_formating = true
 
 	ui.Comp_text_s(&style, label, nil, selection, true)
@@ -509,7 +509,7 @@ func (ui *Ui) Comp_text_s(style *UiComp, value string, icon *WinMedia, selection
 	ui.Paint_textGrid(onCd, style, value, "", InitWinFontPropsDef(ui.win), icon, selection, false, multi_line)
 }
 
-func (ui *Ui) Comp_editbox_desc(description string, description_alignH int, width float64, x, y, w, h int, valueIn interface{}, value_precision int, alignH int, icon *WinMedia, ghost string, highlight bool, tempToValue bool, multi_line bool, enable bool) (string, bool, bool, bool, *UiLayoutDiv) {
+func (ui *Ui) Comp_editbox_desc(description string, description_alignH int, width float64, x, y, w, h int, valueIn interface{}, value_precision int, align OsV2, icon *WinMedia, ghost string, highlight bool, tempToValue bool, multi_line bool, enable bool) (string, bool, bool, bool, *UiLayoutDiv) {
 	ui.Div_start(x, y, w, h)
 
 	xx := 0
@@ -525,14 +525,14 @@ func (ui *Ui) Comp_editbox_desc(description string, description_alignH int, widt
 		ui.Comp_text(0, 0, 1, 1, description, description_alignH)
 	}
 
-	editedValue, active, changed, finished, div := ui.Comp_editbox(xx, 0, 1, 1, valueIn, value_precision, alignH, icon, ghost, highlight, tempToValue, multi_line, enable)
+	editedValue, active, changed, finished, div := ui.Comp_editbox(xx, 0, 1, 1, valueIn, value_precision, align, icon, ghost, highlight, tempToValue, multi_line, enable)
 
 	ui.Div_end()
 
 	return editedValue, active, changed, finished, div
 }
 
-func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, value_precision int, alignH int, icon *WinMedia, ghost string, highlight bool, tempToValue bool, multi_line bool, enable bool) (string, bool, bool, bool, *UiLayoutDiv) {
+func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, value_precision int, align OsV2, icon *WinMedia, ghost string, highlight bool, tempToValue bool, multi_line bool, enable bool) (string, bool, bool, bool, *UiLayoutDiv) {
 
 	ui.Div_start(x, y, w, h)
 	div := ui.GetCall().call
@@ -561,8 +561,8 @@ func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, value_precision 
 	var style UiComp
 	style.enable = enable
 	style.cd = CdPalette_B
-	style.label_alignV = 1
-	style.label_alignH = uint8(alignH)
+	style.label_alignV = uint8(align.Y)
+	style.label_alignH = uint8(align.X)
 
 	editedValue, active, changed, finished := ui.Comp_edit_s(&style, value, value, icon, ghost, highlight, tempToValue, multi_line)
 

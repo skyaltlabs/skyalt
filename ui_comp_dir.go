@@ -97,7 +97,7 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 		}
 
 		//path
-		ui.Comp_editbox(3, 0, 1, 1, &ui.dir.tempPath, 0, 0, nil, "", false, false, false, true)
+		ui.Comp_editbox(3, 0, 1, 1, &ui.dir.tempPath, 0, OsV2{0, 1}, nil, "", false, false, false, true)
 
 		//open
 		if ui.Comp_button(4, 0, 1, 1, "Select", "", true) > 0 {
@@ -181,7 +181,7 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 			ui.Div_colMax(0, 5)
 			ui.Div_colMax(1, 3)
 
-			ui.Comp_editbox(0, 0, 1, 1, &ui.dir.create, 0, 0, nil, "Name", false, true, false, true)
+			ui.Comp_editbox(0, 0, 1, 1, &ui.dir.create, 0, OsV2{0, 1}, nil, "Name", false, true, false, true)
 
 			if ui.Comp_button(1, 0, 1, 1, "Create File", "", ui.dir.create != "") > 0 {
 				pt := directory
@@ -203,7 +203,7 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 			ui.Div_colMax(0, 5)
 			ui.Div_colMax(1, 3)
 
-			ui.Comp_editbox(0, 0, 1, 1, &ui.dir.create, 0, 0, nil, "Name", false, true, false, true)
+			ui.Comp_editbox(0, 0, 1, 1, &ui.dir.create, 0, OsV2{0, 1}, nil, "Name", false, true, false, true)
 
 			if ui.Comp_button(1, 0, 1, 1, "Create Folder", "", ui.dir.create != "") > 0 {
 				pt := directory
@@ -219,7 +219,7 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 		}
 
 		//search
-		ui.Comp_editbox(3, 0, 1, 1, &ui.dir.search, 0, 0, nil, "Search", ui.dir.search != "", true, false, true)
+		ui.Comp_editbox(3, 0, 1, 1, &ui.dir.search, 0, OsV2{0, 1}, nil, "Search", ui.dir.search != "", true, false, true)
 	}
 	ui.Div_end()
 
