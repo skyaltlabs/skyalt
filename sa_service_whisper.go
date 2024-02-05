@@ -24,20 +24,11 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
-	"sync"
-	"time"
 )
-
-type SAServiceWhisperCppQue struct {
-	model string
-	blob  OsBlob
-}
 
 type SAServiceWhisperCpp struct {
 	addr string //http://127.0.0.1:8080/
 
-	mu    sync.Mutex
-	que   []SAServiceWhisperCppQue
 	cache map[string]string //results
 
 	last_setModel string
@@ -65,14 +56,10 @@ func NewSAServiceWhisperCpp(addr string) *SAServiceWhisperCpp {
 		}
 	}
 
-	go wh.tick() //run service in 2nd thread
-
 	return wh
 }
 func (wh *SAServiceWhisperCpp) Destroy() {
-
-	//wait for tick() thread to finish? ...
-
+	//save cache
 	js, err := json.Marshal(wh.cache)
 	if err == nil {
 		os.WriteFile(SAServiceWhisperCpp_cachePath(), js, 0644)
@@ -80,49 +67,11 @@ func (wh *SAServiceWhisperCpp) Destroy() {
 }
 
 func (wh *SAServiceWhisperCpp) findCache(model string, blob OsBlob) (string, bool) {
-	wh.mu.Lock()
-	defer wh.mu.Unlock()
-
 	str, found := wh.cache[model+blob.hash.Hex()]
 	return str, found
 }
 func (wh *SAServiceWhisperCpp) addCache(model string, blob OsBlob, value string) {
-	wh.mu.Lock()
-	defer wh.mu.Unlock()
-
 	wh.cache[model+blob.hash.Hex()] = value
-}
-
-func (wh *SAServiceWhisperCpp) addQue(model string, blob OsBlob) {
-	wh.mu.Lock()
-	defer wh.mu.Unlock()
-
-	//find
-	for _, q := range wh.que {
-		if q.model == model && q.blob.CmpHash(&blob) {
-			return //already exist
-		}
-	}
-
-	//find
-	wh.que = append(wh.que, SAServiceWhisperCppQue{model: model, blob: blob})
-}
-func (wh *SAServiceWhisperCpp) getFirstQue() (SAServiceWhisperCppQue, bool) {
-	wh.mu.Lock()
-	defer wh.mu.Unlock()
-
-	if len(wh.que) > 0 {
-		return wh.que[0], true //found
-	}
-	return SAServiceWhisperCppQue{}, false //not found
-}
-func (wh *SAServiceWhisperCpp) removeFirstQue() {
-	wh.mu.Lock()
-	defer wh.mu.Unlock()
-
-	if len(wh.que) > 0 {
-		wh.que = wh.que[1:]
-	}
 }
 
 func (wh *SAServiceWhisperCpp) Translate(model string, blob OsBlob) (string, float64, bool, error) {
@@ -132,38 +81,22 @@ func (wh *SAServiceWhisperCpp) Translate(model string, blob OsBlob) (string, flo
 		return str, 1, true, nil
 	}
 
-	wh.addQue(model, blob)
-	return "", 0.5, false, nil
-}
-
-func (wh *SAServiceWhisperCpp) tick() {
-	for {
-		que, ok := wh.getFirstQue()
-		if ok {
-			//set model
-			if que.model != wh.last_setModel {
-				err := wh.setModel(que.model)
-				if err != nil {
-					fmt.Println("setModel() error:", err.Error())
-					wh.removeFirstQue()
-					continue
-				}
-			}
-
-			//translace
-			str, err := wh.translate(que.blob)
-			if err != nil {
-				fmt.Println("translate() error:", err.Error())
-				wh.removeFirstQue()
-				continue
-			}
-
-			wh.addCache(que.model, que.blob, str)
-			wh.removeFirstQue()
-		} else {
-			time.Sleep(time.Millisecond * 10)
+	//set model
+	if model != wh.last_setModel {
+		err := wh.setModel(model)
+		if err != nil {
+			return "", 0, false, fmt.Errorf("setModel() failed: %w", err)
 		}
 	}
+
+	//translate
+	str, err := wh.translate(blob)
+	if err != nil {
+		return "", 0, false, fmt.Errorf("translate() failed: %w", err)
+	}
+
+	wh.addCache(model, blob, str)
+	return str, 1, true, nil
 }
 
 func (wh *SAServiceWhisperCpp) setModel(model string) error {

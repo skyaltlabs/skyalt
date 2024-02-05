@@ -23,20 +23,11 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"sync"
-	"time"
 )
-
-type SAServiceLLamaCppQue struct {
-	model string
-	blob  OsBlob
-}
 
 type SAServiceLLamaCpp struct {
 	addr string //http://127.0.0.1:8080/
 
-	mu    sync.Mutex
-	que   []SAServiceLLamaCppQue
 	cache map[string]string //results
 }
 
@@ -62,14 +53,10 @@ func NewSAServiceLLamaCpp(addr string) *SAServiceLLamaCpp {
 		}
 	}
 
-	go wh.tick() //run service in 2nd thread
-
 	return wh
 }
 func (wh *SAServiceLLamaCpp) Destroy() {
-
-	//wait for tick() thread to finish? ...
-
+	//save cache
 	js, err := json.Marshal(wh.cache)
 	if err == nil {
 		os.WriteFile(SAServiceLLamaCpp_cachePath(), js, 0644)
@@ -77,49 +64,11 @@ func (wh *SAServiceLLamaCpp) Destroy() {
 }
 
 func (wh *SAServiceLLamaCpp) findCache(model string, blob OsBlob) (string, bool) {
-	wh.mu.Lock()
-	defer wh.mu.Unlock()
-
 	str, found := wh.cache[model+blob.hash.Hex()]
 	return str, found
 }
 func (wh *SAServiceLLamaCpp) addCache(model string, blob OsBlob, value string) {
-	wh.mu.Lock()
-	defer wh.mu.Unlock()
-
 	wh.cache[model+blob.hash.Hex()] = value
-}
-
-func (wh *SAServiceLLamaCpp) addQue(model string, blob OsBlob) {
-	wh.mu.Lock()
-	defer wh.mu.Unlock()
-
-	//find
-	for _, q := range wh.que {
-		if q.model == model && q.blob.CmpHash(&blob) {
-			return //already exist
-		}
-	}
-
-	//find
-	wh.que = append(wh.que, SAServiceLLamaCppQue{model: model, blob: blob})
-}
-func (wh *SAServiceLLamaCpp) getFirstQue() (SAServiceLLamaCppQue, bool) {
-	wh.mu.Lock()
-	defer wh.mu.Unlock()
-
-	if len(wh.que) > 0 {
-		return wh.que[0], true //found
-	}
-	return SAServiceLLamaCppQue{}, false //not found
-}
-func (wh *SAServiceLLamaCpp) removeFirstQue() {
-	wh.mu.Lock()
-	defer wh.mu.Unlock()
-
-	if len(wh.que) > 0 {
-		wh.que = wh.que[1:]
-	}
 }
 
 func (wh *SAServiceLLamaCpp) Complete(model string, blob OsBlob) (string, float64, bool, error) {
@@ -129,28 +78,13 @@ func (wh *SAServiceLLamaCpp) Complete(model string, blob OsBlob) (string, float6
 		return str, 1, true, nil
 	}
 
-	wh.addQue(model, blob)
-	return "", 0.5, false, nil
-}
-
-func (wh *SAServiceLLamaCpp) tick() {
-	for {
-		que, ok := wh.getFirstQue()
-		if ok {
-			//translace
-			str, err := wh.complete(que.blob)
-			if err != nil {
-				fmt.Println("complete() error:", err.Error())
-				wh.removeFirstQue()
-				continue
-			}
-
-			wh.addCache(que.model, que.blob, str)
-			wh.removeFirstQue()
-		} else {
-			time.Sleep(time.Millisecond * 10)
-		}
+	str, err := wh.complete(blob)
+	if err != nil {
+		return "", 0, false, fmt.Errorf("complete() failed: %w", err)
 	}
+
+	wh.addCache(model, blob, str)
+	return str, 1, true, nil
 }
 
 func (wh *SAServiceLLamaCpp) complete(blob OsBlob) (string, error) {
