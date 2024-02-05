@@ -750,10 +750,6 @@ func (app *SAApp) ExecuteList(list []*SANode) {
 							continue
 						}
 						v.ExecuteExpression()
-						//bug co když navazuji na _out attr, který se ale spočítá až dole v it.Execute()
-						//+ změna db - recompute .....
-						//+ změna service - recompute .....
-						//==>> vypsat warning že navazování na _out attr ve stejném node je zakázáno ......................
 					}
 
 					if !it.Bypass && (!app.IDE || app.EnableExecution) { //ignore in releaseMode
