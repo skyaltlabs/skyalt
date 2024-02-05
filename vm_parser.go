@@ -334,8 +334,13 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 func (line *VmLine) addAccess(node *SANode, attrName string, instr *VmInstr, lexer *VmLexer, mainAttr *SANodeAttr) {
 	vv := node.findAttr(attrName)
 	if vv != nil {
-		instr.accessAttr = vv
-		mainAttr.depends = append(mainAttr.depends, vv) //add
+
+		if line.attr.node != node || !vv.IsOutput() {
+			instr.accessAttr = vv
+			mainAttr.depends = append(mainAttr.depends, vv) //add
+		} else {
+			line.addError(lexer, fmt.Sprintf("Can not read _OUTPUT attribute(%s) from same node", attrName))
+		}
 	} else {
 		line.addError(lexer, fmt.Sprintf("Attribute(%s) not found", attrName))
 	}
