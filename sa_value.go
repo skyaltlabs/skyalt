@@ -34,6 +34,25 @@ func InitSAValue() SAValue {
 	return SAValue{value: ""}
 }
 
+func InitSAValueInteface(v interface{}) *SAValue {
+	val := &SAValue{}
+
+	switch vv := v.(type) {
+	case string:
+		val.value = vv
+	case float64:
+		val.value = v
+	case int:
+		val.value = float64(vv)
+	case []byte:
+		val.value = InitOsBlob(vv)
+	case OsBlob:
+		val.value = vv
+	}
+
+	return val
+}
+
 func (v *SAValue) SetNumber(val float64) {
 	v.value = val
 }
@@ -265,7 +284,7 @@ func (v *SAValue) GetArrayItem(i int) *SAValue {
 		return nil
 	}
 
-	return &SAValue{value: arr[i]}
+	return InitSAValueInteface(arr[i])
 }
 
 func (v *SAValue) GetMapItem(i int) (string, *SAValue) {
@@ -288,7 +307,7 @@ func (v *SAValue) GetMapItem(i int) (string, *SAValue) {
 	ii := 0
 	for _, key := range keys {
 		if i == ii {
-			return key, &SAValue{value: arr[key]}
+			return key, InitSAValueInteface(arr[key])
 		}
 		ii++
 	}
@@ -314,7 +333,7 @@ func (v *SAValue) GetMapKey(key string) *SAValue {
 		return nil
 	}
 
-	return &SAValue{value: ret}
+	return InitSAValueInteface(ret)
 }
 
 func (A *SAValue) Cmp(B *SAValue, sameType bool) int {
