@@ -14,7 +14,7 @@ class MyHandler(BaseHTTPRequestHandler):
         code = received_json['code']
         attrs = received_json['attrs']
         errStr = ""
-        
+          
         try:
             exec(code, {}, attrs)
         except SyntaxError as err:
