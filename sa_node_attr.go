@@ -165,7 +165,9 @@ func (attr *SANodeAttr) GetMapItem(i int) (string, *SAValue) {
 }
 
 func (attr *SANodeAttr) SetOutBlob(blob []byte) {
-	attr.GetResult().SetBlob(blob)
+	attr.instr = NewVmInstr(VmBasic_Constant, nil, attr)
+	attr.instr.temp.SetBlob(blob)
+	//attr.GetResult().SetBlob(blob)
 }
 
 func (attr *SANodeAttr) CheckForLoopAttr(find *SANodeAttr) {
@@ -203,9 +205,9 @@ func (attr *SANodeAttr) ParseExpresion() {
 
 func (attr *SANodeAttr) ExecuteExpression() {
 
-	if attr.IsOutput() {
-		return
-	}
+	//if attr.IsOutput() {
+	//	return
+	//}
 
 	if attr.errExp != nil {
 		return
