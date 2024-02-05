@@ -846,11 +846,11 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 				}
 			}
 		} else if uiVal.Fn == SAAttrUi_DIR.Fn {
-			if ui.comp_dirPicker(x, y, w, h, &value, false, editable) {
+			if ui.comp_dirPicker(x, y, w, h, &value, false, "attr_folder", editable) {
 				instr.LineReplace(value, false)
 			}
 		} else if uiVal.Fn == SAAttrUi_FILE.Fn {
-			if ui.comp_dirPicker(x, y, w, h, &value, true, editable) {
+			if ui.comp_dirPicker(x, y, w, h, &value, true, "attr_file", editable) {
 				instr.LineReplace(value, false)
 			}
 		} else if instr != nil && uiVal.Fn == SAAttrUi_BLOB.Fn {
