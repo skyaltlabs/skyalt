@@ -125,6 +125,11 @@ func VmApi_Exp(instr *VmInstr, st *VmST) SAValue {
 	return instr.temp
 }
 
+func VmApi_Time(instr *VmInstr, st *VmST) SAValue {
+	instr.temp.SetInt(int(OsTicks()))
+	return instr.temp
+}
+
 type VmApi struct {
 	prior int
 	name  string
@@ -178,6 +183,8 @@ func NewVmApis() *VmApis {
 	apis._Add(VmApi{0, "atan", 1, VmApi_ATan})
 	apis._Add(VmApi{0, "log", 1, VmApi_Log})
 	apis._Add(VmApi{0, "exp", 1, VmApi_Exp})
+
+	apis._Add(VmApi{0, "time", 0, VmApi_Time})
 
 	return &apis
 }
