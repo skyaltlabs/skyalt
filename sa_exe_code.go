@@ -37,16 +37,23 @@ func SAExe_Code_python(node *SANode) bool {
 	}
 
 	//set attributes to json
-	attrsList := make(map[string]interface{})
+	attrsJs := "{"
 	for _, a := range node.Attrs {
 		if a.Name == "code" || a.IsOutput() {
 			continue //skip
 		}
-		attrsList[a.Name] = a.GetResult().value
+
+		attrsJs += "\"" + a.Name + "\":"
+		attrsJs += a.GetResult().StringWithQuotes()
+		attrsJs += ","
 	}
+	attrsJs, _ = strings.CutSuffix(attrsJs, ",")
+	attrsJs += "}"
+
+	bodyJs := fmt.Sprintf(`{"code":"%s","attrs":%s}`, OsText_PrintToRaw(code), attrsJs)
 
 	//run python on service server
-	outAttrs, errStr, err := node.app.base.service_python.Exec(code, attrsList)
+	outAttrs, errStr, err := node.app.base.service_python.Exec([]byte(bodyJs))
 	if err != nil {
 		codeAttr.SetErrorExe(err.Error())
 		return false

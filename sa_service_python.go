@@ -38,19 +38,10 @@ func NewSAServicePython(addr string) *SAServicePython {
 func (py *SAServicePython) Destroy() {
 }
 
-func (py *SAServicePython) Exec(code string, attrsList map[string]interface{}) (map[string]interface{}, string, error) {
-
-	type Pyth struct {
-		Code  string                 `json:"code"`
-		Attrs map[string]interface{} `json:"attrs"`
-	}
-	jsonBody, err := json.Marshal(Pyth{Code: code, Attrs: attrsList})
-	if err != nil {
-		return nil, "", fmt.Errorf("Marshal() failed: %v", err)
-	}
+func (py *SAServicePython) Exec(bodyJs []byte) (map[string]interface{}, string, error) {
 
 	// send code and attributes
-	body := bytes.NewReader([]byte(jsonBody))
+	body := bytes.NewReader(bodyJs)
 	req, err := http.NewRequest(http.MethodPost, py.addr, body)
 	if err != nil {
 		return nil, "", fmt.Errorf("NewRequest() failed: %v", err)
