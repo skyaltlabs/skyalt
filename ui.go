@@ -44,6 +44,12 @@ type UiLayoutDrag struct {
 	id    int //maybe string? ...
 }
 
+type UiDir struct {
+	tempPath string
+	create   string
+	search   string
+}
+
 type Ui struct {
 	win *Win
 
@@ -58,6 +64,7 @@ type Ui struct {
 	edit         UiLayoutEdit
 	drag         UiLayoutDrag
 	touch        UiLayoutTouch
+	dir          UiDir
 
 	base_app  *UiLayoutApp
 	app_calls []*UiLayoutApp
