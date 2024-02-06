@@ -648,13 +648,22 @@ func (gph *WinGph) GetStringSize(prop WinFontProps, str string) (OsV2, fixed.Int
 			continue
 		}
 
+		isTab := (ch == '\t')
+		if isTab {
+			ch = ' '
+		}
+
 		face := gph.GetFont(&act_prop).GetFace(&act_prop).face
 
 		if prevCh >= 0 {
 			w += face.Kern(prevCh, ch)
 		}
-		a, _ := face.GlyphAdvance(ch)
-		w += a
+		advance, _ := face.GlyphAdvance(ch)
+		if isTab {
+			advance *= 4
+		}
+
+		w += advance
 		prevCh = ch
 
 		m := face.Metrics()
@@ -696,6 +705,11 @@ func (gph *WinGph) drawString(prop WinFontProps, str string) *WinGphItemText {
 			continue
 		}
 
+		isTab := (ch == '\t')
+		if isTab {
+			ch = ' '
+		}
+
 		d.Face = gph.GetFont(&act_prop).GetFace(&act_prop).face
 
 		if prevCh >= 0 {
@@ -706,6 +720,10 @@ func (gph *WinGph) drawString(prop WinFontProps, str string) *WinGphItemText {
 		if !dr.Empty() {
 			draw.DrawMask(d.Dst, dr, d.Src, image.Point{}, mask, maskp, draw.Over)
 		}
+		if isTab {
+			advance *= 4
+		}
+
 		d.Dot.X += advance
 		prevCh = ch
 	}
