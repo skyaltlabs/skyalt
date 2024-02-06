@@ -269,7 +269,7 @@ func (io *WinIO) SetDPI(dpi int) {
 }
 
 func (io *WinIO) Cell() int {
-	return int(float32(io.GetDPI()) / 2.5) // 2.9f
+	return int(float32(io.GetDPI()) / 2.4)
 }
 
 func (io *WinIO) GetPalette() *WinCdPalette {
