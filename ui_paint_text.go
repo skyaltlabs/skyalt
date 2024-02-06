@@ -71,7 +71,7 @@ func (ui *Ui) Paint_textGrid(
 		size.Y -= 0.5 //make space for narrow h-scroll
 	}
 
-	size.X = OsMaxFloat32(size.X, float32(lv.call.crop.Size.X)/float32((ui.win.Cell()))) //minimum sizeX is over whole div(user can click at the end)
+	size.X = OsMaxFloat32(size.X, float32(lv.call.canvas.Size.X)/float32((ui.win.Cell()))) //minimum sizeX is over whole div(user can click at the end)
 
 	ui.Div_col(0, float64(size.X))
 	ui.Div_row(0, float64(size.Y))
