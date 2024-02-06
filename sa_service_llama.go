@@ -89,7 +89,7 @@ func (wh *SAServiceLLamaCpp) Complete(model string, blob OsBlob) (string, float6
 
 func (wh *SAServiceLLamaCpp) complete(blob OsBlob) (string, error) {
 
-	aa := OsText_PrintToRaw(string(blob.data))
+	aa := OsText_RAWtoJSON(string(blob.data))
 
 	//stream = true ............
 	jsonBody := fmt.Sprintf(`{

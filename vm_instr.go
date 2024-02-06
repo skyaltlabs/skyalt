@@ -100,7 +100,7 @@ func (instr *VmInstr) LineReplace(value string, mapOrArray bool) {
 	}
 
 	if value != "" {
-		value = OsText_PrintToRaw(value)
+		value = OsText_RAWtoJSON(value)
 
 		_, err := strconv.ParseFloat(value, 64)
 		if err != nil && !mapOrArray {

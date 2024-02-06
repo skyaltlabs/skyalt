@@ -156,7 +156,7 @@ func (line *VmLine) getConstant(lexer *VmLexer) (bool, *VmInstr) {
 		ch := line.line[lexer.start]
 		if ch == '"' {
 			instr := NewVmInstr(VmBasic_Constant, lexer, line.attr)
-			instr.temp.SetString(OsText_RawToPrint(lexer.GetString(line.line)))
+			instr.temp.SetString(OsText_JSONtoRAW(lexer.GetString(line.line)))
 			return true, instr
 		}
 

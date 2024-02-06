@@ -944,7 +944,7 @@ func (fl *OsFileList) FindInSubs(name string, isDir bool) int {
 	return -1
 }
 
-func OsText_RawToPrint(str string) string {
+func OsText_JSONtoRAW(str string) string {
 
 	v := strings.Clone(str)
 
@@ -955,7 +955,7 @@ func OsText_RawToPrint(str string) string {
 	return v
 }
 
-func OsText_PrintToRaw(str string) string {
+func OsText_RAWtoJSON(str string) string {
 
 	v := strings.Clone(str)
 
