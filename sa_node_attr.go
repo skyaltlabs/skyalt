@@ -31,6 +31,7 @@ var SAAttrUi_SWITCH = SAAttrUiValue{Fn: "switch"}
 var SAAttrUi_CHECKBOX = SAAttrUiValue{Fn: "checkbox"}
 var SAAttrUi_DATE = SAAttrUiValue{Fn: "date"}
 var SAAttrUi_COLOR = SAAttrUiValue{Fn: "color"}
+var SAAttrUi_CODE = SAAttrUiValue{Fn: "Code"}
 var SAAttrUi_DIR = SAAttrUiValue{Fn: "dir"}
 var SAAttrUi_FILE = SAAttrUiValue{Fn: "file"}
 var SAAttrUi_BLOB = SAAttrUiValue{Fn: "blob"}

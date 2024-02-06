@@ -23,7 +23,7 @@ import (
 
 func SAExe_Code_python(node *SANode) bool {
 
-	codeAttr := node.GetAttr("code", "")
+	codeAttr := node.GetAttrUi("code", "", SAAttrUi_CODE)
 
 	//check code
 	code := codeAttr.GetString()

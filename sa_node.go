@@ -424,7 +424,7 @@ func (w *SANode) Execute() bool {
 	}
 
 	w.exeTimeSec = OsTime() - st
-	//fmt.Printf("'%s' done in %.2fs\n", w.Name, w.exeTimeSec)
+	fmt.Printf("'%s' done in %.2fs\n", w.Name, w.exeTimeSec)
 	return ok
 }
 
@@ -641,7 +641,6 @@ func (w *SANode) _getAttr(find bool, defValue SANodeAttr) *SANodeAttr {
 	}
 
 	v.defaultValue = defValue.Value //update
-	v.Ui = defValue.Ui
 	v.exeMark = true
 	return v
 }
@@ -798,7 +797,9 @@ func _SANode_renderAttrValueHeight(attr *SANodeAttr, attr_instr *VmInstr, uiVal 
 
 		instr := attr_instr.GetConst()
 
-		if instr != nil && VmCallback_Cmp(instr.fn, VmBasic_InitArray) {
+		if instr != nil && uiVal.Fn == SAAttrUi_CODE.Fn {
+			height = 5
+		} else if instr != nil && VmCallback_Cmp(instr.fn, VmBasic_InitArray) {
 			item_pre_row := (uiVal.Fn == "map")
 			n := instr.NumPrms()
 			if item_pre_row {
@@ -857,6 +858,16 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 				if editable {
 					instr.pos_attr.ReplaceCd(cd)
 				}
+			}
+		} else if instr != nil && uiVal.Fn == SAAttrUi_CODE.Fn {
+
+			// \t
+			// \n
+			//vertical align? ...
+
+			_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h+4, &value, 0, OsV2{0, 1}, nil, "", false, false, true, editable)
+			if fnshd {
+				instr.LineReplace(value, false)
 			}
 		} else if uiVal.Fn == SAAttrUi_DIR.Fn {
 			if ui.comp_dirPicker(x, y, w, h, &value, false, "attr_folder", editable) {
