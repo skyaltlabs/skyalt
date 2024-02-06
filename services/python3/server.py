@@ -42,9 +42,13 @@ class MyHandler(BaseHTTPRequestHandler):
         self.wfile.write(bytes(js, "utf8"))
 
 def run(server_class=HTTPServer, handler_class=MyHandler):
-    server_address = ('', 8092)
+    port = 8080
+    if len(sys.argv) > 1:
+        port = int(sys.argv[1])
+    
+    server_address = ('', port)
     httpd = server_class(server_address, handler_class)
-    print('Starting httpd...')
+    print('HTTP server is runnning on port', port)
     httpd.serve_forever()
 
 if __name__ == "__main__":
