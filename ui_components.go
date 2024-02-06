@@ -27,8 +27,7 @@ type UiComp struct {
 	shape           uint8 //0=rect, 1=sphere
 	cd              uint8
 	fade            bool
-	label_alignV    uint8
-	label_alignH    uint8
+	label_align     OsV2
 	label_formating bool
 	image_alignV    uint8
 	image_alignH    uint8
@@ -123,7 +122,7 @@ func (ui *Ui) _compDrawImage(coord OsV4, icon WinMedia, cd OsCd, style *UiComp) 
 func (ui *Ui) _compDrawText(coord OsV4,
 	value string, valueOrigEdit string,
 	frontCd OsCd, prop WinFontProps,
-	selection bool, editable bool, alignH int, alignV int, multi_line bool) {
+	selection bool, editable bool, align OsV2, multi_line bool) {
 
 	lv := ui.GetCall()
 
@@ -141,7 +140,7 @@ func (ui *Ui) _compDrawText(coord OsV4,
 		value, valueOrigEdit,
 		frontCd,
 		prop,
-		"", alignH, alignV,
+		"", align,
 		selection, editable, true, multi_line)
 
 	if active {
@@ -164,8 +163,7 @@ func (ui *Ui) _buttonBasicStyle(enable bool, tooltip string) UiComp {
 	style.tooltip = tooltip
 	style.enable = enable
 	style.cd = CdPalette_P
-	style.label_alignH = 1
-	style.label_alignV = 1
+	style.label_align = OsV2{1, 1}
 	style.image_alignH = 0
 	style.image_alignV = 1
 	return style
@@ -304,7 +302,7 @@ func (ui *Ui) Comp_buttonMenuIcon(x, y, w, h int, label string, icon WinMedia, i
 	ui.Div_start(x, y, w, h)
 
 	style := ui._buttonBasicStyle(enable, tooltip)
-	style.label_alignH = 0
+	style.label_align = OsV2{0, 1}
 	style.image_margin = iconMargin
 	if !selected {
 		style.cd = CdPalette_B
@@ -325,7 +323,7 @@ func (ui *Ui) Comp_buttonMenu(x, y, w, h int, label string, tooltip string, enab
 	ui.Div_start(x, y, w, h)
 
 	style := ui._buttonBasicStyle(enable, tooltip)
-	style.label_alignH = 0
+	style.label_align = OsV2{0, 1}
 	if !selected {
 		style.cd = CdPalette_B
 	}
@@ -403,7 +401,7 @@ func (ui *Ui) Comp_button_s(style *UiComp, value string, icon *WinMedia, url str
 	if len(value) > 0 {
 		prop := InitWinFontPropsDef(ui.win)
 		prop.enableFormating = style.label_formating
-		ui._compDrawText(coordText, value, "", onCd, prop, false, false, int(style.label_alignH), int(style.label_alignV), true)
+		ui._compDrawText(coordText, value, "", onCd, prop, false, false, style.label_align, true)
 	}
 
 	if style.enable {
@@ -427,7 +425,7 @@ func (ui *Ui) Comp_textIcon(x, y, w, h int, label string, icon WinMedia, iconMar
 	var style UiComp
 	style.enable = true
 	style.cd = CdPalette_B
-	style.label_alignV = 1
+	style.label_align = OsV2{0, 1}
 	style.image_alignV = 1
 	style.image_margin = iconMargin
 
@@ -443,8 +441,7 @@ func (ui *Ui) Comp_text(x, y, w, h int, label string, alignH int) *UiLayoutDiv {
 	var style UiComp
 	style.enable = true
 	style.cd = CdPalette_B
-	style.label_alignV = 1
-	style.label_alignH = uint8(alignH)
+	style.label_align = OsV2{alignH, 1}
 
 	ui.Comp_text_s(&style, label, nil, true, false)
 
@@ -459,8 +456,7 @@ func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, align OsV2, selectio
 	var style UiComp
 	style.enable = true
 	style.cd = CdPalette_B
-	style.label_alignV = uint8(align.Y)
-	style.label_alignH = uint8(align.X)
+	style.label_align = align
 	style.label_formating = true
 
 	ui.Comp_text_s(&style, label, nil, selection, false)
@@ -480,8 +476,7 @@ func (ui *Ui) Comp_textSelectMulti(x, y, w, h int, label string, align OsV2, sel
 	var style UiComp
 	style.enable = true
 	style.cd = CdPalette_B
-	style.label_alignV = uint8(align.Y)
-	style.label_alignH = uint8(align.X)
+	style.label_align = align
 	style.label_formating = true
 
 	ui.Comp_text_s(&style, label, nil, selection, true)
@@ -561,8 +556,7 @@ func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, value_precision 
 	var style UiComp
 	style.enable = enable
 	style.cd = CdPalette_B
-	style.label_alignV = uint8(align.Y)
-	style.label_alignH = uint8(align.X)
+	style.label_align = align
 
 	editedValue, active, changed, finished := ui.Comp_edit_s(&style, value, value, icon, ghost, highlight, tempToValue, multi_line)
 
@@ -641,7 +635,7 @@ func (ui *Ui) Comp_edit_s(style *UiComp, valueIn string, valueInOrig string, ico
 
 	//ghost
 	if len(edit.last_edit) == 0 && len(ghost) > 0 {
-		ui._compDrawText(coord, ghost, "", pl.GetGrey(0.7), prop, false, false, 1, int(style.label_alignV), false)
+		ui._compDrawText(coord, ghost, "", pl.GetGrey(0.7), prop, false, false, style.label_align, false)
 	}
 
 	if style.enable {
@@ -673,7 +667,7 @@ func (ui *Ui) Comp_progress(style *UiComp, value float64, prec int) int64 {
 	//ui.Paint_textGrid(coord, onCd, style, strconv.FormatFloat(value*100, 'f', prec, 64)+"%", "", "", true, false)
 	prop := InitWinFontPropsDef(ui.win)
 	prop.enableFormating = style.label_formating
-	ui._compDrawText(coord, strconv.FormatFloat(value*100, 'f', prec, 64)+"%", "", onCd, prop, true, false, int(style.label_alignH), int(style.label_alignV), false)
+	ui._compDrawText(coord, strconv.FormatFloat(value*100, 'f', prec, 64)+"%", "", onCd, prop, true, false, style.label_align, false)
 
 	if style.enable {
 		if len(style.tooltip) > 0 {
@@ -831,7 +825,7 @@ func (ui *Ui) Comp_combo(x, y, w, h int, valueIn *string, options_names []string
 
 	var style UiComp
 	style.cd = CdPalette_B
-	style.label_alignV = 1
+	style.label_align = OsV2{0, 1}
 	style.enable = enable
 	style.tooltip = tooltip
 
@@ -905,9 +899,9 @@ func (ui *Ui) Comp_combo_s(style *UiComp, value string, options_names []string, 
 		}
 		prop := InitWinFontPropsDef(ui.win)
 		prop.enableFormating = style.label_formating
-		ui._compDrawText(coord, label, "", onCd, prop, false, false, int(style.label_alignH), int(style.label_alignV), false)
-		style.label_alignH = 2
-		ui._compDrawText(coord.AddSpace(ui.CellWidth(0.1)), "▼", "", onCd, prop, false, false, int(style.label_alignH), int(style.label_alignV), false)
+		ui._compDrawText(coord, label, "", onCd, prop, false, false, style.label_align, false)
+		style.label_align.X = 2
+		ui._compDrawText(coord.AddSpace(ui.CellWidth(0.1)), "▼", "", onCd, prop, false, false, style.label_align, false)
 	}
 
 	//dialog
@@ -978,7 +972,7 @@ func (ui *Ui) Comp_checkbox(x, y, w, h int, valueIn interface{}, reverseValue bo
 
 	var style UiComp
 	style.cd = CdPalette_B
-	style.label_alignV = 1
+	style.label_align = OsV2{0, 1}
 	style.enable = enable
 	style.tooltip = tooltip
 
@@ -1054,7 +1048,7 @@ func (ui *Ui) Comp_checkbox_s(style *UiComp, value float64, label string) float6
 		//text
 		prop := InitWinFontPropsDef(ui.win)
 		prop.enableFormating = style.label_formating
-		ui._compDrawText(coordText, label, "", onCd, prop, false, false, int(style.label_alignH), int(style.label_alignV), true)
+		ui._compDrawText(coordText, label, "", onCd, prop, false, false, style.label_align, true)
 
 		coord = coordImg
 
@@ -1110,7 +1104,7 @@ func (ui *Ui) Comp_switch(x, y, w, h int, valueIn interface{}, reverseValue bool
 
 	var style UiComp
 	style.cd = CdPalette_P
-	style.label_alignV = 1
+	style.label_align = OsV2{0, 1}
 	style.enable = enable
 	style.tooltip = tooltip
 
@@ -1194,7 +1188,7 @@ func (ui *Ui) Comp_switch_s(style *UiComp, value bool, label string) bool {
 		//text
 		prop := InitWinFontPropsDef(ui.win)
 		prop.enableFormating = style.label_formating
-		ui._compDrawText(coordText, label, "", labelOnCd, prop, false, false, int(style.label_alignH), int(style.label_alignV), true)
+		ui._compDrawText(coordText, label, "", labelOnCd, prop, false, false, style.label_align, true)
 
 		coord = coordImg
 

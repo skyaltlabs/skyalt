@@ -84,7 +84,7 @@ func (ui *Ui) Paint_textGrid(
 			ui._compDrawImage(coordImage, *icon, frontCd, style)
 		}
 		if editable || len(value) > 0 {
-			ui._compDrawText(coordText, value, valueOrigEdit, frontCd, prop, selection, editable, int(style.label_alignH), int(style.label_alignV), multi_line)
+			ui._compDrawText(coordText, value, valueOrigEdit, frontCd, prop, selection, editable, style.label_align, multi_line)
 		}
 	}
 	ui.Div_end()
@@ -715,12 +715,11 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 	frontCd OsCd,
 	prop WinFontProps,
 	font_path string,
-	alignH, alignV int,
+	align OsV2,
 	selection, editable, tabIsChar bool, multi_line bool) bool {
 
 	lv := ui.GetCall()
 
-	align := OsV2{int(alignH), int(alignV)}
 	edit := &ui.edit
 	keys := &ui.win.io.keys
 	touch := &ui.win.io.touch
@@ -845,7 +844,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 		sy, ey := _UiPaint_GetLineYCrop(startY, len(lines), coord, lv.call.crop, prop) //only rows which are on screen
 		for y := sy; y < ey; y++ {
 			st, en := _UiPaint_PosLineRange(lines, y)
-			ui.buff.AddText(value[st:en], prop, coord, frontCd, align, y, len(lines))
+			ui.buff.AddText(value[st:en], prop, coord, frontCd, OsV2{align.X, 1}, y, len(lines))
 		}
 
 	} else {
