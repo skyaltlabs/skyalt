@@ -57,6 +57,7 @@ type SANodeAttr struct {
 	Ui      SAAttrUiValue `json:",omitempty"`
 
 	defaultValue string
+	defaultUi    SAAttrUiValue
 
 	instr   *VmInstr
 	depends []*SANodeAttr

@@ -641,6 +641,7 @@ func (w *SANode) _getAttr(find bool, defValue SANodeAttr) *SANodeAttr {
 	}
 
 	v.defaultValue = defValue.Value //update
+	v.defaultUi = defValue.Ui       //update
 	v.exeMark = true
 	return v
 }
@@ -1306,9 +1307,16 @@ func (w *SANode) RenderAttrs() {
 					ui.Div_colMax(0, 5)
 					y := 0
 
-					//default
+					//default value
 					if ui.Comp_buttonMenu(0, y, 1, 1, "Set default value", "", true, false) > 0 {
 						it.Value = it.defaultValue
+						ui.Dialog_close()
+					}
+					y++
+
+					//default UI
+					if ui.Comp_buttonMenu(0, y, 1, 1, "Set default interface", "", true, false) > 0 {
+						it.Ui = it.defaultUi
 						ui.Dialog_close()
 					}
 					y++
