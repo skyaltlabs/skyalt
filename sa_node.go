@@ -861,12 +861,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 				}
 			}
 		} else if instr != nil && uiVal.Fn == SAAttrUi_CODE.Fn {
-
-			// \t
-			// \n
-			//vertical align? ...
-
-			_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h+4, &value, 0, OsV2{0, 1}, nil, "", false, false, true, editable)
+			_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, 0, OsV2{0, 0}, nil, "", false, false, true, editable)
 			if fnshd {
 				instr.LineReplace(value, false)
 			}
