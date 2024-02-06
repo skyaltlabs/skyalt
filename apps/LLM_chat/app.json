@@ -3,9 +3,9 @@
 "X": 0,
 "Y": 0
 },
-"Cam_x": 5.8452372550964355,
-"Cam_y": 1.4568870067596436,
-"Cam_z": 1,
+"Cam_x": 4.792605400085449,
+"Cam_y": 1.6824508905410767,
+"Cam_z": 0.7000000000000001,
 "Name": "root",
 "Exe": "layout",
 "Attrs": [
@@ -100,7 +100,6 @@
 "Cam_z": 1,
 "Name": "code_python",
 "Exe": "code_python",
-"Selected": true,
 "Attrs": [
 {
 "Name": "code",
@@ -217,16 +216,17 @@
 },
 {
 "Pos": {
-"X": 3.7255478,
-"Y": 4.7638364
+"X": 3.8383298,
+"Y": 5.515716
 },
 "Cam_z": 1,
 "Name": "vars",
 "Exe": "vars",
+"Selected": true,
 "Attrs": [
 {
 "Name": "attr",
-"Value": "if(llama2_7b._text !=\"\", get(llama2_7b._text, \"content\"), \"\")",
+"Value": "if(llama2_7b._text !=\"\", cleanText(get(llama2_7b._text, \"content\")), \"\")",
 "ShowExp": true,
 "Ui": {
 "HideAddDel": false
@@ -280,8 +280,8 @@
 },
 {
 "Pos": {
-"X": -4.6833982,
-"Y": -0.107142895
+"X": -4.720992,
+"Y": -0.069548905
 },
 "Cam_z": 1,
 "Name": "chat_history",
