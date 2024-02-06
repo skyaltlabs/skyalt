@@ -24,11 +24,11 @@ import (
 
 func VmApi_If(instr *VmInstr, st *VmST) SAValue {
 	o := instr.ExePrm(st, 0)
-	return instr.ExePrm(st, OsTrn(o.Is(), 1, 2))
+	instr.temp = instr.ExePrm(st, OsTrn(o.Is(), 1, 2))
+	return instr.temp
 }
 
 func VmApi_Not(instr *VmInstr, st *VmST) SAValue {
-
 	o := instr.ExePrm(st, 0)
 	instr.temp.SetBool(!o.Is())
 	return instr.temp
