@@ -130,6 +130,45 @@ func VmApi_Time(instr *VmInstr, st *VmST) SAValue {
 	return instr.temp
 }
 
+func VmApi_CleanText(instr *VmInstr, st *VmST) SAValue {
+	str := instr.ExePrmString(st, 0)
+
+	var found bool
+
+	//prefix
+	found = true
+	for found {
+		str, found = strings.CutPrefix(str, " ")
+		if !found {
+			str, found = strings.CutPrefix(str, "\t")
+			if !found {
+				str, found = strings.CutPrefix(str, "\n")
+				if !found {
+					str, found = strings.CutPrefix(str, "\r")
+				}
+			}
+		}
+	}
+
+	//suffix
+	found = true
+	for found {
+		str, found = strings.CutSuffix(str, " ")
+		if !found {
+			str, found = strings.CutSuffix(str, "\t")
+			if !found {
+				str, found = strings.CutSuffix(str, "\n")
+				if !found {
+					str, found = strings.CutSuffix(str, "\r")
+				}
+			}
+		}
+	}
+
+	instr.temp.SetString(str)
+	return instr.temp
+}
+
 type VmApi struct {
 	prior int
 	name  string
@@ -168,6 +207,8 @@ func NewVmApis() *VmApis {
 	apis._Add(VmApi{0, "get", 2, VmApi_Get})
 	apis._Add(VmApi{0, "array", 2, VmApi_Array})
 	apis._Add(VmApi{0, "compress", 1, VmApi_Compress})
+
+	apis._Add(VmApi{0, "cleanText", 1, VmApi_CleanText})
 
 	apis._Add(VmApi{0, "min", 2, VmApi_Min})
 	apis._Add(VmApi{0, "max", 2, VmApi_Max})
