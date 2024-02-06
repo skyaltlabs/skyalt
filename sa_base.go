@@ -105,7 +105,7 @@ func (base *SABase) Destroy() {
 func (base *SABase) Save() {
 	//apps
 	for _, a := range base.Apps {
-		if a.root != nil && a.saveIt {
+		if a.root != nil {
 			a.root.Save(a.GetJsonPath())
 		}
 	}

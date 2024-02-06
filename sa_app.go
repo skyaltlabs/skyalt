@@ -54,9 +54,8 @@ type SAApp struct {
 	history_divScroll     *UiLayoutDiv
 	history_divSroll_time float64
 
-	saveIt bool
-	exeIt  bool
-	exe    *SAAppExe
+	exeIt bool
+	exe   *SAAppExe
 
 	graph  *SAGraph
 	canvas SACanvas
@@ -388,7 +387,6 @@ func (app *SAApp) History(ui *Ui) {
 	if len(app.history) == 0 {
 		app.addHistory(true, false)
 		app.history_pos = 0
-		app.saveIt = false
 	}
 
 	lv := ui.GetCall()
@@ -663,7 +661,6 @@ func (app *SAApp) addHistory(exeIt bool, rewriteLast bool) {
 		app.history_act = append(app.history_act, cp_act)
 		app.history_pos++
 	}
-	app.saveIt = true
 	if exeIt {
 		app.SetExecute()
 	}

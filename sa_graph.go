@@ -510,7 +510,6 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 				if over && touch.wheel != 0 {
 					zoom := OsClampFloat(float64(gr.app.act.Cam_z)+float64(touch.wheel)*-0.1, 0.2, 2) //zoom += wheel
 					gr.app.act.Cam_z = zoom
-					gr.app.saveIt = true
 
 					touch.wheel = 0
 				}
@@ -538,7 +537,6 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 
 					gr.app.act.Cam_x = float64(gr.cam_start.Sub(r).X)
 					gr.app.act.Cam_y = float64(gr.cam_start.Sub(r).Y)
-					gr.app.saveIt = true
 				}
 
 				if gr.node_select {
