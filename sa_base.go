@@ -31,8 +31,6 @@ type SABase struct {
 
 	exit bool
 
-	server *SANodeServer
-
 	mic                   *WinMic
 	mic_actived_last_tick int64
 	mic_nodes             []*SANode
@@ -71,12 +69,6 @@ func NewSABase(ui *Ui) (*SABase, error) {
 		}
 	}
 
-	var err error
-	base.server, err = NewSANodeServer("nodes", 4567)
-	if err != nil {
-		return nil, fmt.Errorf("NewNodeServer() failed: %w", err)
-	}
-
 	base.Refresh()
 
 	return base, nil
@@ -98,8 +90,6 @@ func (base *SABase) Destroy() {
 	for _, a := range base.Apps {
 		a.Destroy()
 	}
-
-	base.server.Destroy()
 }
 
 func (base *SABase) Save() {
