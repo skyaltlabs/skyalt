@@ -133,36 +133,24 @@ func VmApi_Time(instr *VmInstr, st *VmST) SAValue {
 func VmApi_CleanText(instr *VmInstr, st *VmST) SAValue {
 	str := instr.ExePrmString(st, 0)
 
-	var found bool
+	var found [4]bool
 
 	//prefix
-	found = true
-	for found {
-		str, found = strings.CutPrefix(str, " ")
-		if !found {
-			str, found = strings.CutPrefix(str, "\t")
-			if !found {
-				str, found = strings.CutPrefix(str, "\n")
-				if !found {
-					str, found = strings.CutPrefix(str, "\r")
-				}
-			}
-		}
+	found[0], found[1], found[2], found[3] = true, true, true, true
+	for found[0] || found[1] || found[2] || found[3] {
+		str, found[0] = strings.CutPrefix(str, " ")
+		str, found[1] = strings.CutPrefix(str, "\t")
+		str, found[2] = strings.CutPrefix(str, "\n")
+		str, found[3] = strings.CutPrefix(str, "\r")
 	}
 
 	//suffix
-	found = true
-	for found {
-		str, found = strings.CutSuffix(str, " ")
-		if !found {
-			str, found = strings.CutSuffix(str, "\t")
-			if !found {
-				str, found = strings.CutSuffix(str, "\n")
-				if !found {
-					str, found = strings.CutSuffix(str, "\r")
-				}
-			}
-		}
+	found[0], found[1], found[2], found[3] = true, true, true, true
+	for found[0] || found[1] || found[2] || found[3] {
+		str, found[0] = strings.CutSuffix(str, " ")
+		str, found[1] = strings.CutSuffix(str, "\t")
+		str, found[2] = strings.CutSuffix(str, "\n")
+		str, found[3] = strings.CutSuffix(str, "\r")
 	}
 
 	instr.temp.SetString(str)
