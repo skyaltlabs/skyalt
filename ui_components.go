@@ -166,6 +166,7 @@ func (ui *Ui) _buttonBasicStyle(enable bool, tooltip string) UiComp {
 	style.label_align = OsV2{1, 1}
 	style.image_alignH = 0
 	style.image_alignV = 1
+	style.label_formating = true
 	return style
 }
 
