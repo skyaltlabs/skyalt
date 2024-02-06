@@ -38,23 +38,12 @@ func SAExe_NN_whisper_cpp(node *SANode) bool {
 	return true
 }
 
-/*
-_chat = ""
-for r in rows:
-	bot = int(r[0])
-	if bot == 0:
-		_chat += "\\nUser: "
-	else:
-		_chat += "\\nLlama: "
-	_chat += r[1]
-_next = intro + "\\n" + _chat + "\\nLlama: "
-*/
-
 func SAExe_NN_llama_cpp(node *SANode) bool {
+	triggerAttr := node.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
+
 	modelAttr := node.GetAttr("model", "\"models/llama-2-7b.Q5_K_M.gguf\"")
 	textAttr := node.GetAttr("text", "\"This is a conversation between User and Llama, a friendly chatbot. Llama is helpful, kind, honest, good at writing, and never fails to answer any requests immediately and with precision.\n\nUser: How Are you doing?\nLlama:\"") //blob
 	_textAttr := node.GetAttr("_text", "")
-
 	//seed ...
 
 	if modelAttr.GetString() == "" {
@@ -62,14 +51,18 @@ func SAExe_NN_llama_cpp(node *SANode) bool {
 		return false
 	}
 
-	str, progress, _, err := node.app.base.service_llama_cpp.Complete(modelAttr.GetString(), textAttr.GetBlob())
-	if err != nil {
-		node.SetError(err.Error())
-		return false
-	}
+	if triggerAttr.GetBool() {
+		str, progress, _, err := node.app.base.service_llama_cpp.Complete(modelAttr.GetString(), textAttr.GetBlob())
+		if err != nil {
+			node.SetError(err.Error())
+			return false
+		}
 
-	node.progress = progress
-	_textAttr.SetOutBlob([]byte(str))
+		node.progress = progress
+		_textAttr.SetOutBlob([]byte(str))
+
+		triggerAttr.exePostExpSet = "0"
+	}
 
 	return true
 }

@@ -140,7 +140,7 @@ func SAExe_Sqlite_insert(node *SANode) bool {
 			return false
 		}
 
-		triggerAttr.SetExpBool(false)
+		triggerAttr.exePostExpSet = "0"
 	}
 
 	return true
@@ -236,7 +236,8 @@ func SAExe_Sqlite_select(node *SANode) bool {
 			}
 
 			if z, ok := (scanArgs[i]).(*sql.NullString); ok {
-				rws += "\"" + z.String + "\","
+
+				rws += "\"" + OsText_PrintToRaw(z.String) + "\","
 				continue
 			}
 			if z, ok := (scanArgs[i]).(*sql.NullFloat64); ok {

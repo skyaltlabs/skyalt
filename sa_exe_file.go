@@ -80,7 +80,7 @@ func SAExe_File_write(node *SANode) bool {
 			return false
 		}
 
-		triggerAttr.SetExpBool(false)
+		triggerAttr.exePostExpSet = "0"
 	}
 
 	return true

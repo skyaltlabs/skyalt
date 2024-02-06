@@ -39,7 +39,7 @@ func SAExe_For(node *SANode) bool {
 		for i := 0; i < n; i++ {
 			_keyAttr.GetResult().SetInt(i)
 			_valueAttr.GetResult().SetInt(i)
-			node.app.ExecuteList(list)
+			node.app.exe.ExecuteList(list)
 		}
 	} else {
 		nArr := inputAttr.NumArrayItems()
@@ -50,7 +50,7 @@ func SAExe_For(node *SANode) bool {
 				_keyAttr.GetResult().SetInt(i)
 				_valueAttr.GetResult().value = inputAttr.GetArrayItem(i)
 
-				node.app.ExecuteList(list)
+				node.app.exe.ExecuteList(list)
 			}
 		}
 		if nMap > 0 {
@@ -59,7 +59,7 @@ func SAExe_For(node *SANode) bool {
 				_keyAttr.GetResult().SetString(key)
 				_valueAttr.GetResult().value = val
 
-				node.app.ExecuteList(list)
+				node.app.exe.ExecuteList(list)
 			}
 		}
 	}
@@ -90,8 +90,8 @@ func SAExe_SetAttribute(node *SANode) bool {
 	}
 
 	if triggerAttr.GetBool() {
-		node.app.AddSetAttr(attr, value)
-		triggerAttr.SetExpBool(false)
+		node.app.exe.AddSetAttr(attr, value)
+		triggerAttr.exePostExpSet = "0"
 	}
 
 	return true

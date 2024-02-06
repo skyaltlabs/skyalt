@@ -264,6 +264,12 @@ func (base *SABase) drawFrame() {
 		app.act = app.root
 	}
 
+	doneNode := app.exe.Tick()
+	if doneNode != nil {
+		app.act = doneNode.FindMirror(app.root, app.act)
+		app.root = doneNode
+	}
+
 	ui := base.ui
 	icon_rad := 1.7
 
@@ -282,7 +288,8 @@ func (base *SABase) drawFrame() {
 		ui.Div_startName(1, 0, 1, 1, base.Apps[base.Selected].Name)
 		{
 			if app.exeIt {
-				app.Execute()
+				app.exe.Add(app.root)
+				app.exeIt = false
 			}
 
 			if app.IDE {

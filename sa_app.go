@@ -56,6 +56,7 @@ type SAApp struct {
 
 	saveIt bool
 	exeIt  bool
+	exe    *SAAppExe
 
 	graph  *SAGraph
 	canvas SACanvas
@@ -67,8 +68,6 @@ type SAApp struct {
 	EnableExecution bool
 
 	iconPath string
-
-	setAttrs []SASetAttr
 }
 
 func (a *SAApp) init(base *SABase) {
@@ -79,6 +78,8 @@ func (a *SAApp) init(base *SABase) {
 	a.prior = 100
 
 	a.graph = NewSAGraph(a)
+
+	a.exe = NewSAAppExe(a)
 
 	ic := a.GetFolderPath() + "icon.png"
 	if OsFileExists(ic) {
@@ -97,6 +98,7 @@ func NewSAApp(name string, base *SABase) *SAApp {
 	return app
 }
 func (app *SAApp) Destroy() {
+	app.exe.Destroy()
 }
 
 func SAApp_GetNewFolderPath(name string) string {
@@ -111,10 +113,6 @@ func (app *SAApp) GetJsonPath() string {
 	return app.GetFolderPath() + "app.json"
 }
 
-func (a *SAApp) AddSetAttr(attr *SANodeAttr, value string) {
-	a.setAttrs = append(a.setAttrs, SASetAttr{attr: attr, value: value})
-}
-
 func (app *SAApp) RenderApp(ide bool) {
 
 	node := app.root
@@ -123,14 +121,6 @@ func (app *SAApp) RenderApp(ide bool) {
 	}
 
 	node.renderLayout()
-
-	if len(app.setAttrs) > 0 {
-		for _, st := range app.setAttrs {
-			st.attr.SetExpString(st.value, false)
-		}
-		app.setAttrs = nil
-		app.Execute()
-	}
 }
 
 func (app *SAApp) renderIDE(ui *Ui) {
@@ -715,61 +705,6 @@ func (app *SAApp) stepHistoryForward() bool {
 
 func (app *SAApp) SetExecute() {
 	app.exeIt = true
-}
-
-func (app *SAApp) ExecuteList(list []*SANode) {
-
-	active := true
-	for active {
-		active = false
-
-		for _, it := range list {
-
-			if it.state.Load() == SANode_STATE_WAITING {
-				active = true
-
-				if it.IsReadyToBeExe() {
-
-					//execute expression
-					for _, v := range it.Attrs {
-						if v.errExp != nil {
-							continue
-						}
-						v.ExecuteExpression()
-					}
-
-					if !it.Bypass && (!app.IDE || app.EnableExecution) { //ignore in releaseMode
-						it.state.Store(SANode_STATE_RUNNING)
-						it.Execute()
-
-					}
-					it.state.Store(SANode_STATE_DONE) //done
-				}
-			}
-		}
-	}
-}
-
-func (app *SAApp) Execute() {
-
-	st := OsTime()
-
-	app.root.PrepareExe() //.state = WAITING(to be executed)
-
-	app.root.ParseExpresions()
-	app.root.CheckForLoops()
-
-	var list []*SANode
-	app.root.buildSubList(&list)
-	app.root.markUnusedAttrs()
-
-	app.ExecuteList(list)
-
-	app.root.PostExe()
-
-	app.exeIt = false
-
-	fmt.Printf("Executed in %.3f\n", OsTime()-st)
 }
 
 func SAApp_getYellow() OsCd {
