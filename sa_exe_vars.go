@@ -67,8 +67,6 @@ func SAExe_For(node *SANode) bool {
 	return true
 }
 
-// 1) add some arrow(special style & color) in graph, which show that this node can modify other node .......
-// 2) when node or attribute is renamed, it need to be renamed here as well .......
 func SAExe_SetAttribute(node *SANode) bool {
 
 	triggerAttr := node.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
@@ -96,7 +94,3 @@ func SAExe_SetAttribute(node *SANode) bool {
 
 	return true
 }
-
-//neukládat jako JSON(ponechat save()), ale jako lines: ... kam dát Node.Pos,Bypass? ..............................
-//edit = editbox(grid:[0, 0, 1, 1], grid_show:1, value:"hello")
-//text = text(grid:[1, 2, 1, 1], grid_show:1, value: edit.value & "hi")
