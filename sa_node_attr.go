@@ -27,6 +27,19 @@ import (
 //{"fn": "combo", "prm": "a;b;c", "prm2": "0;1;2"}
 //{"fn": "map", "map": {"column": {"fn":"switch"}, "value": {"fn":"switch"}}}
 
+var SAAttrUi_uis = []SAAttrUiValue{
+	{Fn: ""}, //editbox
+	{Fn: "switch"},
+	{Fn: "checkbox"},
+	{Fn: "date"},
+	{Fn: "color"},
+	{Fn: "Code"},
+	{Fn: "dir"},
+	{Fn: "file"},
+	{Fn: "blob"},
+	{Fn: "combo"},
+}
+
 var SAAttrUi_SWITCH = SAAttrUiValue{Fn: "switch"}
 var SAAttrUi_CHECKBOX = SAAttrUiValue{Fn: "checkbox"}
 var SAAttrUi_DATE = SAAttrUiValue{Fn: "date"}

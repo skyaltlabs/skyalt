@@ -1299,7 +1299,9 @@ func (w *SANode) RenderAttrs() {
 					ui.Dialog_open(dnm, 1)
 				}
 				if ui.Dialog_start(dnm) {
-					ui.Div_colMax(0, 5)
+					ui.Div_colMax(0, 8)
+					ui.Div_row(1, 0.1)                                   //spacer
+					ui.Div_row(13+OsTrn(it.Ui.Fn == "combo", 2, 0), 0.1) //spacer
 					y := 0
 
 					//default value
@@ -1309,12 +1311,40 @@ func (w *SANode) RenderAttrs() {
 					}
 					y++
 
-					//default UI
-					if ui.Comp_buttonMenu(0, y, 1, 1, "Set default interface", "", true, false) > 0 {
-						it.Ui = it.defaultUi
-						ui.Dialog_close()
+					//UIs
+					{
+						ui.Div_SpacerRow(0, y, 1, 1)
+						y++
+
+						ui.Comp_text(0, y, 1, 1, "Interfaces", 1)
+						y++
+
+						for _, u := range SAAttrUi_uis {
+							isCombo := (u.Fn == "combo")
+							isSelected := it.Ui.Fn == u.Fn
+							isDefault := it.defaultUi.Fn == u.Fn
+							styl := OsTrnString(isDefault, "__", "")
+							name := OsTrnString(u.Fn == "", "Editbox", u.Fn)
+							if ui.Comp_buttonMenu(0, y, 1, 1, styl+"Ui - "+name+OsTrnString(isDefault, "(Default)", "")+styl, "", true, isSelected) > 0 {
+								it.Ui.Fn = u.Fn //only func, keep prms
+								if !isCombo || isSelected {
+									ui.Dialog_close()
+								}
+							}
+							y++
+
+							//extra options
+							if isCombo && isSelected {
+								ui.Comp_editbox_desc("Labels", 0, 2, 0, y, 1, 1, &it.Ui.Prm, 0, OsV2{0, 1}, nil, "", false, false, false, isSelected)
+								y++
+								ui.Comp_editbox_desc("Values", 0, 2, 0, y, 1, 1, &it.Ui.Prm2, 0, OsV2{0, 1}, nil, "", false, false, false, isSelected)
+								y++
+							}
+						}
+
+						ui.Div_SpacerRow(0, y, 1, 1)
+						y++
 					}
-					y++
 
 					//remove
 					if !it.exeMark {
