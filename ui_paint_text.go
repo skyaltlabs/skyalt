@@ -844,7 +844,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 		sy, ey := _UiPaint_GetLineYCrop(startY, len(lines), coord, lv.call.crop, prop) //only rows which are on screen
 		for y := sy; y < ey; y++ {
 			st, en := _UiPaint_PosLineRange(lines, y)
-			ui.buff.AddText(value[st:en], prop, coord, frontCd, OsV2{align.X, 1}, y, len(lines))
+			ui.buff.AddText(value[st:en], prop, coord, frontCd, align, y, len(lines))
 		}
 
 	} else {

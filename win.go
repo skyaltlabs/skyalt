@@ -994,7 +994,7 @@ func (win *Win) GetTextStart(ln string, prop WinFontProps, coord OsV4, align OsV
 	coord.Start = start
 	coord.Size.X = size.X
 	coord.Size.Y = prop.lineH
-	start = coord.Align(lnSize, align)
+	start = coord.Align(lnSize, OsV2{align.X, 1}) //letters must be always in the middle of line
 
 	return start
 }
