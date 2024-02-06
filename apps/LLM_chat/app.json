@@ -1,0 +1,729 @@
+{
+"Pos": {
+"X": 0,
+"Y": 0
+},
+"Cam_x": 5.8452372550964355,
+"Cam_y": 1.4568870067596436,
+"Cam_z": 1,
+"Name": "root",
+"Exe": "layout",
+"Attrs": [
+{
+"Name": "grid",
+"Value": "[0, 0, 0, 0]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+}
+],
+"Cols": [
+{
+"Min": 1,
+"Max": 1,
+"Resize": 1
+},
+{
+"Min": 5,
+"Max": 20,
+"Resize": 1
+},
+{
+"Min": 2,
+"Max": 2,
+"Resize": 1
+}
+],
+"Rows": [
+{
+"Min": 1,
+"Max": 15,
+"Resize": 1
+},
+{
+"Min": 1,
+"Max": 1,
+"Resize": 1
+}
+],
+"Subs": [
+{
+"Pos": {
+"X": 9.977799,
+"Y": -0.12934327
+},
+"Cam_z": 1,
+"Name": "reset_editbox",
+"Exe": "SetAttribute",
+"Attrs": [
+{
+"Name": "trigger",
+"Value": "button_send.clicked",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "value",
+"Value": "\"\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "node",
+"Value": "\"editbox\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "attr",
+"Value": "\"value\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": -4.645499,
+"Y": -2.8957531
+},
+"Cam_z": 1,
+"Name": "code_python",
+"Exe": "code_python",
+"Selected": true,
+"Attrs": [
+{
+"Name": "code",
+"Value": "\"_chat = \\\"\\\"\\nfor r in rows:\\n\\t_chat += \\\"\\\\nUser: \\\" + r[0]\\n\\t_chat += \\\"\\\\nLlama: \\\" + r[1]\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "rows",
+"Value": "db_select._rows",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "_chat",
+"Value": "\"\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": -4.65251,
+"Y": -5.739382
+},
+"Cam_z": 1,
+"Name": "db_select",
+"Exe": "sqlite_select",
+"Attrs": [
+{
+"Name": "file",
+"Value": "\"apps/LLM_chat/db.sqlite\"",
+"ShowExp": false,
+"Ui": {
+"Fn": "file",
+"HideAddDel": false
+}
+},
+{
+"Name": "query",
+"Value": "\"SELECT user, bot FROM chat ORDER by date\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "_rows",
+"Value": "\"\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "_columns",
+"Value": "[]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": 16.61583,
+"Y": -0.19787568
+},
+"Cam_z": 1,
+"Name": "nn_whisper_cpp",
+"Exe": "nn_whisper_cpp",
+"Attrs": [
+{
+"Name": "model",
+"Value": "\"models/ggml-tiny.en.bin\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "audio",
+"Value": "microphone._out",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "_text",
+"Value": "\"\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "_done",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": 3.7255478,
+"Y": 4.7638364
+},
+"Cam_z": 1,
+"Name": "vars",
+"Exe": "vars",
+"Attrs": [
+{
+"Name": "attr",
+"Value": "if(llama2_7b._text !=\"\", get(llama2_7b._text, \"content\"), \"\")",
+"ShowExp": true,
+"Ui": {
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": 3.7474256,
+"Y": 2.7068858
+},
+"Cam_z": 1,
+"Name": "llama2_7b",
+"Exe": "nn_llama_cpp",
+"Attrs": [
+{
+"Name": "trigger",
+"Value": "button_send.clicked",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "model",
+"Value": "\"models/llama-2-7b.Q5_K_M.gguf\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "text",
+"Value": "build_prompt.prompt",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "_text",
+"Value": "\"\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": -4.6833982,
+"Y": -0.107142895
+},
+"Cam_z": 1,
+"Name": "chat_history",
+"Exe": "text",
+"Attrs": [
+{
+"Name": "grid",
+"Value": "[0, 0, 3, 1]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "label",
+"Value": "code_python._chat",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "selection",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "multi_line",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "grid_show",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "draw_border",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "align_h",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prm": "Left;Center;Right",
+"HideAddDel": false
+}
+},
+{
+"Name": "align_v",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prm": "Top;Center;Bottom",
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": 16.581081,
+"Y": -4.25193
+},
+"Cam_z": 1,
+"Name": "microphone",
+"Exe": "microphone",
+"Attrs": [
+{
+"Name": "grid",
+"Value": "[0, 1, 1, 1]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "grid_show",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "enable",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "path",
+"Value": "\"mic.wav\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "active",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "_out",
+"Value": "\"\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": 7.7084956,
+"Y": -2.9121618
+},
+"Cam_z": 1,
+"Name": "button_send",
+"Exe": "button",
+"Attrs": [
+{
+"Name": "grid",
+"Value": "[2, 1, 1, 1]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "grid_show",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "enable",
+"Value": "editbox.value != \"\"",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "type",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prm": "Classic;Light;Menu",
+"HideAddDel": false
+}
+},
+{
+"Name": "label",
+"Value": "\"Send\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "clicked",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": 2.8957524,
+"Y": -5.559845
+},
+"Cam_z": 1,
+"Name": "editbox",
+"Exe": "editbox",
+"Attrs": [
+{
+"Name": "grid",
+"Value": "[1, 1, 1, 1]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "grid_show",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "value",
+"Value": "\"\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "enable",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "tempToValue",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "precision",
+"Value": "2",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "ghost",
+"Value": "\"Message\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "multi_line",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "align_h",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prm": "Left;Center;Right",
+"HideAddDel": false
+}
+},
+{
+"Name": "align_v",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prm": "Top;Center;Bottom",
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": 16.649612,
+"Y": 3.1177611
+},
+"Cam_z": 1,
+"Name": "set_editbox",
+"Exe": "SetAttribute",
+"Attrs": [
+{
+"Name": "trigger",
+"Value": "nn_whisper_cpp._done",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "value",
+"Value": "nn_whisper_cpp._text",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "node",
+"Value": "\"editbox\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "attr",
+"Value": "\"value\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": 8.709458,
+"Y": 7.859075
+},
+"Cam_z": 1,
+"Name": "db_insert",
+"Exe": "sqlite_insert",
+"Attrs": [
+{
+"Name": "trigger",
+"Value": "button_send.clicked",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "file",
+"Value": "\"apps/LLM_chat/db.sqlite\"",
+"ShowExp": false,
+"Ui": {
+"Fn": "file",
+"HideAddDel": false
+}
+},
+{
+"Name": "table",
+"Value": "\"chat\"",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prm": "chat",
+"Prm2": "chat",
+"HideAddDel": false
+}
+},
+{
+"Name": "values",
+"Value": "[{\"value\":editbox.value, \"column\":\"user\", }, {\"value\":time(), \"column\":\"date\", }, {\"value\": vars.attr , \"column\":\"bot\", }]",
+"ShowExp": false,
+"Ui": {
+"Fn": "map",
+"Map": {
+"column": {
+"Fn": "combo",
+"Prm": "date;user;bot",
+"Prm2": "date;user;bot",
+"HideAddDel": false
+},
+"value": {
+"HideAddDel": false
+}
+},
+"HideAddDel": true
+}
+},
+{
+"Name": "_query",
+"Value": "\"\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": 0.4784423,
+"Y": -0.16473438
+},
+"Cam_z": 1,
+"Name": "build_prompt",
+"Exe": "vars",
+"Attrs": [
+{
+"Name": "intro",
+"Value": "\"This is a conversation between User and Llama, a friendly chatbot. Llama is helpful, kind, honest, good at writing, and never fails to answer any requests immediately and with precision.\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "prompt",
+"Value": "intro \u0026 \"\\\\n\"  \u0026 code_python._chat \u0026 \"\\\\nUser: \" \u0026 editbox.value \u0026\"\\\\nLlama:\"",
+"ShowExp": true,
+"Ui": {
+"HideAddDel": false
+}
+}
+]
+}
+]
+}
