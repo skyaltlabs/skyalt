@@ -328,12 +328,7 @@ func (v *SAValue) GetMapKey(key string) *SAValue {
 		return nil
 	}
 
-	ret, err := json.Marshal(item)
-	if err != nil {
-		return nil
-	}
-
-	return InitSAValueInteface(ret)
+	return InitSAValueInteface(item)
 }
 
 func (A *SAValue) Cmp(B *SAValue, sameType bool) int {
