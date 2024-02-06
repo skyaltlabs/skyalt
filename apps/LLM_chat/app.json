@@ -3,9 +3,9 @@
 "X": 0,
 "Y": 0
 },
-"Cam_x": 4.792605400085449,
-"Cam_y": 1.6824508905410767,
-"Cam_z": 0.7000000000000001,
+"Cam_x": 5.870299816131592,
+"Cam_y": 3.0859599113464355,
+"Cam_z": 0.6000000000000001,
 "Name": "root",
 "Exe": "layout",
 "Attrs": [
@@ -50,8 +50,8 @@
 "Subs": [
 {
 "Pos": {
-"X": 9.977799,
-"Y": -0.12934327
+"X": 10.240957,
+"Y": -0.17320292
 },
 "Cam_z": 1,
 "Name": "reset_editbox",
@@ -216,13 +216,12 @@
 },
 {
 "Pos": {
-"X": 3.8383298,
-"Y": 5.515716
+"X": 3.8759236,
+"Y": 5.440528
 },
 "Cam_z": 1,
 "Name": "vars",
 "Exe": "vars",
-"Selected": true,
 "Attrs": [
 {
 "Name": "attr",
@@ -372,7 +371,7 @@
 "Attrs": [
 {
 "Name": "grid",
-"Value": "[0, 1, 1, 1]",
+"Value": "[0, 1, 1, 2]",
 "ShowExp": false,
 "Ui": {
 "HideAddDel": false
@@ -434,7 +433,7 @@
 "Attrs": [
 {
 "Name": "grid",
-"Value": "[2, 1, 1, 1]",
+"Value": "[2, 1, 1, 2]",
 "ShowExp": false,
 "Ui": {
 "HideAddDel": false
@@ -498,7 +497,7 @@
 "Attrs": [
 {
 "Name": "grid",
-"Value": "[1, 1, 1, 1]",
+"Value": "[1, 1, 1, 2]",
 "ShowExp": false,
 "Ui": {
 "HideAddDel": false
@@ -557,7 +556,7 @@
 },
 {
 "Name": "multi_line",
-"Value": "0",
+"Value": "1",
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
@@ -632,8 +631,8 @@
 },
 {
 "Pos": {
-"X": 8.709458,
-"Y": 7.859075
+"X": 8.6718645,
+"Y": 8.798924
 },
 "Cam_z": 1,
 "Name": "db_insert",
