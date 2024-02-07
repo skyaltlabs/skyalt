@@ -218,13 +218,12 @@ func IsAltActive() bool {
 	return state[sdl.SCANCODE_LALT] != 0 || state[sdl.SCANCODE_RALT] != 0
 }
 
-func (win *Win) GetMousePosition() (OsV2, bool) {
-	x, y, _ := sdl.GetGlobalMouseState()
-	//fmt.Println(x, y)
+func (win *Win) GetMousePosition() (OsV2, bool, bool) {
+	x, y, state := sdl.GetGlobalMouseState()
 
 	wx, wy := win.window.GetPosition()
 	ww, wh := win.window.GetSize()
-	return OsV2_32(x, y).Sub(OsV2_32(wx, wy)), InitOsV4(int(wx), int(wy), int(ww), int(wh)).Inside(OsV2_32(x, y))
+	return OsV2_32(x, y).Sub(OsV2_32(wx, wy)), (state != sdl.ButtonLMask), InitOsV4(int(wx), int(wy), int(ww), int(wh)).Inside(OsV2_32(x, y))
 }
 
 func (win *Win) GetOutputSize() (int, int) {
@@ -587,7 +586,7 @@ func (win *Win) UpdateIO() (bool, bool, error) {
 
 	if !io.touch.start && !io.touch.end && !io.touch.rm {
 		var inside bool
-		io.touch.pos, inside = win.GetMousePosition()
+		io.touch.pos, io.touch.rm, inside = win.GetMousePosition()
 
 		//drop file
 		if inside && g_dropPath != "" {
@@ -626,17 +625,20 @@ func (win *Win) UpdateIO() (bool, bool, error) {
 	}
 
 	if io.keys.paste {
-		text, err := sdl.GetClipboardText()
-		if err != nil {
-			fmt.Println("Error: UpdateIO.GetClipboardText() failed: %w", err)
-		}
-		io.keys.clipboard = strings.Trim(text, "\r")
-
+		win.RefreshClipboard()
 	}
 
 	win.cursorId = 0
 
 	return true, redraw, nil
+}
+
+func (win *Win) RefreshClipboard() {
+	text, err := sdl.GetClipboardText()
+	if err != nil {
+		fmt.Println("Error: UpdateIO.GetClipboardText() failed: %w", err)
+	}
+	win.io.keys.clipboard = strings.Trim(text, "\r")
 }
 
 func (win *Win) StartRender(clearCd OsCd) error {
