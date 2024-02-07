@@ -91,7 +91,11 @@ func (attr *SANodeAttr) CheckUniqueName() {
 	if attr.Name == "" {
 		attr.Name = "attr"
 	}
-	attr.Name = strings.ReplaceAll(attr.Name, ".", "") //remove all '.'
+	attr.Name = strings.ReplaceAll(attr.Name, ".", "")  //remove all
+	attr.Name = strings.ReplaceAll(attr.Name, " ", "")  //remove spaces
+	attr.Name = strings.ReplaceAll(attr.Name, "\t", "") //remove spaces
+	attr.Name = strings.ReplaceAll(attr.Name, "\n", "") //remove spaces
+	attr.Name = strings.ReplaceAll(attr.Name, "\r", "") //remove spaces
 
 	for attr.node.NumAttrNames(attr.Name) >= 2 {
 		attr.Name += "1"
