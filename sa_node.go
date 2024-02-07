@@ -1168,8 +1168,8 @@ func (w *SANode) RenderAttrs() {
 
 		ui.Div_start(0, y, 1, h)
 		{
-			ui.Div_colMax(2, 3)
-			ui.Div_colMax(3, 100)
+			ui.Div_colMax(1, 3)
+			ui.Div_colMax(2, 100)
 
 			if hasAttrWith_goto || hasAttrWith_err {
 				ui.Div_col(5, 1)
@@ -1191,22 +1191,6 @@ func (w *SANode) RenderAttrs() {
 			}
 			x++
 
-			//edit name
-			if !it.exeMark {
-				dnm := "rename_" + it.Name
-
-				if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/edit.png"), 0.22, "Rename", CdPalette_B, true, false) > 0 {
-					ui.Dialog_open(dnm, 1)
-				}
-				if ui.Dialog_start(dnm) {
-					ui.Div_colMax(0, 5)
-					ui.Comp_editbox(0, 0, 1, 1, &it.Name, 0, OsV2{0, 1}, nil, "Name", false, false, false, true)
-					it.CheckUniqueName()
-					ui.Dialog_end()
-				}
-			}
-			x++
-
 			//name: drag & drop
 			ui.Div_start(x, 0, 1, 1)
 			{
@@ -1219,13 +1203,34 @@ func (w *SANode) RenderAttrs() {
 			ui.Div_end()
 
 			//name
+			ui.Div_start(x, 0, 1, 1)
 			{
+				ui.Div_colMax(OsTrn(!it.exeMark, 1, 0), 100)
+				xx := 0
+
+				//edit attr name
+				if !it.exeMark {
+					dnm := "rename_" + it.Name
+
+					if ui.Comp_buttonIcon(xx, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/edit.png"), 0.22, "Rename", CdPalette_B, true, false) > 0 {
+						ui.Dialog_open(dnm, 1)
+					}
+					if ui.Dialog_start(dnm) {
+						ui.Div_colMax(0, 5)
+						ui.Comp_editbox(0, 0, 1, 1, &it.Name, 0, OsV2{0, 1}, nil, "Name", false, false, false, true)
+						it.CheckUniqueName()
+						ui.Dialog_end()
+					}
+					xx++
+				}
+
 				//switch: value or expression
-				if ui.Comp_buttonMenu(x, 0, 1, 1, it.Name, "", true, it.ShowExp) > 0 {
+				if ui.Comp_buttonMenu(xx, 0, 1, 1, it.Name, "", true, it.ShowExp) > 0 {
 					it.ShowExp = !it.ShowExp
 				}
-				x++
 			}
+			ui.Div_end()
+			x++
 
 			//value - error/title
 			ui.Div_start(x, 0, 1, h)
