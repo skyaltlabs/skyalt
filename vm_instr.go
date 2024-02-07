@@ -107,7 +107,15 @@ func (instr *VmInstr) LineReplace(value string, mapOrArray bool) {
 		}
 	}
 
-	newValue := instr.pos_attr.Value[:instr.pos.X] + value + instr.pos_attr.Value[instr.pos.Y:]
+	//check
+	var newValue string
+
+	n := len(instr.pos_attr.Value)
+	if instr.pos.X <= n && instr.pos.Y <= n {
+		newValue = instr.pos_attr.Value[:instr.pos.X] + value + instr.pos_attr.Value[instr.pos.Y:]
+	} else {
+		newValue = value
+	}
 
 	if newValue != instr.pos_attr.Value {
 		instr.pos_attr.node.app.SetExecute() //update network
