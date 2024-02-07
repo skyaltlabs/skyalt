@@ -79,8 +79,6 @@ type SANodeAttr struct {
 	errExe error
 
 	exeMark bool
-
-	exePostExpSet string //empty = ignore
 }
 
 func (attr *SANodeAttr) IsOutput() bool {
@@ -100,6 +98,10 @@ func (attr *SANodeAttr) CheckUniqueName() {
 	for attr.node.NumAttrNames(attr.Name) >= 2 {
 		attr.Name += "1"
 	}
+}
+
+func (attr *SANodeAttr) AddSetAttr(value string) {
+	attr.node.app.exe.AddSetAttr(attr, value)
 }
 
 func (attr *SANodeAttr) SetErrorExe(err string) {
