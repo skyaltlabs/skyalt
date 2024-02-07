@@ -35,8 +35,46 @@ type SACanvas struct {
 }
 
 type SASetAttr struct {
-	attr  *SANodeAttr
+	nodes []string //from root to node
+	attr  string
 	value string
+}
+
+func InitSASetAttr(attr *SANodeAttr, value string) SASetAttr {
+
+	//build node list
+	node := attr.node
+	var nodes []string
+	for node != nil {
+		nodes = append(nodes, node.Name)
+		node = node.parent
+	}
+	for i, j := 0, len(nodes)-1; i < j; i, j = i+1, j-1 { //reverse
+		nodes[i], nodes[j] = nodes[j], nodes[i]
+	}
+	nodes = nodes[1:] //remove root
+
+	var sa SASetAttr
+	sa.nodes = nodes
+	sa.attr = attr.Name
+	sa.value = value
+	return sa
+}
+func (st *SASetAttr) Write(root *SANode) bool {
+	for _, nm := range st.nodes {
+		root = root.FindNode(nm)
+		if root == nil {
+			return false
+		}
+	}
+
+	attr := root.findAttr(st.attr)
+	if attr == nil {
+		return false
+	}
+
+	attr.SetExpString(st.value, false)
+	return true
 }
 
 type SAApp struct {
@@ -381,12 +419,16 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	}
 }
 
-func (app *SAApp) History(ui *Ui) {
-
-	//init history
+func (app *SAApp) HistoryInit() {
 	if len(app.history) == 0 {
 		app.addHistory(true, false)
 		app.history_pos = 0
+	}
+}
+
+func (app *SAApp) History(ui *Ui) {
+	if len(app.history) == 0 {
+		return
 	}
 
 	lv := ui.GetCall()

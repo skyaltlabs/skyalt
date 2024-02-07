@@ -23,8 +23,7 @@ import (
 )
 
 type SAAppExe struct {
-	app  *SAApp
-	todo []*SANode
+	app *SAApp
 
 	wip  *SANode
 	exit atomic.Bool
@@ -54,44 +53,42 @@ func (exe *SAAppExe) Destroy() {
 }
 
 func (exe *SAAppExe) AddSetAttr(attr *SANodeAttr, value string) {
-	exe.setAttrs = append(exe.setAttrs, SASetAttr{attr: attr, value: value})
-	//exe.app.SetExecute()
+	exe.setAttrs = append(exe.setAttrs, InitSASetAttr(attr, value))
 }
 
-func (exe *SAAppExe) Add(src *SANode) error {
+func (exe *SAAppExe) Run(src *SANode) error {
+
+	if exe.wip != nil {
+		return fmt.Errorf("busy")
+	}
 
 	dst, err := src.Copy()
 	if err != nil {
 		return err
 	}
 
-	exe.todo = append(exe.todo, dst)
+	exe.wip = dst
+	exe.done.Store(false)
+	go exe.run() //2nd thread
 
 	return nil
 }
 
-func (exe *SAAppExe) Tick() *SANode {
+func (exe *SAAppExe) Tick() (*SANode, []SASetAttr) {
 
 	var doneNode *SANode
+	var doneSets []SASetAttr
 
 	if exe.wip != nil {
 		if exe.done.Load() { //is finished
 			doneNode = exe.wip
+			doneSets = exe.setAttrs
 			exe.wip = nil
+			exe.setAttrs = nil
 		}
 	}
 
-	if exe.wip == nil && len(exe.todo) > 0 {
-		exe.wip = exe.todo[0]
-		exe.todo = exe.todo[1:]
-
-		exe.done.Store(false)
-		go exe.run() //2nd thread
-
-		doneNode = nil //don't return it, because there is newer one
-	}
-
-	return doneNode
+	return doneNode, doneSets
 }
 
 func (exe *SAAppExe) run() {
@@ -110,13 +107,6 @@ func (exe *SAAppExe) run() {
 	exe.ExecuteList(list)
 
 	exe.wip.PostExe()
-
-	if len(exe.setAttrs) > 0 {
-		for _, st := range exe.setAttrs {
-			st.attr.SetExpString(st.value, false)
-		}
-		exe.setAttrs = nil
-	}
 
 	exe.time = OsTime() - st
 	exe.done.Store(true)
@@ -140,6 +130,11 @@ func (exe *SAAppExe) ExecuteList(list []*SANode) {
 						if v.errExp != nil {
 							continue
 						}
+
+						if v.Name == "finished" {
+							fmt.Println("df")
+						}
+
 						v.ExecuteExpression()
 					}
 

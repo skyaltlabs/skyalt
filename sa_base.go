@@ -254,10 +254,32 @@ func (base *SABase) drawFrame() {
 		app.act = app.root
 	}
 
-	doneNode := app.exe.Tick()
+	doneNode, setAttrs := app.exe.Tick()
 	if doneNode != nil {
-		app.act = doneNode.FindMirror(app.root, app.act)
-		app.root = doneNode
+		if app.exeIt {
+			//write only changes and ignore 'doneNode'
+			for _, st := range setAttrs {
+				st.Write(app.root)
+			}
+
+			app.exe.Run(app.root)
+			app.exeIt = false
+		} else {
+			app.act = doneNode.FindMirror(app.root, app.act)
+			app.root = doneNode
+
+			for _, st := range setAttrs {
+				st.Write(app.root)
+			}
+
+			app.exeIt = false //setAttrs.Write() -> LineReplace() -> SetExecute() = ignore that writes
+		}
+	} else {
+		if app.exeIt && app.exe.wip == nil {
+			app.exe.Run(app.root)
+			app.exeIt = false
+			app.HistoryInit()
+		}
 	}
 
 	ui := base.ui
@@ -277,11 +299,6 @@ func (base *SABase) drawFrame() {
 	if base.HasApp() {
 		ui.Div_startName(1, 0, 1, 1, base.Apps[base.Selected].Name)
 		{
-			if app.exeIt {
-				app.exe.Add(app.root)
-				app.exeIt = false
-			}
-
 			if app.IDE {
 				ui.Div_colMax(0, 100)
 				ui.Div_rowMax(1, 100)
