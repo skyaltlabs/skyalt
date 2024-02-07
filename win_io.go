@@ -79,7 +79,7 @@ type WinKeys struct {
 type WinTouch struct {
 	pos       OsV2
 	wheel     int
-	numClicks uint8
+	numClicks int
 	start     bool
 	end       bool
 	rm        bool // right/middle button

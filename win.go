@@ -65,7 +65,7 @@ type Win struct {
 	num_redraws int
 
 	lastClickUp OsV2
-	numClicks   uint8
+	numClicks   int
 
 	fullscreen              bool
 	recover_fullscreen_size OsV2
@@ -361,7 +361,7 @@ func (win *Win) Event() (bool, bool, error) {
 
 		case sdl.MouseButtonEvent:
 
-			win.numClicks = val.Clicks
+			win.numClicks = int(val.Clicks)
 			if val.Clicks > 1 {
 				if win.lastClickUp.Distance(OsV2_32(val.X, val.Y)) > float32(win.Cell())/5 { //7px error space
 					win.numClicks = 1
