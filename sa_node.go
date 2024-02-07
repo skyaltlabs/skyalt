@@ -282,12 +282,9 @@ func (w *SANode) PrepareExe() {
 	}
 }
 func (w *SANode) PostExe() {
-	for _, v := range w.Attrs {
-		if v.exePostExpSet != "" {
-			v.SetExpString(v.exePostExpSet, false)
-			v.exePostExpSet = ""
-		}
-	}
+	//for _, v := range w.Attrs {
+	//...
+	//}
 
 	for _, it := range w.Subs {
 		it.PostExe()
