@@ -828,7 +828,11 @@ func _SANode_renderAttrValueHeight(attr *SANodeAttr, attr_instr *VmInstr, uiVal 
 func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmInstr, isOutput bool, uiVal *SAAttrUiValue, ui *Ui) {
 
 	if attr != nil && attr.ShowExp {
-		ui.Comp_editbox(x, y, w, h, &attr.Value, 2, OsV2{0, 1}, nil, "", false, false, false, true) //show whole expression
+		if attr.IsOutput() {
+			ui.Comp_text(x, y, w, h, "Output attribute", 1)
+		} else {
+			ui.Comp_editbox(x, y, w, h, &attr.Value, 2, OsV2{0, 1}, nil, "", false, false, false, true) //show whole expression
+		}
 	} else {
 
 		if attr_instr == nil {
