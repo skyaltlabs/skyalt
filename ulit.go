@@ -945,24 +945,21 @@ func (fl *OsFileList) FindInSubs(name string, isDir bool) int {
 }
 
 func OsText_JSONtoRAW(str string) string {
+	if str != "" && str[0] != '"' {
+		fmt.Printf("Error: String(%s) doesn't start with quotes\n", str)
+	}
 
-	v := strings.Clone(str)
-
-	v = strings.ReplaceAll(v, "\\n", "\n")
-	v = strings.ReplaceAll(v, "\\t", "\t")
-	v = strings.ReplaceAll(v, "\\\"", "\"")
-
+	//str = strings.Clone(str)
+	v, err := strconv.Unquote(str)
+	if err != nil {
+		fmt.Printf("Unquote failed: %v\n", err)
+	}
 	return v
 }
 
 func OsText_RAWtoJSON(str string) string {
-
-	v := strings.Clone(str)
-
-	v = strings.ReplaceAll(v, "\n", "\\n")
-	v = strings.ReplaceAll(v, "\t", "\\t")
-	v = strings.ReplaceAll(v, "\"", "\\\"")
-
+	//str = strings.Clone(str)
+	v := strconv.Quote(str)
 	return v
 }
 

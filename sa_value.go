@@ -72,11 +72,11 @@ func (v *SAValue) SetInt(val int) {
 	v.SetNumber(float64(val))
 }
 
-func (v *SAValue) StringWithQuotes() string {
+func (v *SAValue) StringJSON() string {
 
 	switch vv := v.value.(type) {
 	case string:
-		return "\"" + OsText_RAWtoJSON(vv) + "\""
+		return OsText_RAWtoJSON(vv)
 	case float64:
 		return strconv.FormatFloat(vv, 'f', -1, 64)
 	case OsBlob:
@@ -91,10 +91,11 @@ func (v *SAValue) StringWithQuotes() string {
 	return "\"\""
 }
 
+// RAW string
 func (v *SAValue) String() string {
 	switch vv := v.value.(type) {
 	case string:
-		return OsText_JSONtoRAW(vv)
+		return vv //OsText_JSONtoRAW(vv)
 	case float64:
 		return strconv.FormatFloat(vv, 'f', -1, 64)
 	case OsBlob:

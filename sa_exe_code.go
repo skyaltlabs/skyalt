@@ -44,13 +44,13 @@ func SAExe_Code_python(node *SANode) bool {
 		}
 
 		attrsJs += "\"" + a.Name + "\":"
-		attrsJs += a.GetResult().StringWithQuotes()
+		attrsJs += a.GetResult().StringJSON()
 		attrsJs += ","
 	}
 	attrsJs, _ = strings.CutSuffix(attrsJs, ",")
 	attrsJs += "}"
 
-	bodyJs := fmt.Sprintf(`{"code":%s,"attrs":%s}`, codeAttr.GetResult().StringWithQuotes(), attrsJs)
+	bodyJs := fmt.Sprintf(`{"code":%s,"attrs":%s}`, codeAttr.GetResult().StringJSON(), attrsJs)
 
 	//run python on service server
 	outAttrs, errStr, err := node.app.base.service_python.Exec([]byte(bodyJs))

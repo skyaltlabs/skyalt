@@ -99,12 +99,11 @@ func (instr *VmInstr) LineReplace(value string, mapOrArray bool) {
 		return
 	}
 
-	if value != "" {
-		value = OsText_RAWtoJSON(value)
-
+	if value != "" && !mapOrArray {
+		//convert to text
 		_, err := strconv.ParseFloat(value, 64)
-		if err != nil && !mapOrArray {
-			value = "\"" + value + "\""
+		if err != nil {
+			value = OsText_RAWtoJSON(value)
 		}
 	}
 
@@ -337,7 +336,7 @@ func VmBasic_InitArray(instr *VmInstr, st *VmST) SAValue {
 	str := "["
 	for i := range instr.prms {
 		prm := instr.ExePrm(st, i)
-		str += prm.StringWithQuotes()
+		str += prm.StringJSON()
 		str += ","
 	}
 	str, _ = strings.CutSuffix(str, ",")
@@ -354,8 +353,8 @@ func VmBasic_InitMap(instr *VmInstr, st *VmST) SAValue {
 		k := instr.ExePrmKey(st, i)
 		v := instr.ExePrm(st, i)
 
-		key := k.StringWithQuotes()
-		value := v.StringWithQuotes()
+		key := k.StringJSON()
+		value := v.StringJSON()
 
 		str += fmt.Sprintf("%s: %s,", key, value)
 	}

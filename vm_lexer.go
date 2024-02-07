@@ -39,18 +39,7 @@ func (lexer *VmLexer) GetStart(line string) byte {
 	return line[lexer.start]
 }
 func (lexer *VmLexer) GetString(line string) string {
-
-	st := lexer.start
-	en := lexer.end
-	if lexer.tp == VmLexerQuote {
-		st++
-		en--
-		if en < st {
-			en = st
-		}
-	}
-
-	return line[st:en]
+	return line[lexer.start:lexer.end]
 }
 
 func (lexer *VmLexer) GetRange(line string) OsV2 {

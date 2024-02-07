@@ -89,7 +89,7 @@ func (wh *SAServiceLLamaCpp) Complete(model string, blob OsBlob) (string, float6
 
 func (wh *SAServiceLLamaCpp) complete(blob OsBlob) (string, error) {
 
-	aa := OsText_RAWtoJSON(string(blob.data))
+	prompt := OsText_RAWtoJSON(string(blob.data))
 
 	//stream = true ............
 	jsonBody := fmt.Sprintf(`{
@@ -114,8 +114,8 @@ func (wh *SAServiceLLamaCpp) complete(blob OsBlob) (string, error) {
 		"image_data": [],
 		"cache_prompt": true,
 		"slot_id": 0,
-		"prompt": "%s"
-		}`, aa)
+		"prompt": %s
+		}`, prompt)
 
 	body := bytes.NewReader([]byte(jsonBody))
 

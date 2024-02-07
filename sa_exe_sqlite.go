@@ -237,7 +237,7 @@ func SAExe_Sqlite_select(node *SANode) bool {
 
 			if z, ok := (scanArgs[i]).(*sql.NullString); ok {
 
-				rws += "\"" + OsText_RAWtoJSON(z.String) + "\","
+				rws += OsText_RAWtoJSON(z.String) + ","
 				continue
 			}
 			if z, ok := (scanArgs[i]).(*sql.NullFloat64); ok {
