@@ -104,7 +104,7 @@ func (div *UiLayoutDiv) ResetGridLock() {
 	}
 }
 
-func (div *UiLayoutDiv) ComputeHash() uint64 {
+func (div *UiLayoutDiv) computeHash() uint64 {
 	var tmp [8]byte
 
 	h := sha256.New()
@@ -134,7 +134,7 @@ func NewUiLayoutPack(parent *UiLayoutDiv, name string, grid OsV4, app *UiLayoutA
 	div.grid = grid
 
 	div.touch_enabled = true
-	div.data.Init(div.ComputeHash(), app)
+	div.data.Init(div.computeHash(), app)
 
 	div.Use()
 
