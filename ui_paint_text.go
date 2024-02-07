@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"strconv"
 	"strings"
 	"unicode/utf8"
 )
@@ -326,6 +327,9 @@ func (ui *Ui) _UiPaint_Text_HScrollInto(text string, lines []int, cursor int, pr
 func (ui *Ui) _UiPaint_TextSelectTouch(text string, lines []int, strEditOrig string, cursor int, editable bool, prop WinFontProps) {
 
 	lv := ui.GetCall()
+	if !lv.call.enableInput {
+		return
+	}
 
 	edit := &ui.edit
 	keys := &ui.win.io.keys
@@ -338,7 +342,11 @@ func (ui *Ui) _UiPaint_TextSelectTouch(text string, lines []int, strEditOrig str
 	active := (edit_uid != nil && edit_uid == this_uid)
 	activate_next_uid := (this_uid == next_uid)
 
-	if lv.call.enableInput && !ui.touch.IsScrollOrResizeActive() && ((editable && edit.setFirstEditbox) || (editable && edit.tab) || activate_next_uid) {
+	if touch.rm && lv.call.IsTouchInside(ui) && active && cursor >= OsMin(edit.start, edit.end) && cursor < OsMax(edit.start, edit.end) {
+		return
+	}
+
+	if !ui.touch.IsScrollOrResizeActive() && ((editable && edit.setFirstEditbox) || (editable && edit.tab) || activate_next_uid) {
 		//setFirstEditbox or Tab
 		edit.uid = this_uid
 
@@ -363,7 +371,6 @@ func (ui *Ui) _UiPaint_TextSelectTouch(text string, lines []int, strEditOrig str
 		if !active {
 			edit.next_uid = this_uid //set next_uid
 		}
-
 		//set end
 		edit.end = cursor
 
@@ -398,6 +405,7 @@ func (ui *Ui) _UiPaint_TextSelectTouch(text string, lines []int, strEditOrig str
 
 func (ui *Ui) _UiPaint_TextSelectKeys(text string, lines []int, editable bool, prop WinFontProps, multi_line bool) {
 
+	touch := &ui.win.io.touch
 	keys := &ui.win.io.keys
 	edit := &ui.edit
 
@@ -408,6 +416,32 @@ func (ui *Ui) _UiPaint_TextSelectKeys(text string, lines []int, editable bool, p
 
 	if editable {
 		text = edit.temp
+	}
+
+	//context dialog
+	{
+		lv := ui.GetCall()
+		dnm := strconv.Itoa(int(lv.call.data.hash))
+		if lv.call.IsTouchInside(ui) && touch.end && touch.rm {
+			ui.Dialog_open(dnm, 2)
+		}
+		if ui.Dialog_start(dnm) {
+			ui.Div_col(0, 5)
+			if ui.Comp_buttonMenu(0, 0, 1, 1, "Copy", "", true, false) > 0 {
+				keys.copy = true
+				ui.Dialog_close()
+			}
+			if ui.Comp_buttonMenu(0, 1, 1, 1, "Cut", "", editable, false) > 0 {
+				keys.cut = true
+				ui.Dialog_close()
+			}
+			if ui.Comp_buttonMenu(0, 2, 1, 1, "Paste", "", editable, false) > 0 {
+				keys.paste = true
+				ui.win.RefreshClipboard()
+				ui.Dialog_close()
+			}
+			ui.Dialog_end()
+		}
 	}
 
 	//select all
@@ -488,7 +522,6 @@ func (ui *Ui) _UiPaint_TextSelectKeys(text string, lines []int, editable bool, p
 }
 
 func (ui *Ui) _UiPaint_TextEditKeys(text string, lines []int, tabIsChar bool, enterIsChar bool, prop WinFontProps, multi_line bool) (string, bool) {
-
 	edit := &ui.edit
 	keys := &ui.win.io.keys
 
@@ -526,6 +559,12 @@ func (ui *Ui) _UiPaint_TextEditKeys(text string, lines []int, tabIsChar bool, en
 		firstCur += len(cb)
 		*s = firstCur
 		*e = firstCur
+	}
+
+	//when dialog is active, don't edit
+	lv := ui.GetCall()
+	if !lv.call.enableInput {
+		return edit.temp, old != *e
 	}
 
 	//insert text
@@ -771,7 +810,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 
 				//enter or Tab(key) or outside => save
 				isOutside := false
-				if touch.start && !lv.call.IsTouchInside(ui) {
+				if touch.start && lv.call.enableInput && !lv.call.IsTouchInside(ui) {
 					uid := edit.uid
 					isOutside = (uid != nil && uid == lv.call)
 				}
