@@ -874,9 +874,13 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 				}
 			}
 		} else if instr != nil && uiVal.Fn == SAAttrUi_CODE.Fn {
-			_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, 0, OsV2{0, 0}, nil, "", false, false, true, editable)
-			if fnshd {
-				instr.LineReplace(value, false)
+			if editable {
+				_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, 0, OsV2{0, 0}, nil, "", false, false, true, editable)
+				if fnshd {
+					instr.LineReplace(value, false)
+				}
+			} else {
+				ui.Comp_textSelectMulti(x, y, w, h, value, OsV2{0, 0}, true, false)
 			}
 		} else if uiVal.Fn == SAAttrUi_DIR.Fn {
 			if ui.comp_dirPicker(x, y, w, h, &value, false, "attr_folder", editable) {
