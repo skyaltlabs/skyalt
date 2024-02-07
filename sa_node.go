@@ -649,6 +649,19 @@ func (w *SANode) _getAttr(find bool, defValue SANodeAttr) *SANodeAttr {
 func (w *SANode) AddAttr(name string) *SANodeAttr {
 	return w._getAttr(false, SANodeAttr{Name: name})
 }
+func (w *SANode) DuplicateAttr(attr SANodeAttr) *SANodeAttr {
+
+	cp := attr
+	if cp.IsOutput() {
+		found := true
+		for found {
+			cp.Name, found = strings.CutPrefix(cp.Name, "_")
+		}
+		cp.Value = cp.GetResult().StringJSON() //copy result into expression
+	}
+
+	return w._getAttr(false, cp)
+}
 func (w *SANode) GetAttr(name string, value string) *SANodeAttr {
 	return w._getAttr(true, SANodeAttr{Name: name, Value: value})
 }
@@ -1308,22 +1321,11 @@ func (w *SANode) RenderAttrs() {
 				}
 				if ui.Dialog_start(dnm) {
 					ui.Div_colMax(0, 8)
-					ui.Div_row(1, 0.1)                                   //spacer
-					ui.Div_row(13+OsTrn(it.Ui.Fn == "combo", 2, 0), 0.1) //spacer
+					ui.Div_row(11+OsTrn(it.Ui.Fn == "combo", 2, 0), 0.1) //spacer
+
 					y := 0
-
-					//default value
-					if ui.Comp_buttonMenu(0, y, 1, 1, "Set default value", "", true, false) > 0 {
-						it.Value = it.defaultValue
-						ui.Dialog_close()
-					}
-					y++
-
 					//UIs
 					{
-						ui.Div_SpacerRow(0, y, 1, 1)
-						y++
-
 						ui.Comp_text(0, y, 1, 1, "Interfaces", 1)
 						y++
 
@@ -1354,13 +1356,29 @@ func (w *SANode) RenderAttrs() {
 						y++
 					}
 
-					//remove
-					if !it.exeMark {
-						if ui.Comp_buttonMenu(0, y, 1, 1, "Delete", "", true, false) > 0 {
-							w.Attrs = append(w.Attrs[:i], w.Attrs[i+1:]...) //remove
-						}
+					//default value
+					if ui.Comp_buttonMenu(0, y, 1, 1, "Set default value", "", true, false) > 0 {
+						it.Value = it.defaultValue
+						ui.Dialog_close()
 					}
 					y++
+
+					//duplicate
+					if ui.Comp_buttonMenu(0, y, 1, 1, "Duplicate", "", true, false) > 0 {
+						w.DuplicateAttr(*it)                                                        //copy
+						Div_DropMoveElement(&w.Attrs, &w.Attrs, len(w.Attrs)-1, i, SA_Drop_V_RIGHT) //move
+						ui.Dialog_close()
+					}
+					y++
+
+					if !it.exeMark {
+						//remove
+						if ui.Comp_buttonMenu(0, y, 1, 1, "Delete", "", true, false) > 0 {
+							w.Attrs = append(w.Attrs[:i], w.Attrs[i+1:]...) //remove
+							ui.Dialog_close()
+						}
+						y++
+					}
 
 					ui.Dialog_end()
 				}
