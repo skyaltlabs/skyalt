@@ -222,9 +222,9 @@ func (attr *SANodeAttr) ParseExpresion() {
 
 func (attr *SANodeAttr) ExecuteExpression() {
 
-	//if attr.IsOutput() {
-	//	return
-	//}
+	if attr.IsOutput() {
+		attr.Value = attr.defaultValue
+	}
 
 	if attr.errExp != nil {
 		return
