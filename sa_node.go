@@ -1209,9 +1209,8 @@ func (w *SANode) RenderAttrs() {
 				xx := 0
 
 				//edit attr name
+				dnm := "rename_" + it.Name
 				if !it.exeMark {
-					dnm := "rename_" + it.Name
-
 					if ui.Comp_buttonIcon(xx, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/edit.png"), 0.22, "Rename", CdPalette_B, true, false) > 0 {
 						ui.Dialog_open(dnm, 1)
 					}
@@ -1226,7 +1225,11 @@ func (w *SANode) RenderAttrs() {
 
 				//switch: value or expression
 				if ui.Comp_buttonMenu(xx, 0, 1, 1, it.Name, "", true, it.ShowExp) > 0 {
-					it.ShowExp = !it.ShowExp
+					if !it.exeMark && ui.win.io.touch.numClicks > 1 {
+						ui.Dialog_open(dnm, 1)
+					} else {
+						it.ShowExp = !it.ShowExp
+					}
 				}
 			}
 			ui.Div_end()
