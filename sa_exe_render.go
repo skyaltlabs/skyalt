@@ -51,7 +51,8 @@ func SAExe_Render_Dialog(w *SANode, renderIt bool) {
 		dnm := w.getPath()
 		if triggerAttr.GetBool() {
 			ui.Dialog_open(dnm, uint8(OsClamp(typeAttr.GetInt(), 0, 2)))
-			triggerAttr.exePostExpSet = "0"
+
+			triggerAttr.AddSetAttr("0")
 		}
 
 		if ui.Dialog_start(dnm) {
@@ -70,7 +71,7 @@ func SAExe_Render_Button(w *SANode, renderIt bool) {
 	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool()
 	tp := w.GetAttrUi("type", "0", SAAttrUi_COMBO("Classic;Light;Menu", "")).GetInt()
 	label := w.GetAttr("label", "").GetString()
-	clickedAttr := w.GetAttrUi("clicked", "0", SAAttrUi_SWITCH)
+	clickedAttr := w.GetAttrUi("clicked", "0", SAAttrUi_SWITCH) //can't be _output, because it's set when render(not graph execution)
 
 	clicked := false
 	switch tp {
@@ -94,9 +95,9 @@ func SAExe_Render_Button(w *SANode, renderIt bool) {
 		}
 	}
 
+	clickedAttr.SetExpBool(clicked)
 	if clicked {
-		clickedAttr.SetExpBool(true)
-		clickedAttr.exePostExpSet = "0"
+		clickedAttr.AddSetAttr("0")
 	}
 }
 
@@ -203,6 +204,7 @@ func SAExe_Render_Editbox(w *SANode, renderIt bool) {
 	precision := w.GetAttr("precision", "2").GetInt()
 	ghost := w.GetAttr("ghost", "").GetString()
 	multi_line := w.GetAttrUi("multi_line", "0", SAAttrUi_SWITCH).GetBool()
+	finishedAttr := w.GetAttrUi("finished", "0", SAAttrUi_SWITCH)
 
 	//temp, tempChanged? ...
 
@@ -211,7 +213,12 @@ func SAExe_Render_Editbox(w *SANode, renderIt bool) {
 		if fnshd || (tmpToValue && chngd) {
 			valueInstr.LineReplace(value, false)
 		}
+		finishedAttr.SetExpBool(fnshd)
+		if fnshd {
+			finishedAttr.AddSetAttr("0")
+		}
 	}
+
 }
 
 func SAExe_Render_Divider(w *SANode, renderIt bool) {
@@ -804,8 +811,8 @@ func SAExe_Render_Microphone(w *SANode, renderIt bool) {
 			outAttr.SetOutBlob(nil)
 
 			active = !active
-			activeAttr.SetExpBool(active)
 		}
+		activeAttr.SetExpBool(active)
 
 		if active {
 			if w.app.base.ui.win.io.ini.MicOff {

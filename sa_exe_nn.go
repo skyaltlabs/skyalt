@@ -61,7 +61,7 @@ func SAExe_NN_llama_cpp(node *SANode) bool {
 		node.progress = progress
 		_textAttr.SetOutBlob([]byte(str))
 
-		triggerAttr.exePostExpSet = "0"
+		triggerAttr.AddSetAttr("0")
 	}
 
 	return true

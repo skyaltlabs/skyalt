@@ -140,7 +140,7 @@ func SAExe_Sqlite_insert(node *SANode) bool {
 			return false
 		}
 
-		triggerAttr.exePostExpSet = "0"
+		triggerAttr.AddSetAttr("0")
 	}
 
 	return true

@@ -68,7 +68,6 @@ func SAExe_For(node *SANode) bool {
 }
 
 func SAExe_SetAttribute(node *SANode) bool {
-
 	triggerAttr := node.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
 
 	nodeAttr := node.GetAttr("node", "")
@@ -88,8 +87,8 @@ func SAExe_SetAttribute(node *SANode) bool {
 	}
 
 	if triggerAttr.GetBool() {
-		node.app.exe.AddSetAttr(attr, value)
-		triggerAttr.exePostExpSet = "0"
+		attr.AddSetAttr(value)
+		triggerAttr.AddSetAttr("0")
 	}
 
 	return true
