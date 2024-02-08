@@ -1079,10 +1079,10 @@ func (w *SANode) RenameSubNodes(oldName string, newName string) {
 		it.RenameExpressionAccessNode(oldName, newName)
 	}
 
-	//SetAttribute node params
+	//Setter node params
 	for _, it := range w.Subs {
-		if SAGroups_IsNodeSetAttribute(it.Exe) {
-			SAExe_SetAttribute_renameNode(it, oldName, newName)
+		if SAGroups_IsNodeSetter(it.Exe) {
+			SAExe_Setter_renameNode(it, oldName, newName)
 		}
 	}
 }
@@ -1092,10 +1092,10 @@ func (w *SANode) RenameSubAttrs(nodeName string, oldAttrName string, newAttrName
 		it.RenameExpressionAccessAttr(nodeName, oldAttrName, newAttrName)
 	}
 
-	//SetAttribute node params
+	//Setter node params
 	for _, it := range w.Subs {
-		if SAGroups_IsNodeSetAttribute(it.Exe) {
-			SAExe_SetAttribute_renameAttr(it, nodeName, oldAttrName, newAttrName)
+		if SAGroups_IsNodeSetter(it.Exe) {
+			SAExe_Setter_renameAttr(it, nodeName, oldAttrName, newAttrName)
 		}
 	}
 }

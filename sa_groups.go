@@ -77,7 +77,7 @@ func InitSAGroups() SAGroups {
 	grs.groups = append(grs.groups, &SAGroup{name: "Variables", icon: InitWinMedia_url(path + "node_vars.png"), nodes: []*SAGroupNode{
 		{name: "vars", fn: SAExe_Vars},
 		{name: "for", fn: SAExe_For},
-		{name: "set_attribute", fn: SAExe_SetAttribute},
+		{name: "setter", fn: SAExe_Setter},
 	}})
 
 	grs.groups = append(grs.groups, &SAGroup{name: "File", icon: InitWinMedia_url(path + "node_file.png"), nodes: []*SAGroupNode{
@@ -112,8 +112,8 @@ func SAGroups_HasNodeSub(node string) bool {
 func SAGroups_IsNodeFor(node string) bool {
 	return strings.EqualFold(node, "for")
 }
-func SAGroups_IsNodeSetAttribute(node string) bool {
-	return strings.EqualFold(node, "set_attribute")
+func SAGroups_IsNodeSetter(node string) bool {
+	return strings.EqualFold(node, "setter")
 }
 
 func (grs *SAGroups) IsUI(node string) bool {
