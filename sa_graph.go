@@ -614,7 +614,7 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 			}
 
 			if gr.app.exe.wip != nil {
-				ui.Paint_rect(0, 0, 1, 1, 0, pl.T, 0.06)
+				ui.Paint_rect(0, 0, 1, 1, 0, pl.P, 0.06) //exe rect
 			} else if !gr.app.EnableExecution {
 				ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0.03)
 			}

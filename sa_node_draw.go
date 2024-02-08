@@ -110,27 +110,21 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 
 	//back
 	{
-		if node.state == SANode_STATE_DONE {
-			backCd := pl.GetGrey(1)
+		backCd := pl.GetGrey(1)
 
-			if node.CanBeRenderOnCanvas() {
-				backCd = pl.P //InitOsCd32(50, 50, 180, 255)
-				backCd.A = 150
-			}
-
-			if node.HasError() {
-				backCd = pl.E
-			}
-			if node.Bypass {
-				backCd.A = 20
-			}
-
-			ui.buff.AddRectRound(coord, ui.CellWidth(roundc), backCd, 0)
-		} else {
-			cq := coord
-			cq.Size.X = int(float64(cq.Size.X) * OsClampFloat(node.progress, 0, 1))
-			ui.buff.AddRectRound(cq, ui.CellWidth(roundc), pl.S, 0)
+		if node.CanBeRenderOnCanvas() {
+			backCd = pl.P //InitOsCd32(50, 50, 180, 255)
+			backCd.A = 150
 		}
+
+		if node.HasError() {
+			backCd = pl.E
+		}
+		if node.Bypass {
+			backCd.A = 20
+		}
+
+		ui.buff.AddRectRound(coord, ui.CellWidth(roundc), backCd, 0)
 
 		//shadow
 		shadowCd := pl.GetGrey(0.4)
@@ -144,27 +138,48 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 	{
 		ui.Div_colMax(0, 1)
 		ui.Div_colMax(1, 100)
-
-		nm := node.Name
-		if node.state != SANode_STATE_DONE {
-			nm += fmt.Sprintf("(%.0f%%)", node.progress*100)
-
-			ui.Paint_tooltip(0, 0, 1, 1, node.progress_desc)
-		} else {
-			ui.Paint_tooltip(0, 0, 1, 1, fmt.Sprintf("Type: %s, Executed in %.3f", node.Exe, node.exeTimeSec))
-		}
-
-		//ui.Comp_image(0, 0, 1, 1, node.app.base.node_groups.FindNodeGroupIcon(node.Exe), InitOsCdWhite(), 0.3, 1, 1, false)	//icon
-		ui.Comp_textSelect(0, 0, 2, 1, nm, OsV2{1, 1}, false, false)
+		ui.Comp_textSelect(0, 0, 2, 1, node.Name, OsV2{1, 1}, false, false)
 	}
 	ui.Div_end()
+
+	//draw progress text
+	if node.state != SANode_STATE_DONE {
+		if node.progress > 0 {
+			cellr := node.parent.cellZoom(ui)
+			cq := coord.AddSpace(int(-0.3 * float64(cellr)))
+			cq.Start.X = cq.End().X
+			ui.Div_startCoord(0, 0, 1, 1, cq, node.Name)
+			{
+				ui.Div_colMax(0, 100)
+				ui.Div_rowMax(0, 100)
+				str := fmt.Sprintf("%.0f%%", node.progress*100)
+				if node.progress_desc != "" {
+					str += "(" + node.progress_desc + ")"
+				}
+				ui.Comp_textSelect(0, 0, 1, 1, str, OsV2{0, 1}, false, false)
+			}
+			ui.Div_end()
+		}
+	}
 
 	selectRad := ui.CellWidth(roundc * 1.3)
 	ui.win.io.ini.Dpi = bck
 
-	//select
+	//select rect
 	if (someNodeIsDraged && node.KeyProgessSelection(&ui.win.io.keys)) || (!someNodeIsDraged && node.Selected) {
 		ui.buff.AddRectRound(selCoord, selectRad, SAApp_getYellow(), ui.CellWidth(0.06)) //selected
+	}
+
+	//exe rect
+	selectRad = ui.CellWidth(roundc * 1.7)
+	if node.state != SANode_STATE_DONE {
+		pl := ui.win.io.GetPalette()
+		cd := pl.P
+
+		cellr := node.parent.cellZoom(ui)
+		cq := coord.AddSpace(int(-0.3 * float64(cellr)))
+
+		ui.buff.AddRectRound(cq, selectRad, cd, ui.CellWidth(0.06)) //selected
 	}
 
 	//go inside sub
