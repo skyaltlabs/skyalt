@@ -877,8 +877,12 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 				instr.LineReplace(strconv.Itoa(int(val)), false)
 			}
 			ui.Div_end()
+		} else if uiVal.Fn == "slider" {
+			if ui.Comp_slider(x, y, w, h, &value, uiVal.GetPrmFloat("min"), uiVal.GetPrmFloat("max"), uiVal.GetPrmFloat("step"), editable) {
+				instr.LineReplace(value, false)
+			}
 		} else if uiVal.Fn == "combo" {
-			if ui.Comp_combo(x, y, w, h, &value, strings.Split(uiVal.Prm, ";"), strings.Split(uiVal.Prm2, ";"), "", editable, false) {
+			if ui.Comp_combo(x, y, w, h, &value, uiVal.GetPrmStringSplit("labels", ";"), uiVal.GetPrmStringSplit("values", ";"), "", editable, false) {
 				instr.LineReplace(value, false)
 			}
 		} else if instr != nil && uiVal.Fn == SAAttrUi_COLOR.Fn {
@@ -1371,8 +1375,15 @@ func (w *SANode) RenderAttrs() {
 					ui.Dialog_open(dnm, 1)
 				}
 				if ui.Dialog_start(dnm) {
+					add := 0
+					if it.Ui.Fn == "combo" {
+						add = 2
+					}
+					if it.Ui.Fn == "slider" {
+						add = 3
+					}
 					ui.Div_colMax(0, 8)
-					ui.Div_row(11+OsTrn(it.Ui.Fn == "combo", 2, 0), 0.1) //spacer
+					ui.Div_row(12+add, 0.1) //spacer
 
 					y := 0
 					//UIs
@@ -1382,23 +1393,52 @@ func (w *SANode) RenderAttrs() {
 
 						for _, u := range SAAttrUi_uis {
 							isCombo := (u.Fn == "combo")
+							isSlider := (u.Fn == "slider")
 							isSelected := it.Ui.Fn == u.Fn
 							isDefault := it.defaultUi.Fn == u.Fn
 							styl := OsTrnString(isDefault, "__", "")
 							name := OsTrnString(u.Fn == "", "Editbox", u.Fn)
 							if ui.Comp_buttonMenu(0, y, 1, 1, styl+"Ui - "+name+OsTrnString(isDefault, "(Default)", "")+styl, "", true, isSelected) > 0 {
 								it.Ui.Fn = u.Fn //only func, keep prms
-								if !isCombo || isSelected {
+								if (!isCombo && !isSlider) || isSelected {
 									ui.Dialog_close()
 								}
 							}
 							y++
 
 							//extra options
-							if isCombo && isSelected {
-								ui.Comp_editbox_desc("Labels", 0, 2, 0, y, 1, 1, &it.Ui.Prm, 0, OsV2{0, 1}, nil, "", false, false, false, isSelected)
+							if isSlider && isSelected {
+								min := it.Ui.GetPrmString("min")
+								max := it.Ui.GetPrmString("max")
+								step := it.Ui.GetPrmString("step")
+								_, _, _, fnshd, _ := ui.Comp_editbox_desc("Min", 0, 2, 0, y, 1, 1, &min, 0, OsV2{0, 1}, nil, "", false, false, false, isSelected)
+								if fnshd {
+									it.Ui.SetPrmString("min", min)
+								}
 								y++
-								ui.Comp_editbox_desc("Values", 0, 2, 0, y, 1, 1, &it.Ui.Prm2, 0, OsV2{0, 1}, nil, "", false, false, false, isSelected)
+								_, _, _, fnshd, _ = ui.Comp_editbox_desc("Max", 0, 2, 0, y, 1, 1, &max, 0, OsV2{0, 1}, nil, "", false, false, false, isSelected)
+								if fnshd {
+									it.Ui.SetPrmString("max", max)
+								}
+								y++
+								_, _, _, fnshd, _ = ui.Comp_editbox_desc("Step", 0, 2, 0, y, 1, 1, &step, 0, OsV2{0, 1}, nil, "", false, false, false, isSelected)
+								if fnshd {
+									it.Ui.SetPrmString("step", step)
+								}
+								y++
+							}
+							if isCombo && isSelected {
+								labels := it.Ui.GetPrmString("labels")
+								values := it.Ui.GetPrmString("values")
+								_, _, _, fnshd, _ := ui.Comp_editbox_desc("Labels", 0, 2, 0, y, 1, 1, &labels, 0, OsV2{0, 1}, nil, "", false, false, false, isSelected)
+								if fnshd {
+									it.Ui.SetPrmString("labels", labels)
+								}
+								y++
+								_, _, _, fnshd, _ = ui.Comp_editbox_desc("Values", 0, 2, 0, y, 1, 1, &values, 0, OsV2{0, 1}, nil, "", false, false, false, isSelected)
+								if fnshd {
+									it.Ui.SetPrmString("values", values)
+								}
 								y++
 							}
 						}

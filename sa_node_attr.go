@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -37,6 +38,7 @@ var SAAttrUi_uis = []SAAttrUiValue{
 	{Fn: "dir"},
 	{Fn: "file"},
 	{Fn: "blob"},
+	{Fn: "slider"},
 	{Fn: "combo"},
 }
 
@@ -49,16 +51,48 @@ var SAAttrUi_DIR = SAAttrUiValue{Fn: "dir"}
 var SAAttrUi_FILE = SAAttrUiValue{Fn: "file"}
 var SAAttrUi_BLOB = SAAttrUiValue{Fn: "blob"}
 
-func SAAttrUi_COMBO(names string, values string) SAAttrUiValue {
-	return SAAttrUiValue{Fn: "combo", Prm: names, Prm2: values}
+func SAAttrUi_COMBO(labels string, values string) SAAttrUiValue {
+	return SAAttrUiValue{Fn: "combo", Prms: map[string]string{
+		"labels": labels,
+		"values": values}}
+}
+func SAAttrUi_SLIDER(min, max, step float64) SAAttrUiValue {
+	return SAAttrUiValue{Fn: "slider", Prms: map[string]string{
+		"min":  strconv.FormatFloat(min, 'f', -1, 64),
+		"max":  strconv.FormatFloat(max, 'f', -1, 64),
+		"step": strconv.FormatFloat(step, 'f', -1, 64)}}
 }
 
 type SAAttrUiValue struct {
 	Fn         string                   `json:",omitempty"`
-	Prm        string                   `json:",omitempty"` //can be SAAttrUiMap
-	Prm2       string                   `json:",omitempty"`
+	Prms       map[string]string        `json:",omitempty"`
 	Map        map[string]SAAttrUiValue `json:",omitempty"`
-	HideAddDel bool
+	HideAddDel bool                     //hide +/-
+}
+
+func (uiv *SAAttrUiValue) JSON() string {
+	js, _ := json.Marshal(uiv)
+	return string(js)
+}
+
+func (uiv *SAAttrUiValue) SetPrmString(key string, value string) {
+	if uiv.Prms == nil {
+		uiv.Prms = make(map[string]string)
+	}
+	uiv.Prms[key] = value
+}
+func (uiv *SAAttrUiValue) GetPrmString(key string) string {
+	return OsTrnString(uiv.Prms != nil, uiv.Prms[key], "")
+}
+func (uiv *SAAttrUiValue) GetPrmStringSplit(key string, sep string) []string {
+	str := uiv.GetPrmString(key)
+	return strings.Split(str, sep)
+}
+
+func (uiv *SAAttrUiValue) GetPrmFloat(key string) float64 {
+	str := uiv.GetPrmString(key)
+	v, _ := strconv.ParseFloat(str, 64)
+	return v
 }
 
 type SANodeAttr struct {
