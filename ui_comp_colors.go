@@ -62,13 +62,13 @@ func (ui *Ui) comp_colorPalette(cd *OsCd) bool {
 		g := float64(cd.G)
 		b := float64(cd.B)
 
-		if ui.Comp_slider_desc(ui.trns.RED, 0, 1.5, 0, 0, 1, 1, &r, 0, 255, 1) {
+		if ui.Comp_slider_desc(ui.trns.RED, 0, 1.5, 0, 0, 1, 1, &r, 0, 255, 1, true) {
 			cd.R = uint8(r)
 		}
-		if ui.Comp_slider_desc(ui.trns.GREEN, 0, 1.5, 0, 1, 1, 1, &g, 0, 255, 1) {
+		if ui.Comp_slider_desc(ui.trns.GREEN, 0, 1.5, 0, 1, 1, 1, &g, 0, 255, 1, true) {
 			cd.G = uint8(g)
 		}
-		if ui.Comp_slider_desc(ui.trns.BLUE, 0, 1.5, 0, 2, 1, 1, &b, 0, 255, 1) {
+		if ui.Comp_slider_desc(ui.trns.BLUE, 0, 1.5, 0, 2, 1, 1, &b, 0, 255, 1, true) {
 			cd.B = uint8(b)
 		}
 	}
@@ -85,13 +85,13 @@ func (ui *Ui) comp_colorPalette(cd *OsCd) bool {
 		l := float64(hsl.L)
 		changed := false
 
-		if ui.Comp_slider_desc(ui.trns.HUE, 0, 2, 0, 0, 1, 1, &h, 0, 359, 1) {
+		if ui.Comp_slider_desc(ui.trns.HUE, 0, 2, 0, 0, 1, 1, &h, 0, 359, 1, true) {
 			changed = true
 		}
-		if ui.Comp_slider_desc(ui.trns.SATURATION, 0, 2, 0, 1, 1, 1, &s, 0, 1, 0.01) {
+		if ui.Comp_slider_desc(ui.trns.SATURATION, 0, 2, 0, 1, 1, 1, &s, 0, 1, 0.01, true) {
 			changed = true
 		}
-		if ui.Comp_slider_desc(ui.trns.LIGHTNESS, 0, 2, 0, 2, 1, 1, &l, 0, 1, 0.01) {
+		if ui.Comp_slider_desc(ui.trns.LIGHTNESS, 0, 2, 0, 2, 1, 1, &l, 0, 1, 0.01, true) {
 			changed = true
 		}
 		if changed {

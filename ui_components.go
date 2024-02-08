@@ -679,19 +679,71 @@ func (ui *Ui) Comp_progress(style *UiComp, value float64, prec int) int64 {
 	return 1
 }
 
-func (ui *Ui) Comp_slider(x, y, w, h int, value *float64, minValue float64, maxValue float64, jumpValue float64) bool {
+func (ui *Ui) Comp_slider(x, y, w, h int, valueIn interface{}, minValue float64, maxValue float64, stepValue float64, enable bool) bool {
+
+	var value float64
+	switch v := valueIn.(type) {
+	case *bool:
+		if v != nil {
+			value = OsTrnFloat(*v, 1, 0)
+		}
+	case *float32:
+		if v != nil {
+			value = float64(*v)
+		}
+	case *float64:
+		if v != nil {
+			value = float64(*v)
+		}
+	case *int:
+		if v != nil {
+			value = float64(*v)
+		}
+	case *string:
+		if v != nil {
+			vv, _ := strconv.Atoi(*v)
+			value = float64(vv)
+		}
+		//int8/16/32, uint8, byte, etc ...
+	}
 
 	ui.Div_start(x, y, w, h)
 
-	styleSlider := UiComp{enable: true, label_formating: true, cd: CdPalette_P}
-	active, changed, end := ui.Comp_slider_s(&styleSlider, value, minValue, maxValue, jumpValue, "", 0)
+	styleSlider := UiComp{enable: enable, label_formating: true, cd: CdPalette_P}
+	active, changed, end := ui.Comp_slider_s(&styleSlider, &value, minValue, maxValue, stepValue, "", 0)
 
 	ui.Div_end()
 
-	return (active || end) && changed //change can be true alone, because of jumpValue "align", no click neede
+	if changed {
+		switch v := valueIn.(type) {
+		case *bool:
+			if v != nil {
+				*v = value != 0
+			}
+		case *float32:
+			if v != nil {
+				*v = float32(value)
+			}
+		case *float64:
+			if v != nil {
+				*v = value
+			}
+		case *int:
+			if v != nil {
+				*v = int(value)
+			}
+		case *string:
+			if v != nil {
+				*v = strconv.FormatFloat(value, 'f', -1, 64)
+			}
+			//int8/16/32, uint8, byte, etc ...
+		}
+	}
+
+	return (active || end) && changed //change can be true alone, because of stepValue "align", no click neede
 }
 
-func (ui *Ui) Comp_slider_desc(description string, description_alignH int, width float64, x, y, w, h int, value *float64, minValue float64, maxValue float64, jumpValue float64) bool {
+func (ui *Ui) Comp_slider_desc(description string, description_alignH int, width float64, x, y, w, h int, valueIn interface{}, minValue float64, maxValue float64, stepValue float64, enable bool) bool {
 	ui.Div_start(x, y, w, h)
 
 	xx := 0
@@ -707,14 +759,21 @@ func (ui *Ui) Comp_slider_desc(description string, description_alignH int, width
 		ui.Comp_text(0, 0, 1, 1, description, description_alignH)
 	}
 
-	changed := ui.Comp_slider(xx, 0, 1, 1, value, minValue, maxValue, jumpValue)
+	changed := ui.Comp_slider(xx, 0, 1, 1, valueIn, minValue, maxValue, stepValue, enable)
 
 	ui.Div_end()
 
 	return changed
 }
 
-func (ui *Ui) Comp_slider_s(style *UiComp, value *float64, minValue float64, maxValue float64, jumpValue float64, imgPath string, imgMargin float64) (bool, bool, bool) {
+func (ui *Ui) Comp_slider_s(style *UiComp, value *float64, minValue float64, maxValue float64, stepValue float64, imgPath string, imgMargin float64) (bool, bool, bool) {
+
+	if stepValue == 0 {
+		stepValue = 0.001 //avoid division by zero
+	}
+	if minValue == maxValue {
+		maxValue = minValue + 0.001 //avoid division by zero
+	}
 
 	lv := ui.GetCall()
 
@@ -755,10 +814,11 @@ func (ui *Ui) Comp_slider_s(style *UiComp, value *float64, minValue float64, max
 			ui.Paint_tooltip(0, 0, 1, 1, style.tooltip)
 		}
 	}
+
 	//check & round
 	{
-		t := math.Round((*value - minValue) / jumpValue)
-		*value = minValue + t*jumpValue
+		t := math.Round((*value - minValue) / stepValue)
+		*value = minValue + t*stepValue
 		*value = OsClampFloat(*value, minValue, maxValue)
 	}
 
