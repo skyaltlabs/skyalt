@@ -63,7 +63,7 @@ func SAExe_File_write(node *SANode) bool {
 
 	triggerAttr := node.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
 
-	tp := node.GetAttrUi("type", "0", SAAttrUiValue{Fn: "combo", Prm: "Database;App;Disk"}).GetInt()
+	tp := node.GetAttrUi("type", "0", SAAttrUi_COMBO("Database;App;Disk", "")).GetInt()
 	pathAttr := node.GetAttrUi("path", "", SAAttrUi_FILE)
 	dataAttr := node.GetAttr("json", "")
 
@@ -88,7 +88,7 @@ func SAExe_File_write(node *SANode) bool {
 
 func SAExe_File_read(node *SANode) bool {
 
-	tp := node.GetAttrUi("type", "0", SAAttrUiValue{Fn: "combo", Prm: "Database;App;Disk"}).GetInt()
+	tp := node.GetAttrUi("type", "0", SAAttrUi_COMBO("Database;App;Disk", "")).GetInt()
 
 	pathAttr := node.GetAttrUi("path", "", SAAttrUi_FILE)
 	path := pathAttr.GetString()
