@@ -150,6 +150,37 @@ func (app *SAApp) GetJsonPath() string {
 	return app.GetFolderPath() + "app.json"
 }
 
+func (app *SAApp) Tick() {
+	doneNode, setAttrs := app.exe.Tick()
+	if doneNode != nil {
+		if app.exeIt {
+			//write only changes and ignore 'doneNode'
+			for _, st := range setAttrs {
+				st.Write(app.root)
+			}
+
+			app.exe.Run(app.root)
+			app.exeIt = false
+		} else {
+			app.act = doneNode.FindMirror(app.root, app.act)
+			app.root = doneNode
+
+			for _, st := range setAttrs {
+				st.Write(app.root)
+			}
+
+			app.exeIt = false //setAttrs.Write() -> LineReplace() -> SetExecute() = ignore that writes
+		}
+	} else {
+		if app.exeIt && app.exe.wip == nil {
+			app.exe.Run(app.root)
+			app.exeIt = false
+			app.HistoryInit()
+		}
+	}
+	app.exe.UpdateProgress(app.root)
+}
+
 func (app *SAApp) RenderApp(ide bool) {
 
 	node := app.root
