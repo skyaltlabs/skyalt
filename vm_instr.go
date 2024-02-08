@@ -143,8 +143,7 @@ func (instr *VmInstr) LineReplace(value string, mapOrArray bool) {
 	}
 
 	instr.pos_attr.Value = newValue //replace
-
-	//instr.pos_attr.ParseExpresion()
+	instr.pos_attr.ParseExpresion() //update constant positions
 	//instr.pos_attr.ExecuteExpression()
 }
 
