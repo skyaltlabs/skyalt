@@ -3,9 +3,9 @@
 "X": 0,
 "Y": 0
 },
-"Cam_x": 5.870299816131592,
-"Cam_y": 3.0859599113464355,
-"Cam_z": 0.6000000000000001,
+"Cam_x": 7.633522987365723,
+"Cam_y": 0.6228170394897461,
+"Cam_z": 0.5999999999999993,
 "Name": "root",
 "Exe": "layout",
 "Attrs": [
@@ -43,19 +43,19 @@
 },
 {
 "Min": 1,
-"Max": 1,
+"Max": 2,
 "Resize": 1
 }
 ],
 "Subs": [
 {
 "Pos": {
-"X": 10.240957,
-"Y": -0.17320292
+"X": 2.4308069,
+"Y": -4.020321
 },
 "Cam_z": 1,
 "Name": "reset_editbox",
-"Exe": "SetAttribute",
+"Exe": "setter",
 "Attrs": [
 {
 "Name": "trigger",
@@ -94,18 +94,19 @@
 },
 {
 "Pos": {
-"X": -4.645499,
-"Y": -2.8957531
+"X": 10.810641,
+"Y": -4.553648
 },
 "Cam_z": 1,
-"Name": "code_python",
+"Name": "json_into_single_string",
 "Exe": "code_python",
 "Attrs": [
 {
 "Name": "code",
-"Value": "\"_chat = \\\"\\\"\\nfor r in rows:\\n\\t_chat += \\\"\\\\nUser: \\\" + r[0]\\n\\t_chat += \\\"\\\\nLlama: \\\" + r[1]\"",
+"Value": "\"_chat = \\\"\\\"\\nfor r in rows:\\n\\t_chat += \\\"\\\\nUser: \\\" + r[0]\\n\\t_chat += \\\"\\\\nLlama: \\\" + r[1]\\n\"",
 "ShowExp": false,
 "Ui": {
+"Fn": "Code",
 "HideAddDel": false
 }
 },
@@ -119,7 +120,6 @@
 },
 {
 "Name": "_chat",
-"Value": "\"\"",
 "ShowExp": false,
 "Ui": {
 "HideAddDel": false
@@ -129,8 +129,8 @@
 },
 {
 "Pos": {
-"X": -4.65251,
-"Y": -5.739382
+"X": 10.84749,
+"Y": -7.2656975
 },
 "Cam_z": 1,
 "Name": "db_select",
@@ -163,7 +163,7 @@
 },
 {
 "Name": "_columns",
-"Value": "[]",
+"Value": "\"\"",
 "ShowExp": false,
 "Ui": {
 "HideAddDel": false
@@ -173,8 +173,8 @@
 },
 {
 "Pos": {
-"X": 16.61583,
-"Y": -0.19787568
+"X": -1.6736441,
+"Y": -13.184718
 },
 "Cam_z": 1,
 "Name": "nn_whisper_cpp",
@@ -206,7 +206,6 @@
 },
 {
 "Name": "_done",
-"Value": "0",
 "ShowExp": false,
 "Ui": {
 "HideAddDel": false
@@ -216,8 +215,8 @@
 },
 {
 "Pos": {
-"X": 3.8759236,
-"Y": 5.440528
+"X": 6.969282,
+"Y": 5.1172194
 },
 "Cam_z": 1,
 "Name": "vars",
@@ -235,8 +234,8 @@
 },
 {
 "Pos": {
-"X": 3.7474256,
-"Y": 2.7068858
+"X": 6.8877764,
+"Y": 2.4963596
 },
 "Cam_z": 1,
 "Name": "llama2_7b",
@@ -245,7 +244,7 @@
 {
 "Name": "trigger",
 "Value": "button_send.clicked",
-"ShowExp": false,
+"ShowExp": true,
 "Ui": {
 "Fn": "switch",
 "HideAddDel": false
@@ -279,8 +278,8 @@
 },
 {
 "Pos": {
-"X": -4.720992,
-"Y": -0.069548905
+"X": 14.007079,
+"Y": -2.0870929
 },
 "Cam_z": 1,
 "Name": "chat_history",
@@ -296,7 +295,7 @@
 },
 {
 "Name": "label",
-"Value": "code_python._chat",
+"Value": "json_into_single_string._chat",
 "ShowExp": false,
 "Ui": {
 "HideAddDel": false
@@ -362,8 +361,8 @@
 },
 {
 "Pos": {
-"X": 16.581081,
-"Y": -4.25193
+"X": -1.6613989,
+"Y": -15.894787
 },
 "Cam_z": 1,
 "Name": "microphone",
@@ -371,7 +370,7 @@
 "Attrs": [
 {
 "Name": "grid",
-"Value": "[0, 1, 1, 2]",
+"Value": "[0, 1, 1, 1]",
 "ShowExp": false,
 "Ui": {
 "HideAddDel": false
@@ -424,8 +423,8 @@
 },
 {
 "Pos": {
-"X": 7.7084956,
-"Y": -2.9121618
+"X": -1.9186972,
+"Y": -6.301886
 },
 "Cam_z": 1,
 "Name": "button_send",
@@ -433,7 +432,7 @@
 "Attrs": [
 {
 "Name": "grid",
-"Value": "[2, 1, 1, 2]",
+"Value": "[2, 1, 1, 1]",
 "ShowExp": false,
 "Ui": {
 "HideAddDel": false
@@ -488,8 +487,8 @@
 },
 {
 "Pos": {
-"X": 2.8957524,
-"Y": -5.559845
+"X": 7.4132967,
+"Y": -10.844933
 },
 "Cam_z": 1,
 "Name": "editbox",
@@ -497,7 +496,7 @@
 "Attrs": [
 {
 "Name": "grid",
-"Value": "[1, 1, 1, 2]",
+"Value": "[1, 1, 1, 1]",
 "ShowExp": false,
 "Ui": {
 "HideAddDel": false
@@ -514,8 +513,8 @@
 },
 {
 "Name": "value",
-"Value": "\"\"",
-"ShowExp": false,
+"Value": "12345",
+"ShowExp": true,
 "Ui": {
 "HideAddDel": false
 }
@@ -531,7 +530,7 @@
 },
 {
 "Name": "tempToValue",
-"Value": "1",
+"Value": "0",
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
@@ -575,11 +574,20 @@
 },
 {
 "Name": "align_v",
-"Value": "1",
+"Value": "0",
 "ShowExp": false,
 "Ui": {
 "Fn": "combo",
 "Prm": "Top;Center;Bottom",
+"HideAddDel": false
+}
+},
+{
+"Name": "finished",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
 "HideAddDel": false
 }
 }
@@ -587,12 +595,12 @@
 },
 {
 "Pos": {
-"X": 16.649612,
-"Y": 3.1177611
+"X": -1.5646734,
+"Y": -10.799532
 },
 "Cam_z": 1,
 "Name": "set_editbox",
-"Exe": "SetAttribute",
+"Exe": "setter",
 "Attrs": [
 {
 "Name": "trigger",
@@ -631,8 +639,8 @@
 },
 {
 "Pos": {
-"X": 8.6718645,
-"Y": 8.798924
+"X": 1.0872786,
+"Y": 7.3434105
 },
 "Cam_z": 1,
 "Name": "db_insert",
@@ -650,7 +658,7 @@
 {
 "Name": "file",
 "Value": "\"apps/LLM_chat/db.sqlite\"",
-"ShowExp": false,
+"ShowExp": true,
 "Ui": {
 "Fn": "file",
 "HideAddDel": false
@@ -670,7 +678,7 @@
 {
 "Name": "values",
 "Value": "[{\"value\":editbox.value, \"column\":\"user\", }, {\"value\":time(), \"column\":\"date\", }, {\"value\": vars.attr , \"column\":\"bot\", }]",
-"ShowExp": false,
+"ShowExp": true,
 "Ui": {
 "Fn": "map",
 "Map": {
@@ -699,8 +707,8 @@
 },
 {
 "Pos": {
-"X": 0.4784423,
-"Y": -0.16473438
+"X": 8.022302,
+"Y": -0.6910502
 },
 "Cam_z": 1,
 "Name": "build_prompt",
@@ -716,7 +724,7 @@
 },
 {
 "Name": "prompt",
-"Value": "intro \u0026 \"\\\\n\"  \u0026 code_python._chat \u0026 \"\\\\nUser: \" \u0026 editbox.value \u0026\"\\\\nLlama:\"",
+"Value": "intro \u0026 \"\\\\n\"  \u0026 json_into_single_string._chat \u0026 \"\\\\nUser: \" \u0026 editbox.value \u0026\"\\\\nLlama:\"",
 "ShowExp": true,
 "Ui": {
 "HideAddDel": false
