@@ -67,7 +67,21 @@ func SAExe_For(node *SANode) bool {
 	return true
 }
 
-func SAExe_SetAttribute(node *SANode) bool {
+func SAExe_Setter_destNode(node *SANode) *SANode {
+	nodeAttr := node.GetAttr("node", "")
+	attrAttr := node.GetAttr("attr", "")
+	nd := node.parent.FindNode(nodeAttr.GetString())
+	if nd == nil {
+		return nil
+	}
+	attr := nd.findAttr(attrAttr.GetString())
+	if attr == nil {
+		return nil //both(node &  attr) must be valid
+	}
+	return nd
+}
+
+func SAExe_Setter(node *SANode) bool {
 	triggerAttr := node.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
 
 	nodeAttr := node.GetAttr("node", "")
@@ -94,14 +108,14 @@ func SAExe_SetAttribute(node *SANode) bool {
 	return true
 }
 
-func SAExe_SetAttribute_renameNode(node *SANode, oldName string, newName string) {
+func SAExe_Setter_renameNode(node *SANode, oldName string, newName string) {
 	nodeAttr := node.GetAttr("node", "")
 	if nodeAttr.GetString() == oldName {
 		nodeAttr.SetExpString(newName, false)
 	}
 }
 
-func SAExe_SetAttribute_renameAttr(node *SANode, nodeName string, oldAttrName string, newAttrName string) {
+func SAExe_Setter_renameAttr(node *SANode, nodeName string, oldAttrName string, newAttrName string) {
 	nodeAttr := node.GetAttr("node", "")
 	attrAttr := node.GetAttr("attr", "")
 	if nodeAttr.GetString() == nodeName && attrAttr.GetString() == oldAttrName {
