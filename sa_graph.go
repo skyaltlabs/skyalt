@@ -58,7 +58,7 @@ func (gr *SAGraph) drawCreateNode(ui *Ui) {
 	}
 }
 
-func _SAGraph_drawConnection(start OsV2, end OsV2, active bool, cellr float32, ui *Ui) {
+func _SAGraph_drawConnectionV(start OsV2, end OsV2, active bool, cellr float32, ui *Ui) {
 	cd := Node_connectionCd(ui)
 	if active {
 		cd = SAApp_getYellow()
@@ -69,14 +69,34 @@ func _SAGraph_drawConnection(start OsV2, end OsV2, active bool, cellr float32, u
 
 	//line
 	mid := start.Aprox(end, 0.5)
-	ui.buff.AddBezier(start, OsV2{start.X, mid.Y}, OsV2{end.X, mid.Y}, end, cd, ui.CellWidth(0.03), false)
+	ui.buff.AddBezier(start, OsV2{start.X, mid.Y}, OsV2{end.X, mid.Y}, end, cd, ui.CellWidth(0.03), 0)
 
 	//arrow
 	ui.buff.AddPoly(end.Add(OsV2{int(-t / 2), 0}), []OsV2f{{0, 0}, {-t / 2, -t}, {t / 2, -t}}, cd, 0)
 
 	//label
 	//.........
+}
 
+func _SAGraph_drawConnectionH(start OsV2, end OsV2, active bool, cellr float32, ui *Ui) {
+	cd := Node_connectionCd(ui)
+	if active {
+		cd = SAApp_getYellow()
+	}
+	cd.A = 100
+
+	t := cellr * 0.4
+	end.X -= int(t) //connect to left of arrow
+
+	//line
+	mid := start.Aprox(end, 0.5)
+	ui.buff.AddBezier(start, OsV2{mid.X, start.Y}, OsV2{mid.X, end.Y}, end, cd, ui.CellWidth(0.03), cellr)
+
+	//arrow
+	ui.buff.AddPoly(end.Add(OsV2{0, int(-t / 2)}), []OsV2f{{0, 0}, {-t, -t / 2}, {-t, t / 2}}, cd, 0)
+
+	//label
+	//.........
 }
 
 func _reorder_layer(nodes_layer []*SANode, max_width int) []float32 {
@@ -349,12 +369,28 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 
 						end := coordIn.Start
 						end.X += int(float64(coordIn.Size.X) * (float64(i_depends) / float64(num_depends)))
-						_SAGraph_drawConnection(OsV2{coordOut.Middle().X, coordOut.End().Y}, end, node.Selected || out.node.Selected, cellr, ui)
+						_SAGraph_drawConnectionV(OsV2{coordOut.Middle().X, coordOut.End().Y}, end, node.Selected || out.node.Selected, cellr, ui)
 						i_depends++
 					}
 				}
-			}
 
+				//draw Setter connection
+				if SAGroups_IsNodeSetter(node.Exe) {
+					dstNode := SAExe_Setter_destNode(node)
+					if dstNode != nil {
+						coordOut, selCoordOut := node.nodeToPixelsCoord(lv.call.canvas, ui)
+						coordIn, selCoordIn := dstNode.nodeToPixelsCoord(lv.call.canvas, ui)
+
+						if node.Selected {
+							coordOut = selCoordOut
+						}
+						if dstNode.Selected {
+							coordIn = selCoordIn
+						}
+						_SAGraph_drawConnectionH(OsV2{coordOut.End().X, coordOut.Middle().Y}, OsV2{coordIn.Start.X, coordIn.Middle().Y}, node.Selected || dstNode.Selected, cellr, ui)
+					}
+				}
+			}
 			//draw node bodies
 			var touchInsideNode *SANode
 			for _, n := range gr.app.act.Subs {
