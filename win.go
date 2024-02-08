@@ -917,7 +917,16 @@ func (win *Win) DrawLine(start OsV2, end OsV2, depth int, thick int, cd OsCd) {
 	}
 }
 
-func (win *Win) DrawBezier(a OsV2, b OsV2, c OsV2, d OsV2, depth int, thick int, cd OsCd, dash bool) {
+func _Win_getBezierPoint(t float64, a, b, c, d OsV2f) OsV2f {
+	af := a.MulV(float32(math.Pow(t, 3)))
+	bf := b.MulV(float32(3 * math.Pow(t, 2) * (1 - t)))
+	cf := c.MulV(float32(3 * t * math.Pow((1-t), 2)))
+	df := d.MulV(float32(math.Pow((1 - t), 3)))
+
+	return af.Add(bf).Add(cf).Add(df)
+}
+
+func (win *Win) DrawBezier(a OsV2, b OsV2, c OsV2, d OsV2, depth int, thick int, cd OsCd, dash_px float32) {
 
 	gl.Color4ub(cd.R, cd.G, cd.B, cd.A)
 
@@ -927,22 +936,25 @@ func (win *Win) DrawBezier(a OsV2, b OsV2, c OsV2, d OsV2, depth int, thick int,
 	dd := d.toV2f()
 
 	gl.LineWidth(float32(thick))
-	if dash {
+	if dash_px > 0 {
 		gl.Begin(gl.LINES)
 	} else {
 		gl.Begin(gl.LINE_STRIP)
 	}
 	{
-		N := float64(30)
-		div := 1 / N
+		//compute length
+		len := float32(0)
+		last_a := a.toV2f()
+		N := 10
+		div := 1 / float64(N)
 		for t := float64(0); t <= 1.001; t += div {
-			af := aa.MulV(float32(math.Pow(t, 3)))
-			bf := bb.MulV(float32(3 * math.Pow(t, 2) * (1 - t)))
-			cf := cc.MulV(float32(3 * t * math.Pow((1-t), 2)))
-			df := dd.MulV(float32(math.Pow((1 - t), 3)))
+			len += last_a.Sub(_Win_getBezierPoint(t, aa, bb, cc, dd)).Len()
+		}
 
-			r := af.Add(bf).Add(cf).Add(df)
-
+		N = OsTrn(dash_px > 0, int(len/dash_px), int(len/5)) // 5 = 5px jump
+		div = 1 / float64(N)
+		for t := float64(0); t <= 1.001; t += div {
+			r := _Win_getBezierPoint(t, aa, bb, cc, dd)
 			gl.Vertex3f(r.X, r.Y, float32(depth))
 		}
 	}
