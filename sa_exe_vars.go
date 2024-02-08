@@ -94,9 +94,17 @@ func SAExe_SetAttribute(node *SANode) bool {
 	return true
 }
 
-func SAExe_SetAttribute_rename(node *SANode, oldName string, newName string) {
+func SAExe_SetAttribute_renameNode(node *SANode, oldName string, newName string) {
 	nodeAttr := node.GetAttr("node", "")
 	if nodeAttr.GetString() == oldName {
 		nodeAttr.SetExpString(newName, false)
+	}
+}
+
+func SAExe_SetAttribute_renameAttr(node *SANode, nodeName string, oldAttrName string, newAttrName string) {
+	nodeAttr := node.GetAttr("node", "")
+	attrAttr := node.GetAttr("attr", "")
+	if nodeAttr.GetString() == nodeName && attrAttr.GetString() == oldAttrName {
+		attrAttr.SetExpString(newAttrName, false)
 	}
 }

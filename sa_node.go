@@ -1058,26 +1058,44 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 	}
 }
 
-func (w *SANode) RenameExpressionAccess(oldName string, newName string) {
+func (w *SANode) RenameExpressionAccessNode(oldName string, newName string) {
 	for _, attr := range w.Attrs {
 		if attr.instr != nil {
 			attr.Value = attr.instr.RenameAccessNode(attr.Value, oldName, newName)
 		}
 	}
-
+}
+func (w *SANode) RenameExpressionAccessAttr(nodeName string, oldAttrName string, newAttrName string) {
+	for _, attr := range w.Attrs {
+		if attr.instr != nil {
+			attr.Value = attr.instr.RenameAccessAttr(attr.Value, nodeName, oldAttrName, newAttrName)
+		}
+	}
 }
 
-func (w *SANode) RenameSubs(oldName string, newName string) {
-
+func (w *SANode) RenameSubNodes(oldName string, newName string) {
 	//expressions
 	for _, it := range w.Subs {
-		it.RenameExpressionAccess(oldName, newName)
+		it.RenameExpressionAccessNode(oldName, newName)
 	}
 
 	//SetAttribute node params
 	for _, it := range w.Subs {
 		if SAGroups_IsNodeSetAttribute(it.Exe) {
-			SAExe_SetAttribute_rename(it, oldName, newName)
+			SAExe_SetAttribute_renameNode(it, oldName, newName)
+		}
+	}
+}
+func (w *SANode) RenameSubAttrs(nodeName string, oldAttrName string, newAttrName string) {
+	//expressions
+	for _, it := range w.Subs {
+		it.RenameExpressionAccessAttr(nodeName, oldAttrName, newAttrName)
+	}
+
+	//SetAttribute node params
+	for _, it := range w.Subs {
+		if SAGroups_IsNodeSetAttribute(it.Exe) {
+			SAExe_SetAttribute_renameAttr(it, nodeName, oldAttrName, newAttrName)
 		}
 	}
 }
@@ -1120,7 +1138,7 @@ func (w *SANode) RenderAttrs() {
 
 			//rename access in other nodes expressions
 			if w.parent != nil {
-				w.parent.RenameSubs(oldName, w.Name)
+				w.parent.RenameSubNodes(oldName, w.Name)
 			}
 		}
 
@@ -1243,8 +1261,13 @@ func (w *SANode) RenderAttrs() {
 					}
 					if ui.Dialog_start(dnm) {
 						ui.Div_colMax(0, 5)
-						ui.Comp_editbox(0, 0, 1, 1, &it.Name, 0, OsV2{0, 1}, nil, "Name", false, false, false, true)
-						it.CheckUniqueName()
+						oldAttrName := it.Name
+						_, _, _, fnsh, _ := ui.Comp_editbox(0, 0, 1, 1, &it.Name, 0, OsV2{0, 1}, nil, "Name", false, false, false, true)
+						if fnsh {
+							it.CheckUniqueName()
+							w.parent.RenameSubAttrs(w.Name, oldAttrName, it.Name)
+						}
+
 						ui.Dialog_end()
 					}
 					xx++

@@ -75,8 +75,8 @@ func NewVmInstr(exe VmInstr_callbackExecute, lexer *VmLexer, pos_attr *SANodeAtt
 
 func (instr *VmInstr) RenameAccessNode(line string, oldName, newName string) string {
 	if VmCallback_Cmp(instr.fn, VmBasic_Access) {
-		spl := strings.Split(line[instr.pos.X:instr.pos.Y], ".")
-		if len(spl) > 0 && spl[0] == oldName {
+		spl := strings.Split(line[instr.pos.X:instr.pos.Y], ".") //'node.attr' or 'attr'
+		if len(spl) > 1 && spl[0] == oldName {
 			line = line[:instr.pos.X] + newName + line[instr.pos.X+len(spl[0]):]
 		}
 	}
@@ -84,6 +84,27 @@ func (instr *VmInstr) RenameAccessNode(line string, oldName, newName string) str
 	for _, prm := range instr.prms {
 		if prm.value != nil {
 			line = prm.value.RenameAccessNode(line, oldName, newName)
+		}
+	}
+
+	return line
+}
+func (instr *VmInstr) RenameAccessAttr(line string, nodeName string, oldAttrName string, newAttrName string) string {
+	if VmCallback_Cmp(instr.fn, VmBasic_Access) {
+		spl := strings.Split(line[instr.pos.X:instr.pos.Y], ".") //'node.attr' or 'attr'
+
+		if len(spl) == 1 && spl[0] == oldAttrName { //attr
+			line = line[:instr.pos.X] + newAttrName + line[instr.pos.Y:]
+		}
+
+		if len(spl) > 1 && spl[0] == nodeName && spl[1] == oldAttrName { //node.attr
+			line = line[:instr.pos.X+len(spl[0])+1] + newAttrName + line[instr.pos.Y:]
+		}
+	}
+
+	for _, prm := range instr.prms {
+		if prm.value != nil {
+			line = prm.value.RenameAccessAttr(line, nodeName, oldAttrName, newAttrName)
 		}
 	}
 

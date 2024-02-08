@@ -443,7 +443,7 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 								oldName := gr.copiedNodes[j].Name
 								newName := newNodes[j].Name
 
-								node.RenameExpressionAccess(oldName, newName)
+								node.RenameExpressionAccessNode(oldName, newName)
 							}
 						}
 					}
