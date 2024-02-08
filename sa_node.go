@@ -1067,9 +1067,18 @@ func (w *SANode) RenameExpressionAccess(oldName string, newName string) {
 
 }
 
-func (w *SANode) RenameSubsExpressionAccess(oldName string, newName string) {
+func (w *SANode) RenameSubs(oldName string, newName string) {
+
+	//expressions
 	for _, it := range w.Subs {
 		it.RenameExpressionAccess(oldName, newName)
+	}
+
+	//SetAttribute node params
+	for _, it := range w.Subs {
+		if SAGroups_IsNodeSetAttribute(it.Exe) {
+			SAExe_SetAttribute_rename(it, oldName, newName)
+		}
 	}
 }
 
@@ -1111,7 +1120,7 @@ func (w *SANode) RenderAttrs() {
 
 			//rename access in other nodes expressions
 			if w.parent != nil {
-				w.parent.RenameSubsExpressionAccess(oldName, w.Name)
+				w.parent.RenameSubs(oldName, w.Name)
 			}
 		}
 
