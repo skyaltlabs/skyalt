@@ -182,9 +182,11 @@ func (a OsV2f) Cmp(b OsV2f) bool {
 func (a OsV2f) Min(b OsV2f) OsV2f {
 	return OsV2f{OsMinFloat32(a.X, b.X), OsMinFloat32(a.Y, b.Y)}
 }
-
 func (a OsV2f) Max(b OsV2f) OsV2f {
 	return OsV2f{OsMaxFloat32(a.X, b.X), OsMaxFloat32(a.Y, b.Y)}
+}
+func (v OsV2f) Len() float32 {
+	return float32(math.Sqrt(float64(v.X*v.X + v.Y*v.Y)))
 }
 
 type OsV2 struct {
