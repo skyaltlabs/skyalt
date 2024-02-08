@@ -52,6 +52,13 @@ func (exe *SAAppExe) Destroy() {
 	}
 }
 
+func (exe *SAAppExe) UpdateProgress(dst *SANode) {
+	if exe.wip == nil {
+		return
+	}
+	dst.UpdateProgress(exe.wip)
+}
+
 func (exe *SAAppExe) AddSetAttr(attr *SANodeAttr, value string) {
 	exe.setAttrs = append(exe.setAttrs, InitSASetAttr(attr, value))
 }
@@ -120,7 +127,7 @@ func (exe *SAAppExe) ExecuteList(list []*SANode) {
 
 		for _, it := range list {
 
-			if it.state.Load() == SANode_STATE_WAITING {
+			if it.state == SANode_STATE_WAITING {
 				active = true
 
 				if it.IsReadyToBeExe() {
@@ -139,11 +146,11 @@ func (exe *SAAppExe) ExecuteList(list []*SANode) {
 					}
 
 					if !it.Bypass {
-						it.state.Store(SANode_STATE_RUNNING)
+						it.state = SANode_STATE_RUNNING
 						it.Execute()
 
 					}
-					it.state.Store(SANode_STATE_DONE) //done
+					it.state = SANode_STATE_DONE //done
 				}
 			}
 		}

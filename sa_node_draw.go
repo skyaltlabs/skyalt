@@ -110,7 +110,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 
 	//back
 	{
-		if node.state.Load() == SANode_STATE_DONE {
+		if node.state == SANode_STATE_DONE {
 			backCd := pl.GetGrey(1)
 
 			if node.CanBeRenderOnCanvas() {
@@ -146,7 +146,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 		ui.Div_colMax(1, 100)
 
 		nm := node.Name
-		if node.state.Load() != SANode_STATE_DONE {
+		if node.state != SANode_STATE_DONE {
 			nm += fmt.Sprintf("(%.0f%%)", node.progress*100)
 
 			ui.Paint_tooltip(0, 0, 1, 1, node.progress_desc)

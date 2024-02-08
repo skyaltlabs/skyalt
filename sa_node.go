@@ -24,7 +24,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync/atomic"
 
 	"github.com/go-audio/audio"
 )
@@ -71,8 +70,7 @@ type SANode struct {
 	Rows []SANodeColRow `json:",omitempty"`
 	Subs []*SANode      `json:",omitempty"`
 
-	state atomic.Uint32 //0=waiting, 1=running, 2=done
-
+	state         int //0=waiting, 1=running, 2=done
 	errExe        error
 	progress      float64
 	progress_desc string
@@ -270,7 +268,7 @@ func (w *SANode) ResetExeErrors() {
 }
 
 func (w *SANode) PrepareExe() {
-	w.state.Store(SANode_STATE_WAITING)
+	w.state = SANode_STATE_WAITING
 
 	for _, v := range w.Attrs {
 		v.errExe = nil
@@ -334,7 +332,7 @@ func (w *SANode) IsReadyToBeExe() bool {
 	//areAttrsErrorFree
 	for _, v := range w.Attrs {
 		if v.errExp != nil {
-			w.state.Store(SANode_STATE_DONE)
+			w.state = SANode_STATE_DONE
 			return false
 		}
 	}
@@ -343,7 +341,7 @@ func (w *SANode) IsReadyToBeExe() bool {
 	for _, v := range w.Attrs {
 		for _, dep := range v.depends {
 			if dep.node.HasExpError() {
-				w.state.Store(SANode_STATE_DONE)
+				w.state = SANode_STATE_DONE
 				return false //has error
 			}
 		}
@@ -356,7 +354,7 @@ func (w *SANode) IsReadyToBeExe() bool {
 				continue //skip self-depends
 			}
 
-			if dep.node.state.Load() != SANode_STATE_DONE {
+			if dep.node.state != SANode_STATE_DONE {
 				return false //still running
 			}
 		}
@@ -466,6 +464,22 @@ func (w *SANode) Copy() (*SANode, error) {
 	dst.updateLinks(nil, w.app)
 
 	return dst, nil
+}
+
+func (dst *SANode) UpdateProgress(src *SANode) {
+
+	dst.state = src.state
+	dst.errExe = src.errExe
+	dst.progress = src.progress
+	dst.progress_desc = src.progress_desc
+	dst.exeTimeSec = src.exeTimeSec
+
+	for _, dn := range dst.Subs {
+		sn := src.FindNode(dn.Name)
+		if sn != nil {
+			dn.UpdateProgress(sn)
+		}
+	}
 }
 
 func (a *SANode) FindMirror(b *SANode, b_find *SANode) *SANode {

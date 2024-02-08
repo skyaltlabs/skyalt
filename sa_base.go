@@ -281,6 +281,7 @@ func (base *SABase) drawFrame() {
 			app.HistoryInit()
 		}
 	}
+	app.exe.UpdateProgress(app.root)
 
 	ui := base.ui
 	icon_rad := 1.7
