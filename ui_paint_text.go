@@ -26,7 +26,8 @@ func (ui *Ui) Paint_textGrid(
 	frontCd OsCd, style *UiComp,
 	value string, valueOrigEdit string,
 	prop WinFontProps, icon *WinMedia,
-	selection bool, editable bool, multi_line bool) {
+	selection bool, editable bool,
+	multi_line bool, multi_line_enter_finish bool) {
 
 	lv := ui.GetCall()
 	if lv.call == nil /*|| lv.call.crop.IsZero()*/ {
@@ -85,7 +86,7 @@ func (ui *Ui) Paint_textGrid(
 			ui._compDrawImage(coordImage, *icon, frontCd, style)
 		}
 		if editable || len(value) > 0 {
-			ui._compDrawText(coordText, value, valueOrigEdit, frontCd, prop, selection, editable, style.label_align, multi_line)
+			ui._compDrawText(coordText, value, valueOrigEdit, frontCd, prop, selection, editable, style.label_align, multi_line, multi_line_enter_finish)
 		}
 	}
 	ui.Div_end()
@@ -521,7 +522,7 @@ func (ui *Ui) _UiPaint_TextSelectKeys(text string, lines []int, editable bool, p
 	}
 }
 
-func (ui *Ui) _UiPaint_TextEditKeys(text string, lines []int, tabIsChar bool, enterIsChar bool, prop WinFontProps, multi_line bool) (string, bool) {
+func (ui *Ui) _UiPaint_TextEditKeys(text string, lines []int, tabIsChar bool, prop WinFontProps, multi_line bool, multi_line_enter_finish bool) (string, bool) {
 	edit := &ui.edit
 	keys := &ui.win.io.keys
 
@@ -572,7 +573,8 @@ func (ui *Ui) _UiPaint_TextEditKeys(text string, lines []int, tabIsChar bool, en
 	if tabIsChar && keys.tab {
 		txt += "\t"
 	}
-	if enterIsChar && (keys.enter && !keys.ctrl) {
+
+	if keys.enter && multi_line && ((multi_line_enter_finish && keys.ctrl) || (!multi_line_enter_finish && !keys.ctrl)) {
 		txt = "\n"
 	}
 
@@ -755,7 +757,8 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 	prop WinFontProps,
 	font_path string,
 	align OsV2,
-	selection, editable, tabIsChar bool, multi_line bool) bool {
+	selection, editable, tabIsChar bool,
+	multi_line bool, multi_line_enter_finish bool) bool {
 
 	lv := ui.GetCall()
 
@@ -799,7 +802,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 
 			if editable {
 				var tryMoveScroll bool
-				value, tryMoveScroll = ui._UiPaint_TextEditKeys(edit.temp, lines, tabIsChar, multi_line, prop, multi_line) //rewrite 'str' with temp value
+				value, tryMoveScroll = ui._UiPaint_TextEditKeys(edit.temp, lines, tabIsChar, prop, multi_line, multi_line_enter_finish) //rewrite 'str' with temp value
 
 				lines = _UiPaint_Split(value) //refresh
 
@@ -814,7 +817,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 					uid := edit.uid
 					isOutside = (uid != nil && uid == lv.call)
 				}
-				isEnter := keys.enter && (!multi_line || keys.ctrl)
+				isEnter := keys.enter && (!multi_line || (multi_line_enter_finish && !keys.ctrl) || (!multi_line_enter_finish && keys.ctrl))
 				isEsc := keys.esc
 				isTab := !tabIsChar && keys.tab
 
