@@ -1180,11 +1180,11 @@ func (w *SANode) RenderAttrs() {
 				}
 				y++
 
-				if ui.Comp_buttonMenu(0, y, 1, 1, ui.trns.BYPASS, "", true, false) > 0 {
+				/*if ui.Comp_buttonMenu(0, y, 1, 1, ui.trns.BYPASS, "", true, false) > 0 {
 					w.Bypass = !w.Bypass
 					ui.Dialog_close()
 				}
-				y++
+				y++*/
 
 				if ui.Comp_buttonMenu(0, y, 1, 1, ui.trns.REMOVE, "", true, false) > 0 {
 					w.Remove()
