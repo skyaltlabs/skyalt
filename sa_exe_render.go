@@ -197,20 +197,23 @@ func SAExe_Render_Editbox(w *SANode, renderIt bool) {
 	valueInstr := valueAttr.instr.GetConst()
 	value := valueAttr.GetString()
 
-	align_h := w.GetAttrUi("align_h", "0", SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
-	align_v := w.GetAttrUi("align_v", "1", SAAttrUi_COMBO("Top;Center;Bottom", "")).GetInt()
-	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool() && valueInstr != nil
-	tmpToValue := w.GetAttrUi("tempToValue", "0", SAAttrUi_SWITCH).GetBool()
-	precision := w.GetAttr("precision", "2").GetInt()
-	ghost := w.GetAttr("ghost", "").GetString()
-	multi_line := w.GetAttrUi("multi_line", "0", SAAttrUi_SWITCH).GetBool()
+	prop := Comp_editboxProp()
+
+	prop.align.X = w.GetAttrUi("align_h", "0", SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
+	prop.align.Y = w.GetAttrUi("align_v", "1", SAAttrUi_COMBO("Top;Center;Bottom", "")).GetInt()
+	prop.enable = w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool() && valueInstr != nil
+	prop.tempToValue = w.GetAttrUi("tempToValue", "0", SAAttrUi_SWITCH).GetBool()
+	prop.value_precision = w.GetAttr("precision", "2").GetInt()
+	prop.ghost = w.GetAttr("ghost", "").GetString()
+	prop.multi_line = w.GetAttrUi("multi_line", "0", SAAttrUi_SWITCH).GetBool()
+	prop.multi_line_enter_finish = w.GetAttrUi("multi_line_enter_finish", "0", SAAttrUi_SWITCH).GetBool()
 	finishedAttr := w.GetAttrUi("finished", "0", SAAttrUi_SWITCH)
 
 	//temp, tempChanged? ...
 
 	if showIt {
-		_, _, chngd, fnshd, _ := ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, precision, OsV2{align_h, align_v}, nil, ghost, false, tmpToValue, multi_line, enable)
-		if fnshd || (tmpToValue && chngd) {
+		_, _, chngd, fnshd, _ := ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, prop)
+		if fnshd || (prop.tempToValue && chngd) {
 			valueInstr.LineReplace(value, false)
 		}
 		finishedAttr.SetExpBool(fnshd)
@@ -415,7 +418,7 @@ func SAExe_Render_FileDrop(w *SANode, renderIt bool) {
 			ui.Div_end()
 			ui.Comp_text(0, 0, 1, 1, "Drag file & drop it here", 1)
 
-			_, _, _, fnshd, _ := ui.Comp_editbox(0, 1, 1, 1, &value, 0, OsV2{0, 1}, nil, "path", false, false, false, true)
+			_, _, _, fnshd, _ := ui.Comp_editbox(0, 1, 1, 1, &value, Comp_editboxProp().Ghost("path"))
 			if fnshd {
 				instr.LineReplace(value, false)
 			}

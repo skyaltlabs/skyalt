@@ -842,7 +842,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 		if attr.IsOutput() {
 			ui.Comp_text(x, y, w, h, "Output attribute", 1)
 		} else {
-			ui.Comp_editbox(x, y, w, h, &attr.Value, 2, OsV2{0, 1}, nil, "", false, false, false, true) //show whole expression
+			ui.Comp_editbox(x, y, w, h, &attr.Value, Comp_editboxProp()) //show whole expression
 		}
 	} else {
 
@@ -894,7 +894,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 			}
 		} else if instr != nil && uiVal.Fn == SAAttrUi_CODE.Fn {
 			if editable {
-				_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, 0, OsV2{0, 0}, nil, "", false, false, true, editable)
+				_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, Comp_editboxProp().Align(0, 0).Enable(editable).MultiLine(true))
 				if fnshd {
 					instr.LineReplace(value, false)
 				}
@@ -1065,7 +1065,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 		} else {
 			//VmBasic_Constant
 			if editable {
-				_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, 2, OsV2{0, 1}, nil, "", false, false, false, editable)
+				_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, Comp_editboxProp().Enable(editable))
 				if fnshd {
 					instr.LineReplace(value, false)
 				}
@@ -1150,7 +1150,7 @@ func (w *SANode) RenderAttrs() {
 
 		//Name
 		oldName := w.Name
-		_, _, _, fnshd, _ := ui.Comp_editbox_desc(ui.trns.NAME, 2, 2, 1, 0, 1, 1, &w.Name, 0, OsV2{0, 1}, nil, ui.trns.NAME, false, false, false, true)
+		_, _, _, fnshd, _ := ui.Comp_editbox_desc(ui.trns.NAME, 2, 2, 1, 0, 1, 1, &w.Name, Comp_editboxProp().Ghost(ui.trns.NAME))
 		if fnshd && w.parent != nil {
 			w.CheckUniqueName()
 
@@ -1231,7 +1231,7 @@ func (w *SANode) RenderAttrs() {
 
 		ui.Div_start(0, y, 1, h)
 		{
-			ui.Div_colMax(1, 3)
+			ui.Div_colMax(1, 4)
 			ui.Div_colMax(2, 100)
 
 			if hasAttrWith_goto || hasAttrWith_err {
@@ -1280,7 +1280,7 @@ func (w *SANode) RenderAttrs() {
 					if ui.Dialog_start(dnm) {
 						ui.Div_colMax(0, 5)
 						oldAttrName := it.Name
-						_, _, _, fnsh, _ := ui.Comp_editbox(0, 0, 1, 1, &it.Name, 0, OsV2{0, 1}, nil, "Name", false, false, false, true)
+						_, _, _, fnsh, _ := ui.Comp_editbox(0, 0, 1, 1, &it.Name, Comp_editboxProp().Ghost(ui.trns.NAME))
 						if fnsh {
 							it.CheckUniqueName()
 							w.parent.RenameSubAttrs(w.Name, oldAttrName, it.Name)
@@ -1411,17 +1411,17 @@ func (w *SANode) RenderAttrs() {
 								min := it.Ui.GetPrmString("min")
 								max := it.Ui.GetPrmString("max")
 								step := it.Ui.GetPrmString("step")
-								_, _, _, fnshd, _ := ui.Comp_editbox_desc("Min", 0, 2, 0, y, 1, 1, &min, 0, OsV2{0, 1}, nil, "", false, false, false, isSelected)
+								_, _, _, fnshd, _ := ui.Comp_editbox_desc("Min", 0, 2, 0, y, 1, 1, &min, Comp_editboxProp().Precision(0).Enable(isSelected))
 								if fnshd {
 									it.Ui.SetPrmString("min", min)
 								}
 								y++
-								_, _, _, fnshd, _ = ui.Comp_editbox_desc("Max", 0, 2, 0, y, 1, 1, &max, 0, OsV2{0, 1}, nil, "", false, false, false, isSelected)
+								_, _, _, fnshd, _ = ui.Comp_editbox_desc("Max", 0, 2, 0, y, 1, 1, &max, Comp_editboxProp().Precision(0).Enable(isSelected))
 								if fnshd {
 									it.Ui.SetPrmString("max", max)
 								}
 								y++
-								_, _, _, fnshd, _ = ui.Comp_editbox_desc("Step", 0, 2, 0, y, 1, 1, &step, 0, OsV2{0, 1}, nil, "", false, false, false, isSelected)
+								_, _, _, fnshd, _ = ui.Comp_editbox_desc("Step", 0, 2, 0, y, 1, 1, &step, Comp_editboxProp().Precision(0).Enable(isSelected))
 								if fnshd {
 									it.Ui.SetPrmString("step", step)
 								}
@@ -1430,12 +1430,12 @@ func (w *SANode) RenderAttrs() {
 							if isCombo && isSelected {
 								labels := it.Ui.GetPrmString("labels")
 								values := it.Ui.GetPrmString("values")
-								_, _, _, fnshd, _ := ui.Comp_editbox_desc("Labels", 0, 2, 0, y, 1, 1, &labels, 0, OsV2{0, 1}, nil, "", false, false, false, isSelected)
+								_, _, _, fnshd, _ := ui.Comp_editbox_desc("Labels", 0, 2, 0, y, 1, 1, &labels, Comp_editboxProp().Precision(0).Enable(isSelected))
 								if fnshd {
 									it.Ui.SetPrmString("labels", labels)
 								}
 								y++
-								_, _, _, fnshd, _ = ui.Comp_editbox_desc("Values", 0, 2, 0, y, 1, 1, &values, 0, OsV2{0, 1}, nil, "", false, false, false, isSelected)
+								_, _, _, fnshd, _ = ui.Comp_editbox_desc("Values", 0, 2, 0, y, 1, 1, &values, Comp_editboxProp().Precision(0).Enable(isSelected))
 								if fnshd {
 									it.Ui.SetPrmString("values", values)
 								}

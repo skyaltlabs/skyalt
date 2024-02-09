@@ -505,7 +505,7 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 		ui.Div_colMax(0, 5)
 
 		y := 0
-		ui.Comp_editbox(0, 0, 1, 1, &app.canvas.addnode_search, 0, OsV2{0, 1}, nil, ui.trns.SEARCH, app.canvas.addnode_search != "", true, false, true)
+		ui.Comp_editbox(0, 0, 1, 1, &app.canvas.addnode_search, Comp_editboxProp().Ghost(ui.trns.SEARCH).Highlight(app.canvas.addnode_search != ""))
 		y++
 
 		if app.canvas.addnode_search != "" {
@@ -605,15 +605,15 @@ func _SAApp_drawColsRowsDialog(name string, items *[]SANodeColRow, i int, ui *Ui
 		}
 		ui.Div_end()
 
-		_, _, _, fnshd1, _ := ui.Comp_editbox_desc(ui.trns.MIN, 0, 2, 0, 1, 1, 1, &(*items)[i].Min, 1, OsV2{0, 1}, nil, "", false, false, false, true)
-		_, _, _, fnshd2, _ := ui.Comp_editbox_desc(ui.trns.MAX, 0, 2, 0, 2, 1, 1, &(*items)[i].Max, 1, OsV2{0, 1}, nil, "", false, false, false, true)
+		_, _, _, fnshd1, _ := ui.Comp_editbox_desc(ui.trns.MIN, 0, 2, 0, 1, 1, 1, &(*items)[i].Min, Comp_editboxProp())
+		_, _, _, fnshd2, _ := ui.Comp_editbox_desc(ui.trns.MAX, 0, 2, 0, 2, 1, 1, &(*items)[i].Max, Comp_editboxProp())
 
 		ui.Div_start(0, 3, 1, 1)
 		{
 			ui.Div_colMax(0, 100)
 			ui.Div_colMax(1, 100)
 
-			_, _, _, fnshd3, _ := ui.Comp_editbox_desc(ui.trns.RESIZE, 0, 2, 0, 0, 1, 1, &(*items)[i].ResizeName, 1, OsV2{0, 1}, nil, "Name", false, false, false, true)
+			_, _, _, fnshd3, _ := ui.Comp_editbox_desc(ui.trns.RESIZE, 0, 2, 0, 0, 1, 1, &(*items)[i].ResizeName, Comp_editboxProp().Ghost(ui.trns.NAME))
 			ui.Comp_text(1, 0, 1, 1, strconv.FormatFloat((*items)[i].Resize, 'f', 2, 64), 0)
 
 			if fnshd1 || fnshd2 || fnshd3 {
