@@ -315,8 +315,7 @@ func (ui *Ui) Div_drop(groupName string, vertical bool, horizontal bool, inside 
 	return id, pos, done
 }
 
-func Div_DropMoveElement[T any](array_src *[]T, array_dst *[]T, src int, dst int, pos SA_Drop_POS) {
-
+func Div_DropMoveElementIndex(src int, dst int, pos SA_Drop_POS) int {
 	//check
 	if src < dst && (pos == SA_Drop_V_LEFT || pos == SA_Drop_H_LEFT) {
 		dst--
@@ -324,6 +323,12 @@ func Div_DropMoveElement[T any](array_src *[]T, array_dst *[]T, src int, dst int
 	if src > dst && (pos == SA_Drop_V_RIGHT || pos == SA_Drop_H_RIGHT) {
 		dst++
 	}
+	return dst
+}
+
+func Div_DropMoveElement[T any](array_src *[]T, array_dst *[]T, src int, dst int, pos SA_Drop_POS) {
+
+	dst = Div_DropMoveElementIndex(src, dst, pos)
 
 	//move(by swap one-by-one)
 	if array_src == array_dst {
@@ -334,7 +339,6 @@ func Div_DropMoveElement[T any](array_src *[]T, array_dst *[]T, src int, dst int
 			(*array_dst)[i], (*array_dst)[i-1] = (*array_dst)[i-1], (*array_dst)[i]
 		}
 	} else {
-
 		backup := (*array_src)[src]
 
 		//remove
