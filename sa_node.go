@@ -29,6 +29,7 @@ import (
 )
 
 type SANodeColRow struct {
+	Pos              int
 	Min, Max, Resize float64 `json:",omitempty"`
 	ResizeName       string  `json:",omitempty"`
 }
@@ -37,8 +38,79 @@ func (a *SANodeColRow) Cmp(b *SANodeColRow) bool {
 	return a.Min == b.Min && a.Max == b.Max && a.Resize == b.Resize && a.ResizeName == b.ResizeName
 }
 
-func InitSANodeColRow() SANodeColRow {
-	return SANodeColRow{Min: 1, Max: 1, Resize: 1}
+func SANodeColRow_Check(items *[]*SANodeColRow) {
+	//ranges
+	for _, c := range *items {
+		c.Pos = OsMax(c.Pos, 0)
+		c.Min = OsMaxFloat(c.Min, 0)
+		c.Max = OsMaxFloat(c.Max, 0)
+		c.Resize = OsMaxFloat(c.Resize, 0)
+	}
+
+	//sort
+	sort.Slice(*items, func(i, j int) bool {
+		return (*items)[i].Pos < (*items)[j].Pos
+	})
+
+	//remove same poses
+	for i := len(*items) - 1; i > 0; i-- {
+		if (*items)[i].Pos == (*items)[i-1].Pos {
+			*items = append((*items)[:i], (*items)[i+1:]...)
+		}
+	}
+}
+
+func SANodeColRow_Insert(items *[]*SANodeColRow, src *SANodeColRow, pos int, shift bool) {
+	if src == nil {
+		src = &SANodeColRow{Pos: pos, Min: 1, Max: 1, Resize: 1}
+	}
+	src.Pos = pos
+
+	//move items afer pos
+	if shift {
+		for _, c := range *items {
+			if c.Pos >= pos {
+				c.Pos++
+			}
+		}
+	}
+
+	*items = append(*items, src)
+}
+func SANodeColRow_Remove(items *[]*SANodeColRow, pos int) {
+
+	remove_i := -1
+
+	//move items afer pos
+	for i, c := range *items {
+		if c.Pos == pos {
+			remove_i = i
+		}
+		if c.Pos >= pos {
+			c.Pos--
+		}
+	}
+
+	//remove
+	if remove_i >= 0 {
+		*items = append((*items)[:remove_i], (*items)[remove_i+1:]...)
+	}
+}
+
+func SANodeColRow_Find(items *[]*SANodeColRow, pos int) *SANodeColRow {
+	for _, c := range *items {
+		if c.Pos == pos {
+			return c
+		}
+	}
+	return nil
+}
+func SANodeColRow_GetMaxPos(items *[]*SANodeColRow) int {
+	mx := 0
+	for _, c := range *items {
+		mx = OsMax(mx, c.Pos)
+	}
+	return mx
 }
 
 const (
@@ -66,9 +138,9 @@ type SANode struct {
 	Attrs []*SANodeAttr `json:",omitempty"`
 
 	//sub-layout
-	Cols []SANodeColRow `json:",omitempty"`
-	Rows []SANodeColRow `json:",omitempty"`
-	Subs []*SANode      `json:",omitempty"`
+	Cols []*SANodeColRow `json:",omitempty"`
+	Rows []*SANodeColRow `json:",omitempty"`
+	Subs []*SANode       `json:",omitempty"`
 
 	state         int //0=waiting, 1=running, 2=done
 	errExe        error
@@ -202,7 +274,7 @@ func (a *SANode) Cmp(b *SANode, historyDiff *bool) bool {
 
 	if len(a.Cols) == len(b.Cols) {
 		for i, itA := range a.Cols {
-			if !itA.Cmp(&b.Cols[i]) {
+			if !itA.Cmp(b.Cols[i]) {
 				*historyDiff = true //no return!
 			}
 		}
@@ -212,7 +284,7 @@ func (a *SANode) Cmp(b *SANode, historyDiff *bool) bool {
 
 	if len(a.Rows) == len(b.Rows) {
 		for i, itA := range a.Rows {
-			if !itA.Cmp(&b.Rows[i]) {
+			if !itA.Cmp(b.Rows[i]) {
 				*historyDiff = true //no return!
 			}
 		}
@@ -773,33 +845,42 @@ func (w *SANode) GetResizerCoord(ui *Ui) OsV4 {
 	return InitOsV4Mid(w.selected_canvas.End(), OsV2{s, s})
 }
 
-func (w *SANode) renderLayout() {
+func (w *SANode) renderLayoutCols() {
+	SANodeColRow_Check(&w.Cols)
 
 	ui := w.app.base.ui
-
-	//columns
-	for i, c := range w.Cols {
-		ui.Div_col(i, c.Min)
-		ui.Div_colMax(i, c.Max)
-		if c.ResizeName != "" {
-			active, v := ui.Div_colResize(i, c.ResizeName, c.Resize, true)
+	for _, it := range w.Cols {
+		ui.Div_col(it.Pos, it.Min)
+		ui.Div_colMax(it.Pos, it.Max)
+		if it.ResizeName != "" {
+			active, v := ui.Div_colResize(it.Pos, it.ResizeName, it.Resize, true)
 			if active {
-				w.Cols[i].Resize = v
+				it.Resize = v
 			}
 		}
 	}
+}
+func (w *SANode) renderLayoutRows() {
+	SANodeColRow_Check(&w.Rows)
 
-	//rows
-	for i, r := range w.Rows {
-		ui.Div_row(i, r.Min)
-		ui.Div_rowMax(i, r.Max)
-		if r.ResizeName != "" {
-			active, v := ui.Div_rowResize(i, r.ResizeName, r.Resize, true)
+	ui := w.app.base.ui
+	for _, it := range w.Rows {
+		ui.Div_row(it.Pos, it.Min)
+		ui.Div_rowMax(it.Pos, it.Max)
+		if it.ResizeName != "" {
+			active, v := ui.Div_rowResize(it.Pos, it.ResizeName, it.Resize, true)
 			if active {
-				w.Rows[i].Resize = v
+				it.Resize = v
 			}
 		}
 	}
+}
+
+func (w *SANode) renderLayout() {
+
+	//cols/rows
+	w.renderLayoutCols()
+	w.renderLayoutRows()
 
 	//sort z-depth
 	sort.Slice(w.Subs, func(i, j int) bool {

@@ -199,60 +199,27 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	var colDiv *UiLayoutDiv
 	var rowDiv *UiLayoutDiv
 
-	lay := app.act
-
-	//at least one
-	if len(lay.Cols) == 0 {
-		lay.Cols = append(lay.Cols, InitSANodeColRow())
-	}
-	if len(lay.Rows) == 0 {
-		lay.Rows = append(lay.Rows, InitSANodeColRow())
-	}
-
-	if ui.Comp_button(0, 0, 1, 1, "+", ui.trns.ADD_COLUMNS_ROWS, true) > 0 {
-		ui.Dialog_open("add_col_row", 1)
-	}
-	if ui.Dialog_start("add_col_row") {
-		ui.Div_col(0, 4)
-		if ui.Comp_buttonMenu(0, 0, 1, 1, ui.trns.ADD_NEW_COLUMN, "", true, false) > 0 {
-			lay.Cols = append(lay.Cols, InitSANodeColRow())
-		}
-		if ui.Comp_buttonMenu(0, 1, 1, 1, ui.trns.ADD_NEW_ROW, "", true, false) > 0 {
-			lay.Rows = append(lay.Rows, InitSANodeColRow())
-
-		}
-		ui.Dialog_end()
-	}
+	node := app.act
 
 	//size
 	appDiv := ui.Div_start(1, 1, 1, 1)
-	gridMax := appDiv.GetGridMax(OsV2{1, 1})
+	gridMax := appDiv.GetGridMax(OsV2{1, 1}) //app size
 	ui.Div_end()
+
+	gridMax.X = OsMax(gridMax.X, SANodeColRow_GetMaxPos(&node.Cols)+1)
+	gridMax.Y = OsMax(gridMax.Y, SANodeColRow_GetMaxPos(&node.Rows)+1)
 
 	//cols header
 	ui.Div_start(1, 0, 1, 1)
 	{
-		colDiv = ui.GetCall().call
 		ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
 		ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
 
-		for i, c := range lay.Cols {
-			ui.Div_col(i, c.Min)
-			ui.Div_colMax(i, c.Max)
-			if c.ResizeName != "" {
-				active, v := ui.Div_colResize(i, c.ResizeName, c.Resize, true)
-				if active {
-					lay.Cols[i].Resize = v
-				}
-			}
-		}
-		//add fake
-		for i := len(lay.Cols); i < gridMax.X; i++ {
-			ui.Div_col(i, 1)
-		}
+		node.renderLayoutCols()
 
-		for i := range lay.Cols {
-			nm := fmt.Sprintf("col_details_%d", i)
+		for i := 0; i < gridMax.X; i++ {
+			dnm := fmt.Sprintf("col_details_%d", i)
+			item := SANodeColRow_Find(&node.Cols, i)
 
 			//drag & drop
 			ui.Div_start(i, 0, 1, 1)
@@ -260,20 +227,35 @@ func (app *SAApp) renderIDE(ui *Ui) {
 				ui.Div_drag("cols", i)
 				src, pos, done := ui.Div_drop("cols", false, true, false)
 				if done {
-					Div_DropMoveElement(&lay.Cols, &lay.Cols, src, i, pos)
+					dst_i := Div_DropMoveElementIndex(src, i, pos)
+					cp := SANodeColRow_Find(&node.Cols, src)
+					if cp != nil {
+						SANodeColRow_Remove(&node.Cols, src)
+						SANodeColRow_Insert(&node.Cols, cp, dst_i, true)
+					}
 				}
 			}
 			ui.Div_end()
 
-			if ui.Comp_buttonLight(i, 0, 1, 1, fmt.Sprintf("%d", i), "", true) > 0 {
-				ui.Dialog_open(nm, 1)
+			if item != nil {
+				if ui.Comp_buttonLight(i, 0, 1, 1, fmt.Sprintf("%d", i), "", true) > 0 {
+					ui.Dialog_open(dnm, 1)
+				}
+			} else {
+				if ui.Comp_buttonTextFade(i, 0, 1, 1, fmt.Sprintf("%d", i), "", "", true, false, true) > 0 {
+					ui.Dialog_open(dnm, 1)
+				}
 			}
 
-			_SAApp_drawColsRowsDialog(nm, &lay.Cols, i, ui)
-
+			_SAApp_drawColsRowsDialog(dnm, &node.Cols, i, ui)
 		}
 	}
 	ui.Div_end()
+
+	//+
+	if ui.Comp_buttonLight(2, 0, 1, 1, "+", ui.trns.ADD_NEW_COLUMN, true) > 0 {
+		SANodeColRow_Insert(&node.Cols, nil, gridMax.X, true)
+	}
 
 	//rows header
 	ui.Div_start(0, 1, 1, 1)
@@ -282,25 +264,11 @@ func (app *SAApp) renderIDE(ui *Ui) {
 		ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
 		ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
 
-		for i, r := range lay.Rows {
-			ui.Div_row(i, r.Min)
-			ui.Div_rowMax(i, r.Max)
+		node.renderLayoutRows()
 
-			if r.ResizeName != "" {
-				active, v := ui.Div_rowResize(i, r.ResizeName, r.Resize, true)
-				if active {
-					lay.Rows[i].Resize = v
-				}
-			}
-		}
-		//add fake
-		for i := len(lay.Rows); i < gridMax.Y; i++ {
-			ui.Div_col(i, 1)
-		}
-
-		for i := range lay.Rows {
-
-			nm := fmt.Sprintf("row_details_%d", i)
+		for i := 0; i < gridMax.Y; i++ {
+			dnm := fmt.Sprintf("row_details_%d", i)
+			item := SANodeColRow_Find(&node.Rows, i)
 
 			//drag & drop
 			ui.Div_start(0, i, 1, 1)
@@ -308,19 +276,36 @@ func (app *SAApp) renderIDE(ui *Ui) {
 				ui.Div_drag("rows", i)
 				src, pos, done := ui.Div_drop("rows", true, false, false)
 				if done {
-					Div_DropMoveElement(&lay.Rows, &lay.Rows, src, i, pos)
+					dst_i := Div_DropMoveElementIndex(src, i, pos)
+					cp := SANodeColRow_Find(&node.Rows, src)
+					if cp != nil {
+						SANodeColRow_Remove(&node.Rows, src)
+						SANodeColRow_Insert(&node.Rows, cp, dst_i, true)
+					}
 				}
 			}
 			ui.Div_end()
 
-			if ui.Comp_buttonLight(0, i, 1, 1, fmt.Sprintf("%d", i), "", true) > 0 {
-				ui.Dialog_open(nm, 1)
+			if item != nil {
+				if ui.Comp_buttonLight(0, i, 1, 1, fmt.Sprintf("%d", i), "", true) > 0 {
+					ui.Dialog_open(dnm, 1)
+				}
+			} else {
+				if ui.Comp_buttonTextFade(0, i, 1, 1, fmt.Sprintf("%d", i), "", "", true, false, true) > 0 {
+					ui.Dialog_open(dnm, 1)
+				}
 			}
-			_SAApp_drawColsRowsDialog(nm, &lay.Rows, i, ui)
+
+			_SAApp_drawColsRowsDialog(dnm, &node.Rows, i, ui)
 		}
 
 	}
 	ui.Div_end()
+
+	//+
+	if ui.Comp_buttonLight(0, 2, 1, 1, "+", ui.trns.ADD_NEW_ROW, true) > 0 {
+		SANodeColRow_Insert(&node.Rows, nil, gridMax.Y, true)
+	}
 
 	//app
 	appDiv = ui.Div_start(1, 1, 1, 1)
@@ -571,7 +556,7 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 	}
 }
 
-func _SAApp_drawColsRowsDialog(name string, items *[]SANodeColRow, i int, ui *Ui) bool {
+func _SAApp_drawColsRowsDialog(name string, items *[]*SANodeColRow, pos int, ui *Ui) bool {
 
 	changed := false
 	if ui.Dialog_start(name) {
@@ -585,38 +570,43 @@ func _SAApp_drawColsRowsDialog(name string, items *[]SANodeColRow, i int, ui *Ui
 			ui.Div_colMax(1, 100)
 			ui.Div_colMax(2, 100)
 
-			if ui.Comp_buttonLight(0, 0, 1, 1, ui.trns.ADD_BEFORE, "", i > 0) > 0 {
-				*items = append(*items, SANodeColRow{})
-				copy((*items)[i+1:], (*items)[i:])
-				(*items)[i] = InitSANodeColRow()
+			if ui.Comp_buttonLight(0, 0, 1, 1, ui.trns.ADD_BEFORE, "", pos > 0) > 0 {
+				SANodeColRow_Insert(items, nil, pos, true)
 				ui.Dialog_close()
 				changed = true
 			}
 
-			ui.Comp_text(1, 0, 1, 1, strconv.Itoa(i), 1) //description
+			ui.Comp_text(1, 0, 1, 1, strconv.Itoa(pos), 1) //description
 
 			if ui.Comp_buttonLight(2, 0, 1, 1, ui.trns.ADD_AFTER, "", true) > 0 {
-				*items = append(*items, SANodeColRow{})
-				copy((*items)[i+2:], (*items)[i+1:])
-				(*items)[i+1] = InitSANodeColRow()
+				SANodeColRow_Insert(items, nil, pos+1, true)
 				ui.Dialog_close()
 				changed = true
 			}
 		}
 		ui.Div_end()
 
-		_, _, _, fnshd1, _ := ui.Comp_editbox_desc(ui.trns.MIN, 0, 2, 0, 1, 1, 1, &(*items)[i].Min, Comp_editboxProp())
-		_, _, _, fnshd2, _ := ui.Comp_editbox_desc(ui.trns.MAX, 0, 2, 0, 2, 1, 1, &(*items)[i].Max, Comp_editboxProp())
+		item := SANodeColRow_Find(items, pos)
+		not_exist := item == nil
+		if not_exist {
+			item = &SANodeColRow{Pos: pos, Min: 1, Max: 1, Resize: 1}
+		}
+
+		_, _, _, fnshd1, _ := ui.Comp_editbox_desc(ui.trns.MIN, 0, 2, 0, 1, 1, 1, &item.Min, Comp_editboxProp())
+		_, _, _, fnshd2, _ := ui.Comp_editbox_desc(ui.trns.MAX, 0, 2, 0, 2, 1, 1, &item.Max, Comp_editboxProp())
 
 		ui.Div_start(0, 3, 1, 1)
 		{
 			ui.Div_colMax(0, 100)
 			ui.Div_colMax(1, 100)
 
-			_, _, _, fnshd3, _ := ui.Comp_editbox_desc(ui.trns.RESIZE, 0, 2, 0, 0, 1, 1, &(*items)[i].ResizeName, Comp_editboxProp().Ghost(ui.trns.NAME))
-			ui.Comp_text(1, 0, 1, 1, strconv.FormatFloat((*items)[i].Resize, 'f', 2, 64), 0)
+			_, _, _, fnshd3, _ := ui.Comp_editbox_desc(ui.trns.RESIZE, 0, 2, 0, 0, 1, 1, &item.ResizeName, Comp_editboxProp().Ghost(ui.trns.NAME))
+			ui.Comp_text(1, 0, 1, 1, strconv.FormatFloat(item.Resize, 'f', 2, 64), 0)
 
 			if fnshd1 || fnshd2 || fnshd3 {
+				if not_exist {
+					SANodeColRow_Insert(items, item, pos, false)
+				}
 				changed = true
 			}
 
@@ -624,8 +614,8 @@ func _SAApp_drawColsRowsDialog(name string, items *[]SANodeColRow, i int, ui *Ui
 		ui.Div_end()
 
 		//remove
-		if ui.Comp_button(0, 5, 1, 1, ui.trns.REMOVE, "", len(*items) > 1) > 0 {
-			*items = append((*items)[:i], (*items)[i+1:]...)
+		if ui.Comp_button(0, 5, 1, 1, ui.trns.REMOVE, "", item != nil) > 0 {
+			SANodeColRow_Remove(items, pos)
 			ui.Dialog_close()
 			changed = true
 		}
