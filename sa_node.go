@@ -1481,7 +1481,7 @@ func (w *SANode) RenderAttrs() {
 						add = 3
 					}
 					ui.Div_colMax(0, 8)
-					ui.Div_row(12+add, 0.1) //spacer
+					ui.Div_row(13+add, 0.1) //spacer
 
 					y := 0
 					//UIs
@@ -1540,6 +1540,9 @@ func (w *SANode) RenderAttrs() {
 								y++
 							}
 						}
+
+						ui.Comp_switch(0, y, 1, 1, &it.Ui.HideAddDel, true, "Show +/-", "For Map{} and Array[]", true)
+						y++
 
 						ui.Div_SpacerRow(0, y, 1, 1)
 						y++
