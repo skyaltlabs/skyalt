@@ -320,13 +320,19 @@ func (base *SABase) drawLauncher(app *SAApp, icon_rad float64) {
 			{
 				if base.Selected == i {
 					ui.Div_colMax(0, 100)
-					ui.Div_row(0, 0.1) //spacer
-					ui.Div_rowMax(1, 100)
-					ui.Div_row(2, 0.7) //IDE
-					ui.Div_row(3, 0.1) //spacer
+					ui.Div_rowMax(0, 100)
+					ui.Div_row(1, 0.7) //IDE
+					ui.Div_row(2, 0.3) //bottom space
 				} else {
 					ui.Div_colMax(0, 100)
 					ui.Div_rowMax(0, 100)
+				}
+
+				if base.Selected == i {
+					pl := ui.win.io.GetPalette()
+					cd := pl.P
+					cd.A = 100
+					ui.Paint_rect(0, 0, 1, 1, 0.06, cd, 0)
 				}
 
 				dst := i
@@ -336,31 +342,30 @@ func (base *SABase) drawLauncher(app *SAApp, icon_rad float64) {
 					Div_DropMoveElement(&base.Apps, &base.Apps, src, dst, pos)
 				}
 
-				buttY := 0
-				if base.Selected == i {
-					ui.Div_SpacerRow(0, 0, 1, 1)
-
-					buttY = 1
-
-					//IDE
-					if ui.Comp_buttonText(0, 2, 1, 1, "IDE", "", "", true, app.IDE) > 0 {
-						app.IDE = !app.IDE
-					}
-					ui.Div_SpacerRow(0, 3, 1, 1)
-				}
 				if app.iconPath != "" {
-					click = ui.Comp_buttonIcon(0, buttY, 1, 1, InitWinMedia_url(app.iconPath), 0.4, app.Name, CdPalette_P, true, base.Selected == i)
+					click = ui.Comp_buttonIcon(0, 0, 1, 1, InitWinMedia_url(app.iconPath), 0.4, app.Name, CdPalette_B, true, false)
 				} else {
 					nm := app.Name
 					if len(nm) > 3 {
 						nm = nm[:3]
 					}
-					click = ui.Comp_buttonText(0, buttY, 1, 1, nm, "", "", true, base.Selected == i)
+					click = ui.Comp_buttonText(0, 0, 1, 1, nm, "", "", true, false)
 				}
+				if base.Selected == i {
+					//IDE
+					if ui.Comp_buttonCd(0, 1, 1, 1, OsTrnString(app.IDE, "**IDE**", "IDE"), "", CdPalette_B, true, false) > 0 {
+						app.IDE = !app.IDE
+					}
+				}
+
 			}
 			ui.Div_end()
 
 			if click == 1 {
+				if base.Selected == i {
+					app.IDE = !app.IDE //already selected => switch IDE
+				}
+
 				base.Selected = i
 			}
 			appUid := fmt.Sprintf("app_context_%d", i)

@@ -261,7 +261,7 @@ func (base *SABase) drawFrame() {
 	}
 
 	ui := base.ui
-	icon_rad := 1.7
+	icon_rad := 1.5
 
 	ui.Div_rowMax(0, 100)
 	ui.Div_col(0, icon_rad)
