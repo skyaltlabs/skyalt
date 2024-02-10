@@ -134,8 +134,14 @@ func (attr *SANodeAttr) CheckUniqueName() {
 	}
 }
 
+func (attr *SANodeAttr) AddSetAttrExe() {
+	attr.node.app.AddSetAttr(nil, "", false, true)
+}
 func (attr *SANodeAttr) AddSetAttr(value string) {
-	attr.node.app.exe.AddSetAttr(attr, value)
+	attr.node.app.AddSetAttr(attr, value, false, false)
+}
+func (attr *SANodeAttr) AddSetAttrArr(value string) {
+	attr.node.app.AddSetAttr(attr, value, true, false)
 }
 
 func (attr *SANodeAttr) SetErrorExe(err string) {

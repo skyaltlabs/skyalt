@@ -51,8 +51,6 @@ func SAExe_Render_Dialog(w *SANode, renderIt bool) {
 		dnm := w.getPath()
 		if triggerAttr.GetBool() {
 			ui.Dialog_open(dnm, uint8(OsClamp(typeAttr.GetInt(), 0, 2)))
-
-			triggerAttr.AddSetAttr("0")
 		}
 
 		if ui.Dialog_start(dnm) {
@@ -84,19 +82,19 @@ func SAExe_Render_Button(w *SANode, renderIt bool) {
 			clicked = ui.Comp_buttonLight(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, "", enable) > 0
 		}
 	case 2:
-		selected := w.GetAttrUi("selected", "0", SAAttrUi_SWITCH).GetBool()
+		selectedAttr := w.GetAttrUi("selected", "0", SAAttrUi_SWITCH)
 
 		if showIt {
-			clicked = ui.Comp_buttonMenu(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, "", enable, selected) > 0
+			clicked = ui.Comp_buttonMenu(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, "", enable, selectedAttr.GetBool()) > 0
 			if clicked {
-				sel := w.findAttr("selected")
-				sel.SetExpBool(!selected)
+				selectedAttr.AddSetAttr(OsTrnString(selectedAttr.GetBool(), "0", "1")) //reverse
 			}
 		}
 	}
 
-	clickedAttr.SetExpBool(clicked)
 	if clicked {
+		clickedAttr.AddSetAttr("1")
+		clickedAttr.AddSetAttrExe()
 		clickedAttr.AddSetAttr("0")
 	}
 }
@@ -216,8 +214,9 @@ func SAExe_Render_Editbox(w *SANode, renderIt bool) {
 		if fnshd || (prop.tempToValue && chngd) {
 			valueInstr.LineReplace(value, false)
 		}
-		finishedAttr.SetExpBool(fnshd)
 		if fnshd {
+			finishedAttr.AddSetAttr("1")
+			finishedAttr.AddSetAttrExe()
 			finishedAttr.AddSetAttr("0")
 		}
 	}
@@ -296,7 +295,7 @@ func _SAExe_Render_FileAndDirPicker(selectFile bool, dialogName string, w *SANod
 
 	if showIt {
 		if ui.comp_dirPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &path, selectFile, dialogName, enable) {
-			pathAttr.SetExpString(path, false)
+			pathAttr.AddSetAttr(path)
 		}
 	}
 }
@@ -325,11 +324,10 @@ func SAExe_Render_Calendar(w *SANode, renderIt bool) {
 			page := pageAttr.GetInt64()
 
 			changed := ui.Comp_Calendar(&value, &page, 100, 100)
-
 			if changed {
 				//set back
-				valueAttr.SetExpInt(int(value))
-				pageAttr.SetExpInt(int(page))
+				valueAttr.AddSetAttr(strconv.Itoa(int(value)))
+				pageAttr.AddSetAttr(strconv.Itoa(int(page)))
 			}
 		}
 		ui.Div_end()
@@ -351,7 +349,7 @@ func SAExe_Render_Date(w *SANode, renderIt bool) {
 		{
 			value := valueAttr.GetInt64()
 			if ui.Comp_CalendarDataPicker(&value, show_time, w.getPath(), enable) {
-				valueAttr.SetExpInt(int(value))
+				valueAttr.AddSetAttr(strconv.Itoa(int(value)))
 			}
 		}
 		ui.Div_end()
@@ -489,9 +487,9 @@ func SAExe_Render_Map(w *SANode, renderIt bool) {
 
 			if changed {
 				//set back
-				cam_lonAttr.SetExpFloat(cam_lon)
-				cam_latAttr.SetExpFloat(cam_lat)
-				cam_zoomAttr.SetExpInt(int(cam_zoom))
+				cam_lonAttr.AddSetAttr(strconv.FormatFloat(cam_lon, 'f', -1, 64))
+				cam_latAttr.AddSetAttr(strconv.FormatFloat(cam_lat, 'f', -1, 64))
+				cam_zoomAttr.AddSetAttr(strconv.Itoa(int(cam_zoom)))
 			}
 
 			//locators
@@ -652,9 +650,9 @@ func SAExe_Render_List(w *SANode, renderIt bool) {
 						}
 						str, _ = strings.CutSuffix(str, ",")
 						str += "]"
-						multi_selectedAttr.SetExpString(str, true)
+						multi_selectedAttr.AddSetAttrArr(str)
 					} else {
-						single_selectedAttr.SetExpInt(OsTrn(isSelected, -1, i))
+						single_selectedAttr.AddSetAttr(strconv.Itoa(OsTrn(isSelected, -1, i)))
 					}
 				}
 
@@ -814,8 +812,9 @@ func SAExe_Render_Microphone(w *SANode, renderIt bool) {
 			outAttr.SetOutBlob(nil)
 
 			active = !active
+
+			activeAttr.AddSetAttr(OsTrnString(active, "1", "0"))
 		}
-		activeAttr.SetExpBool(active)
 
 		if active {
 			if w.app.base.ui.win.io.ini.MicOff {

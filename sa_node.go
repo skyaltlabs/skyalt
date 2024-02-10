@@ -133,7 +133,8 @@ func NewSANodePath(w *SANode) SANodePath {
 func (path *SANodePath) Is() bool {
 	return len(path.names) > 0
 }
-func (path *SANodePath) FindPath(node *SANode) *SANode {
+func (path *SANodePath) FindPath(root *SANode) *SANode {
+	node := root
 	for _, nm := range path.names {
 		node = node.FindNode(nm)
 		if node == nil {
@@ -141,6 +142,10 @@ func (path *SANodePath) FindPath(node *SANode) *SANode {
 		}
 	}
 	return node
+}
+
+type SANodeJob struct {
+	//TODO ......
 }
 
 const (
@@ -566,40 +571,6 @@ func (w *SANode) Copy() (*SANode, error) {
 	dst.updateLinks(nil, w.app)
 
 	return dst, nil
-}
-
-func (dst *SANode) UpdateProgress(src *SANode) {
-
-	dst.state = src.state
-	dst.errExe = src.errExe
-	dst.progress = src.progress
-	dst.progress_desc = src.progress_desc
-	dst.exeTimeSec = src.exeTimeSec
-
-	for _, dn := range dst.Subs {
-		sn := src.FindNode(dn.Name)
-		if sn != nil {
-			dn.UpdateProgress(sn)
-		}
-	}
-}
-
-func (dst *SANode) UpdateInfos(src *SANode) {
-	dst.Pos = src.Pos
-	dst.Cam_x = src.Cam_x
-	dst.Cam_y = src.Cam_y
-	dst.Cam_z = src.Cam_z
-	dst.Bypass = src.Bypass
-	dst.Selected = src.Selected
-	dst.Cols = src.Cols
-	dst.Rows = src.Rows
-
-	for _, dn := range dst.Subs {
-		sn := src.FindNode(dn.Name)
-		if sn != nil {
-			dn.UpdateInfos(sn)
-		}
-	}
 }
 
 func (a *SANode) FindMirror(b *SANode, b_find *SANode) *SANode {

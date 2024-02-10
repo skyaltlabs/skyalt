@@ -35,45 +35,40 @@ type SACanvas struct {
 }
 
 type SASetAttr struct {
-	nodes []string //from root to node
-	attr  string
-	value string
+	node       SANodePath
+	attr       string
+	value      string
+	mapOrArray bool
+	exeIt      bool
 }
 
-func InitSASetAttr(attr *SANodeAttr, value string) SASetAttr {
-
-	//build node list
-	node := attr.node
-	var nodes []string
-	for node != nil {
-		nodes = append(nodes, node.Name)
-		node = node.parent
-	}
-	for i, j := 0, len(nodes)-1; i < j; i, j = i+1, j-1 { //reverse
-		nodes[i], nodes[j] = nodes[j], nodes[i]
-	}
-	nodes = nodes[1:] //remove root
-
+func InitSASetAttr(attr *SANodeAttr, value string, mapOrArray bool, exeIt bool) SASetAttr {
 	var sa SASetAttr
-	sa.nodes = nodes
-	sa.attr = attr.Name
+	if attr != nil {
+		sa.node = NewSANodePath(attr.node)
+		sa.attr = attr.Name
+	}
 	sa.value = value
+	sa.mapOrArray = mapOrArray
+	sa.exeIt = exeIt
 	return sa
 }
-func (st *SASetAttr) Write(root *SANode) bool {
-	for _, nm := range st.nodes {
-		root = root.FindNode(nm)
-		if root == nil {
-			return false
-		}
+func (sa *SASetAttr) Write(root *SANode) bool {
+	if sa.exeIt {
+		return true
 	}
 
-	attr := root.findAttr(st.attr)
+	node := sa.node.FindPath(root)
+	if node == nil {
+		return false
+	}
+
+	attr := node.findAttr(sa.attr)
 	if attr == nil {
 		return false
 	}
 
-	attr.SetExpString(st.value, false)
+	attr.SetExpString(sa.value, sa.mapOrArray)
 	return true
 }
 
@@ -92,8 +87,9 @@ type SAApp struct {
 	history_divScroll     *UiLayoutDiv
 	history_divSroll_time float64
 
-	exeIt bool
-	exe   *SAAppExe
+	exeIt    bool
+	setAttrs []SASetAttr
+	jobs     []SANodeJob
 
 	graph  *SAGraph
 	canvas SACanvas
@@ -116,7 +112,7 @@ func (a *SAApp) init(base *SABase) {
 
 	a.graph = NewSAGraph(a)
 
-	a.exe = NewSAAppExe(a)
+	//a.exe = NewSAAppExe(a)
 
 	ic := a.GetFolderPath() + "icon.png"
 	if OsFileExists(ic) {
@@ -135,7 +131,10 @@ func NewSAApp(name string, base *SABase) *SAApp {
 	return app
 }
 func (app *SAApp) Destroy() {
-	app.exe.Destroy()
+}
+
+func (app *SAApp) AddSetAttr(attr *SANodeAttr, value string, mapOrArray bool, exeIt bool) {
+	app.setAttrs = append(app.setAttrs, InitSASetAttr(attr, value, mapOrArray, exeIt))
 }
 
 func SAApp_GetNewFolderPath(name string) string {
@@ -151,35 +150,75 @@ func (app *SAApp) GetJsonPath() string {
 }
 
 func (app *SAApp) Tick() {
-	doneNode, setAttrs := app.exe.Tick()
-	if doneNode != nil {
-		if app.exeIt {
-			//write only changes and ignore 'doneNode'
-			for _, st := range setAttrs {
-				st.Write(app.root)
+
+	if len(app.setAttrs) > 0 {
+
+		n := 0
+		for _, sa := range app.setAttrs {
+			sa.Write(app.root) //if different, app.exeIt = true
+
+			n++
+			if sa.exeIt {
+				break
 			}
-
-			app.exe.Run(app.root)
-			app.exeIt = false
-		} else {
-			app.act = doneNode.FindMirror(app.root, app.act)
-			doneNode.UpdateInfos(app.root)
-			app.root = doneNode
-
-			for _, st := range setAttrs {
-				st.Write(app.root)
-			}
-
-			app.exeIt = false //setAttrs.Write() -> LineReplace() -> SetExecute() = ignore that writes
 		}
-	} else {
-		if app.exeIt && app.exe.wip == nil {
-			app.exe.Run(app.root)
-			app.exeIt = false
-			app.HistoryInit()
+		app.setAttrs = app.setAttrs[n:]
+	}
+
+	if !app.exeIt {
+		return
+	}
+
+	app.exeIt = false
+	app.HistoryInit()
+
+	app.root.PrepareExe() //.state = WAITING(to be executed)
+
+	app.root.ParseExpresions()
+	app.root.CheckForLoops()
+
+	var list []*SANode
+	app.root.buildSubList(&list)
+	app.root.markUnusedAttrs()
+
+	app.ExecuteList(list)
+
+	app.root.PostExe()
+}
+
+func (app *SAApp) ExecuteList(list []*SANode) {
+
+	active := true
+	for active { //&& !app.exit.Load() {
+		active = false
+
+		for _, it := range list {
+
+			if it.state == SANode_STATE_WAITING {
+				active = true
+
+				if it.IsReadyToBeExe() {
+
+					//execute expression
+					for _, v := range it.Attrs {
+						if v.errExp != nil {
+							continue
+						}
+						v.ExecuteExpression()
+					}
+
+					if !it.Bypass {
+						it.state = SANode_STATE_RUNNING
+						it.Execute()
+
+					}
+					it.state = SANode_STATE_DONE //done
+				}
+			}
 		}
 	}
-	app.exe.UpdateProgress(app.root)
+
+	fmt.Printf("Executed() done\n")
 }
 
 func (app *SAApp) RenderApp(ide bool) {

@@ -83,7 +83,6 @@ func _SAGraph_drawConnectionH(start OsV2, end OsV2, active bool, cellr float32, 
 	if active {
 		cd = SAApp_getYellow()
 	}
-	cd.A = 100
 
 	t := cellr * 0.4
 	end.X -= int(t) //connect to left of arrow
@@ -617,7 +616,7 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 				gr.node_select = false
 			}
 
-			if gr.app.exe.wip != nil {
+			if len(gr.app.jobs) > 0 {
 				ui.Paint_rect(0, 0, 1, 1, 0, pl.P, 0.06) //exe rect
 			} else if !gr.app.EnableExecution {
 				ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0.03)
