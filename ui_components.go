@@ -221,6 +221,22 @@ func (ui *Ui) Comp_buttonIcon(x, y, w, h int, icon WinMedia, icon_margin float64
 	}
 	return 0
 }
+func (ui *Ui) Comp_buttonCd(x, y, w, h int, label string, tooltip string, cd uint8, enable bool, selected bool) int {
+	ui.Div_start(x, y, w, h)
+
+	style := ui._buttonBasicStyle(enable, tooltip)
+	style.cd = cd
+
+	click, rclick := ui.Comp_button_s(&style, label, nil, "", OsTrnFloat(selected, 1, 0), false)
+
+	ui.Div_end()
+	if rclick > 0 {
+		return 2
+	} else if click > 0 {
+		return 1
+	}
+	return 0
+}
 
 func (ui *Ui) Comp_buttonLight(x, y, w, h int, label string, tooltip string, enable bool) int {
 	ui.Div_start(x, y, w, h)
@@ -340,7 +356,7 @@ func (ui *Ui) Comp_buttonMenu(x, y, w, h int, label string, tooltip string, enab
 	return 0
 }
 
-func (ui *Ui) Comp_button_s(style *UiComp, value string, icon *WinMedia, url string, drawBack float64, drawBorder bool) (int, int) {
+func (ui *Ui) Comp_button_s(style *UiComp, label string, icon *WinMedia, url string, drawBack float64, drawBorder bool) (int, int) {
 
 	lv := ui.GetCall()
 
@@ -360,7 +376,7 @@ func (ui *Ui) Comp_button_s(style *UiComp, value string, icon *WinMedia, url str
 			onCd = cd
 		}
 
-		if style.enable && len(value) > 0 { //no background for icons. For text yes
+		if style.enable && len(label) > 0 { //no background for icons. For text yes
 			if inside || active {
 				//not same color as background
 				if style.cd == CdPalette_B {
@@ -395,14 +411,14 @@ func (ui *Ui) Comp_button_s(style *UiComp, value string, icon *WinMedia, url str
 		style.image_alignH = 0
 	}
 
-	coordImage, coordText := ui._compGetTextImageCoord(coord, 1, style.image_alignH, icon != nil, len(value) > 0)
+	coordImage, coordText := ui._compGetTextImageCoord(coord, 1, style.image_alignH, icon != nil, len(label) > 0)
 	if icon != nil {
 		ui._compDrawImage(coordImage, *icon, onCd, style)
 	}
-	if len(value) > 0 {
+	if len(label) > 0 {
 		prop := InitWinFontPropsDef(ui.win)
 		prop.enableFormating = style.label_formating
-		ui._compDrawText(coordText, value, "", onCd, prop, false, false, style.label_align, true, false)
+		ui._compDrawText(coordText, label, "", onCd, prop, false, false, style.label_align, true, false)
 	}
 
 	if style.enable {
@@ -1155,7 +1171,7 @@ func (ui *Ui) Comp_checkbox_s(style *UiComp, value float64, label string) float6
 	pl := ui.win.io.GetPalette()
 	_, onCd := pl.GetCd(style.cd, style.fade, style.enable, inside, active)
 
-	mn := ui.CellWidth(0.5)
+	mn := OsMin(int(float64(lv.call.canvas.Size.Y)*0.9), ui.CellWidth(0.5))
 	coord := lv.call.canvas
 	if len(label) > 0 {
 		coordImg, coordText := ui._compGetTextImageCoord(coord, 1, style.image_alignH, true, true)
@@ -1297,7 +1313,7 @@ func (ui *Ui) Comp_switch_s(style *UiComp, value bool, label string) bool {
 	style.cd = CdPalette_B
 	_, labelOnCd := pl.GetCd(style.cd, style.fade, style.enable, inside, active)
 
-	mn := ui.CellWidth(0.6)
+	mn := OsMin(int(float64(lv.call.canvas.Size.Y)*0.9), ui.CellWidth(0.6))
 	coord := lv.call.canvas
 	if len(label) > 0 {
 		coordImg, coordText := ui._compGetTextImageCoord(coord, 1.5, style.image_alignH, true, true)
