@@ -163,6 +163,7 @@ func (app *SAApp) Tick() {
 			app.exeIt = false
 		} else {
 			app.act = doneNode.FindMirror(app.root, app.act)
+			doneNode.UpdateInfos(app.root)
 			app.root = doneNode
 
 			for _, st := range setAttrs {

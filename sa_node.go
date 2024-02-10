@@ -521,7 +521,7 @@ func (w *SANode) Execute() bool {
 	}
 
 	w.exeTimeSec = OsTime() - st
-	fmt.Printf("'%s' done in %.2fs\n", w.Name, w.exeTimeSec)
+	//fmt.Printf("'%s' done in %.2fs\n", w.Name, w.exeTimeSec)
 	return ok
 }
 
@@ -580,6 +580,24 @@ func (dst *SANode) UpdateProgress(src *SANode) {
 		sn := src.FindNode(dn.Name)
 		if sn != nil {
 			dn.UpdateProgress(sn)
+		}
+	}
+}
+
+func (dst *SANode) UpdateInfos(src *SANode) {
+	dst.Pos = src.Pos
+	dst.Cam_x = src.Cam_x
+	dst.Cam_y = src.Cam_y
+	dst.Cam_z = src.Cam_z
+	dst.Bypass = src.Bypass
+	dst.Selected = src.Selected
+	dst.Cols = src.Cols
+	dst.Rows = src.Rows
+
+	for _, dn := range dst.Subs {
+		sn := src.FindNode(dn.Name)
+		if sn != nil {
+			dn.UpdateInfos(sn)
 		}
 	}
 }
