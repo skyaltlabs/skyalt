@@ -143,8 +143,10 @@ func (instr *VmInstr) LineReplace(value string, mapOrArray bool) {
 	}
 
 	instr.pos_attr.Value = newValue //replace
-	instr.pos_attr.ParseExpresion() //update constant positions
-	//instr.pos_attr.ExecuteExpression()
+
+	//update constant positions: SetExecute() will update, but it can be call multiple times before 'exeIt' is triggered
+	instr.pos_attr.ParseExpresion()
+	instr.pos_attr.ExecuteExpression()
 }
 
 func (instr *VmInstr) LineExtract(line string, value string) string {
