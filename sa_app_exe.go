@@ -99,7 +99,6 @@ func (exe *SAAppExe) Tick() (*SANode, []SASetAttr) {
 }
 
 func (exe *SAAppExe) run() {
-	fmt.Println("------------")
 	st := OsTime()
 
 	exe.wip.PrepareExe() //.state = WAITING(to be executed)
@@ -150,4 +149,6 @@ func (exe *SAAppExe) ExecuteList(list []*SANode) {
 			}
 		}
 	}
+
+	fmt.Printf("Executed() done\n")
 }
