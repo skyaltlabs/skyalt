@@ -494,7 +494,7 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 		ui.Div_colMax(0, 5)
 
 		y := 0
-		ui.Comp_editbox(0, 0, 1, 1, &app.canvas.addnode_search, Comp_editboxProp().Ghost(ui.trns.SEARCH).Highlight(app.canvas.addnode_search != ""))
+		ui.Comp_editbox(0, 0, 1, 1, &app.canvas.addnode_search, Comp_editboxProp().TempToValue(true).Ghost(ui.trns.SEARCH).Highlight(app.canvas.addnode_search != ""))
 		y++
 
 		if app.canvas.addnode_search != "" {
