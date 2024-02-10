@@ -800,8 +800,12 @@ func (w *SANode) GetAttrUi(name string, value string, ui SAAttrUiValue) *SANodeA
 	return w._getAttr(true, SANodeAttr{Name: name, Value: value, Ui: ui})
 }
 
+func (w *SANode) GetGridAttr() *SANodeAttr {
+	return w.GetAttrUi("grid", "[0, 0, 1, 1]", SAAttrUiValue{HideAddDel: true})
+}
+
 func (w *SANode) GetGrid() OsV4 {
-	grid := w.GetAttr("grid", "[0, 0, 1, 1]").GetV4()
+	grid := w.GetGridAttr().GetV4()
 
 	//check
 	grid.Size.X = OsMax(grid.Size.X, 1)
@@ -812,19 +816,13 @@ func (w *SANode) GetGrid() OsV4 {
 }
 
 func (w *SANode) SetGridStart(v OsV2) {
-	attr := w.GetAttr("grid", "[0, 0, 1, 1]")
-	if attr == nil {
-		return
-	}
+	attr := w.GetGridAttr()
 
 	attr.ReplaceArrayItemValueInt(1, v.Y) //y
 	attr.ReplaceArrayItemValueInt(0, v.X) //x
 }
 func (w *SANode) SetGridSize(v OsV2) {
-	attr := w.GetAttr("grid", "[0, 0, 1, 1]")
-	if attr == nil {
-		return
-	}
+	attr := w.GetGridAttr()
 
 	attr.ReplaceArrayItemValueInt(3, v.Y) //h
 	attr.ReplaceArrayItemValueInt(2, v.X) //w
@@ -1094,7 +1092,7 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 				}
 
 				//+/-
-				if !isOutput {
+				if !isOutput && !uiVal.HideAddDel {
 					ui.Div_start(addDelPos.Start.X, addDelPos.Start.Y, addDelPos.Size.X, addDelPos.Size.Y)
 					{
 						ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
