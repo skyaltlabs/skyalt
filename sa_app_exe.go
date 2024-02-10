@@ -137,11 +137,6 @@ func (exe *SAAppExe) ExecuteList(list []*SANode) {
 						if v.errExp != nil {
 							continue
 						}
-
-						if v.Name == "finished" {
-							fmt.Println("df")
-						}
-
 						v.ExecuteExpression()
 					}
 
