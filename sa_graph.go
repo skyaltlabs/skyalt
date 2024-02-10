@@ -29,7 +29,7 @@ type SAGraph struct {
 	node_select        bool
 	cam_start          OsV2f
 	touch_start        OsV2
-	node_move_selected *SANode
+	node_move_selected SANodePath
 
 	copiedNodes []*SANode
 
@@ -441,9 +441,9 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 				if keys.copy {
 					//add selected into list
 					gr.app.graph.copiedNodes = nil
-					for _, n := range gr.app.act.Subs {
-						if n.Selected {
-							gr.app.graph.copiedNodes = append(gr.app.graph.copiedNodes, n)
+					for _, nd := range gr.app.act.Subs {
+						if nd.Selected {
+							gr.app.graph.copiedNodes = append(gr.app.graph.copiedNodes, nd)
 						}
 					}
 				}
@@ -452,9 +452,9 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 				if keys.cut {
 					//add selected into list
 					gr.app.graph.copiedNodes = nil
-					for _, n := range gr.app.act.Subs {
-						if n.Selected {
-							gr.app.graph.copiedNodes = append(gr.app.graph.copiedNodes, n)
+					for _, nd := range gr.app.act.Subs {
+						if nd.Selected {
+							gr.app.graph.copiedNodes = append(gr.app.graph.copiedNodes, nd)
 						}
 					}
 					gr.app.act.RemoveSelectedNodes()
@@ -517,7 +517,7 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 					for _, n := range gr.app.act.Subs {
 						n.pos_start = n.Pos
 					}
-					gr.node_move_selected = touchInsideNode
+					gr.node_move_selected = NewSANodePath(touchInsideNode)
 
 					//click on un-selected => de-select all & select only current
 					if !touchInsideNode.Selected {
@@ -593,12 +593,16 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 
 			if touch.end {
 				//when it's clicked on selected node, but it's not moved => select only this node
-				if gr.node_move && gr.node_move_selected != nil {
+				if gr.node_move && gr.node_move_selected.Is() {
 					if gr.touch_start.Distance(touch.pos) < float32(ui.win.Cell())/5 {
 						for _, n := range gr.app.act.Subs {
 							n.Selected = false
 						}
-						gr.node_move_selected.Selected = true
+
+						sn := gr.node_move_selected.FindPath(gr.app.root)
+						if sn != nil {
+							sn.Selected = true
+						}
 					}
 				}
 

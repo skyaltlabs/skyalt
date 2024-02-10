@@ -113,6 +113,36 @@ func SANodeColRow_GetMaxPos(items *[]*SANodeColRow) int {
 	return mx
 }
 
+type SANodePath struct {
+	names []string
+}
+
+func (path *SANodePath) _getPath(w *SANode) {
+	if w.parent != nil {
+		path._getPath(w.parent)
+
+		//inside If, because don't add root name
+		path.names = append(path.names, w.Name)
+	}
+}
+func NewSANodePath(w *SANode) SANodePath {
+	var path SANodePath
+	path._getPath(w)
+	return path
+}
+func (path *SANodePath) Is() bool {
+	return len(path.names) > 0
+}
+func (path *SANodePath) FindPath(node *SANode) *SANode {
+	for _, nm := range path.names {
+		node = node.FindNode(nm)
+		if node == nil {
+			return nil
+		}
+	}
+	return node
+}
+
 const (
 	SANode_STATE_WAITING = 0
 	SANode_STATE_RUNNING = 1

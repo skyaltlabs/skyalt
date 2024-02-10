@@ -26,10 +26,10 @@ type SACanvas struct {
 	addGrid OsV4
 	addPos  OsV2f
 
-	startClick    *SANode
+	startClick    SANodePath
 	startClickRel OsV2
 
-	resize *SANode
+	resize SANodePath
 
 	addnode_search string
 }
@@ -86,8 +86,8 @@ type SAApp struct {
 	root *SANode
 	act  *SANode
 
-	history_act           []*SANode //JSONs
-	history               []*SANode //JSONs
+	history_act           []SANodePath //JSONs
+	history               []*SANode    //JSONs
 	history_pos           int
 	history_divScroll     *UiLayoutDiv
 	history_divSroll_time float64
@@ -324,10 +324,9 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	touch := &ui.win.io.touch
 	keys := &ui.win.io.keys
 	//add node
-	if (!ui.touch.IsAnyActive() || ui.touch.canvas == appDiv) && app.canvas.startClick == nil && !keys.alt {
-		touchPos := ui.win.io.touch.pos
-		if appDiv.IsOver(ui) { // appDiv.crop.Inside(touchPos)
-			grid := appDiv.GetCloseCell(touchPos)
+	if (!ui.touch.IsAnyActive() || ui.touch.canvas == appDiv) && !app.canvas.startClick.Is() && !keys.alt {
+		if appDiv.IsOver(ui) {
+			grid := appDiv.GetCloseCell(ui.win.io.touch.pos)
 
 			if appDiv.FindFromGridPos(grid.Start) == nil { //no node under touch
 				rect := appDiv.data.Convert(ui.win.Cell(), grid)
@@ -349,7 +348,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 
 	//select/move/resize node
 	if appDiv.IsOver(ui) {
-		grid := appDiv.GetCloseCell(touch.pos)
+		touch_grid := appDiv.GetCloseCell(touch.pos)
 
 		//find resizer
 		for _, w := range app.act.Subs {
@@ -359,26 +358,25 @@ func (app *SAApp) renderIDE(ui *Ui) {
 			if w.Selected && w.GetResizerCoord(ui).Inside(touch.pos) {
 				//resize start
 				if touch.start && keys.alt {
-					app.canvas.resize = w
+					app.canvas.resize = NewSANodePath(w)
 					break
 				}
 			}
 		}
 
 		//find select/move node
-		if app.canvas.resize == nil {
+		if !app.canvas.resize.Is() {
 			for _, w := range app.act.Subs {
 				if !w.CanBeRenderOnCanvas() {
 					continue
 				}
-				if w.GetGridShow() && w.GetGrid().Inside(grid.Start) {
+				if w.GetGridShow() && w.GetGrid().Inside(touch_grid.Start) {
 
 					//select start(go to inside)
 					if keys.alt {
 						if touch.start {
-							wStart := appDiv.crop.Start.Add(appDiv.data.Convert(ui.win.Cell(), w.GetGrid()).Start)
-							app.canvas.startClick = w
-							app.canvas.startClickRel = touch.pos.Sub(wStart)
+							app.canvas.startClick = NewSANodePath(w)
+							app.canvas.startClickRel = touch_grid.Start.Sub(w.GetGrid().Start)
 							w.SelectOnlyThis()
 						}
 
@@ -393,30 +391,35 @@ func (app *SAApp) renderIDE(ui *Ui) {
 		}
 
 		//move
-		if app.canvas.startClick != nil {
-			gridMove := appDiv.GetCloseCell(touch.pos.Sub(app.canvas.startClickRel).Add(OsV2{ui.CellWidth(0.5), ui.CellWidth(0.5)}))
-			//gridMove := appDiv.GetCloseCell(touch.pos)
-			app.canvas.startClick.SetGridStart(gridMove.Start)
+		if app.canvas.startClick.Is() {
+			newPos := touch_grid.Start.Sub(app.canvas.startClickRel)
+			stClick := app.canvas.startClick.FindPath(app.root)
+			if stClick != nil {
+				stClick.SetGridStart(newPos)
+			}
 		}
 
 		//resize
-		if app.canvas.resize != nil {
+		if app.canvas.resize.Is() {
 			pos := appDiv.GetCloseCell(touch.pos)
 
-			grid := app.canvas.resize.GetGrid()
-			grid.Size.X = OsMax(0, pos.Start.X-grid.Start.X) + 1
-			grid.Size.Y = OsMax(0, pos.Start.Y-grid.Start.Y) + 1
+			res := app.canvas.resize.FindPath(app.root)
+			if res != nil {
+				grid := res.GetGrid()
+				grid.Size.X = OsMax(0, pos.Start.X-grid.Start.X) + 1
+				grid.Size.Y = OsMax(0, pos.Start.Y-grid.Start.Y) + 1
 
-			app.canvas.resize.SetGrid(grid)
+				res.SetGrid(grid)
+			}
 		}
 
 	}
 	if touch.end {
-		if appDiv.IsOver(ui) && keys.alt && app.canvas.startClick == nil && app.canvas.resize == nil { //click outside nodes
+		if appDiv.IsOver(ui) && keys.alt && !app.canvas.startClick.Is() && !app.canvas.resize.Is() { //click outside nodes
 			app.act.DeselectAll()
 		}
-		app.canvas.startClick = nil
-		app.canvas.resize = nil
+		app.canvas.startClick = SANodePath{}
+		app.canvas.resize = SANodePath{}
 	}
 
 	//shortcuts
@@ -712,16 +715,11 @@ func (app *SAApp) addHistory(exeIt bool, rewriteLast bool) {
 
 	if rewriteLast {
 		app.history[app.history_pos] = cp_root
-		app.history_act[app.history_pos] = cp_act
+		app.history_act[app.history_pos] = NewSANodePath(cp_act)
 	} else {
-
-		if cp_root == nil || cp_act == nil { //delete ........
-			fmt.Print("df")
-		}
-
 		//add history
 		app.history = append(app.history, cp_root)
-		app.history_act = append(app.history_act, cp_act)
+		app.history_act = append(app.history_act, NewSANodePath(cp_act))
 		app.history_pos++
 	}
 	if exeIt {
@@ -731,8 +729,7 @@ func (app *SAApp) addHistory(exeIt bool, rewriteLast bool) {
 
 func (app *SAApp) recoverHistory() {
 	app.root, _ = app.history[app.history_pos].Copy()
-	app.act = app.root.FindMirror(app.history[app.history_pos], app.history_act[app.history_pos])
-
+	app.act = app.history_act[app.history_pos].FindPath(app.root)
 	app.SetExecute()
 }
 
