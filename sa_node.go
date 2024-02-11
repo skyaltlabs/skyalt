@@ -133,6 +133,7 @@ func NewSANodePath(w *SANode) SANodePath {
 func (path *SANodePath) Is() bool {
 	return len(path.names) > 0
 }
+
 func (path *SANodePath) FindPath(root *SANode) *SANode {
 	node := root
 	for _, nm := range path.names {
@@ -242,6 +243,16 @@ func (w *SANode) UpdateDepth(orig *SANode) {
 
 func (w *SANode) SetError(err string) {
 	w.errExe = errors.New(err)
+}
+
+func (node *SANode) ResetProgress() {
+	node.errExe = nil
+	node.progress_desc = ""
+	node.progress = 0
+
+	for _, nd := range node.Subs {
+		nd.ResetProgress()
+	}
 }
 
 func (a *SANode) Distance(b *SANode) float32 {
