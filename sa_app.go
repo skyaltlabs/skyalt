@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/go-audio/audio"
 )
 
 type SACanvas struct {
@@ -101,6 +103,8 @@ type SAApp struct {
 	EnableExecution bool
 
 	iconPath string
+
+	mic_nodes []SANodePath
 }
 
 func (a *SAApp) init(base *SABase) {
@@ -149,6 +153,41 @@ func (app *SAApp) GetFolderPath() string {
 
 func (app *SAApp) GetJsonPath() string {
 	return app.GetFolderPath() + "app.json"
+}
+
+func (app *SAApp) AddMicNode(nodePath SANodePath) {
+	app.mic_nodes = append(app.mic_nodes, nodePath)
+}
+func (app *SAApp) RemoveMicNode(nodePath SANodePath) bool {
+	for i, pt := range app.mic_nodes {
+		if pt.Cmp(nodePath) {
+			app.mic_nodes = append(app.mic_nodes[:i], app.mic_nodes[i+1:]...) //remove
+			return true
+		}
+	}
+	return false
+}
+func (app *SAApp) IsMicNodeRecording(nodePath SANodePath) bool {
+	for _, pt := range app.mic_nodes {
+		if pt.Cmp(nodePath) {
+			return true
+		}
+	}
+	return false
+}
+func (app *SAApp) AddMic(data audio.IntBuffer) {
+	for i := len(app.mic_nodes) - 1; i >= 0; i-- {
+		nd := app.mic_nodes[i].FindPath(app.root)
+		if nd != nil {
+			nd.temp_mic_data.SourceBitDepth = data.SourceBitDepth
+			nd.temp_mic_data.Format = data.Format
+			nd.temp_mic_data.Data = append(nd.temp_mic_data.Data, data.Data...)
+
+		} else {
+			//un-register
+			app.mic_nodes = append(app.mic_nodes[:i], app.mic_nodes[i+1:]...) //remove
+		}
+	}
 }
 
 func (app *SAApp) Tick() {

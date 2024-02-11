@@ -33,7 +33,6 @@ type SABase struct {
 
 	mic                   *WinMic
 	mic_actived_last_tick int64
-	mic_nodes             []*SANode
 
 	node_groups SAGroups
 
@@ -174,10 +173,6 @@ func (base *SABase) Refresh() {
 	//refresh server nodes list ...
 }
 
-func (base *SABase) AddMicNode(node *SANode) {
-	base.mic_nodes = append(base.mic_nodes, node)
-}
-
 func (base *SABase) tickMick() {
 
 	if base.ui.win.io.ini.MicOff {
@@ -188,7 +183,13 @@ func (base *SABase) tickMick() {
 		return
 	}
 
-	mic_active := len(base.mic_nodes) > 0
+	mic_active := false
+	for _, app := range base.Apps {
+		if len(app.mic_nodes) > 0 {
+			mic_active = true
+			break
+		}
+	}
 	if mic_active {
 		if base.mic == nil {
 			//create
@@ -215,12 +216,9 @@ func (base *SABase) tickMick() {
 
 	if base.mic.IsPlaying() {
 		mic_data := base.mic.Get()
-		for _, nd := range base.mic_nodes {
-			nd.temp_mic_data.SourceBitDepth = mic_data.SourceBitDepth
-			nd.temp_mic_data.Format = mic_data.Format
-			nd.temp_mic_data.Data = append(nd.temp_mic_data.Data, mic_data.Data...)
+		for _, app := range base.Apps {
+			app.AddMic(mic_data)
 		}
-		base.mic_nodes = nil //reset for other tick
 	}
 }
 
