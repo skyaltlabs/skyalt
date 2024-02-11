@@ -39,7 +39,7 @@ func SAExe_For(node *SANode) bool {
 		for i := 0; i < n; i++ {
 			_keyAttr.GetResult().SetInt(i)
 			_valueAttr.GetResult().SetInt(i)
-			node.app.exe.ExecuteList(list)
+			node.app.ExecuteList(list)
 		}
 	} else {
 		nArr := inputAttr.NumArrayItems()
@@ -50,7 +50,7 @@ func SAExe_For(node *SANode) bool {
 				_keyAttr.GetResult().SetInt(i)
 				_valueAttr.GetResult().value = inputAttr.GetArrayItem(i)
 
-				node.app.exe.ExecuteList(list)
+				node.app.ExecuteList(list)
 			}
 		}
 		if nMap > 0 {
@@ -59,7 +59,7 @@ func SAExe_For(node *SANode) bool {
 				_keyAttr.GetResult().SetString(key)
 				_valueAttr.GetResult().value = val
 
-				node.app.exe.ExecuteList(list)
+				node.app.ExecuteList(list)
 			}
 		}
 	}
