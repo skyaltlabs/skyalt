@@ -144,10 +144,6 @@ func (path *SANodePath) FindPath(root *SANode) *SANode {
 	return node
 }
 
-type SANodeJob struct {
-	//TODO ......
-}
-
 const (
 	SANode_STATE_WAITING = 0
 	SANode_STATE_RUNNING = 1
@@ -1475,10 +1471,10 @@ func (w *SANode) RenderAttrs() {
 				if ui.Dialog_start(dnm) {
 					add := 0
 					if it.Ui.Fn == "combo" {
-						add = 2
+						add = 3
 					}
 					if it.Ui.Fn == "slider" {
-						add = 3
+						add = 4
 					}
 					ui.Div_colMax(0, 8)
 					ui.Div_row(13+add, 0.1) //spacer
@@ -1504,6 +1500,7 @@ func (w *SANode) RenderAttrs() {
 							}
 							y++
 
+							addReset := false
 							//extra options
 							if isSlider && isSelected {
 								min := it.Ui.GetPrmString("min")
@@ -1524,6 +1521,8 @@ func (w *SANode) RenderAttrs() {
 									it.Ui.SetPrmString("step", step)
 								}
 								y++
+
+								addReset = true
 							}
 							if isCombo && isSelected {
 								labels := it.Ui.GetPrmString("labels")
@@ -1536,6 +1535,15 @@ func (w *SANode) RenderAttrs() {
 								_, _, _, fnshd, _ = ui.Comp_editbox_desc("Values", 0, 2, 0, y, 1, 1, &values, Comp_editboxProp().Precision(0).Enable(isSelected))
 								if fnshd {
 									it.Ui.SetPrmString("values", values)
+								}
+								y++
+
+								addReset = true
+							}
+
+							if addReset {
+								if ui.Comp_buttonText(0, y, 1, 1, "Reset", "", "", true, false) > 0 {
+									it.Ui.Prms = it.defaultUi.Prms
 								}
 								y++
 							}
