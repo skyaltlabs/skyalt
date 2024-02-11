@@ -768,75 +768,78 @@ func SAExe_Render_Microphone(w *SANode, renderIt bool) {
 	grid := w.GetGrid()
 
 	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool()
+	fileAttr := w.GetAttr("temp_file", "\"temp_mic.wav\"")
+	outAttr := w.GetAttr("_out", "")
+	finishedAttr := w.GetAttrUi("finished", "0", SAAttrUi_SWITCH)
 
-	pathAttr := w.GetAttr("path", "")
-	if pathAttr.GetString() == "" {
-		pathAttr.SetErrorExe("empty")
+	if fileAttr.GetString() == "" {
+		fileAttr.SetErrorExe("empty")
+		return
 	}
 
-	activeAttr := w.GetAttrUi("active", "0", SAAttrUi_SWITCH)
-	outAttr := w.GetAttr("_out", "")
-
-	outAttr.SetOutBlob(nil) //empty
-
-	active := activeAttr.GetBool()
 	if showIt {
+
+		nodePath := NewSANodePath(w)
+		rec_active := w.app.IsMicNodeRecording(nodePath)
+
 		cd := CdPalette_B
-		if active {
+		if rec_active {
 			cd = CdPalette_P
 		}
+		if ui.Comp_buttonIcon(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, InitWinMedia_url("file:apps/base/resources/mic.png"), 0.15, "Enable/Disable audio recording", cd, enable, rec_active) > 0 {
 
-		if ui.Comp_buttonIcon(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, InitWinMedia_url("file:apps/base/resources/mic.png"), 0.15, "Enable/Disable audio recording", cd, enable, active) > 0 {
-			if active {
-
-				file, err := os.Create(pathAttr.GetString())
-				if err != nil {
-					pathAttr.SetErrorExe(err.Error())
+			if !rec_active {
+				//start
+				if w.app.base.ui.win.io.ini.MicOff {
+					outAttr.SetErrorExe("Microphone is disabled in SkyAlt Settings")
 					return
 				}
-				defer file.Close()
+				w.app.AddMicNode(nodePath)
+			} else {
+				//stop
+				w.app.RemoveMicNode(nodePath)
 
-				buff := w.temp_mic_data
-				enc := wav.NewEncoder(file, buff.Format.SampleRate, buff.SourceBitDepth, buff.Format.NumChannels, 1)
-				defer enc.Close()
+				//make WAV file
+				{
+					file, err := os.Create(fileAttr.GetString())
+					if err != nil {
+						w.SetError(err.Error())
+						return
+					}
+					buff := w.temp_mic_data
+					enc := wav.NewEncoder(file, buff.Format.SampleRate, buff.SourceBitDepth, buff.Format.NumChannels, 1)
+					err = enc.Write(&buff)
+					if err != nil {
+						enc.Close()
+						file.Close()
+						w.SetError(err.Error())
+						return
+					}
+					enc.Close()
+					file.Close()
 
-				err = enc.Write(&buff)
-				if err != nil {
-					pathAttr.SetErrorExe(err.Error())
-					return
+					w.temp_mic_data.Data = nil
 				}
+
+				renderIt = false //load it into _out
+
+				//set finished
+				finishedAttr.AddSetAttr("1")
+				finishedAttr.AddSetAttrExe()
+				finishedAttr.AddSetAttr("0")
 			}
-
-			//reset
-			w.temp_mic_data.Data = nil
-			outAttr.SetOutBlob(nil)
-
-			active = !active
-
-			activeAttr.AddSetAttr(OsTrnString(active, "1", "0"))
-		}
-
-		if active {
-			if w.app.base.ui.win.io.ini.MicOff {
-				outAttr.SetErrorExe("Microphone is disabled in SkyAlt Settings")
-				return
-			}
-
-			w.app.base.AddMicNode(w)
 		}
 	}
 
-	if !active { //keep output nil, when recording
-		//read wav
-		var data []byte
-		if OsFileExists(pathAttr.GetString()) {
-			var err error
-			data, err = os.ReadFile(pathAttr.GetString())
-			if err != nil {
-				pathAttr.SetErrorExe(err.Error())
-				return
-			}
+	//read file
+	if !renderIt { //waste of resources to load file every drawFrame() ..........
+
+		wavData, err := os.ReadFile(fileAttr.GetString())
+		if err != nil {
+			w.SetError(err.Error())
+			return
 		}
-		outAttr.SetOutBlob(data)
+		outAttr.SetOutBlob(wavData)
 	}
+
 }
