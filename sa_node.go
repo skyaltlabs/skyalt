@@ -133,7 +133,18 @@ func NewSANodePath(w *SANode) SANodePath {
 func (path *SANodePath) Is() bool {
 	return len(path.names) > 0
 }
+func (a SANodePath) Cmp(b SANodePath) bool {
+	if len(a.names) != len(b.names) {
+		return false
+	}
+	for i, nmA := range a.names {
+		if nmA != b.names[i] {
+			return false
+		}
+	}
 
+	return true
+}
 func (path *SANodePath) FindPath(root *SANode) *SANode {
 	node := root
 	for _, nm := range path.names {
