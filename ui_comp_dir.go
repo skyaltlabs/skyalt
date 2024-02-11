@@ -219,7 +219,7 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 		}
 
 		//search
-		ui.Comp_editbox(3, 0, 1, 1, &ui.dir.search, Comp_editboxProp().Ghost(ui.trns.SEARCH).Highlight(ui.dir.search != ""))
+		ui.Comp_editbox(3, 0, 1, 1, &ui.dir.search, Comp_editboxProp().TempToValue(true).Ghost(ui.trns.SEARCH).Highlight(ui.dir.search != ""))
 	}
 	ui.Div_end()
 
