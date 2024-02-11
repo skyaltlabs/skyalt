@@ -407,11 +407,11 @@ func (ui *Ui) Comp_button_s(style *UiComp, label string, icon *WinMedia, url str
 		ui._compDrawShape(coord, style.shape, cd, 0, 0.03)
 	}
 
-	if icon != nil {
+	if icon != nil && label != "" {
 		style.image_alignH = 0
 	}
 
-	coordImage, coordText := ui._compGetTextImageCoord(coord, 1, style.image_alignH, icon != nil, len(label) > 0)
+	coordImage, coordText := ui._compGetTextImageCoord(coord, 1, style.image_alignH, icon != nil, label != "")
 	if icon != nil {
 		ui._compDrawImage(coordImage, *icon, onCd, style)
 	}
