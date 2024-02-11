@@ -24,7 +24,74 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"strconv"
 )
+
+type SAServiceWhisperCppProps struct {
+	Offset_t    int
+	Offset_n    int
+	Duration    int
+	Max_context int
+	Max_len     int
+	Best_of     int
+	Beam_size   int
+
+	Word_thold    float64
+	Entropy_thold float64
+	Logprob_thold float64
+
+	Translate     bool
+	Diarize       bool
+	Tinydiarize   bool
+	Split_on_word bool
+	No_timestamps bool
+
+	Language        string
+	Detect_language bool
+
+	Temperature     float64
+	Temperature_inc float64
+
+	Response_format string
+}
+
+func (p *SAServiceWhisperCppProps) Hash() (OsHash, error) {
+
+	js, err := json.Marshal(p)
+	if err != nil {
+		return OsHash{}, err
+	}
+
+	return InitOsHash(js)
+}
+
+func (p *SAServiceWhisperCppProps) Write(w *multipart.Writer) {
+	w.WriteField("offset_t", strconv.Itoa(p.Offset_t))
+	w.WriteField("offset_n", strconv.Itoa(p.Offset_n))
+	w.WriteField("duration", strconv.Itoa(p.Duration))
+	w.WriteField("max_context", strconv.Itoa(p.Max_context))
+	w.WriteField("max_len", strconv.Itoa(p.Max_len))
+	w.WriteField("best_of", strconv.Itoa(p.Best_of))
+	w.WriteField("beam_size", strconv.Itoa(p.Beam_size))
+
+	w.WriteField("word_thold", strconv.FormatFloat(p.Word_thold, 'f', -1, 64))
+	w.WriteField("entropy_thold", strconv.FormatFloat(p.Entropy_thold, 'f', -1, 64))
+	w.WriteField("logprob_thold", strconv.FormatFloat(p.Logprob_thold, 'f', -1, 64))
+
+	w.WriteField("translate", OsTrnString(p.Translate, "1", "0"))
+	w.WriteField("diarize", OsTrnString(p.Diarize, "1", "0"))
+	w.WriteField("tinydiarize", OsTrnString(p.Tinydiarize, "1", "0"))
+	w.WriteField("split_on_word", OsTrnString(p.Split_on_word, "1", "0"))
+	w.WriteField("no_timestamps", OsTrnString(p.No_timestamps, "1", "0"))
+
+	w.WriteField("language", p.Language)
+	w.WriteField("detect_language", OsTrnString(p.Detect_language, "1", "0"))
+
+	w.WriteField("temperature", strconv.FormatFloat(p.Temperature, 'f', -1, 64))
+	w.WriteField("temperature_inc", strconv.FormatFloat(p.Temperature_inc, 'f', -1, 64))
+
+	w.WriteField("response_format", p.Response_format)
+}
 
 type SAServiceWhisperCpp struct {
 	addr string //http://127.0.0.1:8080/
@@ -66,17 +133,22 @@ func (wh *SAServiceWhisperCpp) Destroy() {
 	}
 }
 
-func (wh *SAServiceWhisperCpp) findCache(model string, blob OsBlob) (string, bool) {
-	str, found := wh.cache[model+blob.hash.Hex()]
+func (wh *SAServiceWhisperCpp) findCache(model string, blob OsBlob, propsHash OsHash) (string, bool) {
+	str, found := wh.cache[model+blob.hash.Hex()+propsHash.Hex()]
 	return str, found
 }
-func (wh *SAServiceWhisperCpp) addCache(model string, blob OsBlob, value string) {
-	wh.cache[model+blob.hash.Hex()] = value
+func (wh *SAServiceWhisperCpp) addCache(model string, blob OsBlob, propsHash OsHash, value string) {
+	wh.cache[model+blob.hash.Hex()+propsHash.Hex()] = value
 }
 
-func (wh *SAServiceWhisperCpp) Translate(model string, blob OsBlob) (string, float64, bool, error) {
+func (wh *SAServiceWhisperCpp) Translate(model string, blob OsBlob, props *SAServiceWhisperCppProps) (string, float64, bool, error) {
 	//find blob
-	str, found := wh.findCache(model, blob)
+	hash, err := props.Hash()
+	if err != nil {
+		return "", 0, false, fmt.Errorf("Hash() failed: %w", err)
+	}
+
+	str, found := wh.findCache(model, blob, hash)
 	if found {
 		return str, 1, true, nil
 	}
@@ -90,17 +162,16 @@ func (wh *SAServiceWhisperCpp) Translate(model string, blob OsBlob) (string, flo
 	}
 
 	//translate
-	str, err := wh.translate(blob)
+	str, err = wh.translate(blob, props)
 	if err != nil {
 		return "", 0, false, fmt.Errorf("translate() failed: %w", err)
 	}
 
-	wh.addCache(model, blob, str)
+	wh.addCache(model, blob, hash, str)
 	return str, 1, true, nil
 }
 
 func (wh *SAServiceWhisperCpp) setModel(model string) error {
-
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	writer.WriteField("model", model)
@@ -131,8 +202,7 @@ func (wh *SAServiceWhisperCpp) setModel(model string) error {
 	return nil
 }
 
-func (wh *SAServiceWhisperCpp) translate(blob OsBlob) (string, error) {
-
+func (wh *SAServiceWhisperCpp) translate(blob OsBlob, props *SAServiceWhisperCppProps) (string, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -143,9 +213,7 @@ func (wh *SAServiceWhisperCpp) translate(blob OsBlob) (string, error) {
 			return "", fmt.Errorf("CreateFormFile() failed: %w", err)
 		}
 		part.Write(blob.data)
-		//writer.WriteField("temperature", "0.0")
-		//writer.WriteField("temperature_inc", "0.2")
-		writer.WriteField("response_format", "verbose_json")
+		props.Write(writer)
 	}
 	writer.Close()
 

@@ -22,24 +22,73 @@ import (
 	"strings"
 )
 
-func SAExe_NN_whisper_cpp(node *SANode) bool {
-	modelAttr := node.GetAttr("model", "\"models/ggml-tiny.en.bin\"")
-	audioAttr := node.GetAttr("audio", "") //blob
-	_textAttr := node.GetAttr("_text", "")
+var g_whisper_modelList = []string{"", "ggml-tiny.en", "ggml-tiny", "ggml-base.en", "ggml-base", "ggml-small.en", "ggml-small", "ggml-medium.en", "ggml-medium", "ggml-large-v1", "ggml-large-v2", "ggml-large-v3"}
 
-	if modelAttr.GetString() == "" {
+func SAExe_NN_whisper_cpp(node *SANode) bool {
+
+	labels := ";" //empty
+	modelsFolder := "services/whisper.cpp/models/"
+	//labels
+	for _, m := range g_whisper_modelList {
+		if m != "" { //1st is empty
+			if OsFileExists(filepath.Join(modelsFolder, m+".bin")) {
+				labels += m + ";"
+			}
+		}
+	}
+	labels, _ = strings.CutSuffix(labels, ";")
+
+	modelAttr := node.GetAttrUi("model", "", SAAttrUi_COMBO(labels, labels))
+	modelPath := filepath.Join(modelsFolder, modelAttr.GetString()+".bin")
+
+	audioAttr := node.GetAttr("audio", "") //blob
+
+	var props SAServiceWhisperCppProps
+	{
+		props.Offset_t = node.GetAttrUi("offset_t", "0", SAAttrUiValue{}).GetInt()
+		props.Offset_n = node.GetAttrUi("offset_n", "0", SAAttrUiValue{}).GetInt()
+		props.Duration = node.GetAttrUi("duration", "0", SAAttrUiValue{}).GetInt()
+		props.Max_context = node.GetAttrUi("max_context", "-1", SAAttrUiValue{}).GetInt()
+		props.Max_len = node.GetAttrUi("max_len", "0", SAAttrUiValue{}).GetInt()
+		props.Best_of = node.GetAttrUi("best_of", "2", SAAttrUiValue{}).GetInt()
+		props.Beam_size = node.GetAttrUi("beam_size", "-1", SAAttrUiValue{}).GetInt()
+
+		props.Word_thold = node.GetAttrUi("word_thold", "0.01", SAAttrUiValue{}).GetFloat()
+		props.Entropy_thold = node.GetAttrUi("entropy_thold", "2.4", SAAttrUiValue{}).GetFloat()
+		props.Logprob_thold = node.GetAttrUi("logprob_thold", "-1", SAAttrUiValue{}).GetFloat()
+
+		props.Translate = node.GetAttrUi("translate", "0", SAAttrUi_SWITCH).GetBool()
+		props.Diarize = node.GetAttrUi("diarize", "0", SAAttrUi_SWITCH).GetBool()
+		props.Tinydiarize = node.GetAttrUi("tinydiarize", "0", SAAttrUi_SWITCH).GetBool()
+		props.Split_on_word = node.GetAttrUi("split_on_word", "0", SAAttrUi_SWITCH).GetBool()
+		props.No_timestamps = node.GetAttrUi("no_timestamps", "0", SAAttrUi_SWITCH).GetBool()
+
+		props.Language = node.GetAttrUi("language", "", SAAttrUiValue{}).GetString()
+		props.Detect_language = node.GetAttrUi("detect_language", "0", SAAttrUi_SWITCH).GetBool()
+
+		props.Temperature = node.GetAttrUi("temperature", "0", SAAttrUiValue{}).GetFloat()
+		props.Temperature_inc = node.GetAttrUi("temperature_inc", "0.2", SAAttrUiValue{}).GetFloat()
+
+		props.Response_format = node.GetAttrUi("response_format", "\"verbose_json\"", SAAttrUi_COMBO("verbose_json;json;text;srt;vtt", "verbose_json;json;text;srt;vtt")).GetString()
+	}
+
+	_outAttr := node.GetAttr("_out", "")
+
+	if modelPath == "" {
 		modelAttr.SetErrorExe("empty")
 		return false
 	}
 
-	str, progress, _, err := node.app.base.service_whisper_cpp.Translate(modelAttr.GetString(), audioAttr.GetBlob())
+	//SAJob - only one can run at the time?  ...................
+
+	str, progress, _, err := node.app.base.service_whisper_cpp.Translate(modelPath, audioAttr.GetBlob(), &props)
 	if err != nil {
 		node.SetError(err.Error())
 		return false
 	}
 
 	node.progress = progress
-	_textAttr.SetOutBlob([]byte(str))
+	_outAttr.SetOutBlob([]byte(str))
 
 	return true
 }
@@ -57,9 +106,8 @@ func SAExe_NN_whisper_cpp_downloader(node *SANode) bool {
 	}
 
 	//labels
-	modelList := []string{"", "ggml-tiny.en", "ggml-tiny", "ggml-base.en", "ggml-base", "ggml-small.en", "ggml-small", "ggml-medium.en", "ggml-medium", "ggml-large-v1", "ggml-large-v2", "ggml-large-v3"}
 	var labels string
-	for _, m := range modelList {
+	for _, m := range g_whisper_modelList {
 		if m != "" { //1st is empty
 			labels += m
 			if OsFileExists(filepath.Join(folderAttr.GetString(), m+".bin")) {
@@ -82,15 +130,15 @@ func SAExe_NN_whisper_cpp_downloader(node *SANode) bool {
 				serverAttr.SetErrorExe(err.Error())
 				return false
 			}
-			u.Path = filepath.Join(u.Path, modelList[id]+".bin")
+			u.Path = filepath.Join(u.Path, g_whisper_modelList[id]+".bin")
 			urll = u.String()
 		}
 
-		dst := filepath.Join(folderAttr.GetString(), modelList[id]+".bin")
+		dst := filepath.Join(folderAttr.GetString(), g_whisper_modelList[id]+".bin")
 
 		//add job
 		job := NewSAJob(node)
-		go SAJob_NN_whisper_cpp_downloader(job, urll, dst, modelList[id])
+		go SAJob_NN_whisper_cpp_downloader(job, urll, dst, g_whisper_modelList[id])
 		node.app.jobs.AddJob(job)
 
 		//reset in next tick
