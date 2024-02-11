@@ -16,6 +16,12 @@ limitations under the License.
 
 package main
 
+import (
+	"net/url"
+	"path/filepath"
+	"strings"
+)
+
 func SAExe_NN_whisper_cpp(node *SANode) bool {
 	modelAttr := node.GetAttr("model", "\"models/ggml-tiny.en.bin\"")
 	audioAttr := node.GetAttr("audio", "") //blob
@@ -34,6 +40,62 @@ func SAExe_NN_whisper_cpp(node *SANode) bool {
 
 	node.progress = progress
 	_textAttr.SetOutBlob([]byte(str))
+
+	return true
+}
+
+func SAExe_NN_whisper_cpp_downloader(node *SANode) bool {
+	serverAttr := node.GetAttr("server", "\"https://huggingface.co/ggerganov/whisper.cpp/resolve/main\"")
+	if serverAttr.GetString() == "" {
+		serverAttr.SetErrorExe("empty")
+		return false
+	}
+	folderAttr := node.GetAttr("folder", "\"services/whisper.cpp/models/\"")
+	if folderAttr.GetString() == "" {
+		folderAttr.SetErrorExe("empty")
+		return false
+	}
+
+	//labels
+	modelList := []string{"", "ggml-tiny.en", "ggml-tiny", "ggml-base.en", "ggml-base", "ggml-small.en", "ggml-small", "ggml-medium.en", "ggml-medium", "ggml-large-v1", "ggml-large-v2", "ggml-large-v3"}
+	var labels string
+	for _, m := range modelList {
+		if m != "" { //1st is empty
+			labels += m
+			if OsFileExists(filepath.Join(folderAttr.GetString(), m+".bin")) {
+				labels += "(found)"
+			}
+		}
+		labels += ";"
+	}
+	labels, _ = strings.CutSuffix(labels, ";")
+
+	//pick model
+	modelAttr := node.GetAttrUi("model", "", SAAttrUi_COMBO(labels, ""))
+	modelAttr.Ui = SAAttrUi_COMBO(labels, "") //rewrite actual value as well(not only defaultUi)
+	id := modelAttr.GetInt()
+	if id > 0 {
+		urll := ""
+		{
+			u, err := url.Parse(serverAttr.GetString())
+			if err != nil {
+				serverAttr.SetErrorExe(err.Error())
+				return false
+			}
+			u.Path = filepath.Join(u.Path, modelList[id]+".bin")
+			urll = u.String()
+		}
+
+		dst := filepath.Join(folderAttr.GetString(), modelList[id]+".bin")
+
+		//add job
+		job := NewSAJob(node)
+		go SAJob_NN_whisper_cpp_downloader(job, urll, dst, modelList[id])
+		node.app.jobs.AddJob(job)
+
+		//reset in next tick
+		modelAttr.AddSetAttr("0")
+	}
 
 	return true
 }
