@@ -938,7 +938,7 @@ func _SANode_renderAttrValueHeight(attr *SANodeAttr, attr_instr *VmInstr, uiVal 
 
 		instr := attr_instr.GetConst()
 
-		if instr != nil && uiVal.Fn == SAAttrUi_CODE.Fn {
+		if uiVal.Fn == SAAttrUi_CODE.Fn {
 			height = 5
 		} else if instr != nil && VmCallback_Cmp(instr.fn, VmBasic_InitArray) {
 			item_pre_row := (uiVal.Fn == "map")
@@ -987,8 +987,13 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 				instr.LineReplace(value, false)
 			}
 		} else if uiVal.Fn == SAAttrUi_DATE.Fn {
+			var val int64
+			if instr != nil {
+				val = int64(instr.temp.Number())
+			} else {
+				val = int64(attr_instr.temp.Number()) //result(disabled) from expression
+			}
 			ui.Div_start(x, y, w, h)
-			val := int64(instr.temp.Number())
 			if ui.Comp_CalendarDataPicker(&val, true, "attr_calendar", editable) {
 				instr.LineReplace(strconv.Itoa(int(val)), false)
 			}
@@ -1001,14 +1006,19 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 			if ui.Comp_combo(x, y, w, h, &value, uiVal.GetPrmStringSplit("labels", ";"), uiVal.GetPrmStringSplit("values", ";"), "", editable, false) {
 				instr.LineReplace(value, false)
 			}
-		} else if instr != nil && uiVal.Fn == SAAttrUi_COLOR.Fn {
-			cd := instr.temp.Cd()
-			if ui.comp_colorPicker(x, y, w, h, &cd, "attr_cd", true) {
+		} else if uiVal.Fn == SAAttrUi_COLOR.Fn {
+			var val OsCd
+			if instr != nil {
+				val = instr.temp.Cd()
+			} else {
+				val = attr_instr.temp.Cd() //result(disabled) from expression
+			}
+			if ui.comp_colorPicker(x, y, w, h, &val, "attr_cd", true) {
 				if editable {
-					instr.pos_attr.ReplaceCd(cd)
+					instr.pos_attr.ReplaceCd(val)
 				}
 			}
-		} else if instr != nil && uiVal.Fn == SAAttrUi_CODE.Fn {
+		} else if uiVal.Fn == SAAttrUi_CODE.Fn {
 			if editable {
 				_, _, _, fnshd, _ := ui.Comp_editbox(x, y, w, h, &value, Comp_editboxProp().Align(0, 0).Enable(editable).MultiLine(true))
 				if fnshd {
@@ -1025,15 +1035,20 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 			if ui.comp_dirPicker(x, y, w, h, &value, true, "attr_file", editable) {
 				instr.LineReplace(value, false)
 			}
-		} else if instr != nil && uiVal.Fn == SAAttrUi_BLOB.Fn {
-			blob := instr.temp.Blob()
-			if ui.Comp_buttonIcon(x, y, w, h, InitWinMedia_blob(blob), 0, "", CdPalette_White, true, false) > 0 {
+		} else if uiVal.Fn == SAAttrUi_BLOB.Fn {
+			var val OsBlob
+			if instr != nil {
+				val = instr.temp.Blob()
+			} else {
+				val = attr_instr.temp.Blob() //result(disabled) from expression
+			}
+			if ui.Comp_buttonIcon(x, y, w, h, InitWinMedia_blob(val), 0, "", CdPalette_White, true, false) > 0 {
 				ui.Dialog_open("attr_blob", 0)
 			}
 			if ui.Dialog_start("attr_blob") {
 				ui.Div_colMax(0, 20)
 				ui.Div_rowMax(0, 20)
-				ui.Comp_image(0, 0, 1, 1, InitWinMedia_blob(blob), InitOsCdWhite(), 0, 1, 1, false)
+				ui.Comp_image(0, 0, 1, 1, InitWinMedia_blob(val), InitOsCdWhite(), 0, 1, 1, false)
 				ui.Dialog_end()
 			}
 		} else if instr != nil && VmCallback_Cmp(instr.fn, VmBasic_InitArray) {
@@ -1349,13 +1364,6 @@ func (w *SANode) RenderAttrs() {
 		{
 			ui.Div_colMax(1, 4)
 			ui.Div_colMax(2, 100)
-
-			if hasAttrWith_goto || hasAttrWith_err {
-				ui.Div_col(5, 1)
-				if hasAttrWith_goto && hasAttrWith_err {
-					ui.Div_col(6, 1)
-				}
-			}
 
 			//highlight because it has expression
 			if len(it.depends) > 0 {
