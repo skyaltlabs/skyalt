@@ -143,7 +143,8 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 	ui.Div_end()
 
 	//draw progress text
-	if node.state != SANode_STATE_DONE {
+	isJobActive := node.progress > 0
+	if isJobActive {
 		if node.progress > 0 {
 			cellr := node.parent.cellZoom(ui)
 			cq := coord.AddSpace(int(-0.3 * float64(cellr)))
@@ -172,7 +173,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 
 	//exe rect
 	selectRad = ui.CellWidth(roundc * 1.7)
-	if node.state != SANode_STATE_DONE {
+	if isJobActive {
 		pl := ui.win.io.GetPalette()
 		cd := pl.P
 

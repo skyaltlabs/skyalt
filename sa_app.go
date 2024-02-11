@@ -89,7 +89,7 @@ type SAApp struct {
 
 	exeIt    bool
 	setAttrs []SASetAttr
-	jobs     []SANodeJob
+	jobs     *SAJobs
 
 	graph  *SAGraph
 	canvas SACanvas
@@ -112,6 +112,7 @@ func (a *SAApp) init(base *SABase) {
 
 	a.graph = NewSAGraph(a)
 
+	a.jobs = NewSAJobs(a)
 	//a.exe = NewSAAppExe(a)
 
 	ic := a.GetFolderPath() + "icon.png"
@@ -131,6 +132,7 @@ func NewSAApp(name string, base *SABase) *SAApp {
 	return app
 }
 func (app *SAApp) Destroy() {
+	app.jobs.Destroy()
 }
 
 func (app *SAApp) AddSetAttr(attr *SANodeAttr, value string, mapOrArray bool, exeIt bool) {
@@ -150,6 +152,8 @@ func (app *SAApp) GetJsonPath() string {
 }
 
 func (app *SAApp) Tick() {
+
+	app.jobs.Tick(app.EnableExecution)
 
 	if len(app.setAttrs) > 0 {
 

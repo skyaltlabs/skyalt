@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"strings"
 )
@@ -616,7 +617,7 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 				gr.node_select = false
 			}
 
-			if len(gr.app.jobs) > 0 {
+			if gr.app.jobs.Num() > 0 {
 				ui.Paint_rect(0, 0, 1, 1, 0, pl.P, 0.06) //exe rect
 			} else if !gr.app.EnableExecution {
 				ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0.03)
@@ -720,10 +721,10 @@ func (gr *SAGraph) drawGraph(ui *Ui) {
 
 		y++ //space - adjust Div_rowMax()
 
-		//if gr.app.exe.wip != nil {
-		//ui.Comp_text(0, y, 1, 1, fmt.Sprintf("**1/%d**", 1+len(gr.app.exe.wip)), 1)
-		//ui.Comp_text(0, y, 1, 1, OsTrnString(done > 0, fmt.Sprintf("%.0f%%", done*100), "---"), 1)
-		//}
+		if gr.app.jobs.Num() > 0 {
+			ui.Comp_text(0, y, 1, 1, fmt.Sprintf("**%d**", gr.app.jobs.Num()), 1)
+			//ui.Comp_text(0, y, 1, 1, OsTrnString(done > 0, fmt.Sprintf("%.0f%%", done*100), "---"), 1)
+		}
 
 	}
 	ui.Div_end()
