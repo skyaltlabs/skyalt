@@ -65,7 +65,7 @@ func SAExe_File_write(node *SANode) bool {
 
 	tp := node.GetAttrUi("type", "0", SAAttrUi_COMBO("Database;App;Disk", "")).GetInt()
 	pathAttr := node.GetAttrUi("path", "", SAAttrUi_FILE)
-	dataAttr := node.GetAttr("json", "")
+	dataAttr := node.GetAttr("data", "")
 
 	if triggerAttr.GetBool() {
 
