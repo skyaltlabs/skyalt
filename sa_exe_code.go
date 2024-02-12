@@ -28,11 +28,11 @@ func SAExe_Code_python(node *SANode) bool {
 	//check code
 	code := codeAttr.GetString()
 	if code == "" {
-		codeAttr.SetErrorExe("empty")
+		codeAttr.SetErrorStr("empty")
 		return false
 	}
 	if strings.Contains(strings.ToLower(code), "import") {
-		codeAttr.SetErrorExe("Code contains 'import' keyword")
+		codeAttr.SetErrorStr("Code contains 'import' keyword")
 		return false
 	}
 
@@ -55,11 +55,11 @@ func SAExe_Code_python(node *SANode) bool {
 	//run python on service server
 	outAttrs, errStr, err := node.app.base.service_python.Exec([]byte(bodyJs))
 	if err != nil {
-		codeAttr.SetErrorExe(err.Error())
+		codeAttr.SetError(err)
 		return false
 	}
 	if errStr != "" {
-		codeAttr.SetErrorExe(errStr)
+		codeAttr.SetErrorStr(errStr)
 		return false
 	}
 

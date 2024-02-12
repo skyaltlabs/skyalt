@@ -31,13 +31,13 @@ func _SAExe_Sqlite_open(node *SANode, fileAttr *SANodeAttr) *DiskDb {
 	file := fileAttr.GetString()
 
 	if file == "" {
-		fileAttr.SetErrorExe("empty")
+		fileAttr.SetErrorStr("empty")
 		return nil
 	}
 
 	_, err := os.Stat(file)
 	if os.IsNotExist(err) {
-		fileAttr.SetErrorExe(fmt.Sprintf("file(%s) doesn't exist", file))
+		fileAttr.SetError(fmt.Errorf("file(%s) doesn't exist", file))
 		return nil
 	}
 
@@ -51,7 +51,7 @@ func _SAExe_Sqlite_open(node *SANode, fileAttr *SANodeAttr) *DiskDb {
 	db, _, err := node.app.base.ui.win.disk.OpenDb(file)
 	//db, err := NewDiskDb(file, false, nil)
 	if err != nil {
-		fileAttr.SetErrorExe(err.Error())
+		fileAttr.SetError(err)
 		return nil
 	}
 	return db
@@ -59,7 +59,7 @@ func _SAExe_Sqlite_open(node *SANode, fileAttr *SANodeAttr) *DiskDb {
 
 func SAExe_Sqlite_insert(node *SANode) bool {
 
-	triggerAttr := node.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
+	triggerAttr := node.GetAttrUi("trigger", 0, SAAttrUi_SWITCH)
 
 	fileAttr := node.GetAttrUi("file", "", SAAttrUi_FILE)
 
@@ -70,7 +70,7 @@ func SAExe_Sqlite_insert(node *SANode) bool {
 
 	tbls, err := db.GetTableInfo()
 	if err != nil {
-		fileAttr.SetErrorExe(err.Error())
+		fileAttr.SetError(err)
 		return false
 	}
 
@@ -85,7 +85,7 @@ func SAExe_Sqlite_insert(node *SANode) bool {
 
 	table := tableAttr.GetString()
 	if table == "" {
-		tableAttr.SetErrorExe("empty")
+		tableAttr.SetErrorStr("empty")
 		return false
 	}
 
@@ -104,7 +104,7 @@ func SAExe_Sqlite_insert(node *SANode) bool {
 
 	valuesAttr := node.GetAttrUi(
 		"values",
-		"[{\"column\": \"a\", \"value\": \"1\"}, {\"column\": \"b\", \"value\": \"2\"}]",
+		`[{"column": "a", "value": "1"}, {"column": "b", "value": "2"}]`,
 		SAAttrUiValue{Fn: "map", HideAddDel: true, Map: map[string]SAAttrUiValue{"column": SAAttrUi_COMBO(columnList, columnList), "value": {}}})
 
 	type Values struct {
@@ -114,7 +114,7 @@ func SAExe_Sqlite_insert(node *SANode) bool {
 	var vals []Values
 	err = json.Unmarshal([]byte(valuesAttr.GetString()), &vals)
 	if err != nil {
-		valuesAttr.SetErrorExe(err.Error())
+		valuesAttr.SetError(err)
 		return false
 	}
 
@@ -136,7 +136,7 @@ func SAExe_Sqlite_insert(node *SANode) bool {
 	if triggerAttr.GetBool() {
 		_, err = db.Write(query, valValuesArr...)
 		if err != nil {
-			node.SetError(err.Error())
+			node.SetError(err)
 			return false
 		}
 
@@ -150,8 +150,8 @@ func SAExe_Sqlite_select(node *SANode) bool {
 
 	fileAttr := node.GetAttrUi("file", "", SAAttrUi_FILE)
 	queryAttr := node.GetAttr("query", "")
-	rowsAttr := node.GetAttr("_rows", "[]")
-	colsAttr := node.GetAttr("_columns", "[]")
+	rowsAttr := node.GetAttr("_rows", []byte("[]"))
+	colsAttr := node.GetAttr("_columns", []byte("[]"))
 
 	db := _SAExe_Sqlite_open(node, fileAttr)
 	if db == nil {
@@ -160,20 +160,20 @@ func SAExe_Sqlite_select(node *SANode) bool {
 
 	query := queryAttr.GetString()
 	if query == "" {
-		queryAttr.SetErrorExe("empty")
+		queryAttr.SetErrorStr("empty")
 		return false
 	}
 
 	rows, err := db.Read(query)
 	if err != nil {
-		queryAttr.SetErrorExe(fmt.Sprintf("Query() failed: %v", err))
+		queryAttr.SetError(fmt.Errorf("Query() failed: %w", err))
 		return false
 	}
 	defer rows.Close()
 
 	columnTypes, err := rows.ColumnTypes()
 	if err != nil {
-		node.SetError(fmt.Sprintf("ColumnTypes() failed: %v", err))
+		node.SetError(fmt.Errorf("ColumnTypes() failed: %w", err))
 		return false
 	}
 	scanArgs := make([]interface{}, len(columnTypes))
@@ -203,7 +203,7 @@ func SAExe_Sqlite_select(node *SANode) bool {
 	{
 		columnNames, err := rows.Columns()
 		if err != nil {
-			node.SetError(fmt.Sprintf("Columns() failed: %v", err))
+			node.SetError(fmt.Errorf("Columns() failed: %w", err))
 			return false
 		}
 
@@ -223,7 +223,7 @@ func SAExe_Sqlite_select(node *SANode) bool {
 	for rows.Next() {
 		err := rows.Scan(scanArgs...)
 		if err != nil {
-			node.SetError(fmt.Sprintf("Scan() failed: %v", err))
+			node.SetError(fmt.Errorf("Scan() failed: %w", err))
 			return false
 		}
 

@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
 	"os"
 	"strings"
 )
@@ -30,12 +29,12 @@ func SAExe_File_dir(node *SANode) bool {
 
 	path := pathAttr.GetString()
 	if path == "" {
-		pathAttr.SetErrorExe("empty")
+		pathAttr.SetErrorStr("empty")
 		return false
 	}
 	dir, err := os.ReadDir(path)
 	if err != nil {
-		pathAttr.SetErrorExe(err.Error())
+		pathAttr.SetError(err)
 		return false
 	}
 
@@ -61,9 +60,9 @@ func SAExe_File_dir(node *SANode) bool {
 
 func SAExe_File_write(node *SANode) bool {
 
-	triggerAttr := node.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
+	triggerAttr := node.GetAttrUi("trigger", 0, SAAttrUi_SWITCH)
 
-	tp := node.GetAttrUi("type", "0", SAAttrUi_COMBO("Database;App;Disk", "")).GetInt()
+	tp := node.GetAttrUi("type", 0, SAAttrUi_COMBO("Database;App;Disk", "")).GetInt()
 	pathAttr := node.GetAttrUi("path", "", SAAttrUi_FILE)
 	dataAttr := node.GetAttr("data", "")
 
@@ -76,7 +75,7 @@ func SAExe_File_write(node *SANode) bool {
 
 		err := os.WriteFile(path, dataAttr.GetBlob().data, 0644)
 		if err != nil {
-			pathAttr.SetErrorExe(fmt.Sprintf("%v", err))
+			pathAttr.SetError(err)
 			return false
 		}
 
@@ -88,7 +87,7 @@ func SAExe_File_write(node *SANode) bool {
 
 func SAExe_File_read(node *SANode) bool {
 
-	tp := node.GetAttrUi("type", "0", SAAttrUi_COMBO("Database;App;Disk", "")).GetInt()
+	tp := node.GetAttrUi("type", 0, SAAttrUi_COMBO("Database;App;Disk", "")).GetInt()
 
 	pathAttr := node.GetAttrUi("path", "", SAAttrUi_FILE)
 	path := pathAttr.GetString()
@@ -96,7 +95,7 @@ func SAExe_File_read(node *SANode) bool {
 	outputAttr := node.GetAttrUi("_out", "", SAAttrUi_BLOB)
 
 	if path == "" {
-		pathAttr.SetErrorExe("value is empty")
+		pathAttr.SetErrorStr("value is empty")
 		return false
 	}
 
@@ -113,7 +112,7 @@ func SAExe_File_read(node *SANode) bool {
 
 	//set
 	if err != nil {
-		pathAttr.SetErrorExe(fmt.Sprintf("%v", err))
+		pathAttr.SetError(err)
 		return false
 	}
 	outputAttr.SetOutBlob(data)

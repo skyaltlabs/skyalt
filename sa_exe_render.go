@@ -44,8 +44,8 @@ func SAExe_Render_Dialog(w *SANode, renderIt bool) {
 	ui := w.app.base.ui
 	showIt := renderIt && w.CanBeRenderOnCanvas() && ui != nil
 
-	triggerAttr := w.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
-	typeAttr := w.GetAttrUi("type", "0", SAAttrUi_COMBO("Center;Relative", ""))
+	triggerAttr := w.GetAttrUi("trigger", 0, SAAttrUi_SWITCH)
+	typeAttr := w.GetAttrUi("type", 0, SAAttrUi_COMBO("Center;Relative", ""))
 
 	if showIt {
 		dnm := w.getPath()
@@ -66,10 +66,10 @@ func SAExe_Render_Button(w *SANode, renderIt bool) {
 
 	grid := w.GetGrid()
 
-	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool()
-	tp := w.GetAttrUi("type", "0", SAAttrUi_COMBO("Classic;Light;Menu", "")).GetInt()
+	enable := w.GetAttrUi("enable", 1, SAAttrUi_SWITCH).GetBool()
+	tp := w.GetAttrUi("type", 0, SAAttrUi_COMBO("Classic;Light;Menu", "")).GetInt()
 	label := w.GetAttr("label", "").GetString()
-	clickedAttr := w.GetAttrUi("clicked", "0", SAAttrUi_SWITCH) //can't be _output, because it's set when render(not graph execution)
+	clickedAttr := w.GetAttrUi("clicked", 0, SAAttrUi_SWITCH) //can't be _output, because it's set when render(not graph execution)
 
 	clicked := false
 	switch tp {
@@ -82,7 +82,7 @@ func SAExe_Render_Button(w *SANode, renderIt bool) {
 			clicked = ui.Comp_buttonLight(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, "", enable) > 0
 		}
 	case 2:
-		selectedAttr := w.GetAttrUi("selected", "0", SAAttrUi_SWITCH)
+		selectedAttr := w.GetAttrUi("selected", 0, SAAttrUi_SWITCH)
 
 		if showIt {
 			clicked = ui.Comp_buttonMenu(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, "", enable, selectedAttr.GetBool()) > 0
@@ -106,11 +106,11 @@ func SAExe_Render_Text(w *SANode, renderIt bool) {
 	grid := w.GetGrid()
 
 	label := w.GetAttr("label", "").GetString()
-	align_h := w.GetAttrUi("align_h", "0", SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
-	align_v := w.GetAttrUi("align_v", "1", SAAttrUi_COMBO("Top;Center;Bottom", "")).GetInt()
-	selection := w.GetAttrUi("selection", "1", SAAttrUi_SWITCH).GetBool()
-	multi_line := w.GetAttrUi("multi_line", "0", SAAttrUi_SWITCH).GetBool()
-	drawBorder := w.GetAttrUi("draw_border", "1", SAAttrUi_SWITCH).GetBool()
+	align_h := w.GetAttrUi("align_h", 0, SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
+	align_v := w.GetAttrUi("align_v", 1, SAAttrUi_COMBO("Top;Center;Bottom", "")).GetInt()
+	selection := w.GetAttrUi("selection", 1, SAAttrUi_SWITCH).GetBool()
+	multi_line := w.GetAttrUi("multi_line", 0, SAAttrUi_SWITCH).GetBool()
+	drawBorder := w.GetAttrUi("draw_border", 1, SAAttrUi_SWITCH).GetBool()
 
 	if showIt {
 		if multi_line {
@@ -133,7 +133,7 @@ func SAExe_Render_Switch(w *SANode, renderIt bool) {
 	valueInstr := valueAttr.instr.GetConst()
 	value := valueAttr.GetString()
 
-	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool() && valueInstr != nil
+	enable := w.GetAttrUi("enable", 1, SAAttrUi_SWITCH).GetBool() && valueInstr != nil
 
 	if showIt {
 		if ui.Comp_switch(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, label, "", enable) {
@@ -154,7 +154,7 @@ func SAExe_Render_Checkbox(w *SANode, renderIt bool) {
 	valueInstr := valueAttr.instr.GetConst()
 	value := valueAttr.GetString()
 
-	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool() && valueInstr != nil
+	enable := w.GetAttrUi("enable", 1, SAAttrUi_SWITCH).GetBool() && valueInstr != nil
 
 	if showIt {
 		if ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, label, "", enable) {
@@ -173,10 +173,10 @@ func SAExe_Render_Combo(w *SANode, renderIt bool) {
 	valueInstr := valueAttr.instr.GetConst()
 	value := valueAttr.GetString()
 
-	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool() && valueInstr != nil
-	options_names := w.GetAttr("options_names", "\"a;b;c\")").GetString()
-	options_values := w.GetAttr("options_values", "\"a;b;c\")").GetString()
-	search := w.GetAttrUi("search", "0", SAAttrUi_SWITCH).GetBool()
+	enable := w.GetAttrUi("enable", 1, SAAttrUi_SWITCH).GetBool() && valueInstr != nil
+	options_names := w.GetAttr("options_names", "a;b;c").GetString()
+	options_values := w.GetAttr("options_values", "a;b;c").GetString()
+	search := w.GetAttrUi("search", 0, SAAttrUi_SWITCH).GetBool()
 
 	if showIt {
 		if ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, strings.Split(options_names, ";"), strings.Split(options_values, ";"), "", enable, search) {
@@ -197,15 +197,15 @@ func SAExe_Render_Editbox(w *SANode, renderIt bool) {
 
 	prop := Comp_editboxProp()
 
-	prop.align.X = w.GetAttrUi("align_h", "0", SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
-	prop.align.Y = w.GetAttrUi("align_v", "1", SAAttrUi_COMBO("Top;Center;Bottom", "")).GetInt()
-	prop.enable = w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool() && valueInstr != nil
-	prop.tempToValue = w.GetAttrUi("tempToValue", "0", SAAttrUi_SWITCH).GetBool()
-	prop.value_precision = w.GetAttr("precision", "2").GetInt()
+	prop.align.X = w.GetAttrUi("align_h", 0, SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
+	prop.align.Y = w.GetAttrUi("align_v", 1, SAAttrUi_COMBO("Top;Center;Bottom", "")).GetInt()
+	prop.enable = w.GetAttrUi("enable", 1, SAAttrUi_SWITCH).GetBool() && valueInstr != nil
+	prop.tempToValue = w.GetAttrUi("tempToValue", 0, SAAttrUi_SWITCH).GetBool()
+	prop.value_precision = w.GetAttr("precision", 2).GetInt()
 	prop.ghost = w.GetAttr("ghost", "").GetString()
-	prop.multi_line = w.GetAttrUi("multi_line", "0", SAAttrUi_SWITCH).GetBool()
-	prop.multi_line_enter_finish = w.GetAttrUi("multi_line_enter_finish", "0", SAAttrUi_SWITCH).GetBool()
-	finishedAttr := w.GetAttrUi("finished", "0", SAAttrUi_SWITCH)
+	prop.multi_line = w.GetAttrUi("multi_line", 0, SAAttrUi_SWITCH).GetBool()
+	prop.multi_line_enter_finish = w.GetAttrUi("multi_line_enter_finish", 0, SAAttrUi_SWITCH).GetBool()
+	finishedAttr := w.GetAttrUi("finished", 0, SAAttrUi_SWITCH)
 
 	//temp, tempChanged? ...
 
@@ -229,7 +229,7 @@ func SAExe_Render_Divider(w *SANode, renderIt bool) {
 
 	grid := w.GetGrid()
 
-	tp := w.GetAttrUi("type", "0", SAAttrUi_COMBO("Column;Row", "")).GetInt()
+	tp := w.GetAttrUi("type", 0, SAAttrUi_COMBO("Column;Row", "")).GetInt()
 
 	if showIt {
 		switch tp {
@@ -247,7 +247,7 @@ func SAExe_Render_ColorPalette(w *SANode, renderIt bool) {
 
 	grid := w.GetGrid()
 
-	cdAttr := w.GetAttrUi("cd", "[0, 0, 0, 255]", SAAttrUi_COLOR)
+	cdAttr := w.GetAttrUi("cd", []byte("[0, 0, 0, 255]"), SAAttrUi_COLOR)
 	cd := cdAttr.GetCd()
 
 	if showIt {
@@ -267,8 +267,8 @@ func SAExe_Render_ColorPicker(w *SANode, renderIt bool) {
 
 	grid := w.GetGrid()
 
-	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool()
-	cdAttr := w.GetAttrUi("cd", "[0, 0, 0, 255]", SAAttrUi_COLOR)
+	enable := w.GetAttrUi("enable", 1, SAAttrUi_SWITCH).GetBool()
+	cdAttr := w.GetAttrUi("cd", []byte("[0, 0, 0, 255]"), SAAttrUi_COLOR)
 	cd := cdAttr.GetCd()
 
 	if showIt {
@@ -289,7 +289,7 @@ func _SAExe_Render_FileAndDirPicker(selectFile bool, dialogName string, w *SANod
 		uiV = SAAttrUi_FILE
 	}
 
-	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool()
+	enable := w.GetAttrUi("enable", 1, SAAttrUi_SWITCH).GetBool()
 	pathAttr := w.GetAttrUi("path", "", uiV)
 	path := pathAttr.GetString()
 
@@ -314,8 +314,8 @@ func SAExe_Render_Calendar(w *SANode, renderIt bool) {
 
 	grid := w.GetGrid()
 
-	valueAttr := w.GetAttrUi("value", "0", SAAttrUi_DATE)
-	pageAttr := w.GetAttrUi("page", "0", SAAttrUi_DATE)
+	valueAttr := w.GetAttrUi("value", 0, SAAttrUi_DATE)
+	pageAttr := w.GetAttrUi("page", 0, SAAttrUi_DATE)
 
 	if showIt {
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
@@ -340,9 +340,9 @@ func SAExe_Render_Date(w *SANode, renderIt bool) {
 
 	grid := w.GetGrid()
 
-	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool()
-	valueAttr := w.GetAttrUi("value", "0", SAAttrUi_DATE)
-	show_time := w.GetAttrUi("show_time", "0", SAAttrUi_SWITCH).GetBool()
+	enable := w.GetAttrUi("enable", 1, SAAttrUi_SWITCH).GetBool()
+	valueAttr := w.GetAttrUi("value", 0, SAAttrUi_DATE)
+	show_time := w.GetAttrUi("show_time", 0, SAAttrUi_SWITCH).GetBool()
 
 	if showIt {
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
@@ -362,19 +362,19 @@ func SAExe_Render_Image(w *SANode, renderIt bool) {
 
 	grid := w.GetGrid()
 
-	margin := w.GetAttr("margin", "0").GetFloat()
-	cd := w.GetAttrUi("cd", "[255, 255, 255, 255]", SAAttrUi_COLOR).GetCd()
-	background := w.GetAttrUi("background", "0", SAAttrUi_SWITCH).GetBool()
+	margin := w.GetAttr("margin", 0).GetFloat()
+	cd := w.GetAttrUi("cd", []byte("[255, 255, 255, 255]"), SAAttrUi_COLOR).GetCd()
+	background := w.GetAttrUi("background", 0, SAAttrUi_SWITCH).GetBool()
 
-	alignV := w.GetAttrUi("alignV", "1", SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
-	alignH := w.GetAttrUi("alignH", "1", SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
-	fill := w.GetAttrUi("fill", "0", SAAttrUi_SWITCH).GetBool()
+	alignV := w.GetAttrUi("alignV", 1, SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
+	alignH := w.GetAttrUi("alignH", 1, SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
+	fill := w.GetAttrUi("fill", 0, SAAttrUi_SWITCH).GetBool()
 
 	blobAttr := w.GetAttrUi("blob", "", SAAttrUi_BLOB)
 
 	if !renderIt {
 		if !blobAttr.IsBlob() {
-			blobAttr.SetErrorExe("Not BLOB")
+			blobAttr.SetErrorStr("Not BLOB")
 			return
 		}
 	}
@@ -439,7 +439,7 @@ func SAExe_Render_FileDrop(w *SANode, renderIt bool) {
 			if err == nil {
 				outputAttr.SetOutBlob(data)
 			} else {
-				pathAttr.SetErrorExe(fmt.Sprintf("ReadFile(%s) failed: %v", value, err))
+				pathAttr.SetError(fmt.Errorf("ReadFile(%s) failed: %w", value, err))
 			}
 		}
 	}
@@ -451,20 +451,20 @@ func SAExe_Render_Map(w *SANode, renderIt bool) {
 
 	grid := w.GetGrid()
 
-	file := w.GetAttr("file", "\"maps/osm\"").GetString()
-	url := w.GetAttr("url", "\"https://tile.openstreetmap.org/{z}/{x}/{y}.png\"").GetString()
-	copyright := w.GetAttr("copyright", "\"(c)OpenStreetMap contributors\"").GetString()
-	copyright_url := w.GetAttr("copyright_url", "\"https://www.openstreetmap.org/copyright\"").GetString()
+	file := w.GetAttr("file", "maps/osm").GetString()
+	url := w.GetAttr("url", "https://tile.openstreetmap.org/{z}/{x}/{y}.png").GetString()
+	copyright := w.GetAttr("copyright", "(c)OpenStreetMap contributors").GetString()
+	copyright_url := w.GetAttr("copyright_url", "https://www.openstreetmap.org/copyright").GetString()
 
-	cam_lonAttr := w.GetAttr("lon", "14.4071117049")
-	cam_latAttr := w.GetAttr("lat", "50.0852013259")
-	cam_zoomAttr := w.GetAttr("zoom", "5")
+	cam_lonAttr := w.GetAttr("lon", 14.4071117049)
+	cam_latAttr := w.GetAttr("lat", 50.0852013259)
+	cam_zoomAttr := w.GetAttr("zoom", 5)
 
 	//locators
-	locatorsAttr := w.GetAttr("locators", "[{\"label\":\"1\", \"lon\":14.4071117049, \"lat\":50.0852013259}, {\"label\":\"2\", \"lon\":14, \"lat\":50}]")
+	locatorsAttr := w.GetAttr("locators", []byte(`[{"label":"1", "lon":14.4071117049, "lat":50.0852013259}, {"label":"2", "lon":14, "lat":50}]`))
 
 	//segments
-	segmentsAttr := w.GetAttr("segments", "[{\"label\":\"ABC\", \"Trkpt\":[{\"lat\":50,\"lon\":16,\"ele\":400,\"time\":\"2020-04-15T09:05:20Z\"},{\"lat\":50.4,\"lon\":16.1,\"ele\":400,\"time\":\"2020-04-15T09:05:23Z\"}]}]")
+	segmentsAttr := w.GetAttr("segments", []byte(`[{"label":"ABC", "Trkpt":[{"lat":50,"lon":16,"ele":400,"time":"2020-04-15T09:05:20Z"},{"lat":50.4,"lon":16.1,"ele":400,"time":"2020-04-15T09:05:23Z"}]}]`))
 
 	//Locators and Path can be Array or single Item(1x map)! .......
 
@@ -482,7 +482,7 @@ func SAExe_Render_Map(w *SANode, renderIt bool) {
 
 			changed, err := ui.comp_map(&cam_lon, &cam_lat, &cam_zoom, file, url, copyright, copyright_url)
 			if err != nil {
-				w.errExe = err
+				w.SetError(err)
 			}
 
 			if changed {
@@ -500,10 +500,10 @@ func SAExe_Render_Map(w *SANode, renderIt bool) {
 				if err == nil {
 					err = ui.comp_mapLocators(cam_lon, cam_lat, cam_zoom, locators, w.getPath())
 					if err != nil {
-						locatorsAttr.SetErrorExe(fmt.Sprintf("comp_mapLocators() failed: %v", err))
+						locatorsAttr.SetError(fmt.Errorf("comp_mapLocators() failed: %w", err))
 					}
 				} else {
-					locatorsAttr.SetErrorExe(fmt.Sprintf("Unmarshal() failed: %v", err))
+					locatorsAttr.SetError(fmt.Errorf("Unmarshal() failed: %w", err))
 				}
 			}
 
@@ -515,10 +515,10 @@ func SAExe_Render_Map(w *SANode, renderIt bool) {
 				if err == nil {
 					err = ui.comp_mapSegments(cam_lon, cam_lat, cam_zoom, segments)
 					if err != nil {
-						segmentsAttr.SetErrorExe(fmt.Sprintf("comp_mapSegments() failed: %v", err))
+						segmentsAttr.SetError(fmt.Errorf("comp_mapSegments() failed: %w", err))
 					}
 				} else {
-					segmentsAttr.SetErrorExe(fmt.Sprintf("Unmarshal() failed: %v", err))
+					segmentsAttr.SetError(fmt.Errorf("Unmarshal() failed: %w", err))
 				}
 			}
 			ui.Div_end()
@@ -532,18 +532,18 @@ func SAExe_Render_List(w *SANode, renderIt bool) {
 
 	grid := w.GetGrid()
 
-	itemsAttr := w.GetAttr("items", "[0, 1, 2, 3, 4, 5]")
-	multiSelect := w.GetAttrUi("multi_select", "1", SAAttrUi_CHECKBOX).GetBool()
-	direction := w.GetAttrUi("direction", "0", SAAttrUi_COMBO("Vertical;Horizonal", "")).GetBool()
-	maxItemSize := w.GetAttr("max_item_size", "[100, 1]").GetV2f()
+	itemsAttr := w.GetAttr("items", []byte("[0, 1, 2, 3, 4, 5]"))
+	multiSelect := w.GetAttrUi("multi_select", 1, SAAttrUi_CHECKBOX).GetBool()
+	direction := w.GetAttrUi("direction", 0, SAAttrUi_COMBO("Vertical;Horizonal", "")).GetBool()
+	maxItemSize := w.GetAttr("max_item_size", []byte("[100, 1]")).GetV2f()
 
-	single_selectedAttr := w.GetAttr("single_selected", "-1")   //input, but can replace(instr)
-	multi_selectedAttr := w.GetAttr("multi_selected", "[2, 3]") //input, but can replace(instr)
+	single_selectedAttr := w.GetAttr("single_selected", -1)             //input, but can replace(instr)
+	multi_selectedAttr := w.GetAttr("multi_selected", []byte("[2, 3]")) //input, but can replace(instr)
 
 	var items []interface{}
 	err := json.Unmarshal(itemsAttr.GetBlob().data, &items)
 	if err != nil {
-		itemsAttr.SetErrorExe(err.Error())
+		itemsAttr.SetError(err)
 		return
 	}
 
@@ -552,7 +552,7 @@ func SAExe_Render_List(w *SANode, renderIt bool) {
 	if multiSelect {
 		err = json.Unmarshal(multi_selectedAttr.GetBlob().data, &multi_selected)
 		if err != nil {
-			multi_selectedAttr.SetErrorExe(err.Error())
+			multi_selectedAttr.SetError(err)
 			return
 		}
 		sort.Ints(multi_selected)
@@ -670,9 +670,9 @@ func SAExe_Render_Table(w *SANode, renderIt bool) {
 
 	grid := w.GetGrid()
 
-	resizable := w.GetAttrUi("resizable", "0", SAAttrUi_SWITCH).GetBool()
-	columnsAttr := w.GetAttr("columns", `["a", "b"]`)
-	rowsAttr := w.GetAttr("rows", `[{"a":1, "b":2}, {"a":10, "b":20}, {"a":100, "b":200}]`)
+	resizable := w.GetAttrUi("resizable", 0, SAAttrUi_SWITCH).GetBool()
+	columnsAttr := w.GetAttr("columns", []byte(`["a", "b"]`))
+	rowsAttr := w.GetAttr("rows", []byte(`[{"a":1, "b":2}, {"a":10, "b":20}, {"a":100, "b":200}]`))
 
 	if showIt {
 		ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, w.Name)
@@ -681,7 +681,7 @@ func SAExe_Render_Table(w *SANode, renderIt bool) {
 		var rows []map[string]interface{}
 		err := json.Unmarshal([]byte(rowsAttr.GetString()), &rows)
 		if err != nil {
-			rowsAttr.SetErrorExe(err.Error())
+			rowsAttr.SetError(err)
 		}
 
 		//columns
@@ -689,7 +689,7 @@ func SAExe_Render_Table(w *SANode, renderIt bool) {
 		if columnsAttr.GetString() != "" {
 			err := json.Unmarshal([]byte(columnsAttr.GetString()), &columnNames)
 			if err != nil {
-				columnsAttr.SetErrorExe(err.Error())
+				columnsAttr.SetError(err)
 			}
 		} else {
 			if len(rows) > 0 {
@@ -767,13 +767,13 @@ func SAExe_Render_Microphone(w *SANode, renderIt bool) {
 
 	grid := w.GetGrid()
 
-	enable := w.GetAttrUi("enable", "1", SAAttrUi_SWITCH).GetBool()
-	fileAttr := w.GetAttr("temp_file", "\"temp_mic.wav\"")
+	enable := w.GetAttrUi("enable", 1, SAAttrUi_SWITCH).GetBool()
+	fileAttr := w.GetAttr("temp_file", "temp_mic.wav")
 	outAttr := w.GetAttr("_out", "")
-	finishedAttr := w.GetAttrUi("finished", "0", SAAttrUi_SWITCH)
+	finishedAttr := w.GetAttrUi("finished", 0, SAAttrUi_SWITCH)
 
 	if fileAttr.GetString() == "" {
-		fileAttr.SetErrorExe("empty")
+		fileAttr.SetErrorStr("empty")
 		return
 	}
 
@@ -791,7 +791,7 @@ func SAExe_Render_Microphone(w *SANode, renderIt bool) {
 			if !rec_active {
 				//start
 				if w.app.base.ui.win.io.ini.MicOff {
-					outAttr.SetErrorExe("Microphone is disabled in SkyAlt Settings")
+					outAttr.SetErrorStr("Microphone is disabled in SkyAlt Settings")
 					return
 				}
 				w.app.AddMicNode(nodePath)
@@ -803,7 +803,7 @@ func SAExe_Render_Microphone(w *SANode, renderIt bool) {
 				{
 					file, err := os.Create(fileAttr.GetString())
 					if err != nil {
-						w.SetError(err.Error())
+						w.SetError(err)
 						return
 					}
 					buff := w.temp_mic_data
@@ -812,7 +812,7 @@ func SAExe_Render_Microphone(w *SANode, renderIt bool) {
 					if err != nil {
 						enc.Close()
 						file.Close()
-						w.SetError(err.Error())
+						w.SetError(err)
 						return
 					}
 					enc.Close()
@@ -836,7 +836,7 @@ func SAExe_Render_Microphone(w *SANode, renderIt bool) {
 
 		wavData, err := os.ReadFile(fileAttr.GetString())
 		if err != nil {
-			w.SetError(err.Error())
+			w.SetError(err)
 			return
 		}
 		outAttr.SetOutBlob(wavData)

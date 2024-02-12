@@ -52,14 +52,14 @@ func SAExe_Convert_GpxToJson(node *SANode) bool {
 	var g SAExe_ConvertGPX
 	err := xml.Unmarshal(gpx.data, &g)
 	if err != nil {
-		gpxAttr.SetErrorExe(fmt.Sprintf("Unmarshal() failed: %v", err))
+		gpxAttr.SetError(fmt.Errorf("Unmarshal() failed: %w", err))
 		return false
 	}
 
 	//struct -> json
 	js, err := json.Marshal(g.Trkseg)
 	if err != nil {
-		node.SetError(fmt.Sprintf("Marshal() failed: %v", err))
+		node.SetError(fmt.Errorf("Marshal() failed: %w", err))
 		return false
 	}
 
@@ -70,8 +70,8 @@ func SAExe_Convert_GpxToJson(node *SANode) bool {
 func SAExe_Convert_CsvToJson(node *SANode) bool {
 
 	csvAttr := node.GetAttr("Csv", "")
-	firstLineHeader := node.GetAttrUi("first_line_header", "1", SAAttrUi_SWITCH).GetBool()
-	resultAttr := node.GetAttr("_result", "[]")
+	firstLineHeader := node.GetAttrUi("first_line_header", 1, SAAttrUi_SWITCH).GetBool()
+	resultAttr := node.GetAttr("_result", []byte("[]"))
 
 	csvBlob := csvAttr.GetBlob()
 	if csvBlob.Len() == 0 {
@@ -80,7 +80,7 @@ func SAExe_Convert_CsvToJson(node *SANode) bool {
 
 	data, err := csv.NewReader(bytes.NewBuffer(csvBlob.data)).ReadAll()
 	if err != nil {
-		node.SetError(fmt.Sprintf("ReadAll() failed: %v", err))
+		node.SetError(fmt.Errorf("ReadAll() failed: %w", err))
 	}
 
 	max_cols := 0

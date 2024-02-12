@@ -24,7 +24,7 @@ func SAExe_Vars(node *SANode) bool {
 // TODO: render sub nodes in same level as this node ...
 // - the node can be large(area) so reorder() must count with that
 func SAExe_For(node *SANode) bool {
-	inputAttr := node.GetAttr("input", "[]")
+	inputAttr := node.GetAttr("input", []byte("[]"))
 	isInputNumber := inputAttr.GetResult().IsNumber()
 
 	_keyAttr := node.GetAttr("_key", "")
@@ -82,7 +82,7 @@ func SAExe_Setter_destNode(node *SANode) *SANode {
 }
 
 func SAExe_Setter(node *SANode) bool {
-	triggerAttr := node.GetAttrUi("trigger", "0", SAAttrUi_SWITCH)
+	triggerAttr := node.GetAttrUi("trigger", 0, SAAttrUi_SWITCH)
 
 	nodeAttr := node.GetAttr("node", "")
 	attrAttr := node.GetAttr("attr", "")
@@ -90,13 +90,13 @@ func SAExe_Setter(node *SANode) bool {
 
 	nd := node.parent.FindNode(nodeAttr.GetString())
 	if nd == nil {
-		nodeAttr.SetErrorExe("Not exist")
+		nodeAttr.SetErrorStr("Not exist")
 		return false
 	}
 
 	attr := nd.findAttr(attrAttr.GetString())
 	if attr == nil {
-		attrAttr.SetErrorExe("Not exist")
+		attrAttr.SetErrorStr("Not exist")
 		return false
 	}
 

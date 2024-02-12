@@ -18,7 +18,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -252,12 +251,11 @@ func (w *SANode) UpdateDepth(orig *SANode) {
 	}
 }
 
-func (w *SANode) SetError(err string) {
-	w.errExe = errors.New(err)
+func (w *SANode) SetError(err error) {
+	w.errExe = err
 }
 
 func (node *SANode) ResetProgress() {
-	node.errExe = nil
 	node.progress_desc = ""
 	node.progress = 0
 
@@ -385,23 +383,18 @@ func (w *SANode) HasError() bool {
 	return w.HasExeError() || w.HasExpError()
 }
 
-func (w *SANode) ResetExeErrors() {
-	w.errExe = nil
-	for _, v := range w.Attrs {
-		v.errExe = nil
-	}
-}
-
 func (w *SANode) PrepareExe() {
+
 	w.state = SANode_STATE_WAITING
 
-	for _, v := range w.Attrs {
-		v.errExe = nil
-		v.errExp = nil
+	w.errExe = nil
+	for _, attr := range w.Attrs {
+		attr.errExe = nil
+		attr.errExp = nil
 	}
 
-	for _, it := range w.Subs {
-		it.PrepareExe()
+	for _, nd := range w.Subs {
+		nd.PrepareExe()
 	}
 }
 func (w *SANode) PostExe() {
@@ -782,15 +775,19 @@ func (w *SANode) DuplicateAttr(attr SANodeAttr) *SANodeAttr {
 
 	return w._getAttr(false, cp)
 }
-func (w *SANode) GetAttr(name string, value string) *SANodeAttr {
-	return w._getAttr(true, SANodeAttr{Name: name, Value: value})
+
+// for [] or {} use []byte("[]")
+func (w *SANode) GetAttrUi(name string, value interface{}, ui SAAttrUiValue) *SANodeAttr {
+	return w._getAttr(true, SANodeAttr{Name: name, Value: OsText_InterfaceToJSON(value), Ui: ui})
 }
-func (w *SANode) GetAttrUi(name string, value string, ui SAAttrUiValue) *SANodeAttr {
-	return w._getAttr(true, SANodeAttr{Name: name, Value: value, Ui: ui})
+
+// for [] or {} use []byte("[]")
+func (w *SANode) GetAttr(name string, value interface{}) *SANodeAttr {
+	return w.GetAttrUi(name, value, SAAttrUiValue{})
 }
 
 func (w *SANode) GetGridAttr() *SANodeAttr {
-	return w.GetAttrUi("grid", "[0, 0, 1, 1]", SAAttrUiValue{HideAddDel: true})
+	return w.GetAttrUi("grid", []byte("[0, 0, 1, 1]"), SAAttrUiValue{HideAddDel: true})
 }
 
 func (w *SANode) GetGrid() OsV4 {
@@ -822,7 +819,7 @@ func (w *SANode) SetGrid(coord OsV4) {
 }
 
 func (w *SANode) GetGridShow() bool {
-	return w.GetAttrUi("grid_show", "1", SAAttrUi_SWITCH).GetBool()
+	return w.GetAttrUi("grid_show", 1, SAAttrUi_SWITCH).GetBool()
 }
 
 func (w *SANode) Render() {
@@ -1340,7 +1337,7 @@ func (w *SANode) RenderAttrs() {
 			ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0) //red rect
 		}
 		ui.Div_end()
-		ui.Comp_text(0, y, 1, 1, "Error: "+w.errExe.Error(), 0)
+		ui.Comp_text(0, y, 1, 1, w.errExe.Error(), 0)
 		y++
 	}
 
