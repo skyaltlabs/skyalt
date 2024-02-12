@@ -110,7 +110,7 @@ func (jbs *SAJobs) Tick(enableExe bool) {
 
 		//update
 		nd := jb.node.FindPath(jbs.app.root)
-		nd.errExe = jb.err
+		nd.SetError(jb.err)
 		nd.progress_desc = jb.progress_desc
 		nd.progress = jb.progress
 
@@ -224,6 +224,22 @@ func SAJob_NN_whisper_cpp(job *SAJob, model string, blob OsBlob, props *SAServic
 	job.progress_desc = "Translating"
 	job.progress = 0.5 //...
 	_, _, _, err := job.jobs.app.base.service_whisper_cpp.Translate(model, blob, props)
+	if err != nil {
+		job.err = err
+		return
+	}
+
+	job.jobs.app.SetExecute() //refresh node from cache
+}
+
+func SAJob_NN_llama_cpp(job *SAJob, model string, props *SAServiceLLamaCppProps) {
+
+	fmt.Println("Whispering", model)
+	defer job.Done(OsTime())
+
+	job.progress_desc = "Predicting"
+	job.progress = 0.5 //...
+	_, _, _, err := job.jobs.app.base.service_llama_cpp.Complete(model, props)
 	if err != nil {
 		job.err = err
 		return

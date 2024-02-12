@@ -23,12 +23,48 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sync"
 )
+
+type SAServiceLLamaCppProps struct {
+	Prompt            string   `json:"prompt"`
+	N_predict         int      `json:"n_predict"`
+	Temperature       float64  `json:"temperature"`
+	Stop              []string `json:"stop"`
+	Repeat_last_n     int      `json:"repeat_last_n"`
+	Repeat_penalty    float64  `json:"repeat_penalty"`
+	Top_k             int      `json:"top_k"`
+	Top_p             float64  `json:"top_p"`
+	Min_p             float64  `json:"min_p"`
+	Tfs_z             float64  `json:"tfs_z"`
+	Typical_p         float64  `json:"typical_p"`
+	Presence_penalty  float64  `json:"presence_penalty"`
+	Frequency_penalty float64  `json:"frequency_penalty"`
+	Mirostat          int      `json:"mirostat"`
+	Mirostat_tau      float64  `json:"mirostat_tau"`
+	Mirostat_eta      float64  `json:"mirostat_eta"`
+	//Grammar           string   `json:"grammar"` //[]string?
+	N_probs int `json:"n_probs"`
+	//Image_data //{"data": "<BASE64_STRING>", "id": 12}
+	Cache_prompt bool `json:"cache_prompt"`
+	Slot_id      int  `json:"slot_id"`
+
+	//Stream bool ......
+}
+
+func (p *SAServiceLLamaCppProps) Hash() (OsHash, error) {
+	js, err := json.Marshal(p)
+	if err != nil {
+		return OsHash{}, err
+	}
+	return InitOsHash(js)
+}
 
 type SAServiceLLamaCpp struct {
 	addr string //http://127.0.0.1:8080/
 
-	cache map[string]string //results
+	cache      map[string]string //results
+	cache_lock sync.Mutex        //for cache
 }
 
 func SAServiceLLamaCpp_cachePath() string {
@@ -63,61 +99,47 @@ func (wh *SAServiceLLamaCpp) Destroy() {
 	}
 }
 
-func (wh *SAServiceLLamaCpp) findCache(model string, blob OsBlob) (string, bool) {
-	str, found := wh.cache[model+blob.hash.Hex()]
+func (wh *SAServiceLLamaCpp) FindCache(model string, propsHash OsHash) (string, bool) {
+	wh.cache_lock.Lock()
+	defer wh.cache_lock.Unlock()
+
+	str, found := wh.cache[model+propsHash.Hex()]
 	return str, found
 }
-func (wh *SAServiceLLamaCpp) addCache(model string, blob OsBlob, value string) {
-	wh.cache[model+blob.hash.Hex()] = value
+func (wh *SAServiceLLamaCpp) addCache(model string, propsHash OsHash, value string) {
+	wh.cache_lock.Lock()
+	defer wh.cache_lock.Unlock()
+
+	wh.cache[model+propsHash.Hex()] = value
 }
 
-func (wh *SAServiceLLamaCpp) Complete(model string, blob OsBlob) (string, float64, bool, error) {
-	//find blob
-	str, found := wh.findCache(model, blob)
+func (wh *SAServiceLLamaCpp) Complete(model string, props *SAServiceLLamaCppProps) (string, float64, bool, error) {
+	//find
+	propsHash, err := props.Hash()
+	if err != nil {
+		return "", 0, false, fmt.Errorf("Hash() failed: %w", err)
+	}
+	str, found := wh.FindCache(model, propsHash)
 	if found {
 		return str, 1, true, nil
 	}
 
-	str, err := wh.complete(blob)
+	str, err = wh.complete(props)
 	if err != nil {
 		return "", 0, false, fmt.Errorf("complete() failed: %w", err)
 	}
 
-	wh.addCache(model, blob, str)
+	wh.addCache(model, propsHash, str)
 	return str, 1, true, nil
 }
 
-func (wh *SAServiceLLamaCpp) complete(blob OsBlob) (string, error) {
+func (wh *SAServiceLLamaCpp) complete(props *SAServiceLLamaCppProps) (string, error) {
+	js, err := json.Marshal(props)
+	if err != nil {
+		return "", fmt.Errorf("Marshal() failed: %w", err)
+	}
 
-	prompt := OsText_RAWtoJSON(string(blob.data))
-
-	//stream = true ............
-	jsonBody := fmt.Sprintf(`{
-		"stream": false,
-		"n_predict": 400,
-		"temperature": 0.7,
-		"stop": ["</s>", "Llama:", "User:"],
-		"repeat_last_n": 256,
-		"repeat_penalty": 1.18,
-		"top_k": 40,
-		"top_p": 0.5,
-		"min_p": 0.05,
-		"tfs_z": 1,
-		"typical_p": 1,
-		"presence_penalty": 0,
-		"frequency_penalty": 0,
-		"mirostat": 0,
-		"mirostat_tau": 5,
-		"mirostat_eta": 0.1,
-		"grammar": "",
-		"n_probs": 0,
-		"image_data": [],
-		"cache_prompt": true,
-		"slot_id": 0,
-		"prompt": %s
-		}`, prompt)
-
-	body := bytes.NewReader([]byte(jsonBody))
+	body := bytes.NewReader([]byte(js))
 
 	req, err := http.NewRequest(http.MethodPost, wh.addr+"completion", body)
 	if err != nil {
