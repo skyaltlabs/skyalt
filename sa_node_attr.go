@@ -144,7 +144,10 @@ func (attr *SANodeAttr) AddSetAttrArr(value string) {
 	attr.node.app.AddSetAttr(attr, value, true, false)
 }
 
-func (attr *SANodeAttr) SetErrorExe(err string) {
+func (attr *SANodeAttr) SetError(err error) {
+	attr.errExe = err
+}
+func (attr *SANodeAttr) SetErrorStr(err string) {
 	attr.errExe = errors.New(err)
 }
 

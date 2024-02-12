@@ -424,7 +424,7 @@ func VmApi_Get(instr *VmInstr, st *VmST) SAValue {
 		}
 	}
 
-	instr.pos_attr.SetErrorExe("source is not Array [] or Map {} or map key isn't found")
+	instr.pos_attr.SetErrorStr("source is not Array [] or Map {} or map key isn't found")
 	instr.temp = InitSAValue()
 	return instr.temp
 }
