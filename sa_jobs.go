@@ -140,7 +140,7 @@ func (jbs *SAJobs) AddJob(node *SANode) *SAJob {
 
 var flagTimeout = flag.Duration("timeout", 30*time.Minute, "HTTP timeout")
 
-func SAJob_NN_whisper_cpp_downloader(job *SAJob, url string, dst string, modelName string) {
+func SAJob_downloader(job *SAJob, url string, dst string, label string) {
 
 	fmt.Println("Downloading", url, "into", dst)
 	defer job.Done(OsTime())
@@ -179,7 +179,7 @@ func SAJob_NN_whisper_cpp_downloader(job *SAJob, url string, dst string, modelNa
 	}
 	defer w.Close()
 
-	job.progress_desc = fmt.Sprint("Downloading: ", modelName)
+	job.progress_desc = fmt.Sprint("Downloading: ", label)
 
 	// Loop
 	data := make([]byte, 1024*64)
