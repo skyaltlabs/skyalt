@@ -946,7 +946,7 @@ func (fl *OsFileList) FindInSubs(name string, isDir bool) int {
 	return -1
 }
 
-func OsText_JSONtoRAW(str string) string {
+func OsText_JSONtoRAW(str string) (string, error) {
 	if str != "" && str[0] != '"' {
 		fmt.Printf("Error: String(%s) doesn't start with quotes\n", str)
 	}
@@ -954,15 +954,42 @@ func OsText_JSONtoRAW(str string) string {
 	//str = strings.Clone(str)
 	v, err := strconv.Unquote(str)
 	if err != nil {
-		fmt.Printf("Unquote failed: %v\n", err)
+		return "", err
 	}
-	return v
+	return v, nil
 }
 
 func OsText_RAWtoJSON(str string) string {
 	//str = strings.Clone(str)
 	v := strconv.Quote(str)
 	return v
+}
+
+func OsText_InterfaceToJSON(value interface{}) string {
+	switch vv := value.(type) {
+	case string:
+		return OsText_RAWtoJSON(vv)
+	case float64:
+		return strconv.FormatFloat(vv, 'f', -1, 64)
+
+	case int: //this is just for SANodeAttr init, otherwise float64
+		return strconv.Itoa(vv)
+
+	case []byte: //this is just for SANodeAttr init, otherwise OsBlob
+		if len(vv) > 0 && (vv[0] == '{' || vv[0] == '[') {
+			return string(vv) //map or array
+		}
+		return "\"" + string(vv) + "\"" //binary/hex
+	case OsBlob:
+		if len(vv.data) > 0 && (vv.data[0] == '{' || vv.data[0] == '[') {
+			return string(vv.data) //map or array
+		}
+		return "\"" + string(vv.data) + "\"" //binary/hex
+
+	default:
+		fmt.Println("Warning: Unknown SAValue conversion into String")
+	}
+	return "\"\""
 }
 
 func Os_StartProfile(path string) error {
