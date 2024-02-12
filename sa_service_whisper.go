@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 )
 
 type SAServiceWhisperCppProps struct {
@@ -96,7 +97,8 @@ func (p *SAServiceWhisperCppProps) Write(w *multipart.Writer) {
 type SAServiceWhisperCpp struct {
 	addr string //http://127.0.0.1:8080/
 
-	cache map[string]string //results
+	cache      map[string]string //results
+	cache_lock sync.Mutex        //for cache
 
 	last_setModel string
 }
@@ -133,11 +135,17 @@ func (wh *SAServiceWhisperCpp) Destroy() {
 	}
 }
 
-func (wh *SAServiceWhisperCpp) findCache(model string, blob OsBlob, propsHash OsHash) (string, bool) {
+func (wh *SAServiceWhisperCpp) FindCache(model string, blob OsBlob, propsHash OsHash) (string, bool) {
+	wh.cache_lock.Lock()
+	defer wh.cache_lock.Unlock()
+
 	str, found := wh.cache[model+blob.hash.Hex()+propsHash.Hex()]
 	return str, found
 }
 func (wh *SAServiceWhisperCpp) addCache(model string, blob OsBlob, propsHash OsHash, value string) {
+	wh.cache_lock.Lock()
+	defer wh.cache_lock.Unlock()
+
 	wh.cache[model+blob.hash.Hex()+propsHash.Hex()] = value
 }
 
@@ -148,7 +156,7 @@ func (wh *SAServiceWhisperCpp) Translate(model string, blob OsBlob, props *SASer
 		return "", 0, false, fmt.Errorf("Hash() failed: %w", err)
 	}
 
-	str, found := wh.findCache(model, blob, hash)
+	str, found := wh.FindCache(model, blob, hash)
 	if found {
 		return str, 1, true, nil
 	}

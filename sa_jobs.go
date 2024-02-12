@@ -26,6 +26,8 @@ import (
 )
 
 type SAJob struct {
+	jobs *SAJobs
+
 	interrupt atomic.Bool
 	done      atomic.Bool
 
@@ -37,8 +39,8 @@ type SAJob struct {
 	progress_desc string
 }
 
-func NewSAJob(node *SANode) *SAJob {
-	return &SAJob{node: NewSANodePath(node), progress: 0.001}
+func NewSAJob(jobs *SAJobs, node *SANode) *SAJob {
+	return &SAJob{jobs: jobs, node: NewSANodePath(node), progress: 0.001}
 }
 func (jb *SAJob) Interrupt() {
 	jb.interrupt.Store(true)
@@ -46,6 +48,15 @@ func (jb *SAJob) Interrupt() {
 func (jb *SAJob) Done(start_time float64) {
 	jb.run_time = OsTime() - start_time
 	jb.done.Store(true)
+}
+func (jb *SAJob) Stop() {
+	jb.Interrupt()
+	for {
+		if jb.done.Load() {
+			return //ok
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
 }
 
 type SAJobs struct {
@@ -58,7 +69,6 @@ func NewSAJobs(app *SAApp) *SAJobs {
 }
 
 func (jbs *SAJobs) StopAll() {
-
 	for _, jb := range jbs.jobs {
 		jb.Interrupt()
 	}
@@ -112,11 +122,20 @@ func (jbs *SAJobs) Tick(enableExe bool) {
 	}
 }
 
-func (jbs *SAJobs) AddJob(job *SAJob) {
+func (jbs *SAJobs) AddJob(node *SANode) *SAJob {
+	job := NewSAJob(jbs, node)
 
-	//find and cancel previous ....
+	//remove same nodes
+	for i := len(jbs.jobs) - 1; i >= 0; i-- {
+		jb := jbs.jobs[i]
+		if jb.node.Cmp(job.node) {
+			jb.Stop()
+			jbs.jobs = append(jbs.jobs[:i], jbs.jobs[i+1:]...) //remove
+		}
+	}
 
 	jbs.jobs = append(jbs.jobs, job)
+	return job
 }
 
 var flagTimeout = flag.Duration("timeout", 30*time.Minute, "HTTP timeout")
@@ -195,4 +214,20 @@ func SAJob_NN_whisper_cpp_downloader(job *SAJob, url string, dst string, modelNa
 		w.Close()
 		OsFileRemove(dst)
 	}
+}
+
+func SAJob_NN_whisper_cpp(job *SAJob, model string, blob OsBlob, props *SAServiceWhisperCppProps) {
+
+	fmt.Println("Whispering", model)
+	defer job.Done(OsTime())
+
+	job.progress_desc = "Translating"
+	job.progress = 0.5 //...
+	_, _, _, err := job.jobs.app.base.service_whisper_cpp.Translate(model, blob, props)
+	if err != nil {
+		job.err = err
+		return
+	}
+
+	job.jobs.app.SetExecute() //refresh node from cache
 }

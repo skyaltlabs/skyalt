@@ -79,17 +79,21 @@ func SAExe_NN_whisper_cpp(node *SANode) bool {
 		return false
 	}
 
-	//SAJob - only one can run at the time?  ...................
-
-	str, progress, _, err := node.app.base.service_whisper_cpp.Translate(modelPath, audioAttr.GetBlob(), &props)
+	propHash, err := props.Hash()
 	if err != nil {
-		node.SetError(err.Error())
+		modelAttr.SetErrorExe(err.Error())
 		return false
 	}
 
-	node.progress = progress
-	_outAttr.SetOutBlob([]byte(str))
-
+	//try find in cache
+	str, found := node.app.base.service_whisper_cpp.FindCache(modelPath, audioAttr.GetBlob(), propHash)
+	if found {
+		_outAttr.SetOutBlob([]byte(str))
+	} else {
+		//add job
+		job := node.app.jobs.AddJob(node)
+		go SAJob_NN_whisper_cpp(job, modelPath, audioAttr.GetBlob(), &props)
+	}
 	return true
 }
 
@@ -137,9 +141,8 @@ func SAExe_NN_whisper_cpp_downloader(node *SANode) bool {
 		dst := filepath.Join(folderAttr.GetString(), g_whisper_modelList[id]+".bin")
 
 		//add job
-		job := NewSAJob(node)
+		job := node.app.jobs.AddJob(node)
 		go SAJob_NN_whisper_cpp_downloader(job, urll, dst, g_whisper_modelList[id])
-		node.app.jobs.AddJob(job)
 
 		//reset in next tick
 		modelAttr.AddSetAttr("0")
