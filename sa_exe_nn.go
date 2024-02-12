@@ -142,7 +142,77 @@ func SAExe_NN_whisper_cpp_downloader(node *SANode) bool {
 
 		//add job
 		job := node.app.jobs.AddJob(node)
-		go SAJob_NN_whisper_cpp_downloader(job, urll, dst, g_whisper_modelList[id])
+		go SAJob_downloader(job, urll, dst, g_whisper_modelList[id])
+
+		//reset in next tick
+		modelAttr.AddSetAttr("0")
+	}
+
+	return true
+}
+
+type SAExe_llama_cpp_model struct {
+	url_base string
+	name     string
+}
+
+var g_llama_modelList = []SAExe_llama_cpp_model{
+	{"", ""},
+
+	{"https://huggingface.co/TheBloke/Llama-2-7b-Chat-GGUF/resolve/main", "llama-2-7b-chat.Q4_K_S.gguf"},
+	{"https://huggingface.co/TheBloke/Llama-2-7b-Chat-GGUF/resolve/main", "llama-2-7b-chat.Q6_K.gguf"},
+
+	{"https://huggingface.co/TheBloke/phi-2-GGUF/resolve/main", "phi-2.Q4_K_S.gguf"},
+	{"https://huggingface.co/TheBloke/phi-2-GGUF/resolve/main", "phi-2.Q6_K.gguf"},
+
+	{"https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF/resolve/main", "mistral-7b-instruct-v0.1.Q4_K_S.gguf"},
+	{"https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF/resolve/main", "mistral-7b-instruct-v0.1.Q6_K.gguf"},
+
+	{"https://huggingface.co/TheBloke/CodeLlama-7B-Instruct-GGUF/resolve/main", "codellama-7b-instruct.Q4_K_S.gguf"},
+	{"https://huggingface.co/TheBloke/CodeLlama-7B-Instruct-GGUF/resolve/main", "codellama-7b-instruct.Q6_K.gguf"},
+}
+
+func SAExe_NN_llama_cpp_downloader(node *SANode) bool {
+	folderAttr := node.GetAttr("folder", "\"services/llama.cpp/models/\"")
+	if folderAttr.GetString() == "" {
+		folderAttr.SetErrorExe("empty")
+		return false
+	}
+
+	//labels
+	var labels string
+	for _, m := range g_llama_modelList {
+		if m.name != "" { //1st is empty
+			labels += m.name
+			if OsFileExists(filepath.Join(folderAttr.GetString(), m.name)) {
+				labels += "(found)"
+			}
+		}
+		labels += ";"
+	}
+	labels, _ = strings.CutSuffix(labels, ";")
+
+	//pick model
+	modelAttr := node.GetAttrUi("model", "", SAAttrUi_COMBO(labels, ""))
+	modelAttr.Ui = SAAttrUi_COMBO(labels, "") //rewrite actual value as well(not only defaultUi)
+	id := modelAttr.GetInt()
+	if id > 0 {
+		urll := ""
+		{
+			u, err := url.Parse(g_llama_modelList[id].url_base)
+			if err != nil {
+				node.SetError(err.Error())
+				return false
+			}
+			u.Path = filepath.Join(u.Path, g_llama_modelList[id].name)
+			urll = u.String()
+		}
+
+		dst := filepath.Join(folderAttr.GetString(), g_llama_modelList[id].name)
+
+		//add job
+		job := node.app.jobs.AddJob(node)
+		go SAJob_downloader(job, urll, dst, g_llama_modelList[id].name)
 
 		//reset in next tick
 		modelAttr.AddSetAttr("0")
