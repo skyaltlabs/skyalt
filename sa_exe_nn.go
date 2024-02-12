@@ -48,6 +48,8 @@ func SAExe_NN_whisper_cpp(node *SANode) bool {
 
 	var props SAServiceWhisperCppProps
 	{
+		//Documentation: https://github.com/ggerganov/whisper.cpp/tree/master/examples/server
+
 		props.Offset_t = node.GetAttrUi("offset_t", 0, SAAttrUiValue{}).GetInt()
 		props.Offset_n = node.GetAttrUi("offset_n", 0, SAAttrUiValue{}).GetInt()
 		props.Duration = node.GetAttrUi("duration", 0, SAAttrUiValue{}).GetInt()
@@ -242,6 +244,8 @@ func SAExe_NN_llama_cpp(node *SANode) bool {
 
 	var props SAServiceLLamaCppProps
 	{
+		//Documentation: https://github.com/ggerganov/llama.cpp/tree/master/examples/server
+
 		props.Prompt = node.GetAttrUi("prompt", "This is a conversation between User and Llama, a friendly chatbot. Llama is helpful, kind, honest, good at writing, and never fails to answer any requests immediately and with precision.\n\nUser: How Are you doing?\nLlama:", SAAttrUi_CODE).GetString()
 
 		stopAttr := node.GetAttr("stop", []byte(`["</s>", "Llama:", "User:"]`))
