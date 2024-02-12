@@ -580,11 +580,9 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 		y++
 
 		if app.canvas.addnode_search != "" {
-
 			//search
 			keys := &ui.win.io.keys
 			searches := strings.Split(strings.ToLower(app.canvas.addnode_search), " ")
-		out1:
 			for _, gr := range app.base.node_groups.groups {
 				for _, nd := range gr.nodes {
 					if app.canvas.addnode_search == "" || SAApp_IsSearchedName(nd.name, searches) {
@@ -594,23 +592,20 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 							nw.SelectOnlyThis()
 
 							ui.Dialog_close()
-							break out1
+							keys.enter = false
 						}
 						y++
 					}
 				}
 			}
 		} else {
-
-		out2:
 			for _, gr := range app.base.node_groups.groups {
-
 				//folders
 				dnm := "node_group_" + gr.name
 				if ui.Comp_buttonMenuIcon(0, y, 1, 1, gr.name, gr.icon, 0.2, "", true, false) > 0 {
 					ui.Dialog_open(dnm, 1)
 				}
-				ui.Comp_text(1, y, 1, 1, "►", 1)
+				//ui.Comp_text(1, y, 1, 1, "►", 1)
 
 				if ui.Dialog_start(dnm) {
 					ui.Div_colMax(0, 5)
@@ -622,7 +617,6 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 							nw.SelectOnlyThis()
 
 							ui.CloseAll()
-							break out2
 						}
 					}
 
@@ -635,6 +629,7 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 		}
 
 		if ui.win.io.keys.tab {
+			ui.edit.uid = nil //non-standard(not save src) end of editbox
 			ui.Dialog_close()
 		}
 
