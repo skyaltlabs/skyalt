@@ -57,15 +57,12 @@ type SAServiceWhisperCppProps struct {
 }
 
 func (p *SAServiceWhisperCppProps) Hash() (OsHash, error) {
-
 	js, err := json.Marshal(p)
 	if err != nil {
 		return OsHash{}, err
 	}
-
 	return InitOsHash(js)
 }
-
 func (p *SAServiceWhisperCppProps) Write(w *multipart.Writer) {
 	w.WriteField("offset_t", strconv.Itoa(p.Offset_t))
 	w.WriteField("offset_n", strconv.Itoa(p.Offset_n))
@@ -150,13 +147,12 @@ func (wh *SAServiceWhisperCpp) addCache(model string, blob OsBlob, propsHash OsH
 }
 
 func (wh *SAServiceWhisperCpp) Translate(model string, blob OsBlob, props *SAServiceWhisperCppProps) (string, float64, bool, error) {
-	//find blob
-	hash, err := props.Hash()
+	//find
+	propsHash, err := props.Hash()
 	if err != nil {
 		return "", 0, false, fmt.Errorf("Hash() failed: %w", err)
 	}
-
-	str, found := wh.FindCache(model, blob, hash)
+	str, found := wh.FindCache(model, blob, propsHash)
 	if found {
 		return str, 1, true, nil
 	}
@@ -175,7 +171,7 @@ func (wh *SAServiceWhisperCpp) Translate(model string, blob OsBlob, props *SASer
 		return "", 0, false, fmt.Errorf("translate() failed: %w", err)
 	}
 
-	wh.addCache(model, blob, hash, str)
+	wh.addCache(model, blob, propsHash, str)
 	return str, 1, true, nil
 }
 
