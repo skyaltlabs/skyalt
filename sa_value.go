@@ -73,22 +73,7 @@ func (v *SAValue) SetInt(val int) {
 }
 
 func (v *SAValue) StringJSON() string {
-
-	switch vv := v.value.(type) {
-	case string:
-		return OsText_RAWtoJSON(vv)
-	case float64:
-		return strconv.FormatFloat(vv, 'f', -1, 64)
-	case OsBlob:
-		if len(vv.data) > 0 && (vv.data[0] == '{' || vv.data[0] == '[') {
-			return string(vv.data) //map or array
-		}
-		return "\"" + string(vv.data) + "\"" //binary/hex
-
-	default:
-		fmt.Println("Warning: Unknown SAValue conversion into String")
-	}
-	return "\"\""
+	return OsText_InterfaceToJSON(v.value)
 }
 
 // RAW string
