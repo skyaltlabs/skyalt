@@ -1,2 +1,2 @@
 cd whisper.cpp
-./server --port 8090 -m models/ggml-tiny.en.bin
+./server --port 8090 --convert -m models/ggml-tiny.en.bin
