@@ -28,8 +28,11 @@ import (
 
 type SAServiceLLamaCppProps struct {
 	Prompt            string   `json:"prompt"`
+	Seed              int      `json:"seed"`
 	N_predict         int      `json:"n_predict"`
 	Temperature       float64  `json:"temperature"`
+	Dynatemp_range    float64  `json:"dynatemp_range"`
+	Dynatemp_exponent float64  `json:"dynatemp_exponent"`
 	Stop              []string `json:"stop"`
 	Repeat_last_n     int      `json:"repeat_last_n"`
 	Repeat_penalty    float64  `json:"repeat_penalty"`
