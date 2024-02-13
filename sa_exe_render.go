@@ -206,6 +206,7 @@ func SAExe_Render_Editbox(w *SANode, renderIt bool) {
 	prop.multi_line = w.GetAttrUi("multi_line", 0, SAAttrUi_SWITCH).GetBool()
 	prop.multi_line_enter_finish = w.GetAttrUi("multi_line_enter_finish", 0, SAAttrUi_SWITCH).GetBool()
 	finishedAttr := w.GetAttrUi("finished", 0, SAAttrUi_SWITCH)
+	enter_finishedAttr := w.GetAttrUi("enter_finished", 0, SAAttrUi_SWITCH)
 
 	//temp, tempChanged? ...
 
@@ -218,6 +219,12 @@ func SAExe_Render_Editbox(w *SANode, renderIt bool) {
 			finishedAttr.AddSetAttr("1")
 			finishedAttr.AddSetAttrExe()
 			finishedAttr.AddSetAttr("0")
+
+			if ui.win.io.keys.enter {
+				enter_finishedAttr.AddSetAttr("1")
+				enter_finishedAttr.AddSetAttrExe()
+				enter_finishedAttr.AddSetAttr("0")
+			}
 		}
 	}
 
