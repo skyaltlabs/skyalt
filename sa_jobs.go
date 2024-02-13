@@ -49,7 +49,8 @@ func (jb *SAJob) Done(start_time float64) {
 	jb.run_time = OsTime() - start_time
 	jb.done.Store(true)
 }
-func (jb *SAJob) Stop() {
+
+/*func (jb *SAJob) Stop() {
 	jb.Interrupt()
 	for {
 		if jb.done.Load() {
@@ -57,7 +58,7 @@ func (jb *SAJob) Stop() {
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
-}
+}*/
 
 type SAJobs struct {
 	app  *SAApp
@@ -129,7 +130,8 @@ func (jbs *SAJobs) AddJob(node *SANode) *SAJob {
 	for i := len(jbs.jobs) - 1; i >= 0; i-- {
 		jb := jbs.jobs[i]
 		if jb.node.Cmp(job.node) {
-			jb.Stop()
+			jb.Interrupt() //only interrupt, don't wait for actual stop
+
 			jbs.jobs = append(jbs.jobs[:i], jbs.jobs[i+1:]...) //remove
 		}
 	}
