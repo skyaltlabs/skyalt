@@ -254,8 +254,11 @@ func SAExe_NN_llama_cpp(node *SANode) bool {
 			stopAttr.SetError(err)
 		}
 
+		props.Seed = node.GetAttr("seed", -1).GetInt()
 		props.N_predict = node.GetAttr("n_predict", 400).GetInt()
 		props.Temperature = node.GetAttr("temperature", 0.8).GetFloat()
+		props.Dynatemp_range = node.GetAttr("dynatemp_range", 0.0).GetFloat()
+		props.Dynatemp_exponent = node.GetAttr("dynatemp_exponent", 1.0).GetFloat()
 		props.Repeat_last_n = node.GetAttr("repeat_last_n", 256).GetInt()
 		props.Repeat_penalty = node.GetAttr("repeat_penalty", 1.18).GetFloat()
 		props.Top_k = node.GetAttr("top_k", 40).GetInt()
