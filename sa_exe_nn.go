@@ -18,10 +18,92 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
+	"fmt"
+	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
+
+var _NN_downloader_flagTimeout = flag.Duration("timeout", 30*time.Minute, "HTTP timeout")
+
+func _SAExe_NN_downloader(node *SANode, url string, dst string, label string) {
+
+	fmt.Println("Downloading", url, "into", dst)
+
+	client := http.Client{
+		Timeout: *_NN_downloader_flagTimeout,
+	}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		node.SetError(err)
+		return
+	}
+
+	//req.Header.Set("User-Agent", "skyalt")
+	resp, err := client.Do(req)
+	if err != nil {
+		node.SetError(err)
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		node.SetError(fmt.Errorf("%s: %s", url, resp.Status))
+		return
+	}
+
+	// file already exists(same size)
+	if info, err := os.Stat(dst); err == nil && info.Size() == resp.ContentLength {
+		fmt.Println("Skipping", dst, "as it already exists")
+		return
+	}
+
+	w, err := os.Create(dst)
+	if err != nil {
+		node.SetError(err)
+		return
+	}
+	defer w.Close()
+
+	node.progress_desc = fmt.Sprint("Downloading: ", label)
+
+	// Loop
+	data := make([]byte, 1024*64)
+	recv_bytes := int64(0)
+	ticker := time.NewTicker(1 * time.Second)
+	for node.app.EnableExecution {
+		select {
+		case <-ticker.C:
+			node.progress = float64(recv_bytes) / float64(resp.ContentLength)
+		default:
+			//download
+			n, err := resp.Body.Read(data)
+			if err != nil {
+				node.SetError(err)
+				w.Close()
+				return
+			}
+			//save
+			m, err := w.Write(data[:n])
+			if err != nil {
+				node.SetError(err)
+				w.Close()
+				return
+			}
+
+			recv_bytes += int64(m)
+			node.progress = float64(recv_bytes) / float64(resp.ContentLength)
+		}
+	}
+
+	if recv_bytes < resp.ContentLength {
+		w.Close()
+		OsFileRemove(dst)
+	}
+}
 
 var g_whisper_modelList = []string{"", "ggml-tiny.en", "ggml-tiny", "ggml-base.en", "ggml-base", "ggml-small.en", "ggml-small", "ggml-medium.en", "ggml-medium", "ggml-large-v1", "ggml-large-v2", "ggml-large-v3"}
 
@@ -95,9 +177,17 @@ func SAExe_NN_whisper_cpp(node *SANode) bool {
 	if found {
 		_outAttr.SetOutBlob([]byte(str))
 	} else {
-		//add job
-		job := node.app.jobs.AddJob(node)
-		go SAJob_NN_whisper_cpp(job, modelPath, audioAttr.GetBlob(), &props)
+		//run it
+		fmt.Println("Whispering", modelPath)
+
+		node.progress_desc = "Translating"
+		node.progress = 0.5 //...
+		str, _, _, err := node.app.base.service_whisper_cpp.Translate(modelPath, audioAttr.GetBlob(), &props)
+		if err != nil {
+			node.SetError(err)
+			return false
+		}
+		_outAttr.SetOutBlob([]byte(str))
 	}
 	return true
 }
@@ -145,9 +235,8 @@ func SAExe_NN_whisper_cpp_downloader(node *SANode) bool {
 
 		dst := filepath.Join(folderAttr.GetString(), g_whisper_modelList[id]+".bin")
 
-		//add job
-		job := node.app.jobs.AddJob(node)
-		go SAJob_downloader(job, urll, dst, g_whisper_modelList[id])
+		//run
+		_SAExe_NN_downloader(node, urll, dst, g_whisper_modelList[id])
 
 		//reset in next tick
 		modelAttr.AddSetAttr("0")
@@ -215,9 +304,8 @@ func SAExe_NN_llama_cpp_downloader(node *SANode) bool {
 
 		dst := filepath.Join(folderAttr.GetString(), g_llama_modelList[id].name)
 
-		//add job
-		job := node.app.jobs.AddJob(node)
-		go SAJob_downloader(job, urll, dst, g_llama_modelList[id].name)
+		//run
+		_SAExe_NN_downloader(node, urll, dst, g_llama_modelList[id].name)
 
 		//reset in next tick
 		modelAttr.AddSetAttr("0")
@@ -296,9 +384,18 @@ func SAExe_NN_llama_cpp(node *SANode) bool {
 	if found {
 		_outAttr.SetOutBlob([]byte(str))
 	} else {
-		//add job
-		job := node.app.jobs.AddJob(node)
-		go SAJob_NN_llama_cpp(job, modelPath, &props)
+		//run
+		fmt.Println("Completing", modelPath)
+
+		node.progress_desc = "Predicting"
+		node.progress = 0.5 //...
+		str, _, _, err := node.app.base.service_llama_cpp.Complete(modelPath, &props)
+		if err != nil {
+			node.SetError(err)
+			return false
+		}
+		_outAttr.SetOutBlob([]byte(str))
 	}
+
 	return true
 }

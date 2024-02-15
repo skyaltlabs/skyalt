@@ -165,13 +165,11 @@ type SANode struct {
 	app    *SAApp
 	parent *SANode
 
-	Pos                 OsV2f
-	pos_start           OsV2f
-	Cam_x, Cam_y, Cam_z float64 `json:",omitempty"`
+	Pos       OsV2f
+	pos_start OsV2f
 
 	Name     string
 	Exe      string
-	Bypass   bool `json:",omitempty"`
 	Selected bool `json:",omitempty"`
 
 	selected_cover  bool
@@ -204,11 +202,13 @@ func NewSANode(app *SAApp, parent *SANode, name string, exe string, grid OsV4, p
 	w.Name = name
 	w.Exe = exe
 	w.Pos = pos
-	w.Cam_z = 1
 
 	if w.CanBeRenderOnCanvas() {
 		w.SetGrid(grid)
 	}
+
+	w.Execute()
+
 	return w
 }
 
@@ -255,12 +255,21 @@ func (w *SANode) SetError(err error) {
 	w.errExe = err
 }
 
-func (node *SANode) ResetProgress() {
-	node.progress_desc = ""
-	node.progress = 0
+func (w *SANode) SetPosStart() {
+	w.pos_start = w.Pos
+	for _, nd := range w.Subs {
+		nd.SetPosStart()
+	}
+}
 
-	for _, nd := range node.Subs {
-		nd.ResetProgress()
+func (w *SANode) AddPos(r OsV2f) {
+
+	if SAGroups_HasNodeSub(w.Exe) {
+		for _, nd := range w.Subs {
+			nd.AddPos(r)
+		}
+	} else {
+		w.Pos = w.pos_start.Add(r)
 	}
 }
 
@@ -297,7 +306,7 @@ func (w *SANode) Save(path string) error {
 }
 
 func (a *SANode) Cmp(b *SANode, historyDiff *bool) bool {
-	if a.Name != b.Name || a.Exe != b.Exe || a.Bypass != b.Bypass {
+	if a.Name != b.Name || a.Exe != b.Exe {
 		return false
 	}
 
@@ -306,10 +315,6 @@ func (a *SANode) Cmp(b *SANode, historyDiff *bool) bool {
 	}
 
 	if !a.Pos.Cmp(b.Pos) {
-		*historyDiff = true //no return!
-	}
-
-	if a.Cam_x != b.Cam_x || a.Cam_y != b.Cam_y || a.Cam_z != b.Cam_z {
 		*historyDiff = true //no return!
 	}
 
@@ -387,6 +392,9 @@ func (w *SANode) PrepareExe() {
 
 	w.state = SANode_STATE_WAITING
 
+	w.progress_desc = ""
+	w.progress = 0
+
 	w.errExe = nil
 	for _, attr := range w.Attrs {
 		attr.errExe = nil
@@ -405,6 +413,40 @@ func (w *SANode) PostExe() {
 	for _, it := range w.Subs {
 		it.PostExe()
 	}
+}
+
+func (node *SANode) ExecuteSubs() {
+
+	var list []*SANode
+	node.buildSubList(&list)
+	node.markUnusedAttrs()
+
+	active := true
+	for active { //&& !app.exit.Load() {
+		active = false
+
+		for _, it := range list {
+
+			if it.state == SANode_STATE_WAITING {
+				active = true
+
+				if it.IsReadyToBeExe() {
+
+					//execute expression
+					for _, v := range it.Attrs {
+						if v.errExp != nil {
+							continue
+						}
+						v.ExecuteExpression()
+					}
+
+					it.state = SANode_STATE_DONE //done
+				}
+			}
+		}
+	}
+
+	fmt.Printf("Executed() done\n")
 }
 
 func (w *SANode) ParseExpresions() {
@@ -486,15 +528,12 @@ func (w *SANode) buildSubList(list *[]*SANode) {
 
 		*list = append(*list, it)
 
-		if !SAGroups_IsNodeFor(it.Exe) {
+		if !SAGroups_IsNodeFor(it.Exe) && !SAGroups_IsNodeIf(it.Exe) {
 			it.buildSubList(list)
 		}
 	}
 }
 
-func (w *SANode) IsGuiLayout() bool {
-	return SAGroups_HasNodeSub(w.Exe)
-}
 func (w *SANode) CanBeRenderOnCanvas() bool {
 	return w.app.base.node_groups.IsUI(w.Exe)
 }
@@ -547,15 +586,19 @@ func (w *SANode) FindNode(name string) *SANode {
 			return it
 		}
 	}
+
+	for _, it := range w.Subs {
+		nd := it.FindNode(name)
+		if nd != nil {
+			return nd
+		}
+	}
 	return nil
 }
 
 func (w *SANode) updateLinks(parent *SANode, app *SAApp) {
 	w.parent = parent
 	w.app = app
-	if w.Cam_z <= 0 {
-		w.Cam_z = 1
-	}
 
 	for _, v := range w.Attrs {
 		v.node = w
@@ -584,45 +627,57 @@ func (w *SANode) Copy() (*SANode, error) {
 	return dst, nil
 }
 
-func (a *SANode) FindMirror(b *SANode, b_find *SANode) *SANode {
-
-	if b == b_find {
-		return a
-	}
-	for i, na := range a.Subs {
-		ret := na.FindMirror(b.Subs[i], b_find)
-		if ret != nil {
-			return ret
-		}
-	}
-	return nil
-}
-
-func (w *SANode) DeselectAll() {
-	for _, n := range w.Subs {
-		n.Selected = false
-	}
-}
-
 func (w *SANode) SelectOnlyThis() {
 	w.parent.DeselectAll()
 	w.Selected = true
 }
 
-func (w *SANode) BypassReverseSelectedNodes() {
+func (w *SANode) SelectAll() {
+	w.Selected = true
 	for _, n := range w.Subs {
-		if n.Selected {
-			n.Bypass = !n.Bypass
-		}
+		n.SelectAll()
 	}
 }
 
-func (w *SANode) RemoveSelectedNodes() {
-	for i := len(w.Subs) - 1; i >= 0; i-- {
-		if w.Subs[i].Selected {
-			w.Subs = append(w.Subs[:i], w.Subs[i+1:]...)
-		}
+func (w *SANode) NumSelected() int {
+	sum := OsTrn(w.Selected, 1, 0)
+	for _, nd := range w.Subs {
+		sum += nd.NumSelected()
 	}
+	return sum
+}
+
+func (w *SANode) DeselectAll() {
+	for _, n := range w.Subs {
+		n.Selected = false
+		n.DeselectAll()
+	}
+}
+
+func (w *SANode) isParentSelected() bool {
+	w = w.parent
+	for w != nil {
+		if w.Selected {
+			return true
+		}
+		w = w.parent
+	}
+	return false
+}
+
+func (w *SANode) _buildListOfSelected(list *[]*SANode) {
+	for _, n := range w.Subs {
+		if n.Selected && !n.isParentSelected() {
+			*list = append(*list, n)
+		}
+		n._buildListOfSelected(list)
+	}
+}
+
+func (w *SANode) BuildListOfSelected() []*SANode {
+	var list []*SANode
+	w._buildListOfSelected(&list)
+	return list
 }
 
 func (w *SANode) FindSelected() *SANode {
@@ -631,16 +686,29 @@ func (w *SANode) FindSelected() *SANode {
 			return it
 		}
 	}
+
+	for _, nd := range w.Subs {
+		//if nd.IsGuiLayout() {
+		fd := nd.FindSelected()
+		if fd != nil {
+			return fd
+		}
+		//}
+	}
+
 	return nil
 }
 
-func (w *SANode) buildSubsList(listPathes *[]string, listNodes *[]*SANode) {
-	*listPathes = append(*listPathes, w.getPath())
-	*listNodes = append(*listNodes, w)
-
+func (w *SANode) RemoveSelectedNodes() {
 	for _, n := range w.Subs {
-		if n.IsGuiLayout() {
-			n.buildSubsList(listPathes, listNodes)
+		n.RemoveSelectedNodes()
+	}
+
+	for i := len(w.Subs) - 1; i >= 0; i-- {
+		if w.Subs[i].Selected {
+			w.Subs = append(w.Subs[:i], w.Subs[i+1:]...) //remove
+		} else {
+			w.Subs[i].RemoveSelectedNodes() //go deeper
 		}
 	}
 }
@@ -674,20 +742,34 @@ func (w *SANode) NumSubNames(name string) int {
 		if nd.Name == name {
 			n++
 		}
+		n += nd.NumSubNames(name)
 	}
 	return n
 }
 
+func (w *SANode) GetAbsoluteRoot() *SANode {
+	for w.parent != nil {
+		w = w.parent
+	}
+	return w
+}
+
 func (w *SANode) CheckUniqueName() {
 
+	//check
 	if w.Name == "" {
 		w.Name = "node"
 	}
-
 	w.Name = strings.ReplaceAll(w.Name, ".", "") //remove all '.'
 
-	for w.parent.NumSubNames(w.Name) >= 2 {
+	//set unique
+	for w.GetAbsoluteRoot().NumSubNames(w.Name) >= 2 {
 		w.Name += "1"
+	}
+
+	//check subs as well
+	for _, nd := range w.Subs {
+		nd.CheckUniqueName()
 	}
 }
 
@@ -701,7 +783,12 @@ func (w *SANode) AddNode(grid OsV4, pos OsV2f, name string, exe string) *SANode 
 func (w *SANode) AddNodeCopy(src *SANode) *SANode { // note: 'w' can be root graph
 	nw, _ := src.Copy() //err ...
 	nw.updateLinks(w, w.app)
+
+	//move Pos
 	nw.Pos = nw.Pos.Add(OsV2f{1, 1})
+	for _, nd := range nw.Subs {
+		nd.Pos = nd.Pos.Add(OsV2f{1, 1})
+	}
 
 	w.Subs = append(w.Subs, nw)
 	nw.CheckUniqueName()
@@ -834,41 +921,38 @@ func (w *SANode) Render() {
 		grid.Size.Y = OsMax(grid.Size.Y, 1)
 
 		//draw Select rectangle
-		if w.app.act == w.parent {
-			if w.HasExeError() || w.HasExpError() {
-				pl := ui.win.io.GetPalette()
-				cd := pl.E
-				cd.A = 150
+		if w.HasExeError() || w.HasExpError() {
+			pl := ui.win.io.GetPalette()
+			cd := pl.E
+			cd.A = 150
 
-				//rect
-				div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, ".err.")
-				div.touch_enabled = false
-				ui.Paint_rect(0, 0, 1, 1, 0, cd, 0)
-				ui.Div_end()
-			}
-
-			if w.Selected {
-				cd := SAApp_getYellow()
-
-				//rect
-				div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, ".sel.")
-				div.touch_enabled = false
-				ui.Paint_rect(0, 0, 1, 1, 0, cd, 0.06)
-				ui.Div_end()
-
-				//resizer
-				s := ui.CellWidth(0.3)
-				en := InitOsV4Mid(div.canvas.End(), OsV2{s, s})
-				if en.Inside(ui.win.io.touch.pos) && ui.win.io.keys.alt {
-					pl := ui.win.io.GetPalette()
-					cd = pl.P
-				}
-				ui.buff.AddRect(en, cd, 0)
-
-				w.selected_canvas = div.canvas //copy coord size
-			}
+			//rect
+			div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, ".err.")
+			div.touch_enabled = false
+			ui.Paint_rect(0, 0, 1, 1, 0, cd, 0)
+			ui.Div_end()
 		}
-		//when editbox with expression is active - match colors between access(text) and nodes(coords) ...
+
+		if w.Selected {
+			cd := SAApp_getYellow()
+
+			//rect
+			div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, ".sel.")
+			div.touch_enabled = false
+			ui.Paint_rect(0, 0, 1, 1, 0, cd, 0.06)
+			ui.Div_end()
+
+			//resizer
+			s := ui.CellWidth(0.3)
+			en := InitOsV4Mid(div.canvas.End(), OsV2{s, s})
+			if en.Inside(ui.win.io.touch.pos) && ui.win.io.keys.alt {
+				pl := ui.win.io.GetPalette()
+				cd = pl.P
+			}
+			ui.buff.AddRect(en, cd, 0)
+
+			w.selected_canvas = div.canvas //copy coord size
+		}
 	}
 }
 
@@ -1207,18 +1291,31 @@ func _SANode_renderAttrValue(x, y, w, h int, attr *SANodeAttr, attr_instr *VmIns
 func (w *SANode) RenameExpressionAccessNode(oldName string, newName string) {
 	for _, attr := range w.Attrs {
 		if attr.instr != nil {
-			attr.Value = attr.instr.RenameAccessNode(attr.Value, oldName, newName)
+			changed := true
+			for changed {
+				attr.Value, changed = attr.instr.RenameAccessNode(attr.Value, oldName, newName)
+				if changed {
+					attr.ParseExpresion()
+				}
+			}
 		}
 	}
 }
 func (w *SANode) RenameExpressionAccessAttr(nodeName string, oldAttrName string, newAttrName string) {
 	for _, attr := range w.Attrs {
 		if attr.instr != nil {
-			attr.Value = attr.instr.RenameAccessAttr(attr.Value, nodeName, oldAttrName, newAttrName)
+			changed := true
+			for changed {
+				attr.Value, changed = attr.instr.RenameAccessAttr(attr.Value, nodeName, oldAttrName, newAttrName)
+				if changed {
+					attr.ParseExpresion()
+				}
+			}
 		}
 	}
 }
 
+// use node.GetAbsoluteRoot().RenameSubNodes()
 func (w *SANode) RenameSubNodes(oldName string, newName string) {
 	//expressions
 	for _, it := range w.Subs {
@@ -1231,7 +1328,14 @@ func (w *SANode) RenameSubNodes(oldName string, newName string) {
 			SAExe_Setter_renameNode(it, oldName, newName)
 		}
 	}
+
+	//Subs
+	for _, it := range w.Subs {
+		it.RenameSubNodes(oldName, newName)
+	}
 }
+
+// use node.GetAbsoluteRoot().RenameSubAttrs()
 func (w *SANode) RenameSubAttrs(nodeName string, oldAttrName string, newAttrName string) {
 	//expressions
 	for _, it := range w.Subs {
@@ -1244,6 +1348,11 @@ func (w *SANode) RenameSubAttrs(nodeName string, oldAttrName string, newAttrName
 			SAExe_Setter_renameAttr(it, nodeName, oldAttrName, newAttrName)
 		}
 	}
+
+	//Subs
+	for _, it := range w.Subs {
+		it.RenameSubAttrs(nodeName, oldAttrName, newAttrName)
+	}
 }
 
 func (w *SANode) RenderAttrs() {
@@ -1251,21 +1360,9 @@ func (w *SANode) RenderAttrs() {
 	ui := w.app.base.ui
 
 	ui.Div_colMax(0, 100)
-	if w.IsGuiLayout() {
-		ui.Div_row(2, 0.5) //spacer
-	} else {
-		ui.Div_row(1, 0.5) //spacer
-	}
+	ui.Div_row(1, 0.5) //spacer
 
 	y := 0
-
-	if w.IsGuiLayout() {
-		if ui.Comp_buttonLight(0, y, 1, 1, ui.trns.OPEN, "", true) > 0 {
-			w.app.act = w
-		}
-		y++
-	}
-
 	ui.Div_start(0, y, 1, 1)
 	{
 		ui.Div_colMax(1, 100)
@@ -1283,9 +1380,7 @@ func (w *SANode) RenderAttrs() {
 			w.CheckUniqueName()
 
 			//rename access in other nodes expressions
-			if w.parent != nil {
-				w.parent.RenameSubNodes(oldName, w.Name)
-			}
+			w.GetAbsoluteRoot().RenameSubNodes(oldName, w.Name)
 		}
 
 		//type
@@ -1307,12 +1402,6 @@ func (w *SANode) RenderAttrs() {
 					ui.Dialog_close()
 				}
 				y++
-
-				/*if ui.Comp_buttonMenu(0, y, 1, 1, ui.trns.BYPASS, "", true, false) > 0 {
-					w.Bypass = !w.Bypass
-					ui.Dialog_close()
-				}
-				y++*/
 
 				if ui.Comp_buttonMenu(0, y, 1, 1, ui.trns.REMOVE, "", true, false) > 0 {
 					w.Remove()
@@ -1350,7 +1439,6 @@ func (w *SANode) RenderAttrs() {
 		if it.errExe != nil {
 			hasAttrWith_err = true
 		}
-
 	}
 
 	for i, it := range w.Attrs {
@@ -1404,7 +1492,7 @@ func (w *SANode) RenderAttrs() {
 						_, _, _, fnsh, _ := ui.Comp_editbox(0, 0, 1, 1, &it.Name, Comp_editboxProp().Ghost(ui.trns.NAME))
 						if fnsh {
 							it.CheckUniqueName()
-							w.parent.RenameSubAttrs(w.Name, oldAttrName, it.Name)
+							w.GetAbsoluteRoot().RenameSubAttrs(w.Name, oldAttrName, it.Name)
 						}
 
 						ui.Dialog_end()
@@ -1617,5 +1705,3 @@ func (w *SANode) RenderAttrs() {
 		y += h
 	}
 }
-
-//maybe make dialog with expression like a dialog(bellow is active) and user can click on nodes and their path is insert into expression? .......

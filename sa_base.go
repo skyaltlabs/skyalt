@@ -254,9 +254,6 @@ func (base *SABase) drawFrame() {
 	}
 
 	app := base.GetApp()
-	if app.act == nil {
-		app.act = app.root
-	}
 
 	ui := base.ui
 	icon_rad := 1.5
@@ -301,16 +298,49 @@ func (base *SABase) drawFrame() {
 			ui.Div_rowResize(0, "node", 5, false)
 			ui.Div_rowMax(1, 100)
 
-			sel := app.act.FindSelected()
+			//attributes layout
+			sel := app.root.FindSelected()
 			if sel != nil {
 				ui.Div_start(0, 0, 1, 1)
 				sel.RenderAttrs()
 				ui.Div_end()
 			}
 
+			//graph layout
+			if app.Cam_z <= 0 {
+				app.Cam_z = 1
+			}
+
 			ui.Div_start(0, 1, 1, 1)
-			app.graph.drawGraph(ui)
+			{
+				ui.Div_colMax(0, 100)
+				ui.Div_rowMax(0, 100)
+				pn_x := 1
+				if app.graph.showNodeList {
+					ui.Div_col(1, 3) //min
+					ui.Div_colResize(1, "node_list", 5, false)
+					pn_x = 2
+				}
+
+				//graph
+				ui.Div_start(0, 0, 1, 1)
+				graphCanvas, keyAllow := app.graph.drawGraph(app.root, ui)
+				ui.Div_end()
+
+				//node list
+				if app.graph.showNodeList {
+					ui.Div_start(1, 0, 1, 1)
+					app.graph.drawNodeList(graphCanvas, app.root, ui)
+					ui.Div_end()
+				}
+
+				//panel
+				ui.Div_start(pn_x, 0, 1, 1)
+				app.graph.drawPanel(graphCanvas, keyAllow, ui)
+				ui.Div_end()
+			}
 			ui.Div_end()
+
 		}
 		ui.Div_end()
 	}

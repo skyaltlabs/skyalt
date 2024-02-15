@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
 	"math/rand"
 	"strings"
 )
@@ -52,7 +51,7 @@ func (gr *SAGraph) drawCreateNode(ui *Ui) {
 	if !ui.edit.IsActive() {
 		if ui.win.io.keys.tab && lvBaseDiv.IsOver(ui) {
 			gr.app.canvas.addGrid = InitOsV4(0, 0, 1, 1)
-			gr.app.canvas.addPos = gr.app.act.pixelsToNode(ui.win.io.touch.pos, ui, lvBaseDiv)
+			gr.app.canvas.addPos = gr.app.root.pixelsToNode(ui.win.io.touch.pos, ui, lvBaseDiv)
 			gr.app.canvas.addnode_search = ""
 			ui.Dialog_open("nodes_list", 2)
 		}
@@ -156,7 +155,7 @@ func (gr *SAGraph) reorder(onlySelected bool, ui *Ui) {
 
 	//create list
 	var nodes []*SANode
-	for _, n := range gr.app.act.Subs {
+	for _, n := range gr.app.root.Subs {
 		if onlySelected && !n.Selected {
 			continue //skip
 		}
@@ -248,7 +247,7 @@ func (gr *SAGraph) autoZoom(onlySelected bool, canvas OsV4, ui *Ui) {
 	var mn OsV2f
 	var mx OsV2f
 	num := 0
-	for _, n := range gr.app.act.Subs {
+	for _, n := range gr.app.root.Subs {
 		if onlySelected && !n.Selected {
 			continue //skip
 		}
@@ -276,18 +275,18 @@ func (gr *SAGraph) autoZoom(onlySelected bool, canvas OsV4, ui *Ui) {
 	if num == 0 {
 		return
 	}
-	gr.app.act.Cam_x = float64(mn.X+mx.X) / 2
-	gr.app.act.Cam_y = float64(mn.Y+mx.Y) / 2
+	gr.app.Cam_x = float64(mn.X+mx.X) / 2
+	gr.app.Cam_y = float64(mn.Y+mx.Y) / 2
 
-	gr.app.act.Cam_z = 1
-	for gr.app.act.Cam_z > 0.1 {
+	gr.app.Cam_z = 1
+	for gr.app.Cam_z > 0.1 {
 		areIn := true
-		for _, n := range gr.app.act.Subs {
+		for _, n := range gr.app.root.Subs {
 			if onlySelected && !n.Selected {
 				continue //skip
 			}
 
-			_, cq := n.nodeToPixelsCoord(canvas, ui)
+			_, cq, _ := n.nodeToPixelsCoord(canvas, ui)
 			if !canvas.GetIntersect(cq).Cmp(cq) {
 				areIn = false
 				break
@@ -296,436 +295,428 @@ func (gr *SAGraph) autoZoom(onlySelected bool, canvas OsV4, ui *Ui) {
 		if areIn {
 			break
 		}
-		gr.app.act.Cam_z -= 0.05
+		gr.app.Cam_z -= 0.05
 	}
 }
 
-func (gr *SAGraph) drawGraph(ui *Ui) {
+func (gr *SAGraph) buildNodes(node *SANode) []*SANode {
+	var list []*SANode
+
+	for _, nd := range node.Subs {
+		list = append(list, nd)
+		list = append(list, gr.buildNodes(nd)...)
+	}
+	return list
+}
+
+func (gr *SAGraph) drawConnections(nodes []*SANode, ui *Ui) {
+
+	lv := ui.GetCall()
+	cellr := gr.app.root.cellZoom(ui)
+
+	for _, node := range nodes {
+
+		var depends []*SANode
+		for _, in := range node.Attrs {
+			for _, out := range in.depends {
+				if out.node != node {
+
+					//already added
+					found := false
+					for _, it := range depends {
+						if it == out.node {
+							found = true
+						}
+					}
+					if !found {
+						depends = append(depends, out.node)
+					}
+				}
+			}
+		}
+
+		i_depends := 1 //center
+
+		coordIn, selCoordIn, _ := node.nodeToPixelsCoord(lv.call.canvas, ui)
+		if node.Selected {
+			coordIn = selCoordIn
+		}
+
+		for _, out := range depends {
+			coordOut, selCoordOut, _ := out.nodeToPixelsCoord(lv.call.canvas, ui)
+			if out.Selected {
+				coordOut = selCoordOut
+			}
+
+			end := coordIn.Start
+			end.X += int(float64(coordIn.Size.X) * (float64(i_depends) / float64(len(depends)+1))) //+1 = center
+			_SAGraph_drawConnectionV(OsV2{coordOut.Middle().X, coordOut.End().Y}, end, node.Selected || out.Selected, cellr, ui)
+			i_depends++
+
+		}
+
+		//draw Setter connection
+		if SAGroups_IsNodeSetter(node.Exe) {
+			dstNode, _ := SAExe_Setter_destNode(node)
+			if dstNode != nil {
+				coordOut, selCoordOut, _ := node.nodeToPixelsCoord(lv.call.canvas, ui)
+				coordIn, selCoordIn, _ := dstNode.nodeToPixelsCoord(lv.call.canvas, ui)
+
+				if node.Selected {
+					coordOut = selCoordOut
+				}
+				if dstNode.Selected {
+					coordIn = selCoordIn
+				}
+				_SAGraph_drawConnectionH(OsV2{coordOut.End().X, coordOut.Middle().Y}, OsV2{coordIn.Start.X, coordIn.Middle().Y}, node.Selected || dstNode.Selected, cellr, ui)
+			}
+		}
+	}
+}
+
+func (gr *SAGraph) drawNodes(nodes []*SANode, rects bool, classic bool, ui *Ui) *SANode {
+
+	var touchInsideNode *SANode
+	for _, n := range nodes {
+		if SAGroups_HasNodeSub(n.Exe) {
+			if rects {
+				if n.drawRectNode(gr.node_select, gr.app) { //inside
+					touchInsideNode = n
+				}
+			}
+		} else {
+			if classic {
+				if n.drawNode(gr.node_select, gr.app) { //inside
+					touchInsideNode = n
+				}
+			}
+		}
+	}
+
+	return touchInsideNode
+}
+
+func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
+
+	nodes := gr.buildNodes(root)
+
 	pl := ui.win.io.GetPalette()
 
-	ui.Div_colMax(0, 100)
-	ui.Div_rowMax(0, 100)
-
-	keyAllow := false
 	touch := &ui.win.io.touch
 	keys := &ui.win.io.keys
 	var graphCanvas OsV4
 
-	ui.Div_start(0, 0, 1, 1)
-	{
-		ui.Div_colMax(0, 100)
-		ui.Div_rowMax(0, 100)
-		if gr.showNodeList {
-			ui.Div_col(1, 3)
-			ui.Div_colResize(1, "node_list", 5, false)
+	over := ui.GetCall().call.IsOver(ui)
+	keyAllow := (over && !ui.edit.IsActive())
+
+	graphCanvas = ui.GetCall().call.canvas
+
+	ui.Div_colMax(0, 100)
+	ui.Div_rowMax(0, 100)
+	ui.Paint_rect(0, 0, 1, 1, 0, pl.GetGrey(0.8), 0)
+
+	//fade "press tab" bottom - middle in background
+	lv := ui.GetCall()
+	ui._compDrawText(lv.call.canvas.AddSpace(ui.CellWidth(0.5)), "press tab", "", pl.GetGrey(1), InitWinFontPropsDef(ui.win), false, false, OsV2{1, 2}, false, false)
+
+	//+
+	gr.drawCreateNode(ui)
+
+	touchInsideNode := gr.drawNodes(nodes, true, false, ui)
+
+	gr.drawConnections(nodes, ui)
+	tin := gr.drawNodes(nodes, false, true, ui)
+	if tin != nil {
+		touchInsideNode = tin
+	}
+
+	if touch.rm {
+		touchInsideNode = nil
+	}
+
+	//keys actions
+	if keyAllow {
+		//delete
+		if keys.delete {
+			gr.app.root.RemoveSelectedNodes()
 		}
 
-		ui.Div_start(0, 0, 1, 1)
-		{
-			graphCanvas = ui.GetCall().call.canvas
+		//copy
+		if keys.copy {
+			//add selected into list
+			gr.app.graph.copiedNodes = gr.app.root.BuildListOfSelected()
+		}
 
-			ui.Div_colMax(0, 100)
-			ui.Div_rowMax(0, 100)
-			ui.Paint_rect(0, 0, 1, 1, 0, pl.GetGrey(0.8), 0)
+		//cut
+		if keys.cut {
+			//add selected into list
+			gr.app.graph.copiedNodes = gr.app.root.BuildListOfSelected()
+			gr.app.root.RemoveSelectedNodes()
+		}
+		//paste
+		if keys.paste {
 
-			//fade "press tab" bottom - middle in background
-			lv := ui.GetCall()
-			ui._compDrawText(lv.call.canvas.AddSpace(ui.CellWidth(0.5)), "press tab", "", pl.GetGrey(1), InitWinFontPropsDef(ui.win), false, false, OsV2{1, 2}, false, false)
+			//add new nodes
+			origNodes := gr.copiedNodes
+			var newNodes []*SANode
+			for _, src := range origNodes {
 
-			//+
-			gr.drawCreateNode(ui)
-
-			cellr := gr.app.act.cellZoom(ui)
-
-			//draw connections
-			for _, node := range gr.app.act.Subs {
-
-				num_depends := 0
-				for _, in := range node.Attrs {
-					for _, out := range in.depends {
-						if out.node != node {
-							num_depends++
-						}
-					}
-				}
-				num_depends++  //center
-				i_depends := 1 //center
-
-				for _, in := range node.Attrs {
-					for _, out := range in.depends {
-						if out.node == node {
-							continue
-						}
-
-						coordOut, selCoordOut := out.node.nodeToPixelsCoord(lv.call.canvas, ui)
-						coordIn, selCoordIn := in.node.nodeToPixelsCoord(lv.call.canvas, ui)
-
-						if out.node.Selected {
-							coordOut = selCoordOut
-						}
-						if in.node.Selected {
-							coordIn = selCoordIn
-						}
-
-						end := coordIn.Start
-						end.X += int(float64(coordIn.Size.X) * (float64(i_depends) / float64(num_depends)))
-						_SAGraph_drawConnectionV(OsV2{coordOut.Middle().X, coordOut.End().Y}, end, node.Selected || out.node.Selected, cellr, ui)
-						i_depends++
-					}
+				path := NewSANodePath(src.parent)
+				dstParent := path.FindPath(gr.app.root)
+				if dstParent == nil {
+					dstParent = gr.app.root
 				}
 
-				//draw Setter connection
-				if SAGroups_IsNodeSetter(node.Exe) {
-					dstNode := SAExe_Setter_destNode(node)
-					if dstNode != nil {
-						coordOut, selCoordOut := node.nodeToPixelsCoord(lv.call.canvas, ui)
-						coordIn, selCoordIn := dstNode.nodeToPixelsCoord(lv.call.canvas, ui)
+				nw := dstParent.AddNodeCopy(src)
+				newNodes = append(newNodes, nw)
 
-						if node.Selected {
-							coordOut = selCoordOut
-						}
-						if dstNode.Selected {
-							coordIn = selCoordIn
-						}
-						_SAGraph_drawConnectionH(OsV2{coordOut.End().X, coordOut.Middle().Y}, OsV2{coordIn.Start.X, coordIn.Middle().Y}, node.Selected || dstNode.Selected, cellr, ui)
-					}
-				}
+				//add subs(rename expressions later)
+				origNodes = append(origNodes, src.Subs...)
+				newNodes = append(newNodes, nw.Subs...)
 			}
-			//draw node bodies
-			var touchInsideNode *SANode
-			for _, n := range gr.app.act.Subs {
-				inside := n.drawNode(gr.node_select, gr.app)
-				if inside {
-					touchInsideNode = n
+
+			//rename expressions access to keep links between copied nodes
+			for i := 0; i < len(newNodes); i++ {
+
+				node := newNodes[i]
+				node.ParseExpresions()
+
+				for j := 0; j < len(newNodes); j++ {
+					oldName := origNodes[j].Name
+					newName := newNodes[j].Name
+
+					node.RenameExpressionAccessNode(oldName, newName)
 				}
 			}
 
-			over := lv.call.IsOver(ui)
-
-			if touch.rm {
-				touchInsideNode = nil
+			//select and zoom
+			gr.app.root.DeselectAll()
+			for _, n := range newNodes {
+				n.Selected = true
 			}
+			gr.autoZoom(true, graphCanvas, ui)
+		}
 
-			//keys actions
-			keyAllow = (over && !ui.edit.IsActive())
-			if keyAllow {
-
-				//bypass
-				if keys.text == "b" {
-					gr.app.act.BypassReverseSelectedNodes()
+		if keys.copy {
+			for _, n := range nodes {
+				if n.Selected {
+					keys.clipboard = n.Name //copy name into clipboard
+					break
 				}
-
-				//delete
-				if keys.delete {
-					gr.app.act.RemoveSelectedNodes()
-				}
-
-				//level-down
-				if keys.enter {
-					for _, n := range gr.app.act.Subs {
-						if n.Selected && n.IsGuiLayout() {
-							gr.app.act = n //goto layout
-							break
-						}
-					}
-				}
-
-				//level-up
-				if keys.backspace {
-					if gr.app.act.parent != nil {
-						gr.app.act = gr.app.act.parent
-					}
-				}
-
-				//copy
-				if keys.copy {
-					//add selected into list
-					gr.app.graph.copiedNodes = nil
-					for _, nd := range gr.app.act.Subs {
-						if nd.Selected {
-							gr.app.graph.copiedNodes = append(gr.app.graph.copiedNodes, nd)
-						}
-					}
-				}
-
-				//cut
-				if keys.cut {
-					//add selected into list
-					gr.app.graph.copiedNodes = nil
-					for _, nd := range gr.app.act.Subs {
-						if nd.Selected {
-							gr.app.graph.copiedNodes = append(gr.app.graph.copiedNodes, nd)
-						}
-					}
-					gr.app.act.RemoveSelectedNodes()
-				}
-				//paste
-				if keys.paste {
-
-					var newNodes []*SANode
-					for _, src := range gr.copiedNodes {
-						nw := gr.app.act.AddNodeCopy(src)
-						newNodes = append(newNodes, nw)
-					}
-
-					//rename expressions access to keep links between copied nodes
-					{
-						for i := 0; i < len(newNodes); i++ {
-
-							node := newNodes[i]
-							node.ParseExpresions()
-
-							for j := 0; j < len(newNodes); j++ {
-								oldName := gr.copiedNodes[j].Name
-								newName := newNodes[j].Name
-
-								node.RenameExpressionAccessNode(oldName, newName)
-							}
-						}
-					}
-
-					//select and zoom
-					gr.app.act.DeselectAll()
-					for _, n := range newNodes {
-						n.Selected = true
-					}
-					gr.autoZoom(true, graphCanvas, ui)
-				}
-
-				if keys.copy {
-					for _, n := range gr.app.act.Subs {
-						if n.Selected {
-							keys.clipboard = n.Name //copy name into clipboard
-							break
-						}
-					}
-				}
-
-				if keys.selectAll {
-					for _, n := range gr.app.act.Subs {
-						n.Selected = true
-					}
-				}
-			}
-
-			//touch actions
-			{
-				//nodes
-				if touchInsideNode != nil && over && touch.start && !keys.shift && !keys.ctrl {
-					gr.node_move = true
-					gr.touch_start = touch.pos
-					for _, n := range gr.app.act.Subs {
-						n.pos_start = n.Pos
-					}
-					gr.node_move_selected = NewSANodePath(touchInsideNode)
-
-					//click on un-selected => de-select all & select only current
-					if !touchInsideNode.Selected {
-						for _, n := range gr.app.act.Subs {
-							n.Selected = false
-						}
-						touchInsideNode.Selected = true
-					}
-				}
-				if gr.node_move {
-					cell := ui.win.Cell()
-					p := touch.pos.Sub(gr.touch_start)
-					var r OsV2f
-					r.X = float32(p.X) / float32(gr.app.act.Cam_z) / float32(cell)
-					r.Y = float32(p.Y) / float32(gr.app.act.Cam_z) / float32(cell)
-
-					for _, n := range gr.app.act.Subs {
-						if n.Selected {
-							n.Pos = n.pos_start.Add(r)
-						}
-					}
-				}
-
-				//zoom
-				if over && touch.wheel != 0 {
-					zoom := OsClampFloat(float64(gr.app.act.Cam_z)+float64(touch.wheel)*-0.1, 0.2, 2) //zoom += wheel
-					gr.app.act.Cam_z = zoom
-
-					touch.wheel = 0
-				}
-
-				//cam & selection
-				if (touchInsideNode == nil || keys.shift || keys.ctrl) && over && touch.start {
-					if touch.rm {
-						//start camera move
-						gr.cam_move = true
-						gr.touch_start = touch.pos
-						gr.cam_start = OsV2f{float32(gr.app.act.Cam_x), float32(gr.app.act.Cam_y)}
-					} else if touchInsideNode == nil || keys.shift || keys.ctrl {
-						//start selection
-						gr.node_select = true
-						gr.touch_start = touch.pos
-					}
-				}
-
-				if gr.cam_move {
-					cell := ui.win.Cell()
-					p := touch.pos.Sub(gr.touch_start)
-					var r OsV2f
-					r.X = float32(p.X) / float32(gr.app.act.Cam_z) / float32(cell)
-					r.Y = float32(p.Y) / float32(gr.app.act.Cam_z) / float32(cell)
-
-					gr.app.act.Cam_x = float64(gr.cam_start.Sub(r).X)
-					gr.app.act.Cam_y = float64(gr.cam_start.Sub(r).Y)
-				}
-
-				if gr.node_select {
-					coord := InitOsV4ab(gr.touch_start, touch.pos)
-					coord.Size.X++
-					coord.Size.Y++
-
-					ui.buff.AddRect(coord, pl.P.SetAlpha(50), 0)     //back
-					ui.buff.AddRect(coord, pl.P, ui.CellWidth(0.03)) //border
-
-					//update
-					for _, n := range gr.app.act.Subs {
-						cq, _ := n.nodeToPixelsCoord(lv.call.canvas, ui)
-						n.selected_cover = coord.HasCover(cq)
-					}
-				}
-
-			}
-
-			if touch.end {
-				//when it's clicked on selected node, but it's not moved => select only this node
-				if gr.node_move && gr.node_move_selected.Is() {
-					if gr.touch_start.Distance(touch.pos) < float32(ui.win.Cell())/5 {
-						for _, n := range gr.app.act.Subs {
-							n.Selected = false
-						}
-
-						sn := gr.node_move_selected.FindPath(gr.app.root)
-						if sn != nil {
-							sn.Selected = true
-						}
-					}
-				}
-
-				if gr.node_select {
-					for _, n := range gr.app.act.Subs {
-						n.Selected = n.KeyProgessSelection(keys)
-					}
-				}
-
-				gr.cam_move = false
-				gr.node_move = false
-				gr.node_select = false
-			}
-
-			if gr.app.jobs.Num() > 0 {
-				ui.Paint_rect(0, 0, 1, 1, 0, pl.P, 0.06) //exe rect
-			} else if !gr.app.EnableExecution {
-				ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0.03)
 			}
 		}
-		ui.Div_end()
 
-		//node list
-		if gr.showNodeList {
-			ui.Div_start(1, 0, 1, 1)
-			{
-				ui.Div_colMax(0, 100)
-
-				ui.Div_start(0, 0, 1, 1)
-				{
-					//activate editbox
-					if gr.showNodeList_justOpen {
-						ui.edit.setFirstEditbox = true
-						gr.showNodeList_justOpen = false
-					}
-
-					ui.Div_colMax(0, 100)
-					ui.Comp_editbox(0, 0, 1, 1, &gr.node_search, Comp_editboxProp().Ghost(ui.trns.SEARCH).Highlight(gr.node_search != ""))
-					if ui.Comp_buttonText(1, 0, 1, 1, "X", "", ui.trns.CLOSE, true, false) > 0 {
-						gr.showNodeList = false //hide
-					}
-				}
-				ui.Div_end()
-
-				y := 1
-				searches := strings.Split(strings.ToLower(gr.node_search), " ")
-				for _, n := range gr.app.act.Subs {
-					if gr.node_search == "" || SAApp_IsSearchedName(n.Name, searches) {
-						if ui.Comp_buttonMenu(0, y, 1, 1, n.Name, n.Exe, true, n.Selected) > 0 {
-							n.SelectOnlyThis()
-							gr.autoZoom(true, graphCanvas, ui)
-						}
-						y++
-					}
-				}
-
+		if keys.selectAll {
+			for _, n := range nodes {
+				n.Selected = true
 			}
-			ui.Div_end()
 		}
 	}
-	ui.Div_end()
 
-	//panel
-	ui.Div_start(1, 0, 1, 1)
+	//touch actions
 	{
-		ui.DivInfo_set(SA_DIV_SET_scrollVnarrow, 1, 0)
-		ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
+		//nodes
+		if touchInsideNode != nil && over && touch.start && !keys.shift && !keys.ctrl {
+			gr.node_move = true
+			gr.touch_start = touch.pos
+			gr.app.root.SetPosStart() //ALL nodes(not only selected)
+			gr.node_move_selected = NewSANodePath(touchInsideNode)
 
-		ui.Div_rowMax(7, 100)
-
-		path := "file:apps/base/resources/"
-
-		y := 0
-		if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+OsTrnString(gr.app.EnableExecution, "pause.png", "play.png")), 0.25, "Enable/Disable nodes execution", uint8(OsTrn(gr.app.EnableExecution, int(CdPalette_B), int(CdPalette_E))), true, false) > 0 {
-			gr.app.EnableExecution = !gr.app.EnableExecution
-			if gr.app.EnableExecution {
-				gr.app.SetExecute()
+			//click on un-selected => de-select all & select only current
+			if !touchInsideNode.Selected {
+				for _, n := range nodes {
+					n.Selected = false
+				}
+				touchInsideNode.Selected = true
 			}
 		}
-		y++
+		if gr.node_move {
+			cell := ui.win.Cell()
+			p := touch.pos.Sub(gr.touch_start)
+			var r OsV2f
+			r.X = float32(p.X) / float32(gr.app.Cam_z) / float32(cell)
+			r.Y = float32(p.Y) / float32(gr.app.Cam_z) / float32(cell)
 
-		if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"update.png"), 0.25, "Recompute all nodes", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
+			for _, n := range nodes {
+				if n.Selected {
+					n.AddPos(r)
+				}
+			}
+		}
+
+		//zoom
+		if over && touch.wheel != 0 {
+			zoom := OsClampFloat(float64(gr.app.Cam_z)+float64(touch.wheel)*-0.1, 0.2, 2) //zoom += wheel
+			gr.app.Cam_z = zoom
+
+			touch.wheel = 0
+		}
+
+		//cam & selection
+		if (touchInsideNode == nil || keys.shift || keys.ctrl) && over && touch.start {
+			if touch.rm {
+				//start camera move
+				gr.cam_move = true
+				gr.touch_start = touch.pos
+				gr.cam_start = OsV2f{float32(gr.app.Cam_x), float32(gr.app.Cam_y)}
+			} else if touchInsideNode == nil || keys.shift || keys.ctrl {
+				//start selection
+				gr.node_select = true
+				gr.touch_start = touch.pos
+			}
+		}
+
+		if gr.cam_move {
+			cell := ui.win.Cell()
+			p := touch.pos.Sub(gr.touch_start)
+			var r OsV2f
+			r.X = float32(p.X) / float32(gr.app.Cam_z) / float32(cell)
+			r.Y = float32(p.Y) / float32(gr.app.Cam_z) / float32(cell)
+
+			gr.app.Cam_x = float64(gr.cam_start.Sub(r).X)
+			gr.app.Cam_y = float64(gr.cam_start.Sub(r).Y)
+		}
+
+		if gr.node_select {
+			coord := InitOsV4ab(gr.touch_start, touch.pos)
+			coord.Size.X++
+			coord.Size.Y++
+
+			ui.buff.AddRect(coord, pl.P.SetAlpha(50), 0)     //back
+			ui.buff.AddRect(coord, pl.P, ui.CellWidth(0.03)) //border
+
+			//update
+			for _, n := range nodes {
+				_, _, sel := n.nodeToPixelsCoord(lv.call.canvas, ui)
+				n.selected_cover = coord.HasCover(sel)
+			}
+		}
+
+	}
+
+	if touch.end {
+		//when it's clicked on selected node, but it's not moved => select only this node
+		if gr.node_move && gr.node_move_selected.Is() {
+			if gr.touch_start.Distance(touch.pos) < float32(ui.win.Cell())/5 {
+				for _, n := range nodes {
+					n.Selected = false
+				}
+
+				sn := gr.node_move_selected.FindPath(gr.app.root)
+				if sn != nil {
+					sn.Selected = true
+				}
+			}
+		}
+
+		if gr.node_select {
+			for _, n := range nodes {
+				n.Selected = n.KeyProgessSelection(keys)
+			}
+		}
+
+		gr.cam_move = false
+		gr.node_move = false
+		gr.node_select = false
+	}
+
+	if gr.app.exeRunning {
+		ui.Paint_rect(0, 0, 1, 1, 0, pl.P, 0.06) //exe rect
+	} else if !gr.app.EnableExecution {
+		ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0.03)
+	}
+
+	return graphCanvas, keyAllow
+}
+
+func (gr *SAGraph) drawNodeList(graphCanvas OsV4, act *SANode, ui *Ui) {
+
+	//activate editbox
+	if gr.showNodeList_justOpen {
+		ui.edit.setFirstEditbox = true
+		gr.showNodeList_justOpen = false
+	}
+
+	//search
+	ui.Div_colMax(0, 100)
+	ui.Comp_editbox(0, 0, 1, 1, &gr.node_search, Comp_editboxProp().Ghost(ui.trns.SEARCH).Highlight(gr.node_search != ""))
+	if ui.Comp_buttonText(1, 0, 1, 1, "X", "", ui.trns.CLOSE, true, false) > 0 {
+		gr.showNodeList = false //hide
+	}
+
+	//items
+	y := 1
+	searches := strings.Split(strings.ToLower(gr.node_search), " ")
+	for _, n := range act.Subs {
+		if gr.node_search == "" || SAApp_IsSearchedName(n.Name, searches) {
+			if ui.Comp_buttonMenu(0, y, 1, 1, n.Name, n.Exe, true, n.Selected) > 0 {
+				n.SelectOnlyThis()
+				gr.autoZoom(true, graphCanvas, ui)
+			}
+			y++
+		}
+	}
+}
+
+func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool, ui *Ui) {
+
+	keys := &ui.win.io.keys
+
+	ui.DivInfo_set(SA_DIV_SET_scrollVnarrow, 1, 0)
+	ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
+
+	ui.Div_rowMax(7, 100)
+
+	path := "file:apps/base/resources/"
+
+	y := 0
+	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+OsTrnString(gr.app.EnableExecution, "pause.png", "play.png")), 0.25, "Enable/Disable nodes execution", uint8(OsTrn(gr.app.EnableExecution, int(CdPalette_B), int(CdPalette_E))), true, false) > 0 {
+		gr.app.EnableExecution = !gr.app.EnableExecution
+		if gr.app.EnableExecution {
 			gr.app.SetExecute()
 		}
-		y++
-
-		if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"home.png"), 0.3, "Zoom all nodes(H)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
-			gr.autoZoom(false, graphCanvas, ui) //zoom to all
-		}
-		y++
-
-		if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"home_select.png"), 0.2, "Zoom selected nodes(G)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "g")) {
-			gr.autoZoom(true, graphCanvas, ui) //zoom to selected
-		}
-		y++
-
-		if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy.png"), 0.25, "Reoder all nodes(L)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "l")) {
-			gr.reorder(false, ui)               //reorder nodes
-			gr.autoZoom(false, graphCanvas, ui) //zoom to all
-		}
-		y++
-
-		if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy_select.png"), 0.2, "Reorder selected nodes(K)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "k")) {
-			gr.reorder(true, ui)               //reorder only selected nodes
-			gr.autoZoom(true, graphCanvas, ui) //zoom to selected
-		}
-		y++
-
-		if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"list.png"), 0.2, "Show list of all nodes(Ctrl+F)", CdPalette_P, true, gr.showNodeList) > 0 || strings.EqualFold(keys.ctrlChar, "f") {
-			gr.showNodeList = !gr.showNodeList
-			if gr.showNodeList {
-				gr.showNodeList_justOpen = true
-			}
-		}
-		y++
-
-		y++ //space - adjust Div_rowMax()
-
-		if gr.app.jobs.Num() > 0 {
-			ui.Comp_text(0, y, 1, 1, fmt.Sprintf("**%d**", gr.app.jobs.Num()), 1)
-			//ui.Comp_text(0, y, 1, 1, OsTrnString(done > 0, fmt.Sprintf("%.0f%%", done*100), "---"), 1)
-		}
-
 	}
-	ui.Div_end()
+	y++
+
+	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"update.png"), 0.25, "Recompute all nodes", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
+		gr.app.SetExecute()
+	}
+	y++
+
+	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"home.png"), 0.3, "Zoom all nodes(H)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
+		gr.autoZoom(false, graphCanvas, ui) //zoom to all
+	}
+	y++
+
+	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"home_select.png"), 0.2, "Zoom selected nodes(G)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "g")) {
+		gr.autoZoom(true, graphCanvas, ui) //zoom to selected
+	}
+	y++
+
+	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy.png"), 0.25, "Reoder all nodes(L)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "l")) {
+		gr.reorder(false, ui)               //reorder nodes
+		gr.autoZoom(false, graphCanvas, ui) //zoom to all
+	}
+	y++
+
+	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy_select.png"), 0.2, "Reorder selected nodes(K)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "k")) {
+		gr.reorder(true, ui)               //reorder only selected nodes
+		gr.autoZoom(true, graphCanvas, ui) //zoom to selected
+	}
+	y++
+
+	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"list.png"), 0.2, "Show list of all nodes(Ctrl+F)", CdPalette_P, true, gr.showNodeList) > 0 || strings.EqualFold(keys.ctrlChar, "f") {
+		gr.showNodeList = !gr.showNodeList
+		if gr.showNodeList {
+			gr.showNodeList_justOpen = true
+		}
+	}
+	y++
+
+	y++ //space - adjust Div_rowMax()
+
+	if gr.app.exeRunning {
+		//ui.Comp_text(0, y, 1, 1, fmt.Sprintf("**%d**", gr.app.jobs.Num()), 1)
+		//ui.Comp_text(0, y, 1, 1, OsTrnString(done > 0, fmt.Sprintf("%.0f%%", done*100), "---"), 1)
+	}
 }

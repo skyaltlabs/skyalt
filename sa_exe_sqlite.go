@@ -59,8 +59,6 @@ func _SAExe_Sqlite_open(node *SANode, fileAttr *SANodeAttr) *DiskDb {
 
 func SAExe_Sqlite_insert(node *SANode) bool {
 
-	triggerAttr := node.GetAttrUi("trigger", 0, SAAttrUi_SWITCH)
-
 	fileAttr := node.GetAttrUi("file", "", SAAttrUi_FILE)
 
 	db := _SAExe_Sqlite_open(node, fileAttr)
@@ -133,14 +131,11 @@ func SAExe_Sqlite_insert(node *SANode) bool {
 
 	node.GetAttr("_query", "").SetOutBlob([]byte(query)) //show final query
 
-	if triggerAttr.GetBool() {
-		_, err = db.Write(query, valValuesArr...)
-		if err != nil {
-			node.SetError(err)
-			return false
-		}
-
-		triggerAttr.AddSetAttr("0")
+	//write
+	_, err = db.Write(query, valValuesArr...)
+	if err != nil {
+		node.SetError(err)
+		return false
 	}
 
 	return true

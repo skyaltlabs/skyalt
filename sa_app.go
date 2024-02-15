@@ -80,18 +80,18 @@ type SAApp struct {
 	Name string
 	IDE  bool
 
-	root *SANode
-	act  *SANode
+	Cam_x, Cam_y, Cam_z float64 `json:",omitempty"`
 
-	history_act           []SANodePath //JSONs
-	history               []*SANode    //JSONs
+	root *SANode
+
+	history               []*SANode //JSONs
 	history_pos           int
 	history_divScroll     *UiLayoutDiv
 	history_divSroll_time float64
 
-	exeIt    bool
-	setAttrs []SASetAttr
-	jobs     *SAJobs
+	exeIt      bool
+	setAttrs   []SASetAttr
+	exeRunning bool
 
 	graph  *SAGraph
 	canvas SACanvas
@@ -116,8 +116,7 @@ func (a *SAApp) init(base *SABase) {
 
 	a.graph = NewSAGraph(a)
 
-	a.jobs = NewSAJobs(a)
-	//a.exe = NewSAAppExe(a)
+	a.Cam_z = 1
 
 	ic := a.GetFolderPath() + "icon.png"
 	if OsFileExists(ic) {
@@ -136,7 +135,6 @@ func NewSAApp(name string, base *SABase) *SAApp {
 	return app
 }
 func (app *SAApp) Destroy() {
-	app.jobs.Destroy()
 }
 
 func (app *SAApp) AddSetAttr(attr *SANodeAttr, value string, mapOrArray bool, exeIt bool) {
@@ -191,87 +189,49 @@ func (app *SAApp) AddMic(data audio.IntBuffer) {
 }
 
 func (app *SAApp) Tick() {
+	if !app.exeRunning {
+		if len(app.setAttrs) > 0 {
+			n := 0
+			for _, sa := range app.setAttrs {
+				sa.Write(app.root) //if different, app.exeIt = true
 
-	app.jobs.Tick(app.EnableExecution)
-
-	if len(app.setAttrs) > 0 {
-
-		n := 0
-		for _, sa := range app.setAttrs {
-			sa.Write(app.root) //if different, app.exeIt = true
-
-			n++
-			if sa.exeIt {
-				break
+				n++
+				if sa.exeIt {
+					break
+				}
 			}
+			app.setAttrs = app.setAttrs[n:]
 		}
-		app.setAttrs = app.setAttrs[n:]
-	}
 
-	if !app.exeIt {
-		return
-	}
+		if app.exeIt {
+			app.HistoryInit()
 
-	app.exeIt = false
-	app.HistoryInit()
+			app.exeIt = false
+			app.exeRunning = true
+
+			go app.execute()
+
+			return
+		}
+	}
+}
+
+func (app *SAApp) execute() {
 
 	app.root.PrepareExe() //.state = WAITING(to be executed)
 
 	app.root.ParseExpresions()
 	app.root.CheckForLoops()
 
-	var list []*SANode
-	app.root.buildSubList(&list)
-	app.root.markUnusedAttrs()
-
-	app.ExecuteList(list)
+	app.root.ExecuteSubs()
 
 	app.root.PostExe()
-}
 
-func (app *SAApp) ExecuteList(list []*SANode) {
-
-	active := true
-	for active { //&& !app.exit.Load() {
-		active = false
-
-		for _, it := range list {
-
-			if it.state == SANode_STATE_WAITING {
-				active = true
-
-				if it.IsReadyToBeExe() {
-
-					//execute expression
-					for _, v := range it.Attrs {
-						if v.errExp != nil {
-							continue
-						}
-						v.ExecuteExpression()
-					}
-
-					if !it.Bypass {
-						it.state = SANode_STATE_RUNNING
-						it.Execute()
-
-					}
-					it.state = SANode_STATE_DONE //done
-				}
-			}
-		}
-	}
-
-	fmt.Printf("Executed() done\n")
+	app.exeRunning = false
 }
 
 func (app *SAApp) RenderApp(ide bool) {
-
-	node := app.root
-	if ide {
-		node = app.act
-	}
-
-	node.renderLayout()
+	app.root.renderLayout()
 }
 
 func (app *SAApp) renderIDE(ui *Ui) {
@@ -282,7 +242,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	var colDiv *UiLayoutDiv
 	var rowDiv *UiLayoutDiv
 
-	node := app.act
+	node := app.root
 
 	//size
 	appDiv := ui.Div_start(1, 1, 1, 1)
@@ -434,7 +394,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 		touch_grid := appDiv.GetCloseCell(touch.pos)
 
 		//find resizer
-		for _, w := range app.act.Subs {
+		for _, w := range app.root.Subs {
 			if !w.CanBeRenderOnCanvas() {
 				continue
 			}
@@ -449,22 +409,17 @@ func (app *SAApp) renderIDE(ui *Ui) {
 
 		//find select/move node
 		if !app.canvas.resize.Is() {
-			for _, w := range app.act.Subs {
+			for _, w := range app.root.Subs {
 				if !w.CanBeRenderOnCanvas() {
 					continue
 				}
 				if w.GetGridShow() && w.GetGrid().Inside(touch_grid.Start) {
-
 					//select start(go to inside)
 					if keys.alt {
 						if touch.start {
 							app.canvas.startClick = NewSANodePath(w)
 							app.canvas.startClickRel = touch_grid.Start.Sub(w.GetGrid().Start)
 							w.SelectOnlyThis()
-						}
-
-						if touch.end && touch.numClicks > 1 && w.IsGuiLayout() {
-							app.act = w //goto layout
 						}
 					}
 
@@ -499,7 +454,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	}
 	if touch.end {
 		if appDiv.IsOver(ui) && keys.alt && !app.canvas.startClick.Is() && !app.canvas.resize.Is() { //click outside nodes
-			app.act.DeselectAll()
+			app.root.DeselectAll()
 		}
 		app.canvas.startClick = SANodePath{}
 		app.canvas.resize = SANodePath{}
@@ -509,14 +464,9 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	if ui.edit.uid == nil && appDiv.IsOver(ui) {
 		keys := &ui.win.io.keys
 
-		//bypass
-		if keys.text == "b" {
-			app.act.BypassReverseSelectedNodes()
-		}
-
 		//delete
 		if keys.delete {
-			app.act.RemoveSelectedNodes()
+			app.root.RemoveSelectedNodes()
 		}
 	}
 }
@@ -553,7 +503,6 @@ func (app *SAApp) History(ui *Ui) {
 }
 
 func (app *SAApp) ComboListOfNodes(x, y, w, h int, act string, ui *Ui) string {
-	//fns_names := app.getListOfNodesTranslated()
 	fns_values := app.base.node_groups.getList()
 
 	ui.Comp_combo(x, y, w, h, &act, fns_values, fns_values, "", true, true) //add icons ...
@@ -588,7 +537,7 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 					if app.canvas.addnode_search == "" || SAApp_IsSearchedName(nd.name, searches) {
 						if keys.enter || ui.Comp_buttonMenuIcon(0, y, 1, 1, nd.name, gr.icon, 0.2, "", true, false) > 0 {
 							//add new node
-							nw := app.act.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name, nd.name)
+							nw := app.root.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name, nd.name)
 							nw.SelectOnlyThis()
 
 							ui.Dialog_close()
@@ -613,7 +562,7 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 					for i, nd := range gr.nodes {
 						if ui.Comp_buttonMenuIcon(0, i, 1, 1, nd.name, gr.icon, 0.2, "", true, false) > 0 {
 							//add new node
-							nw := app.act.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name, nd.name)
+							nw := app.root.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name, nd.name)
 							nw.SelectOnlyThis()
 
 							ui.CloseAll()
@@ -710,42 +659,6 @@ func _SAApp_drawColsRowsDialog(name string, items *[]*SANodeColRow, pos int, ui 
 func (app *SAApp) RenderHeader(ui *Ui) {
 	ui.Div_colMax(1, 100)
 	ui.Div_colMax(2, 6)
-	//ui.Div_colMax(5, 2)
-
-	//level up
-	if ui.Comp_buttonIcon(0, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/levelup.png"), 0.3, "One level up", CdPalette_P, app.act.parent != nil, false) > 0 {
-		app.act = app.act.parent
-	}
-	if !ui.edit.IsActive() {
-		keys := &ui.win.io.keys
-		if strings.EqualFold(keys.text, "u") {
-			if app.act.parent != nil {
-				app.act = app.act.parent
-			}
-		}
-	}
-
-	//list
-	{
-		var listPathes []string
-		var listNodes []*SANode
-		app.root.buildSubsList(&listPathes, &listNodes)
-
-		val := ""
-		for i, nd := range listNodes {
-			if app.act == nd {
-				val = listPathes[i]
-			}
-		}
-		if ui.Comp_combo(1, 0, 1, 1, &val, listPathes, listPathes, "", true, true) {
-			for i, lp := range listPathes {
-				if val == lp {
-					app.act = listNodes[i]
-					break
-				}
-			}
-		}
-	}
 
 	ui.Comp_text(2, 0, 1, 1, "Press Alt-key to select nodes", 1)
 
@@ -785,19 +698,15 @@ func (app *SAApp) addHistory(exeIt bool, rewriteLast bool) {
 	//cut newer history
 	if app.history_pos+1 < len(app.history) {
 		app.history = app.history[:app.history_pos+1]
-		app.history_act = app.history_act[:app.history_pos+1]
 	}
 
 	cp_root, _ := app.root.Copy() //err ...
-	cp_act := cp_root.FindMirror(app.root, app.act)
 
 	if rewriteLast {
 		app.history[app.history_pos] = cp_root
-		app.history_act[app.history_pos] = NewSANodePath(cp_act)
 	} else {
 		//add history
 		app.history = append(app.history, cp_root)
-		app.history_act = append(app.history_act, NewSANodePath(cp_act))
 		app.history_pos++
 	}
 	if exeIt {
@@ -807,7 +716,6 @@ func (app *SAApp) addHistory(exeIt bool, rewriteLast bool) {
 
 func (app *SAApp) recoverHistory() {
 	app.root, _ = app.history[app.history_pos].Copy()
-	app.act = app.history_act[app.history_pos].FindPath(app.root)
 	app.SetExecute()
 }
 

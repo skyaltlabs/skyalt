@@ -40,6 +40,10 @@ func (node *SANode) KeyProgessSelection(keys *WinKeys) bool {
 	return node.selected_cover
 }
 
+func (w *SANode) cellZoom(ui *Ui) float32 {
+	return float32(ui.win.Cell()) * float32(w.app.Cam_z) * 1
+}
+
 func (w *SANode) pixelsToNode(touchPos OsV2, ui *Ui, lvDiv *UiLayoutDiv) OsV2f {
 
 	cell := ui.win.Cell()
@@ -47,60 +51,127 @@ func (w *SANode) pixelsToNode(touchPos OsV2, ui *Ui, lvDiv *UiLayoutDiv) OsV2f {
 	p := touchPos.Sub(lvDiv.canvas.Start).Sub(lvDiv.canvas.Size.MulV(0.5))
 
 	var r OsV2f
-	r.X = float32(p.X) / float32(w.Cam_z) / float32(cell)
-	r.Y = float32(p.Y) / float32(w.Cam_z) / float32(cell)
+	r.X = float32(p.X) / float32(w.app.Cam_z) / float32(cell)
+	r.Y = float32(p.Y) / float32(w.app.Cam_z) / float32(cell)
 
-	r.X += float32(w.Cam_x)
-	r.Y += float32(w.Cam_y)
+	r.X += float32(w.app.Cam_x)
+	r.Y += float32(w.app.Cam_y)
 
 	return r
 }
 
-func (w *SANode) nodeToPixels(p OsV2f, canvas OsV4, ui *Ui) OsV2 {
+func (node *SANode) nodeToPixels(p OsV2f, canvas OsV4, ui *Ui) OsV2 {
+
+	node = node.GetAbsoluteRoot()
 
 	cell := ui.win.Cell()
 
-	p.X -= float32(w.Cam_x)
-	p.Y -= float32(w.Cam_y)
+	p.X -= float32(node.app.Cam_x)
+	p.Y -= float32(node.app.Cam_y)
 
 	var r OsV2
-	r.X = int(p.X * float32(cell) * float32(w.Cam_z))
-	r.Y = int(p.Y * float32(cell) * float32(w.Cam_z))
+	r.X = int(p.X * float32(cell) * float32(node.app.Cam_z))
+	r.Y = int(p.Y * float32(cell) * float32(node.app.Cam_z))
 
 	return r.Add(canvas.Start).Add(canvas.Size.MulV(0.5))
 }
 
-func (w *SANode) cellZoom(ui *Ui) float32 {
-	return float32(ui.win.Cell()) * float32(w.Cam_z) * 1
+func (node *SANode) nodeToPixelsCoord(canvas OsV4, ui *Ui) (OsV4, OsV4, OsV4) {
+	var cq OsV4
+	var cq_sel OsV4
+	cellr := node.parent.cellZoom(ui)
+
+	if SAGroups_HasNodeSub(node.Exe) {
+		//compute bound
+		var bound OsV4
+		for i, nd := range node.Subs {
+			coord, _, _ := nd.nodeToPixelsCoord(canvas, ui)
+			if i == 0 {
+				bound = coord
+			} else {
+				bound = bound.Extend(coord)
+			}
+		}
+
+		//add 1cell around and 1cell header
+		header_h := int(1 * cellr)
+		cq = bound.AddSpace(int(-1.0 * float64(cellr)))
+		cq = InitOsV4(cq.Start.X, cq.Start.Y-header_h, cq.Size.X, cq.Size.Y+header_h)
+
+		cq_sel = cq
+		cq_sel.Size.Y = header_h
+	} else {
+
+		mid := node.parent.nodeToPixels(node.Pos, canvas, ui) //.parent, because it has Cam
+
+		w := 4
+		h := 1
+
+		cq = InitOsV4Mid(mid, OsV2{int(float32(w) * cellr), int(float32(h) * cellr)})
+		cq_sel = cq //same
+	}
+
+	return cq, cq.AddSpace(int(-0.15 * float64(cellr))), cq_sel
 }
 
-func (node *SANode) nodeToPixelsCoord(canvas OsV4, ui *Ui) (OsV4, OsV4) {
+func (node *SANode) drawRectNode(someNodeIsDraged bool, app *SAApp) bool {
+	ui := app.base.ui
+	lv := ui.GetCall()
+	touch := &ui.win.io.touch
+	pl := ui.win.io.GetPalette()
+	roundc := 0.2
 
-	coord := node.parent.nodeToPixels(node.Pos, canvas, ui) //.parent, because it has Cam
+	coord, selCoord, headerCoord := node.nodeToPixelsCoord(lv.call.canvas, ui)
 
-	w := 4
-	h := 1
+	bck := ui.win.io.ini.Dpi
+	ui.win.io.ini.Dpi = int(float32(ui.win.io.ini.Dpi) * float32(node.parent.app.Cam_z))
 
-	cellr := node.parent.cellZoom(ui)
-	cq := InitOsV4Mid(coord, OsV2{int(float32(w) * cellr), int(float32(h) * cellr)})
+	backCd := pl.GetGrey(1)
 
-	return cq, cq.AddSpace(int(-0.15 * float64(cellr)))
+	backCd.A = 255
+	ui.buff.AddRectRound(headerCoord, ui.CellWidth(roundc), backCd, 0)
+
+	inside := false
+	ui.Div_startCoord(0, 0, 1, 1, headerCoord, node.Name)
+	{
+		ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
+		ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
+		ui.Div_colMax(0, 1)
+		ui.Div_colMax(1, 100)
+		ui.Comp_textSelect(0, 0, 2, 1, node.Name, OsV2{1, 1}, false, false)
+		inside = headerCoord.GetIntersect(lv.call.crop).Inside(touch.pos)
+	}
+	ui.Div_end()
+
+	backCd.A = 50
+	ui.buff.AddRectRound(coord, ui.CellWidth(roundc), backCd, 0)
+
+	backCd.A = 255
+	ui.buff.AddRectRound(coord, ui.CellWidth(roundc), backCd, ui.CellWidth((0.03)))
+
+	//select rect
+	selectRad := ui.CellWidth(roundc * 1.3)
+	if (someNodeIsDraged && node.KeyProgessSelection(&ui.win.io.keys)) || (!someNodeIsDraged && node.Selected) {
+		ui.buff.AddRectRound(selCoord, selectRad, SAApp_getYellow(), ui.CellWidth(0.06)) //selected
+	}
+
+	ui.win.io.ini.Dpi = bck
+
+	return inside
 }
 
 func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 
 	ui := app.base.ui
-
 	lv := ui.GetCall()
 	touch := &ui.win.io.touch
 	pl := ui.win.io.GetPalette()
-
-	coord, selCoord := node.nodeToPixelsCoord(lv.call.canvas, ui)
-
 	roundc := 0.2
 
+	coord, selCoord, _ := node.nodeToPixelsCoord(lv.call.canvas, ui)
+
 	bck := ui.win.io.ini.Dpi
-	ui.win.io.ini.Dpi = int(float32(ui.win.io.ini.Dpi) * float32(node.parent.Cam_z))
+	ui.win.io.ini.Dpi = int(float32(ui.win.io.ini.Dpi) * float32(node.parent.app.Cam_z))
 
 	ui.Div_startCoord(0, 0, 1, 1, coord, node.Name)
 	ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
@@ -120,18 +191,11 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 		if node.HasError() {
 			backCd = pl.E
 		}
-		if node.Bypass {
-			backCd.A = 20
-		}
 
 		ui.buff.AddRectRound(coord, ui.CellWidth(roundc), backCd, 0)
 
 		//shadow
-		shadowCd := pl.GetGrey(0.4)
-		if node.Bypass {
-			shadowCd.A = 20
-		}
-		ui.buff.AddRectRound(coord, ui.CellWidth(roundc), shadowCd, ui.CellWidth(0.03)) //smooth
+		ui.buff.AddRectRound(coord, ui.CellWidth(roundc), pl.GetGrey(0.4), ui.CellWidth(0.03)) //smooth
 	}
 
 	ui.Div_startCoord(0, 0, 1, 1, coord, node.Name)
@@ -163,10 +227,8 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 		}
 	}
 
-	selectRad := ui.CellWidth(roundc * 1.3)
-	ui.win.io.ini.Dpi = bck
-
 	//select rect
+	selectRad := ui.CellWidth(roundc * 1.3)
 	if (someNodeIsDraged && node.KeyProgessSelection(&ui.win.io.keys)) || (!someNodeIsDraged && node.Selected) {
 		ui.buff.AddRectRound(selCoord, selectRad, SAApp_getYellow(), ui.CellWidth(0.06)) //selected
 	}
@@ -183,10 +245,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 		ui.buff.AddRectRound(cq, selectRad, cd, ui.CellWidth(0.06)) //selected
 	}
 
-	//go inside sub
-	if node.IsGuiLayout() && inside && touch.end && touch.numClicks > 1 {
-		app.act = node
-	}
+	ui.win.io.ini.Dpi = bck
 
 	return inside
 }
