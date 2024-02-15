@@ -277,6 +277,7 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 	//attr		//same node
 	//.attr		//parent
 	//node.attr
+	rootNode := line.attr.node.app.root
 	if lexer.subs[0].tp == VmLexerWord {
 
 		//var attrLex *VmLexer
@@ -287,15 +288,15 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 
 		if len(lexer.subs) == 1 {
 			//attribute from same node
-			line.addAccess(line.attr.node, lexer.subs[0].GetString(line.line), instr, lexer, line.attr)
+			line.addAccessAttr(line.attr.node, lexer.subs[0].GetString(line.line), instr, lexer, line.attr)
 		} else if len(lexer.subs) >= 2 && lexer.subs[1].tp == VmLexerDot {
 			if len(lexer.subs) >= 3 && lexer.subs[2].tp == VmLexerWord {
 				if len(lexer.subs) == 3 {
 					//node.attribute
 					nodeName := lexer.subs[0].GetString(line.line)
-					ww := line.attr.node.parent.FindNode(nodeName)
-					if ww != nil {
-						line.addAccess(ww, lexer.subs[2].GetString(line.line), instr, lexer, line.attr)
+					nd := rootNode.FindNode(nodeName)
+					if nd != nil {
+						line.addAccessAttr(nd, lexer.subs[2].GetString(line.line), instr, lexer, line.attr)
 					} else {
 						line.addError(lexer, fmt.Sprintf("Node(%s) not found", nodeName))
 					}
@@ -321,7 +322,7 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 		if len(lexer.subs) >= 2 && lexer.subs[1].tp == VmLexerWord {
 			if len(lexer.subs) == 2 {
 				//attribute from parent node
-				line.addAccess(line.attr.node.parent, lexer.subs[1].GetString(line.line), instr, lexer, line.attr)
+				line.addAccessAttr(rootNode, lexer.subs[1].GetString(line.line), instr, lexer, line.attr)
 			} else {
 				line.addError(lexer, "Access must be in form of <node>.<attribute> or .<attribute>")
 			}
@@ -335,13 +336,12 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 	return nil
 }
 
-func (line *VmLine) addAccess(node *SANode, attrName string, instr *VmInstr, lexer *VmLexer, mainAttr *SANodeAttr) {
+func (line *VmLine) addAccessAttr(node *SANode, attrName string, instr *VmInstr, lexer *VmLexer, srcAttr *SANodeAttr) {
 	vv := node.findAttr(attrName)
 	if vv != nil {
-
 		if line.attr.node != node || !vv.IsOutput() {
 			instr.accessAttr = vv
-			mainAttr.depends = append(mainAttr.depends, vv) //add
+			srcAttr.AddDepend(vv)
 		} else {
 			line.addError(lexer, fmt.Sprintf("Can not read _OUTPUT attribute(%s) from same node", attrName))
 		}
