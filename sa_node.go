@@ -264,12 +264,12 @@ func (w *SANode) SetPosStart() {
 
 func (w *SANode) AddPos(r OsV2f) {
 
+	w.Pos = w.pos_start.Add(r)
+
 	if SAGroups_HasNodeSub(w.Exe) {
 		for _, nd := range w.Subs {
 			nd.AddPos(r)
 		}
-	} else {
-		w.Pos = w.pos_start.Add(r)
 	}
 }
 

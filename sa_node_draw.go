@@ -81,9 +81,13 @@ func (node *SANode) nodeToPixelsCoord(canvas OsV4, ui *Ui) (OsV4, OsV4, OsV4) {
 	var cq_sel OsV4
 	cellr := node.parent.cellZoom(ui)
 
+	mid := node.parent.nodeToPixels(node.Pos, canvas, ui) //.parent, because it has Cam
+	w := 4
+	h := 1
+
 	if SAGroups_HasNodeSub(node.Exe) {
 		//compute bound
-		var bound OsV4
+		bound := InitOsV4Mid(mid, OsV2{int(float32(w) * cellr), int(float32(h) * cellr)})
 		for i, nd := range node.Subs {
 			coord, _, _ := nd.nodeToPixelsCoord(canvas, ui)
 			if i == 0 {
@@ -101,12 +105,6 @@ func (node *SANode) nodeToPixelsCoord(canvas OsV4, ui *Ui) (OsV4, OsV4, OsV4) {
 		cq_sel = cq
 		cq_sel.Size.Y = header_h
 	} else {
-
-		mid := node.parent.nodeToPixels(node.Pos, canvas, ui) //.parent, because it has Cam
-
-		w := 4
-		h := 1
-
 		cq = InitOsV4Mid(mid, OsV2{int(float32(w) * cellr), int(float32(h) * cellr)})
 		cq_sel = cq //same
 	}
