@@ -21,6 +21,17 @@ func SAExe_Vars(node *SANode) bool {
 	return true
 }
 
+func SAExe_If(node *SANode) bool {
+	triggerAttr := node.GetAttrUi("trigger", 0, SAAttrUi_SWITCH)
+
+	if triggerAttr.GetBool() {
+		node.ExecuteSubs()
+		triggerAttr.AddSetAttr("0")
+	}
+
+	return true
+}
+
 // TODO: render sub nodes in same level as this node ...
 // - the node can be large(area) so reorder() must count with that
 func SAExe_For(node *SANode) bool {
@@ -30,16 +41,12 @@ func SAExe_For(node *SANode) bool {
 	_keyAttr := node.GetAttr("_key", "")
 	_valueAttr := node.GetAttr("_value", "")
 
-	var list []*SANode
-	node.buildSubList(&list)
-	node.markUnusedAttrs()
-
 	if isInputNumber {
 		n := inputAttr.GetInt()
 		for i := 0; i < n; i++ {
 			_keyAttr.GetResult().SetInt(i)
 			_valueAttr.GetResult().SetInt(i)
-			node.app.ExecuteList(list)
+			node.ExecuteSubs()
 		}
 	} else {
 		nArr := inputAttr.NumArrayItems()
@@ -50,7 +57,7 @@ func SAExe_For(node *SANode) bool {
 				_keyAttr.GetResult().SetInt(i)
 				_valueAttr.GetResult().value = inputAttr.GetArrayItem(i)
 
-				node.app.ExecuteList(list)
+				node.ExecuteSubs()
 			}
 		}
 		if nMap > 0 {
@@ -59,7 +66,7 @@ func SAExe_For(node *SANode) bool {
 				_keyAttr.GetResult().SetString(key)
 				_valueAttr.GetResult().value = val
 
-				node.app.ExecuteList(list)
+				node.ExecuteSubs()
 			}
 		}
 	}
@@ -67,36 +74,29 @@ func SAExe_For(node *SANode) bool {
 	return true
 }
 
-func SAExe_Setter_destNode(node *SANode) *SANode {
+func SAExe_Setter_destNode(node *SANode) (*SANode, *SANodeAttr) {
 	nodeAttr := node.GetAttr("node", "")
 	attrAttr := node.GetAttr("attr", "")
 	nd := node.parent.FindNode(nodeAttr.GetString())
 	if nd == nil {
-		return nil
+		nodeAttr.SetErrorStr("Node not found")
+		return nil, nil
 	}
 	attr := nd.findAttr(attrAttr.GetString())
 	if attr == nil {
-		return nil //both(node &  attr) must be valid
+		nodeAttr.SetErrorStr("Attribute not found")
+		return nil, nil //both(node &  attr) must be valid
 	}
-	return nd
+	return nd, attr
 }
 
 func SAExe_Setter(node *SANode) bool {
 	triggerAttr := node.GetAttrUi("trigger", 0, SAAttrUi_SWITCH)
 
-	nodeAttr := node.GetAttr("node", "")
-	attrAttr := node.GetAttr("attr", "")
 	value := node.GetAttr("value", "").GetString()
 
-	nd := node.parent.FindNode(nodeAttr.GetString())
-	if nd == nil {
-		nodeAttr.SetErrorStr("Not exist")
-		return false
-	}
-
-	attr := nd.findAttr(attrAttr.GetString())
-	if attr == nil {
-		attrAttr.SetErrorStr("Not exist")
+	nd, attr := SAExe_Setter_destNode(node)
+	if nd == nil || attr == nil {
 		return false
 	}
 

@@ -76,6 +76,7 @@ func InitSAGroups() SAGroups {
 
 	grs.groups = append(grs.groups, &SAGroup{name: "Variables", icon: InitWinMedia_url(path + "node_vars.png"), nodes: []*SAGroupNode{
 		{name: "vars", fn: SAExe_Vars},
+		{name: "if", fn: SAExe_If},
 		{name: "for", fn: SAExe_For},
 		{name: "setter", fn: SAExe_Setter},
 	}})
@@ -109,11 +110,16 @@ func InitSAGroups() SAGroups {
 	return grs
 }
 func SAGroups_HasNodeSub(node string) bool {
-	return strings.EqualFold(node, "layout") || strings.EqualFold(node, "dialog") || strings.EqualFold(node, "for")
+	return strings.EqualFold(node, "layout") || strings.EqualFold(node, "dialog") || strings.EqualFold(node, "for") || strings.EqualFold(node, "if")
+}
+
+func SAGroups_IsNodeIf(node string) bool {
+	return strings.EqualFold(node, "if")
 }
 func SAGroups_IsNodeFor(node string) bool {
 	return strings.EqualFold(node, "for")
 }
+
 func SAGroups_IsNodeSetter(node string) bool {
 	return strings.EqualFold(node, "setter")
 }
