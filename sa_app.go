@@ -754,18 +754,19 @@ func SAApp_getYellow() OsCd {
 	return OsCd{204, 204, 0, 255} //...
 }
 
-func (app *SAApp) ImportCode(code string) {
-	lines := strings.Split(code, "\n")
+type SALine struct {
+	line string
+	subs []*SALine
+}
 
-	ops := *app.ops
-	ops.ops = append(ops.ops, VmOp{100, false, "=", nil})
+func (node *SANode) _importCode(line *SALine, ops *VmOps) {
 
-	for i, ln := range lines {
-		if ln == "" {
+	for i, ln := range line.subs {
+		if ln.line == "" {
 			continue //skip empty
 		}
 
-		lex, err := ParseLine(ln, 0, &ops)
+		lex, err := ParseLine(ln.line, 0, ops)
 		if err != nil {
 			fmt.Printf("Line(%d: %s) has parsing error: %v\n", i, ln, err)
 			continue
@@ -774,11 +775,11 @@ func (app *SAApp) ImportCode(code string) {
 		if len(lex.subs) >= 3 &&
 			lex.subs[0].tp == VmLexerWord &&
 			lex.subs[1].tp == VmLexerOp &&
-			lex.subs[1].GetString(ln) == "=" &&
+			lex.subs[1].GetString(ln.line) == "=" &&
 			lex.subs[2].tp == VmLexerWord &&
 			lex.subs[3].tp == VmLexerBracketRound {
 
-			nd := app.root.AddNode(OsV4{}, OsV2f{}, lex.subs[0].GetString(ln), lex.subs[2].GetString(ln)) //grid ... pos ...
+			nd := node.AddNode(OsV4{}, OsV2f{}, lex.subs[0].GetString(ln.line), lex.subs[2].GetString(ln.line)) //grid ... pos ...
 
 			//parameters
 			prms := lex.subs[3]
@@ -790,18 +791,82 @@ func (app *SAApp) ImportCode(code string) {
 				}
 
 				if len(prm.subs) >= 3 && prm.subs[0].tp == VmLexerWord && prm.subs[1].tp == VmLexerDiv {
-					attr := nd.AddAttr(prm.subs[0].GetString(ln))
-					attr.Value = ln[:prm.subs[1].end]
+					attr := nd.AddAttr(prm.subs[0].GetString(ln.line))
+					attr.Value = ln.line[:prm.subs[1].end]
 				} else {
 					fmt.Printf("Line(%d: %s) has param(%d) error\n", i, ln, prm_i)
 				}
 
 				prm_i++
 			}
+
+			//subs
+			nd._importCode(ln, ops)
 		} else {
 			fmt.Printf("Line(%d: %s) has base error\n", i, ln)
 		}
 	}
+}
+
+func _SALine_countTabs(line string) int {
+	tabs := 0
+	for _, ch := range line {
+		if ch == '\t' {
+			tabs++
+		} else {
+			break
+		}
+	}
+	return tabs
+
+}
+
+func InitSALine(code string) *SALine {
+	root_ln := &SALine{}
+
+	var list []*SALine
+	list = append(list, root_ln) //keep depth
+	code_lines := strings.Split(code, "\n")
+	for i := 0; i < len(code_lines); i++ {
+
+		line := code_lines[i]
+
+		tabs := _SALine_countTabs(line)
+		line = line[tabs:] //cut
+
+		depth := len(list) - 1
+		if tabs == depth {
+			list[depth].subs = append(list[depth].subs, &SALine{line: line})
+		} else if tabs < depth {
+			list = list[:tabs+1]
+			i-- //do the line again
+		} else if tabs == depth+1 {
+
+			if len(list[depth].subs) > 0 {
+				parent := list[depth].subs[len(list[depth].subs)-1]
+				//go deep
+				list = append(list, parent)
+				i-- //do the line again
+			} else {
+				fmt.Printf("Error on line(%d): First line must be 0 tabs\n", i)
+			}
+		} else if tabs > depth+1 {
+			fmt.Printf("Error on line(%d): Too many tabs\n", i)
+		}
+	}
+
+	return root_ln
+}
+
+func (app *SAApp) ImportCode(code string) {
+
+	ln := InitSALine(code)
+
+	ops := *app.ops
+	ops.ops = append(ops.ops, VmOp{100, false, "=", nil})
+
+	app.root, _ = NewSANodeRoot("", app)
+	app.root._importCode(ln, &ops)
 }
 
 func (node *SANode) _exportCode(depth int) string {
