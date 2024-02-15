@@ -804,10 +804,14 @@ func (app *SAApp) ImportCode(code string) {
 	}
 }
 
-func (app *SAApp) ExportCode() string {
-	str := ""
+func (node *SANode) _exportCode(depth int) string {
+	tabs := ""
+	for i := 0; i < depth; i++ {
+		tabs += "\t"
+	}
 
-	for _, nd := range app.root.Subs {
+	str := ""
+	for _, nd := range node.Subs {
 		//params
 		params := ""
 		for _, attr := range nd.Attrs {
@@ -817,12 +821,20 @@ func (app *SAApp) ExportCode() string {
 		}
 		params, _ = strings.CutSuffix(params, ",")
 
-		//whole line
-		str += fmt.Sprintf("%s=%s(%s)\n", nd.Name, nd.Exe, params)
+		//line
+		str += fmt.Sprintf("%s%s=%s(%s)\n", tabs, nd.Name, nd.Exe, params)
 
-		//nd.Subs? ...
+		//subs
+		if len(nd.Subs) > 0 {
+			str += nd._exportCode(depth + 1)
+		}
 	}
-	str, _ = strings.CutSuffix(str, "\n")
 
+	return str
+}
+
+func (app *SAApp) ExportCode() string {
+	str := app.root._exportCode(0)
+	str, _ = strings.CutSuffix(str, "\n")
 	return str
 }
