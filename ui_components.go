@@ -711,7 +711,7 @@ func (ui *Ui) Comp_edit_s(style *UiComp, valueIn string, valueInOrig string, ico
 
 	//ghost
 	if len(edit.last_edit) == 0 && len(ghost) > 0 {
-		ui._compDrawText(coord, ghost, "", pl.GetGrey(0.7), prop, false, false, style.label_align, false, false)
+		ui._compDrawText(coord, ghost, "", pl.GetGrey(0.7), prop, false, false, OsV2{1, 1}, false, false)
 	}
 
 	if style.enable {
