@@ -236,6 +236,16 @@ func (attr *SANodeAttr) SetOutBlob(blob []byte) {
 	//attr.GetResult().SetBlob(blob)
 }
 
+func (attr *SANodeAttr) AddDepend(vv *SANodeAttr) {
+	//same
+	for _, dep := range attr.depends {
+		if dep == vv {
+			return
+		}
+	}
+	attr.depends = append(attr.depends, vv) //add
+}
+
 func (attr *SANodeAttr) CheckForLoopAttr(find *SANodeAttr) {
 	for _, dep := range attr.depends {
 		if dep == find {
@@ -244,7 +254,6 @@ func (attr *SANodeAttr) CheckForLoopAttr(find *SANodeAttr) {
 		}
 		dep.CheckForLoopAttr(find)
 	}
-
 }
 
 func (attr *SANodeAttr) ParseExpresion() {
