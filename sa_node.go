@@ -587,12 +587,11 @@ func (w *SANode) FindNode(name string) *SANode {
 		}
 	}
 
-	for _, it := range w.Subs {
-		nd := it.FindNode(name)
-		if nd != nil {
-			return nd
-		}
+	//parent only, never deeper
+	if w.parent != nil {
+		return w.parent.FindNode(name)
 	}
+
 	return nil
 }
 
