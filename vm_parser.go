@@ -277,7 +277,6 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 	//attr		//same node
 	//.attr		//parent
 	//node.attr
-	rootNode := line.attr.node.app.root
 	if lexer.subs[0].tp == VmLexerWord {
 
 		//var attrLex *VmLexer
@@ -294,7 +293,7 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 				if len(lexer.subs) == 3 {
 					//node.attribute
 					nodeName := lexer.subs[0].GetString(line.line)
-					nd := rootNode.FindNode(nodeName)
+					nd := line.attr.node.parent.FindNode(nodeName)
 					if nd != nil {
 						line.addAccessAttr(nd, lexer.subs[2].GetString(line.line), instr, lexer, line.attr)
 					} else {
@@ -322,7 +321,7 @@ func (line *VmLine) getExp(lexer *VmLexer) *VmInstr {
 		if len(lexer.subs) >= 2 && lexer.subs[1].tp == VmLexerWord {
 			if len(lexer.subs) == 2 {
 				//attribute from parent node
-				line.addAccessAttr(rootNode, lexer.subs[1].GetString(line.line), instr, lexer, line.attr)
+				line.addAccessAttr(line.attr.node.parent, lexer.subs[1].GetString(line.line), instr, lexer, line.attr)
 			} else {
 				line.addError(lexer, "Access must be in form of <node>.<attribute> or .<attribute>")
 			}
