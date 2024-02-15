@@ -217,7 +217,7 @@ func NewSANodeRoot(path string, app *SAApp) (*SANode, error) {
 	w.Exe = "layout"
 
 	//load
-	{
+	if path != "" {
 		js, err := os.ReadFile(path)
 		if err == nil {
 			err = json.Unmarshal([]byte(js), w)
