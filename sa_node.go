@@ -440,6 +440,8 @@ func (node *SANode) ExecuteSubs() {
 						v.ExecuteExpression()
 					}
 
+					it.Execute()
+
 					it.state = SANode_STATE_DONE //done
 				}
 			}
