@@ -73,42 +73,59 @@ func NewVmInstr(exe VmInstr_callbackExecute, lexer *VmLexer, pos_attr *SANodeAtt
 	return &instr
 }
 
-func (instr *VmInstr) RenameAccessNode(line string, oldName, newName string) string {
+func (instr *VmInstr) RenameAccessNode(line string, oldName, newName string) (string, bool) {
+	if oldName == newName {
+		return line, false
+	}
+
 	if VmCallback_Cmp(instr.fn, VmBasic_Access) {
 		spl := strings.Split(line[instr.pos.X:instr.pos.Y], ".") //'node.attr' or 'attr'
 		if len(spl) > 1 && spl[0] == oldName {
 			line = line[:instr.pos.X] + newName + line[instr.pos.X+len(spl[0]):]
+			return line, true
 		}
 	}
 
 	for _, prm := range instr.prms {
 		if prm.value != nil {
-			line = prm.value.RenameAccessNode(line, oldName, newName)
+			ln, changed := prm.value.RenameAccessNode(line, oldName, newName)
+			if changed {
+				return ln, true
+			}
 		}
 	}
 
-	return line
+	return line, false
 }
-func (instr *VmInstr) RenameAccessAttr(line string, nodeName string, oldAttrName string, newAttrName string) string {
+func (instr *VmInstr) RenameAccessAttr(line string, nodeName string, oldAttrName string, newAttrName string) (string, bool) {
+	if oldAttrName == newAttrName {
+		return line, false
+	}
+
 	if VmCallback_Cmp(instr.fn, VmBasic_Access) {
 		spl := strings.Split(line[instr.pos.X:instr.pos.Y], ".") //'node.attr' or 'attr'
 
 		if len(spl) == 1 && spl[0] == oldAttrName { //attr
 			line = line[:instr.pos.X] + newAttrName + line[instr.pos.Y:]
+			return line, true
 		}
 
 		if len(spl) > 1 && spl[0] == nodeName && spl[1] == oldAttrName { //node.attr
 			line = line[:instr.pos.X+len(spl[0])+1] + newAttrName + line[instr.pos.Y:]
+			return line, true
 		}
 	}
 
 	for _, prm := range instr.prms {
 		if prm.value != nil {
-			line = prm.value.RenameAccessAttr(line, nodeName, oldAttrName, newAttrName)
+			ln, changed := prm.value.RenameAccessAttr(line, nodeName, oldAttrName, newAttrName)
+			if changed {
+				return ln, true
+			}
 		}
 	}
 
-	return line
+	return line, false
 }
 
 func (instr *VmInstr) IsRunning(st *VmST) bool {
