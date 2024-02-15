@@ -242,6 +242,13 @@ func (base *SABase) GetApp() *SAApp {
 	app := base.Apps[base.Selected]
 	if app.root == nil {
 		app.root, _ = NewSANodeRoot(app.GetJsonPath(), app) //err ...
+
+		//testing import/export
+		/*if app.Name == "LLM_chat" {
+			code := app.ExportCode()
+			b := NewSAApp("dd", base)
+			b.ImportCode(code)
+		}*/
 	}
 	return app
 }
