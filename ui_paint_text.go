@@ -811,25 +811,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 					ui._UiPaint_Text_HScrollInto(value, lines, edit.end, prop)
 				}
 
-				//enter or Tab(key) or outside => save
-				isOutside := false
-				if touch.start && lv.call.enableInput && !lv.call.IsTouchInside(ui) {
-					uid := edit.uid
-					isOutside = (uid != nil && uid == lv.call)
-				}
-				isEnter := keys.enter && (!multi_line || (multi_line_enter_finish && !keys.ctrl) || (!multi_line_enter_finish && keys.ctrl))
-				isEsc := keys.esc
 				isTab := !tabIsChar && keys.tab
-
-				if isTab || isEnter || isOutside || isEsc {
-					if isEsc {
-						value = edit.orig
-					}
-
-					//reset
-					edit.uid = nil
-					edit.temp = ""
-				}
 				if isTab {
 					edit.tab = true //edit
 				}
@@ -838,6 +820,26 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 				cursorPos = edit.end
 
 				edit.last_edit = value
+			}
+
+			//enter or Tab(key) or outside => save
+			isOutside := false
+			if touch.start && lv.call.enableInput && !lv.call.IsTouchInside(ui) {
+				uid := edit.uid
+				isOutside = (uid != nil && uid == lv.call)
+			}
+			isEnter := keys.enter && (!multi_line || (multi_line_enter_finish && !keys.ctrl) || (!multi_line_enter_finish && keys.ctrl))
+			isEsc := keys.esc
+			isTab := !tabIsChar && keys.tab
+
+			if isTab || isEnter || isOutside || isEsc {
+				if isEsc {
+					value = edit.orig
+				}
+
+				//reset
+				edit.uid = nil
+				edit.temp = ""
 			}
 
 			//draw selection
