@@ -327,7 +327,7 @@ func InitWinCdPalette_light() WinCdPalette {
 	pl.E = InitOsCd32(180, 40, 30, 255)
 	pl.OnE = InitOsCdWhite()
 	//Surface(background)
-	pl.B = InitOsCd32(230, 235, 240, 255)
+	pl.B = InitOsCd32(240, 245, 245, 255)
 	pl.OnB = InitOsCd32(25, 27, 30, 255)
 	return pl
 }
