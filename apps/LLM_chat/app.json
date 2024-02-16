@@ -52,523 +52,35 @@
 "Subs": [
 {
 "Pos": {
-"X": -2.3752718,
-"Y": 4.3701906
+"X": 7.6147194,
+"Y": -2.0745087
 },
-"Name": "if1",
-"Exe": "if",
+"Name": "build_prompt",
+"Exe": "vars",
 "Attrs": [
 {
-"Name": "trigger",
-"Value": "button_send.clicked || editbox.enter_finished",
+"Name": "intro",
+"Value": "\"This is a conversation between User and Llama, a friendly chatbot. Llama is helpful, kind, honest, good at writing, and never fails to answer any requests immediately and with precision.\"",
 "ShowExp": false,
 "Ui": {
-"Fn": "switch",
-"HideAddDel": false
-}
-}
-],
-"Subs": [
-{
-"Pos": {
-"X": -14.0036545,
-"Y": 4.678885
-},
-"Name": "db_insert1",
-"Exe": "sqlite_insert",
-"Attrs": [
-{
-"Name": "file",
-"Value": "\"apps/LLM_chat/db.sqlite\"",
-"ShowExp": false,
-"Ui": {
-"Fn": "file",
-"HideAddDel": false
-}
-},
-{
-"Name": "table",
-"Value": "\"chat\"",
-"ShowExp": false,
-"Ui": {
-"Fn": "combo",
-"HideAddDel": false
-}
-},
-{
-"Name": "values",
-"Value": "[{\"value\":editbox.value, \"column\":\"user\", }, {\"value\":time(), \"column\":\"date\", }, {\"value\": if(nn_llama_cpp1._out!=\"\", cleanText(get(nn_llama_cpp1._out, \"content\")), \"\") , \"column\":\"bot\", }]",
-"ShowExp": true,
-"Ui": {
-"Fn": "map",
-"Map": {
-"column": {
-"Fn": "combo",
-"HideAddDel": false
-},
-"value": {
-"HideAddDel": false
-}
-},
-"HideAddDel": true
-}
-},
-{
-"Name": "_query",
-"Value": "\"\"",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-}
-]
-},
-{
-"Pos": {
-"X": -10.80378,
-"Y": 1.1895356
-},
-"Name": "nn_llama_cpp1",
-"Exe": "nn_llama_cpp",
-"Attrs": [
-{
-"Name": "model",
-"Value": "\"llama-2-7b.Q5_K_M.gguf\"",
-"ShowExp": false,
-"Ui": {
-"Fn": "combo",
-"Prms": {
-"labels": ";llama-2-7b.Q5_K_M.gguf",
-"values": ";llama-2-7b.Q5_K_M.gguf"
-},
 "HideAddDel": false
 }
 },
 {
 "Name": "prompt",
-"Value": "build_prompt.prompt",
-"ShowExp": true,
+"Value": "intro \u0026 \"\\n\"  \u0026 json_into_single_string._chat \u0026 \"\\nUser: \" \u0026 editbox.value \u0026\"\\nLlama:\"",
+"ShowExp": false,
 "Ui": {
 "Fn": "Code",
 "HideAddDel": false
 }
-},
-{
-"Name": "stop",
-"Value": "[\"\u003c/s\u003e\", \"Llama:\", \"User:\"]",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "seed",
-"Value": "-1",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "n_predict",
-"Value": "400",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "temperature",
-"Value": "0.8",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "dynatemp_range",
-"Value": "0",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "dynatemp_exponent",
-"Value": "1",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "repeat_last_n",
-"Value": "256",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "repeat_penalty",
-"Value": "1.18",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "top_k",
-"Value": "40",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "top_p",
-"Value": "0.5",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "min_p",
-"Value": "0.05",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "tfs_z",
-"Value": "1",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "typical_p",
-"Value": "1",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "presence_penalty",
-"Value": "0",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "frequency_penalty",
-"Value": "0",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "mirostat",
-"Value": "0",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "mirostat_tau",
-"Value": "5",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "mirostat_eta",
-"Value": "0.1",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "n_probs",
-"Value": "0",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "cache_prompt",
-"Value": "\"0\"",
-"ShowExp": false,
-"Ui": {
-"Fn": "switch",
-"HideAddDel": false
-}
-},
-{
-"Name": "slot_id",
-"Value": "-1",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "_out",
-"Value": "\"\"",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-}
-]
 }
 ]
 },
 {
 "Pos": {
-"X": -1.82402,
-"Y": -13.259906
-},
-"Name": "nn_whisper_cpp",
-"Exe": "nn_whisper_cpp",
-"Attrs": [
-{
-"Name": "model",
-"Value": "\"models/ggml-tiny.en.bin\"",
-"ShowExp": false,
-"Ui": {
-"Fn": "combo",
-"Prms": {
-"labels": ";ggml-tiny.en",
-"values": ";ggml-tiny.en"
-},
-"HideAddDel": false
-}
-},
-{
-"Name": "audio",
-"Value": "microphone._out",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "_text",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "_done",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "offset_t",
-"Value": "0",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "offset_n",
-"Value": "0",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "duration",
-"Value": "0",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "max_context",
-"Value": "-1",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "max_len",
-"Value": "0",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "best_of",
-"Value": "2",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "beam_size",
-"Value": "-1",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "word_thold",
-"Value": "0.01",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "entropy_thold",
-"Value": "2.4",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "logprob_thold",
-"Value": "-1",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "translate",
-"Value": "0",
-"ShowExp": false,
-"Ui": {
-"Fn": "switch",
-"HideAddDel": false
-}
-},
-{
-"Name": "diarize",
-"Value": "0",
-"ShowExp": false,
-"Ui": {
-"Fn": "switch",
-"HideAddDel": false
-}
-},
-{
-"Name": "tinydiarize",
-"Value": "0",
-"ShowExp": false,
-"Ui": {
-"Fn": "switch",
-"HideAddDel": false
-}
-},
-{
-"Name": "split_on_word",
-"Value": "0",
-"ShowExp": false,
-"Ui": {
-"Fn": "switch",
-"HideAddDel": false
-}
-},
-{
-"Name": "no_timestamps",
-"Value": "0",
-"ShowExp": false,
-"Ui": {
-"Fn": "switch",
-"HideAddDel": false
-}
-},
-{
-"Name": "language",
-"Value": "\"\"",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "detect_language",
-"Value": "0",
-"ShowExp": false,
-"Ui": {
-"Fn": "switch",
-"HideAddDel": false
-}
-},
-{
-"Name": "temperature",
-"Value": "0",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "temperature_inc",
-"Value": "0.2",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "response_format",
-"Value": "\"verbose_json\"",
-"ShowExp": false,
-"Ui": {
-"Fn": "combo",
-"Prms": {
-"labels": "verbose_json;json;text;srt;vtt",
-"values": "verbose_json;json;text;srt;vtt"
-},
-"HideAddDel": false
-}
-},
-{
-"Name": "_out",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "input",
-"Value": "\"\"",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-}
-]
-},
-{
-"Pos": {
-"X": 1.7447157,
-"Y": 7.57899
+"X": 1.5078737,
+"Y": 7.334629
 },
 "Name": "reset_editbox",
 "Exe": "setter",
@@ -629,7 +141,7 @@
 "Subs": [
 {
 "Pos": {
-"X": -1.9663744,
+"X": -1.9225148,
 "Y": 4.365288
 },
 "Name": "db_insert",
@@ -956,8 +468,8 @@
 },
 {
 "Pos": {
-"X": -1.8278314,
-"Y": -10.87472
+"X": -1.7839718,
+"Y": -10.918579
 },
 "Name": "set_editbox",
 "Exe": "setter",
@@ -999,34 +511,7 @@
 },
 {
 "Pos": {
-"X": 7.667351,
-"Y": -2.0745087
-},
-"Name": "build_prompt",
-"Exe": "vars",
-"Attrs": [
-{
-"Name": "intro",
-"Value": "\"This is a conversation between User and Llama, a friendly chatbot. Llama is helpful, kind, honest, good at writing, and never fails to answer any requests immediately and with precision.\"",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "prompt",
-"Value": "intro \u0026 \"\\n\"  \u0026 json_into_single_string._chat \u0026 \"\\nUser: \" \u0026 editbox.value \u0026\"\\nLlama:\"",
-"ShowExp": false,
-"Ui": {
-"Fn": "Code",
-"HideAddDel": false
-}
-}
-]
-},
-{
-"Pos": {
-"X": 10.690027,
+"X": 10.847921,
 "Y": -4.674262
 },
 "Name": "json_into_single_string",
@@ -1035,7 +520,7 @@
 {
 "Name": "code",
 "Value": "\"_chat = \\\"\\\"\\nfor r in rows:\\n\\t_chat += \\\"\\\\nUser: \\\" + r[0]\\n\\t_chat += \\\"\\\\nLlama: \\\" + r[1]\\n\"",
-"ShowExp": true,
+"ShowExp": false,
 "Ui": {
 "Fn": "Code",
 "HideAddDel": false
@@ -1051,6 +536,7 @@
 },
 {
 "Name": "_chat",
+"Value": "\"\"",
 "ShowExp": false,
 "Ui": {
 "HideAddDel": false
@@ -1243,6 +729,7 @@
 },
 {
 "Name": "_rows",
+"Value": "[]",
 "ShowExp": false,
 "Ui": {
 "HideAddDel": false
@@ -1250,6 +737,7 @@
 },
 {
 "Name": "_columns",
+"Value": "[]",
 "ShowExp": false,
 "Ui": {
 "HideAddDel": false
@@ -1375,6 +863,238 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": -1.82402,
+"Y": -13.259906
+},
+"Name": "nn_whisper_cpp",
+"Exe": "nn_whisper_cpp",
+"Attrs": [
+{
+"Name": "model",
+"Value": "\"models/ggml-tiny.en.bin\"",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prms": {
+"labels": ";ggml-tiny.en",
+"values": ";ggml-tiny.en"
+},
+"HideAddDel": false
+}
+},
+{
+"Name": "audio",
+"Value": "microphone._out",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "_text",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "_done",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "offset_t",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "offset_n",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "duration",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "max_context",
+"Value": "-1",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "max_len",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "best_of",
+"Value": "2",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "beam_size",
+"Value": "-1",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "word_thold",
+"Value": "0.01",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "entropy_thold",
+"Value": "2.4",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "logprob_thold",
+"Value": "-1",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "translate",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "diarize",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "tinydiarize",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "split_on_word",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "no_timestamps",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "language",
+"Value": "\"\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "detect_language",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "temperature",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "temperature_inc",
+"Value": "0.2",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "response_format",
+"Value": "\"verbose_json\"",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prms": {
+"labels": "verbose_json;json;text;srt;vtt",
+"values": "verbose_json;json;text;srt;vtt"
+},
+"HideAddDel": false
+}
+},
+{
+"Name": "_out",
+"Value": "\"\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "input",
+"Value": "\"\"",
+"ShowExp": false,
+"Ui": {
 "HideAddDel": false
 }
 }
