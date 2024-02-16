@@ -2,6 +2,11 @@
 Build node-based, local-first, and LLM-powered apps.
 
 
+<p align="center">
+<img src="https://github.com/skyaltlabs/skyalt/blob/main/screenshots/screenshot_2024-2-16_14-57-29.png?raw=true" style="border:1px solid LightGrey" />
+</p>
+
+
 
 ## Node-based
 In Unix, everything is a file. In SkyAlt, everything is a node.
