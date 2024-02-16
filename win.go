@@ -84,8 +84,7 @@ type Win struct {
 
 	gph *WinGph
 
-	particles   *WinParticles
-	startupAnim bool
+	particles *WinParticles
 
 	stat       WinStats
 	start_time int64
@@ -98,7 +97,7 @@ func NewWin(disk *Disk) (*Win, error) {
 	win := &Win{}
 	win.disk = disk
 
-	win.startupAnim = !OsFileExists(SKYALT_INI_PATH)
+	startupAnim := !OsFileExists(SKYALT_INI_PATH)
 
 	var err error
 	win.io, err = NewWinIO()
@@ -147,8 +146,8 @@ func NewWin(disk *Disk) (*Win, error) {
 	win.cursors = append(win.cursors, WinCursor{"wait", sdl.SYSTEM_CURSOR_WAITARROW, sdl.CreateSystemCursor(sdl.SYSTEM_CURSOR_WAITARROW)})
 	win.cursors = append(win.cursors, WinCursor{"no", sdl.SYSTEM_CURSOR_NO, sdl.CreateSystemCursor(sdl.SYSTEM_CURSOR_NO)})
 
-	if win.startupAnim {
-		win.SetProgress(5)
+	if startupAnim {
+		win.SetProgress(5, true)
 	}
 
 	return win, nil
@@ -185,17 +184,20 @@ func (win *Win) Destroy() error {
 	return nil
 }
 
-func (win *Win) SetProgress(time_sec float32) {
+func (win *Win) SetProgress(time_sec float32, reset bool) {
 
-	if win.particles == nil {
+	if reset || win.particles == nil {
+		if win.particles != nil {
+			win.particles.Destroy()
+		}
+
 		var err error
-		win.particles, err = NewWinParticles(win)
+		win.particles, err = NewWinParticles(win, time_sec)
 		if err != nil {
 			fmt.Printf("NewParticles() failed: %v\n", err)
 			return
 		}
 	}
-	win.particles.StartAnim(time_sec)
 }
 
 func IsSpaceActive() bool {
@@ -258,10 +260,10 @@ func (win *Win) SaveScreenshot() error {
 	img := image.NewRGBA(image.Rectangle{image.Point{0, 0}, image.Point{int(surface.W), int(surface.H)}})
 	for y := int32(0); y < surface.H; y++ {
 		for x := int32(0); x < surface.W; x++ {
-			b := surface.Pixels()[y*surface.W*4+x*4+0] //blue 1st
+			r := surface.Pixels()[y*surface.W*4+x*4+0]
 			g := surface.Pixels()[y*surface.W*4+x*4+1]
-			r := surface.Pixels()[y*surface.W*4+x*4+2] //red last
-			img.SetRGBA(int(x), int(y), color.RGBA{r, g, b, 255})
+			b := surface.Pixels()[y*surface.W*4+x*4+2]
+			img.SetRGBA(int(x), int(surface.H-1-y), color.RGBA{r, g, b, 255})
 		}
 	}
 
@@ -691,16 +693,23 @@ func (win *Win) StartRender(clearCd OsCd) error {
 	return nil
 }
 
+func (win *Win) RenderProgress() bool {
+	if win == nil {
+		return false
+	}
+	if win.particles != nil {
+		if !win.particles.Tick(win) || win.io.touch.start {
+			win.particles.Destroy()
+			win.particles = nil
+		}
+		win.SetRedraw()
+		return true
+	}
+	return false
+}
 func (win *Win) EndRender(present bool) error {
 	if win == nil {
 		return nil
-	}
-
-	if win.particles != nil && win.particles.num_draw > 0 {
-		if !win.particles.Tick(win) || (win.startupAnim && win.io.touch.start) {
-			win.particles.Clear()
-			win.startupAnim = false
-		}
 	}
 
 	win.stat.Update(int(OsTicks() - win.start_time))

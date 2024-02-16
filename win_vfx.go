@@ -48,7 +48,7 @@ type WinParticles struct {
 	oldDone float32
 }
 
-func NewWinParticles(win *Win) (*WinParticles, error) {
+func NewWinParticles(win *Win, time_sec float32) (*WinParticles, error) {
 	var ptcs WinParticles
 	ptcs.win = win
 
@@ -60,6 +60,10 @@ func NewWinParticles(win *Win) (*WinParticles, error) {
 
 	ptcs.noiseX = NewWinNoise(ptcs.logo.size)
 	ptcs.noiseY = NewWinNoise(ptcs.logo.size)
+
+	ptcs.anim_max_time = time_sec
+	ptcs.anim_act_time = 0
+	ptcs.Emit()
 
 	return &ptcs, nil
 }
@@ -146,13 +150,6 @@ func (ptcs *WinParticles) Emit() error {
 	ptcs.num_draw = n
 
 	return nil
-}
-
-func (ptcs *WinParticles) StartAnim(time_sec float32) {
-
-	ptcs.anim_max_time = time_sec
-	ptcs.anim_act_time = 0
-	ptcs.Emit()
 }
 
 func (ptcs *WinParticles) UpdateTime() float64 {

@@ -93,11 +93,14 @@ func main() {
 		if redraw {
 			win.StartRender(OsCd{220, 220, 220, 255})
 
-			ui.StartRender()
-			if !base.Render() {
-				run = false
+			progressActive := win.RenderProgress()
+			if !progressActive {
+				ui.StartRender()
+				if !base.Render() {
+					run = false
+				}
+				ui.EndRender()
 			}
-			ui.EndRender()
 
 			win.EndRender(true)
 		} else {
