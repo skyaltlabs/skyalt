@@ -207,7 +207,9 @@ func NewSANode(app *SAApp, parent *SANode, name string, exe string, grid OsV4, p
 		w.SetGrid(grid)
 	}
 
-	w.Execute()
+	if w.Exe != "" {
+		w.Execute()
+	}
 
 	return w
 }
