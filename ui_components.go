@@ -776,8 +776,8 @@ func (ui *Ui) Comp_slider(x, y, w, h int, valueIn interface{}, minValue float64,
 		}
 	case *string:
 		if v != nil {
-			vv, _ := strconv.Atoi(*v)
-			value = float64(vv)
+			vv, _ := strconv.ParseFloat(*v, 64)
+			value = vv
 		}
 		//int8/16/32, uint8, byte, etc ...
 	}
@@ -1100,8 +1100,8 @@ func (ui *Ui) Comp_checkbox(x, y, w, h int, valueIn interface{}, reverseValue bo
 		}
 	case *string:
 		if v != nil {
-			vv, _ := strconv.Atoi(*v)
-			value = float64(vv)
+			vv, _ := strconv.ParseFloat(*v, 64)
+			value = vv
 		}
 		//int8/16/32, uint8, byte, etc ...
 	}
