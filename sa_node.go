@@ -182,7 +182,7 @@ type SANode struct {
 	Rows []*SANodeColRow `json:",omitempty"`
 	Subs []*SANode       `json:",omitempty"`
 
-	state         int //0=waiting, 1=running, 2=done
+	state         int //0=SANode_STATE_WAITING, 1=SANode_STATE_RUNNING, 2=SANode_STATE_DONE
 	errExe        error
 	progress      float64
 	progress_desc string
@@ -407,15 +407,6 @@ func (w *SANode) PrepareExe() {
 		nd.PrepareExe()
 	}
 }
-func (w *SANode) PostExe() {
-	//for _, v := range w.Attrs {
-	//...
-	//}
-
-	for _, it := range w.Subs {
-		it.PostExe()
-	}
-}
 
 func (node *SANode) ExecuteSubs() {
 
@@ -624,10 +615,20 @@ func (w *SANode) Copy() (*SANode, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	dst.updateLinks(nil, w.app)
 
 	return dst, nil
+}
+
+func (dst *SANode) CopyPoses(src *SANode) {
+	dst.Pos = src.Pos
+
+	for _, dstIt := range dst.Subs {
+		srcIt := src.FindNode(dstIt.Name)
+		if srcIt != nil {
+			dstIt.CopyPoses(srcIt)
+		}
+	}
 }
 
 func (w *SANode) SelectOnlyThis() {

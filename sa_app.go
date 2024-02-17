@@ -17,6 +17,8 @@ limitations under the License.
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -24,7 +26,7 @@ import (
 	"github.com/go-audio/audio"
 )
 
-type SACanvas struct {
+type SACanvas struct { // widgets
 	addGrid OsV4
 	addPos  OsV2f
 
@@ -44,17 +46,6 @@ type SASetAttr struct {
 	exeIt      bool
 }
 
-func InitSASetAttr(attr *SANodeAttr, value string, mapOrArray bool, exeIt bool) SASetAttr {
-	var sa SASetAttr
-	if attr != nil {
-		sa.node = NewSANodePath(attr.node)
-		sa.attr = attr.Name
-	}
-	sa.value = value
-	sa.mapOrArray = mapOrArray
-	sa.exeIt = exeIt
-	return sa
-}
 func (sa *SASetAttr) Write(root *SANode) bool {
 	if sa.exeIt {
 		return true
@@ -82,16 +73,16 @@ type SAApp struct {
 
 	Cam_x, Cam_y, Cam_z float64 `json:",omitempty"`
 
-	root *SANode
+	historyIt bool
+	exeIt     bool
+	root      *SANode
 
-	history               []*SANode //JSONs
-	history_pos           int
-	history_divScroll     *UiLayoutDiv
-	history_divSroll_time float64
+	history     [][]byte //JSONs
+	history_pos int
 
-	exeIt      bool
-	setAttrs   []SASetAttr
-	exeRunning bool
+	setAttrs []SASetAttr
+	exeNode  *SANode //copy, not pointer
+	exeState int     //0=SANode_STATE_WAITING, 1=SANode_STATE_RUNNING, 2=SANode_STATE_DONE
 
 	graph  *SAGraph
 	canvas SACanvas
@@ -131,14 +122,25 @@ func NewSAApp(name string, base *SABase) *SAApp {
 	app.EnableExecution = true
 
 	app.init(base)
-
 	return app
 }
 func (app *SAApp) Destroy() {
 }
 
 func (app *SAApp) AddSetAttr(attr *SANodeAttr, value string, mapOrArray bool, exeIt bool) {
-	app.setAttrs = append(app.setAttrs, InitSASetAttr(attr, value, mapOrArray, exeIt))
+
+	if len(app.setAttrs) > 0 && exeIt && app.setAttrs[len(app.setAttrs)-1].exeIt {
+		return
+	}
+
+	var node SANodePath
+	var name string
+	if attr != nil {
+		node = NewSANodePath(attr.node)
+		name = attr.Name
+	}
+
+	app.setAttrs = append(app.setAttrs, SASetAttr{node: node, attr: name, value: value, mapOrArray: mapOrArray, exeIt: exeIt})
 }
 
 func SAApp_GetNewFolderPath(name string) string {
@@ -189,8 +191,12 @@ func (app *SAApp) AddMic(data audio.IntBuffer) {
 }
 
 func (app *SAApp) Tick() {
-	if !app.exeRunning {
-		if len(app.setAttrs) > 0 {
+
+	switch app.exeState {
+	case SANode_STATE_WAITING:
+
+		if app.EnableExecution {
+			//save changes
 			n := 0
 			for _, sa := range app.setAttrs {
 				sa.Write(app.root) //if different, app.exeIt = true
@@ -200,34 +206,54 @@ func (app *SAApp) Tick() {
 					break
 				}
 			}
-			app.setAttrs = app.setAttrs[n:]
+
+			if n > 0 {
+				app.setAttrs = app.setAttrs[n:]
+			}
+
+			if n == 0 && app.historyIt && !app.base.ui.touch.IsAnyActive() {
+				app.historyIt = false
+				app.addHistory()
+			}
+
+			if app.exeIt {
+				app.exeIt = false
+				app.historyIt = true
+
+				var err error
+				app.exeNode, err = app.root.Copy()
+				if err != nil {
+					fmt.Println("Error Copy()", err)
+					return
+				}
+
+				app.exeState = SANode_STATE_RUNNING
+				go app.executeThread()
+			}
+
 		}
 
-		if app.exeIt {
-			app.HistoryInit()
+	case SANode_STATE_RUNNING:
+		//nothing ...
 
-			app.exeIt = false
-			app.exeRunning = true
+	case SANode_STATE_DONE:
+		//copy result back
+		app.exeNode.CopyPoses(app.root)
+		app.root = app.exeNode
+		app.exeNode = nil
 
-			go app.execute()
-
-			return
-		}
+		app.exeState = SANode_STATE_WAITING
 	}
 }
 
-func (app *SAApp) execute() {
+func (app *SAApp) executeThread() {
 
-	app.root.PrepareExe() //.state = WAITING(to be executed)
+	app.exeNode.PrepareExe() //.state = WAITING(to be executed)
+	app.exeNode.ParseExpresions()
+	app.exeNode.CheckForLoops()
 
-	app.root.ParseExpresions()
-	app.root.CheckForLoops()
-
-	app.root.ExecuteSubs()
-
-	app.root.PostExe()
-
-	app.exeRunning = false
+	app.exeNode.ExecuteSubs()
+	app.exeState = SANode_STATE_DONE
 }
 
 func (app *SAApp) RenderApp(ide bool) {
@@ -252,6 +278,8 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	gridMax.X = OsMax(gridMax.X, SANodeColRow_GetMaxPos(&node.Cols)+1)
 	gridMax.Y = OsMax(gridMax.Y, SANodeColRow_GetMaxPos(&node.Rows)+1)
 
+	changed := false
+
 	//cols header
 	ui.Div_start(1, 0, 1, 1)
 	{
@@ -275,6 +303,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 					if cp != nil {
 						SANodeColRow_Remove(&node.Cols, src)
 						SANodeColRow_Insert(&node.Cols, cp, dst_i, true)
+						changed = true
 					}
 				}
 			}
@@ -290,7 +319,9 @@ func (app *SAApp) renderIDE(ui *Ui) {
 				}
 			}
 
-			_SAApp_drawColsRowsDialog(dnm, &node.Cols, i, ui)
+			if _SAApp_drawColsRowsDialog(dnm, &node.Cols, i, ui) {
+				changed = true
+			}
 		}
 	}
 	ui.Div_end()
@@ -298,6 +329,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	//+
 	if ui.Comp_buttonLight(2, 0, 1, 1, "+", ui.trns.ADD_NEW_COLUMN, true) > 0 {
 		SANodeColRow_Insert(&node.Cols, nil, gridMax.X, true)
+		changed = true
 	}
 
 	//rows header
@@ -324,6 +356,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 					if cp != nil {
 						SANodeColRow_Remove(&node.Rows, src)
 						SANodeColRow_Insert(&node.Rows, cp, dst_i, true)
+						changed = true
 					}
 				}
 			}
@@ -339,7 +372,9 @@ func (app *SAApp) renderIDE(ui *Ui) {
 				}
 			}
 
-			_SAApp_drawColsRowsDialog(dnm, &node.Rows, i, ui)
+			if _SAApp_drawColsRowsDialog(dnm, &node.Rows, i, ui) {
+				changed = true
+			}
 		}
 
 	}
@@ -348,6 +383,11 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	//+
 	if ui.Comp_buttonLight(0, 2, 1, 1, "+", ui.trns.ADD_NEW_ROW, true) > 0 {
 		SANodeColRow_Insert(&node.Rows, nil, gridMax.Y, true)
+		changed = true
+	}
+
+	if changed {
+		app.SetExecute()
 	}
 
 	//app
@@ -471,22 +511,12 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	}
 }
 
-func (app *SAApp) HistoryInit() {
-	if len(app.history) == 0 {
-		app.addHistory(true, false)
-		app.history_pos = 0
-	}
-}
-
 func (app *SAApp) History(ui *Ui) {
 	if len(app.history) == 0 {
 		return
 	}
 
 	lv := ui.GetCall()
-	touch := &ui.win.io.touch
-	keys := &ui.win.io.keys
-
 	if !ui.edit.IsActive() {
 		if lv.call.IsOver(ui) && ui.win.io.keys.backward {
 			app.stepHistoryBack()
@@ -495,10 +525,6 @@ func (app *SAApp) History(ui *Ui) {
 		if lv.call.IsOver(ui) && ui.win.io.keys.forward {
 			app.stepHistoryForward()
 		}
-	}
-
-	if touch.end || keys.hasChanged || app.base.ui.touch.scrollWheel != nil || touch.drop_path != "" {
-		app.cmpAndAddHistory()
 	}
 }
 
@@ -662,7 +688,6 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 
 	ui.Comp_text(2, 0, 1, 1, "Press Alt-key to select nodes", 1)
 
-	//shortcuts
 	if ui.Comp_buttonLight(3, 0, 1, 1, "←", fmt.Sprintf("%s(%d)", ui.trns.BACKWARD, app.history_pos), app.canHistoryBack()) > 0 {
 		app.stepHistoryBack()
 
@@ -672,50 +697,35 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 	}
 }
 
-func (app *SAApp) cmpAndAddHistory() {
-	if len(app.history) > 0 {
-		historyDiff := false
-		exeDiff := !app.root.Cmp(app.history[app.history_pos], &historyDiff)
-		if exeDiff || historyDiff {
+func (app *SAApp) addHistory() {
 
-			//scroll - update last item in history or add new item
-			rewrite := (app.history_divScroll != nil && app.history_divScroll == app.base.ui.touch.scrollWheel)
-			if OsTime()-app.history_divSroll_time > 1 { //1sec
-				rewrite = false
-			}
-
-			app.addHistory(exeDiff, rewrite)
-
-			app.history_divScroll = app.base.ui.touch.scrollWheel
-			if app.base.ui.touch.scrollWheel != nil {
-				app.history_divSroll_time = OsTime()
-			}
-		}
+	js, err := json.Marshal(app.root)
+	if err != nil {
+		return
 	}
-}
+	if len(app.history) > 0 && bytes.Equal(js, app.history[app.history_pos]) {
+		return //same as current history
+	}
 
-func (app *SAApp) addHistory(exeIt bool, rewriteLast bool) {
 	//cut newer history
 	if app.history_pos+1 < len(app.history) {
 		app.history = app.history[:app.history_pos+1]
 	}
 
-	cp_root, _ := app.root.Copy() //err ...
-
-	if rewriteLast {
-		app.history[app.history_pos] = cp_root
-	} else {
-		//add history
-		app.history = append(app.history, cp_root)
-		app.history_pos++
-	}
-	if exeIt {
-		app.SetExecute()
-	}
+	app.history = append(app.history, js)
+	app.history_pos = len(app.history) - 1
 }
 
 func (app *SAApp) recoverHistory() {
-	app.root, _ = app.history[app.history_pos].Copy()
+
+	dst := NewSANode(app, nil, "", "", OsV4{}, OsV2f{})
+	err := json.Unmarshal(app.history[app.history_pos], dst)
+	if err != nil {
+		return
+	}
+	dst.updateLinks(nil, app)
+	app.root = dst
+
 	app.SetExecute()
 }
 

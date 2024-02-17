@@ -620,7 +620,7 @@ func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
 		gr.node_select = false
 	}
 
-	if gr.app.exeRunning {
+	if gr.app.exeState == SANode_STATE_RUNNING {
 		ui.Paint_rect(0, 0, 1, 1, 0, pl.P, 0.06) //exe rect
 	} else if !gr.app.EnableExecution {
 		ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0.03)
@@ -715,8 +715,8 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool, ui *Ui) {
 
 	y++ //space - adjust Div_rowMax()
 
-	if gr.app.exeRunning {
-		//ui.Comp_text(0, y, 1, 1, fmt.Sprintf("**%d**", gr.app.jobs.Num()), 1)
-		//ui.Comp_text(0, y, 1, 1, OsTrnString(done > 0, fmt.Sprintf("%.0f%%", done*100), "---"), 1)
-	}
+	//if gr.app.exeState == SANode_STATE_RUNNING {
+	//ui.Comp_text(0, y, 1, 1, fmt.Sprintf("**%d**", gr.app.jobs.Num()), 1)
+	//ui.Comp_text(0, y, 1, 1, OsTrnString(done > 0, fmt.Sprintf("%.0f%%", done*100), "---"), 1)
+	//}
 }
