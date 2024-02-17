@@ -57,7 +57,7 @@ func InitWinTextureFromImageRGBA(rgba *image.RGBA) (*WinTexture, error) {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 
 	tex.size = OsV2{rgba.Rect.Size().X, rgba.Rect.Size().Y}
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.SRGB_ALPHA, int32(tex.size.X), int32(tex.size.Y), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(rgba.Pix))
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, int32(tex.size.X), int32(tex.size.Y), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(rgba.Pix))
 
 	//gl.GenerateMipmap(texture.id)
 	gl.BindTexture(gl.TEXTURE_2D, 0) //UnBind
