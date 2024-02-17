@@ -126,7 +126,9 @@ func (path *SANodePath) _getPath(w *SANode) {
 }
 func NewSANodePath(w *SANode) SANodePath {
 	var path SANodePath
-	path._getPath(w)
+	if w != nil {
+		path._getPath(w)
+	}
 	return path
 }
 func (path *SANodePath) Is() bool {
