@@ -47,13 +47,13 @@ func SAExe_Render_Dialog(w *SANode, renderIt bool) {
 	triggerAttr := w.GetAttrUi("trigger", 0, SAAttrUi_SWITCH)
 	typeAttr := w.GetAttrUi("type", 0, SAAttrUi_COMBO("Center;Relative", ""))
 
-	if showIt {
-		dnm := w.getPath()
-		if triggerAttr.GetBool() {
-			ui.Dialog_open(dnm, uint8(OsClamp(typeAttr.GetInt(), 0, 2)))
-			triggerAttr.AddSetAttr("0")
-		}
+	dnm := w.getPath()
+	if triggerAttr.GetBool() {
+		ui.Dialog_open(dnm, uint8(OsClamp(typeAttr.GetInt(), 0, 2)))
+		triggerAttr.AddSetAttr("0")
+	}
 
+	if showIt {
 		if ui.Dialog_start(dnm) {
 			w.renderLayout()
 			ui.Dialog_end()
@@ -159,6 +159,29 @@ func SAExe_Render_Checkbox(w *SANode, renderIt bool) {
 
 	if showIt {
 		if ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, label, "", enable) {
+			valueInstr.LineReplace(value, false)
+		}
+	}
+}
+
+func SAExe_Render_Slider(w *SANode, renderIt bool) {
+	ui := w.app.base.ui
+	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
+
+	grid := w.GetGrid()
+
+	valueAttr := w.GetAttr("value", "")
+	valueInstr := valueAttr.instr.GetConst()
+	value := valueAttr.GetString()
+
+	min := w.GetAttr("min", 0).GetFloat()
+	max := w.GetAttr("max", 10).GetFloat()
+	step := w.GetAttr("step", 1).GetFloat()
+
+	enable := w.GetAttrUi("enable", 1, SAAttrUi_SWITCH).GetBool() && valueInstr != nil
+
+	if showIt {
+		if ui.Comp_slider(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, min, max, step, enable) {
 			valueInstr.LineReplace(value, false)
 		}
 	}

@@ -56,6 +56,7 @@ func InitSAGroups() SAGroups {
 		{name: "text", render: SAExe_Render_Text},
 		{name: "checkbox", render: SAExe_Render_Checkbox},
 		{name: "switch", render: SAExe_Render_Switch},
+		{name: "slider", render: SAExe_Render_Slider},
 		{name: "editbox", render: SAExe_Render_Editbox},
 		{name: "divider", render: SAExe_Render_Divider},
 		{name: "combo", render: SAExe_Render_Combo},
