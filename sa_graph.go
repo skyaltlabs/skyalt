@@ -343,9 +343,13 @@ func (gr *SAGraph) drawConnections(nodes []*SANode, ui *Ui) {
 		}
 
 		for _, out := range depends {
-			coordOut, selCoordOut, _ := out.nodeToPixelsCoord(lv.call.canvas, ui)
+			coordOut, selCoordOut, coordOutSmall := out.nodeToPixelsCoord(lv.call.canvas, ui)
 			if out.Selected {
 				coordOut = selCoordOut
+			}
+
+			if node.FindParent(out) {
+				coordOut = coordOutSmall //for,if,etc. bottom = bottom of label
 			}
 
 			end := coordIn.Start
