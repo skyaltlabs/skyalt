@@ -25,6 +25,7 @@ import (
 func SAExe_File_dir(node *SANode) bool {
 
 	pathAttr := node.GetAttrUi("path", "", SAAttrUi_DIR)
+	full_path := node.GetAttrUi("full_path", "0", SAAttrUi_SWITCH).GetBool()
 	exts := strings.Split(node.GetAttr("exts", "").GetString(), ";")
 	extsType := node.GetAttrUi("exts_type", "0", SAAttrUi_COMBO("Include;Exclude", "")).GetBool()
 	if len(exts) == 1 && exts[0] == "" {
@@ -62,6 +63,9 @@ func SAExe_File_dir(node *SANode) bool {
 		}
 
 		if ok {
+			if full_path {
+				nm = filepath.Join(path, nm)
+			}
 			if f.IsDir() {
 				dirsStr += "\"" + nm + "\","
 			} else {
