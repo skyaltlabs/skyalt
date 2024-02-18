@@ -18,13 +18,20 @@ package main
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 )
 
 func SAExe_File_dir(node *SANode) bool {
 
-	pathAttr := node.GetAttr("path", "")
-	filesAttr := node.GetAttrUi("_files", "", SAAttrUi_DIR)
+	pathAttr := node.GetAttrUi("path", "", SAAttrUi_DIR)
+	exts := strings.Split(node.GetAttr("exts", "").GetString(), ";")
+	extsType := node.GetAttrUi("exts_type", "0", SAAttrUi_COMBO("Include;Exclude", "")).GetBool()
+	if len(exts) == 1 && exts[0] == "" {
+		exts = nil
+	}
+
+	filesAttr := node.GetAttr("_files", "")
 	dirsAttr := node.GetAttr("_dirs", "")
 
 	path := pathAttr.GetString()
@@ -41,10 +48,25 @@ func SAExe_File_dir(node *SANode) bool {
 	filesStr := "["
 	dirsStr := "["
 	for _, f := range dir {
-		if f.IsDir() {
-			dirsStr += "\"" + f.Name() + "\","
-		} else {
-			filesStr += "\"" + f.Name() + "\","
+		nm := f.Name()
+		ext := filepath.Ext(nm)
+		ok := true
+
+		if len(exts) > 0 {
+			ok = OsTrnBool(!extsType, false, true)
+			for _, e := range exts {
+				if ext == e {
+					ok = OsTrnBool(!extsType, true, false)
+				}
+			}
+		}
+
+		if ok {
+			if f.IsDir() {
+				dirsStr += "\"" + nm + "\","
+			} else {
+				filesStr += "\"" + nm + "\","
+			}
 		}
 	}
 	filesStr, _ = strings.CutSuffix(filesStr, ",")
@@ -79,7 +101,7 @@ func SAExe_File_write(node *SANode) bool {
 			return false
 		}
 
-		triggerAttr.AddSetAttr("0")
+		//triggerAttr.AddSetAttr("0")
 	}
 
 	return true
