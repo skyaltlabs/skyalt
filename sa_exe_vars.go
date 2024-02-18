@@ -25,8 +25,9 @@ func SAExe_If(node *SANode) bool {
 	triggerAttr := node.GetAttrUi("trigger", 0, SAAttrUi_SWITCH)
 
 	if triggerAttr.GetBool() {
+		node.PrepareSubsExe()
 		node.ExecuteSubs()
-		triggerAttr.AddSetAttr("0")
+		//triggerAttr.AddSetAttr("0")
 	}
 
 	return true
@@ -46,6 +47,8 @@ func SAExe_For(node *SANode) bool {
 		for i := 0; i < n; i++ {
 			_keyAttr.GetResult().SetInt(i)
 			_valueAttr.GetResult().SetInt(i)
+
+			node.PrepareSubsExe()
 			node.ExecuteSubs()
 		}
 	} else {
@@ -55,8 +58,9 @@ func SAExe_For(node *SANode) bool {
 		if nArr > 0 {
 			for i := 0; i < nArr; i++ {
 				_keyAttr.GetResult().SetInt(i)
-				_valueAttr.GetResult().value = inputAttr.GetArrayItem(i)
+				*_valueAttr.GetResult() = *inputAttr.GetArrayItem(i)
 
+				node.PrepareSubsExe()
 				node.ExecuteSubs()
 			}
 		}
@@ -64,8 +68,9 @@ func SAExe_For(node *SANode) bool {
 			for i := 0; i < nArr; i++ {
 				key, val := inputAttr.GetMapItem(i)
 				_keyAttr.GetResult().SetString(key)
-				_valueAttr.GetResult().value = val
+				*_valueAttr.GetResult() = *val
 
+				node.PrepareSubsExe()
 				node.ExecuteSubs()
 			}
 		}
@@ -102,7 +107,7 @@ func SAExe_Setter(node *SANode) bool {
 
 	if triggerAttr.GetBool() {
 		attr.AddSetAttr(value)
-		triggerAttr.AddSetAttr("0")
+		//triggerAttr.AddSetAttr("0")
 	}
 
 	return true
