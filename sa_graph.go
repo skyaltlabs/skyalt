@@ -53,6 +53,8 @@ func (gr *SAGraph) drawCreateNode(ui *Ui) {
 			gr.app.canvas.addGrid = InitOsV4(0, 0, 1, 1)
 			gr.app.canvas.addPos = gr.app.root.pixelsToNode(ui.win.io.touch.pos, ui, lvBaseDiv)
 			gr.app.canvas.addnode_search = ""
+			gr.app.canvas.addParent = NewSANodePath(gr.app.root.FindInsideParent(ui.win.io.touch.pos, lvBaseDiv.canvas, ui))
+
 			ui.Dialog_open("nodes_list", 2)
 		}
 	}

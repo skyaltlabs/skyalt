@@ -27,8 +27,9 @@ import (
 )
 
 type SACanvas struct { // widgets
-	addGrid OsV4
-	addPos  OsV2f
+	addGrid   OsV4
+	addPos    OsV2f
+	addParent SANodePath
 
 	startClick    SANodePath
 	startClickRel OsV2
@@ -421,6 +422,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 				if appDiv.IsTouchEnd(ui) {
 					app.canvas.addGrid = grid
 					app.canvas.addPos = OsV2f{}
+					app.canvas.addParent = NewSANodePath(app.root)
 					app.canvas.addnode_search = ""
 					ui.Dialog_open("nodes_list", 2)
 				}
@@ -563,7 +565,8 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 					if app.canvas.addnode_search == "" || SAApp_IsSearchedName(nd.name, searches) {
 						if keys.enter || ui.Comp_buttonMenuIcon(0, y, 1, 1, nd.name, gr.icon, 0.2, "", true, false) > 0 {
 							//add new node
-							nw := app.root.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name, nd.name)
+							parent := app.canvas.addParent.FindPath(app.root)
+							nw := parent.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name, nd.name)
 							nw.SelectOnlyThis()
 
 							ui.Dialog_close()
