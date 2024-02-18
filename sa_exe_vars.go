@@ -50,6 +50,7 @@ func SAExe_For(node *SANode) bool {
 
 			node.PrepareSubsExe()
 			node.ExecuteSubs()
+			node.progress = float64(i+1) / float64(n)
 		}
 	} else {
 		nArr := inputAttr.NumArrayItems()
@@ -62,16 +63,18 @@ func SAExe_For(node *SANode) bool {
 
 				node.PrepareSubsExe()
 				node.ExecuteSubs()
+				node.progress = float64(i+1) / float64(nArr)
 			}
 		}
 		if nMap > 0 {
-			for i := 0; i < nArr; i++ {
+			for i := 0; i < nMap; i++ {
 				key, val := inputAttr.GetMapItem(i)
 				_keyAttr.GetResult().SetString(key)
 				*_valueAttr.GetResult() = *val
 
 				node.PrepareSubsExe()
 				node.ExecuteSubs()
+				node.progress = float64(i+1) / float64(nArr)
 			}
 		}
 	}
