@@ -1,0 +1,472 @@
+{
+"Pos": {
+"X": 0,
+"Y": 0
+},
+"Name": "root",
+"Exe": "layout",
+"Attrs": [
+{
+"Name": "grid",
+"Value": "[0, 0, 0, 0]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": true
+}
+}
+],
+"Cols": [
+{
+"Pos": 0,
+"Min": 1,
+"Max": 5,
+"Resize": 1
+}
+],
+"Subs": [
+{
+"Pos": {
+"X": -1.7858188,
+"Y": -10.498539
+},
+"Name": "folder_picker",
+"Exe": "folder_picker",
+"Attrs": [
+{
+"Name": "grid",
+"Value": "[0, 0, 1, 1]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": true
+}
+},
+{
+"Name": "enable",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "path",
+"Value": "\"./tracks/\"",
+"ShowExp": false,
+"Ui": {
+"Fn": "dir",
+"HideAddDel": false
+}
+},
+{
+"Name": "grid_show",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": -1.910819,
+"Y": -2.7814329
+},
+"Name": "for",
+"Exe": "for",
+"Attrs": [
+{
+"Name": "input",
+"Value": "read_dir._files",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "_key",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "_value",
+"Value": "\"\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+}
+],
+"Subs": [
+{
+"Pos": {
+"X": -0.35223532,
+"Y": -1.1908947
+},
+"Name": "nn_whisper_cpp",
+"Exe": "nn_whisper_cpp",
+"Attrs": [
+{
+"Name": "model",
+"Value": "\"ggml-tiny.en\"",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prms": {
+"labels": ";ggml-tiny.en",
+"values": ";ggml-tiny.en"
+},
+"HideAddDel": false
+}
+},
+{
+"Name": "input",
+"Value": "read_audio_file._out",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "offset_t",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "offset_n",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "duration",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "max_context",
+"Value": "-1",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "max_len",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "best_of",
+"Value": "2",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "beam_size",
+"Value": "-1",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "word_thold",
+"Value": "0.01",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "entropy_thold",
+"Value": "2.4",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "logprob_thold",
+"Value": "-1",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "translate",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "diarize",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "tinydiarize",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "split_on_word",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "no_timestamps",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "language",
+"Value": "\"\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "detect_language",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "temperature",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "temperature_inc",
+"Value": "0.2",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "response_format",
+"Value": "\"srt\"",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prms": {
+"labels": "verbose_json;json;text;srt;vtt",
+"values": "verbose_json;json;text;srt;vtt"
+},
+"HideAddDel": false
+}
+},
+{
+"Name": "_out",
+"Value": "\"\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": -3.2845666,
+"Y": 1.6901628
+},
+"Name": "write_srt_file",
+"Exe": "write_file",
+"Attrs": [
+{
+"Name": "trigger",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "type",
+"Value": "2",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prms": {
+"labels": "Database;App;Disk",
+"values": ""
+},
+"HideAddDel": false
+}
+},
+{
+"Name": "path",
+"Value": "for._value \u0026 \".srt\"",
+"ShowExp": false,
+"Ui": {
+"Fn": "file",
+"HideAddDel": false
+}
+},
+{
+"Name": "data",
+"Value": "nn_whisper_cpp._out",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": -0.27266118,
+"Y": -3.5577488
+},
+"Name": "read_audio_file",
+"Exe": "read_file",
+"Attrs": [
+{
+"Name": "type",
+"Value": "2",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prms": {
+"labels": "Database;App;Disk",
+"values": ""
+},
+"HideAddDel": false
+}
+},
+{
+"Name": "path",
+"Value": "for._value",
+"ShowExp": false,
+"Ui": {
+"Fn": "file",
+"HideAddDel": false
+}
+},
+{
+"Name": "_out",
+"Value": "\"\"",
+"ShowExp": false,
+"Ui": {
+"Fn": "blob",
+"HideAddDel": false
+}
+}
+]
+}
+]
+},
+{
+"Pos": {
+"X": -1.7658733,
+"Y": -8.104637
+},
+"Name": "read_dir",
+"Exe": "read_dir",
+"Selected": true,
+"Attrs": [
+{
+"Name": "path",
+"Value": "folder_picker.path",
+"ShowExp": false,
+"Ui": {
+"Fn": "dir",
+"HideAddDel": false
+}
+},
+{
+"Name": "full_path",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "exts",
+"Value": "\".srt\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "exts_type",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prms": {
+"labels": "Include;Exclude",
+"values": ""
+},
+"HideAddDel": false
+}
+},
+{
+"Name": "_files",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "_dirs",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+}
+]
+}
+]
+}
