@@ -44,6 +44,7 @@ func (srv *SAServices) Destroy() {
 func (srv *SAServices) GetWhisper() *SAServiceWhisperCpp {
 	if srv.service_whisper_cpp == nil {
 		srv.service_whisper_cpp = NewSAServiceWhisperCpp("http://127.0.0.1", "8090")
+		time.Sleep(200 * time.Millisecond)
 	}
 	return srv.service_whisper_cpp
 }

@@ -24,6 +24,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"os/exec"
 	"strconv"
 	"sync"
 )
@@ -92,6 +93,7 @@ func (p *SAServiceWhisperCppProps) Write(w *multipart.Writer) {
 }
 
 type SAServiceWhisperCpp struct {
+	cmd  *exec.Cmd
 	addr string //http://127.0.0.1:8080/
 
 	cache      map[string]string //results
@@ -122,6 +124,19 @@ func NewSAServiceWhisperCpp(addr string, port string) *SAServiceWhisperCpp {
 		}
 	}
 
+	//run process
+	{
+		wh.cmd = exec.Command("./server", "--port", port, "--convert", "-m", "models/ggml-tiny.en.bin")
+		wh.cmd.Dir = "services/whisper.cpp/"
+
+		wh.cmd.Stdout = os.Stdout
+		wh.cmd.Stderr = os.Stderr
+		err := wh.cmd.Start()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
 	return wh
 }
 func (wh *SAServiceWhisperCpp) Destroy() {
@@ -129,6 +144,12 @@ func (wh *SAServiceWhisperCpp) Destroy() {
 	js, err := json.Marshal(wh.cache)
 	if err == nil {
 		os.WriteFile(SAServiceWhisperCpp_cachePath(), js, 0644)
+	}
+
+	//py.cmd.Process.Signal(syscall.SIGQUIT)
+	err = wh.cmd.Process.Kill()
+	if err != nil {
+		fmt.Println(err)
 	}
 }
 
