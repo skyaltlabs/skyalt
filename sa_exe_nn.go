@@ -173,7 +173,7 @@ func SAExe_NN_whisper_cpp(node *SANode) bool {
 	}
 
 	//try find in cache
-	str, found := node.app.base.service_whisper_cpp.FindCache(modelPath, audioAttr.GetBlob(), propHash)
+	str, found := node.app.base.services.GetWhisper().FindCache(modelPath, audioAttr.GetBlob(), propHash)
 	if found {
 		_outAttr.SetOutBlob([]byte(str))
 	} else {
@@ -182,7 +182,7 @@ func SAExe_NN_whisper_cpp(node *SANode) bool {
 
 		node.progress_desc = "Translating"
 		node.progress = 0.5 //...
-		str, _, _, err := node.app.base.service_whisper_cpp.Translate(modelPath, audioAttr.GetBlob(), &props)
+		str, _, _, err := node.app.base.services.GetWhisper().Translate(modelPath, audioAttr.GetBlob(), &props)
 		if err != nil {
 			node.SetError(err)
 			return false
@@ -380,7 +380,7 @@ func SAExe_NN_llama_cpp(node *SANode) bool {
 	}
 
 	//try find in cache
-	str, found := node.app.base.service_llama_cpp.FindCache(modelPath, propHash)
+	str, found := node.app.base.services.GetLLama().FindCache(modelPath, propHash)
 	if found {
 		_outAttr.SetOutBlob([]byte(str))
 	} else {
@@ -389,7 +389,7 @@ func SAExe_NN_llama_cpp(node *SANode) bool {
 
 		node.progress_desc = "Predicting"
 		node.progress = 0.5 //...
-		str, _, _, err := node.app.base.service_llama_cpp.Complete(modelPath, &props)
+		str, _, _, err := node.app.base.services.GetLLama().Complete(modelPath, &props)
 		if err != nil {
 			node.SetError(err)
 			return false

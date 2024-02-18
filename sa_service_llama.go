@@ -74,10 +74,10 @@ func SAServiceLLamaCpp_cachePath() string {
 	return "services/llama.cpp.json"
 }
 
-func NewSAServiceLLamaCpp(addr string) *SAServiceLLamaCpp {
+func NewSAServiceLLamaCpp(addr string, port string) *SAServiceLLamaCpp {
 	wh := &SAServiceLLamaCpp{}
 
-	wh.addr = addr
+	wh.addr = addr + ":" + port
 
 	wh.cache = make(map[string]string)
 

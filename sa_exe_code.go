@@ -53,7 +53,7 @@ func SAExe_Code_python(node *SANode) bool {
 	bodyJs := fmt.Sprintf(`{"code":%s,"attrs":%s}`, codeAttr.GetResult().StringJSON(), attrsJs)
 
 	//run python on service server
-	outAttrs, errStr, err := node.app.base.service_python.Exec([]byte(bodyJs))
+	outAttrs, errStr, err := node.app.base.services.GetPython().Exec([]byte(bodyJs))
 	if err != nil {
 		codeAttr.SetError(err)
 		return false

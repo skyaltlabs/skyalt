@@ -22,20 +22,39 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"os/exec"
 )
 
 type SAServicePython struct {
-	addr string //http://127.0.0.1:8080/
+	cmd  *exec.Cmd
+	addr string //http://127.0.0.1:8080
 }
 
-func NewSAServicePython(addr string) *SAServicePython {
+func NewSAServicePython(addr string, port string) *SAServicePython {
 	py := &SAServicePython{}
 
-	py.addr = addr
+	py.addr = addr + ":" + port
+
+	//run process
+	{
+		py.cmd = exec.Command("python3", "services/python3/server.py", "8092")
+		py.cmd.Stdout = os.Stdout
+		py.cmd.Stderr = os.Stderr
+		err := py.cmd.Start()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
 
 	return py
 }
 func (py *SAServicePython) Destroy() {
+	//py.cmd.Process.Signal(syscall.SIGQUIT)
+	err := py.cmd.Process.Kill()
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func (py *SAServicePython) Exec(bodyJs []byte) (map[string]interface{}, string, error) {
