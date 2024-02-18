@@ -36,9 +36,7 @@ type SABase struct {
 
 	node_groups SAGroups
 
-	service_whisper_cpp *SAServiceWhisperCpp
-	service_llama_cpp   *SAServiceLLamaCpp
-	service_python      *SAServicePython
+	services *SAServices
 }
 
 func NewSABase(ui *Ui) (*SABase, error) {
@@ -47,9 +45,7 @@ func NewSABase(ui *Ui) (*SABase, error) {
 
 	base.node_groups = InitSAGroups()
 
-	base.service_whisper_cpp = NewSAServiceWhisperCpp("http://127.0.0.1:8090/")
-	base.service_llama_cpp = NewSAServiceLLamaCpp("http://127.0.0.1:8091/")
-	base.service_python = NewSAServicePython("http://127.0.0.1:8092/")
+	base.services = NewSAServices()
 
 	//open
 	{
@@ -75,9 +71,7 @@ func NewSABase(ui *Ui) (*SABase, error) {
 
 func (base *SABase) Destroy() {
 
-	base.service_whisper_cpp.Destroy()
-	base.service_llama_cpp.Destroy()
-	base.service_python.Destroy()
+	base.services.Destroy()
 
 	base.Save()
 
@@ -223,6 +217,8 @@ func (base *SABase) tickMick() {
 }
 
 func (base *SABase) Render() bool {
+
+	base.services.Tick()
 
 	base.tickMick()
 
