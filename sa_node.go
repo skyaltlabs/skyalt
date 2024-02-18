@@ -405,6 +405,9 @@ func (w *SANode) PrepareExe() {
 		attr.errExp = nil
 	}
 
+	w.PrepareSubsExe()
+}
+func (w *SANode) PrepareSubsExe() {
 	for _, nd := range w.Subs {
 		nd.PrepareExe()
 	}
@@ -423,9 +426,9 @@ func (node *SANode) ExecuteSubs() {
 		for _, it := range list {
 
 			if it.state == SANode_STATE_WAITING {
-				active = true
-
 				if it.IsReadyToBeExe() {
+
+					active = true
 
 					//execute expression
 					for _, v := range it.Attrs {
@@ -511,7 +514,7 @@ func (w *SANode) IsReadyToBeExe() bool {
 				continue //skip self-depends
 			}
 
-			if dep.node.state != SANode_STATE_DONE {
+			if !w.FindParent(dep.node) && dep.node.state != SANode_STATE_DONE { //for,if,etc. are not done yet
 				return false //still running
 			}
 		}
@@ -590,6 +593,16 @@ func (w *SANode) FindNode(name string) *SANode {
 	}
 
 	return nil
+}
+
+func (w *SANode) FindParent(parent *SANode) bool {
+	for w != nil {
+		if w == parent {
+			return true
+		}
+		w = w.parent
+	}
+	return false
 }
 
 func (w *SANode) updateLinks(parent *SANode, app *SAApp) {
