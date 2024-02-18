@@ -111,7 +111,7 @@ func SAExe_Render_Text(w *SANode, renderIt bool) {
 	align_v := w.GetAttrUi("align_v", 1, SAAttrUi_COMBO("Top;Center;Bottom", "")).GetInt()
 	selection := w.GetAttrUi("selection", 1, SAAttrUi_SWITCH).GetBool()
 	multi_line := w.GetAttrUi("multi_line", 0, SAAttrUi_SWITCH).GetBool()
-	drawBorder := w.GetAttrUi("draw_border", 1, SAAttrUi_SWITCH).GetBool()
+	drawBorder := w.GetAttrUi("draw_border", 0, SAAttrUi_SWITCH).GetBool()
 
 	if showIt {
 		if multi_line {
