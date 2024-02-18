@@ -107,7 +107,7 @@ func SAServiceWhisperCpp_cachePath() string {
 func NewSAServiceWhisperCpp(addr string, port string) *SAServiceWhisperCpp {
 	wh := &SAServiceWhisperCpp{}
 
-	wh.addr = addr + ":" + port
+	wh.addr = addr + ":" + port + "/"
 
 	wh.cache = make(map[string]string)
 

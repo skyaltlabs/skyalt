@@ -77,7 +77,7 @@ func SAServiceLLamaCpp_cachePath() string {
 func NewSAServiceLLamaCpp(addr string, port string) *SAServiceLLamaCpp {
 	wh := &SAServiceLLamaCpp{}
 
-	wh.addr = addr + ":" + port
+	wh.addr = addr + ":" + port + "/"
 
 	wh.cache = make(map[string]string)
 

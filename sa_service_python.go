@@ -34,7 +34,7 @@ type SAServicePython struct {
 func NewSAServicePython(addr string, port string) *SAServicePython {
 	py := &SAServicePython{}
 
-	py.addr = addr + ":" + port
+	py.addr = addr + ":" + port + "/"
 
 	//run process
 	{
