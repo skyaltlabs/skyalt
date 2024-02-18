@@ -48,6 +48,12 @@ func InitSAValueInteface(v interface{}) *SAValue {
 		val.value = InitOsBlob(vv)
 	case OsBlob:
 		val.value = vv
+
+	case []interface{}:
+		js, _ := json.Marshal(vv)
+		val.value = string(js)
+	default:
+		fmt.Println("Warning: Unknown SAValue conversion")
 	}
 
 	return val
@@ -303,7 +309,7 @@ func (v *SAValue) GetMapItem(i int) (string, *SAValue) {
 
 func (v *SAValue) GetMapKey(key string) *SAValue {
 
-	var arr map[string]interface{}
+	var arr map[string]interface{} //string
 	err := json.Unmarshal(v.Blob().data, &arr)
 	if err != nil {
 		return nil
