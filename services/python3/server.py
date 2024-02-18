@@ -16,7 +16,7 @@ class MyHandler(BaseHTTPRequestHandler):
         errStr = ""
           
         try:
-            exec(code, {}, attrs)
+            exec(code, {'json': json}, attrs)
         except SyntaxError as err:
             error_class = err.__class__.__name__
             detail = err.args[0]
