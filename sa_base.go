@@ -36,6 +36,8 @@ type SABase struct {
 
 	node_groups SAGroups
 
+	copiedNodes []*SANode
+
 	services *SAServices
 }
 

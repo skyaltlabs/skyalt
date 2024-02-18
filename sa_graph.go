@@ -31,8 +31,6 @@ type SAGraph struct {
 	touch_start        OsV2
 	node_move_selected SANodePath
 
-	copiedNodes []*SANode
-
 	showNodeList          bool
 	showNodeList_justOpen bool
 	node_search           string
@@ -446,20 +444,20 @@ func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
 		//copy
 		if keys.copy {
 			//add selected into list
-			gr.app.graph.copiedNodes = gr.app.root.BuildListOfSelected()
+			gr.app.base.copiedNodes = gr.app.root.BuildListOfSelected()
 		}
 
 		//cut
 		if keys.cut {
 			//add selected into list
-			gr.app.graph.copiedNodes = gr.app.root.BuildListOfSelected()
+			gr.app.base.copiedNodes = gr.app.root.BuildListOfSelected()
 			gr.app.root.RemoveSelectedNodes()
 		}
 		//paste
 		if keys.paste {
 
 			//add new nodes
-			origNodes := gr.copiedNodes
+			origNodes := gr.app.base.copiedNodes
 			var newNodes []*SANode
 			for _, src := range origNodes {
 
