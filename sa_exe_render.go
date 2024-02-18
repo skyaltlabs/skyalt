@@ -50,7 +50,7 @@ func SAExe_Render_Dialog(w *SANode, renderIt bool) {
 	dnm := w.getPath()
 	if triggerAttr.GetBool() {
 		ui.Dialog_open(dnm, uint8(OsClamp(typeAttr.GetInt(), 0, 2)))
-		triggerAttr.AddSetAttr("0")
+		//triggerAttr.AddSetAttr("0")
 	}
 
 	if showIt {
