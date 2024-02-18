@@ -38,7 +38,7 @@ func NewSAServicePython(addr string, port string) *SAServicePython {
 
 	//run process
 	{
-		py.cmd = exec.Command("python3", "services/python3/server.py", "8092")
+		py.cmd = exec.Command("python3", "services/python3/server.py", port)
 		py.cmd.Stdout = os.Stdout
 		py.cmd.Stderr = os.Stderr
 		err := py.cmd.Start()
