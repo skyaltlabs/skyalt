@@ -34,7 +34,7 @@ func InitSAValue() SAValue {
 	return SAValue{value: ""}
 }
 
-func InitSAValueInteface(v interface{}) *SAValue {
+func InitSAValueInterface(v interface{}) *SAValue {
 	val := &SAValue{}
 
 	switch vv := v.(type) {
@@ -276,7 +276,7 @@ func (v *SAValue) GetArrayItem(i int) *SAValue {
 		return nil
 	}
 
-	return InitSAValueInteface(arr[i])
+	return InitSAValueInterface(arr[i])
 }
 
 func (v *SAValue) GetMapItem(i int) (string, *SAValue) {
@@ -299,7 +299,7 @@ func (v *SAValue) GetMapItem(i int) (string, *SAValue) {
 	ii := 0
 	for _, key := range keys {
 		if i == ii {
-			return key, InitSAValueInteface(arr[key])
+			return key, InitSAValueInterface(arr[key])
 		}
 		ii++
 	}
@@ -320,7 +320,7 @@ func (v *SAValue) GetMapKey(key string) *SAValue {
 		return nil
 	}
 
-	return InitSAValueInteface(item)
+	return InitSAValueInterface(item)
 }
 
 func (A *SAValue) Cmp(B *SAValue, sameType bool) int {
