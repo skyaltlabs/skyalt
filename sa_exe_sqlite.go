@@ -57,6 +57,36 @@ func _SAExe_Sqlite_open(node *SANode, fileAttr *SANodeAttr) *DiskDb {
 	return db
 }
 
+func SAExe_Sqlite_info(node *SANode) bool {
+	fileAttr := node.GetAttrUi("file", "", SAAttrUi_FILE)
+
+	db := _SAExe_Sqlite_open(node, fileAttr)
+	if db == nil {
+		return false
+	}
+
+	_infoAttr := node.GetAttr("_info", []byte("[]"))
+
+	type TableInfo struct {
+		Tables []*DiskIndexTable
+	}
+	var tinf TableInfo
+
+	var err error
+	tinf.Tables, err = db.GetTableInfo()
+	if err != nil {
+		node.SetError(err)
+	}
+
+	js, err := json.MarshalIndent(tinf, "", "")
+	if err != nil {
+		node.SetError(err)
+	}
+	_infoAttr.SetOutBlob([]byte(js))
+
+	return true
+}
+
 func SAExe_Sqlite_insert(node *SANode) bool {
 
 	fileAttr := node.GetAttrUi("file", "", SAAttrUi_FILE)

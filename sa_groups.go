@@ -92,6 +92,7 @@ func InitSAGroups() SAGroups {
 		{name: "gpx_to_json", fn: SAExe_Convert_GpxToJson},
 	}})
 	grs.groups = append(grs.groups, &SAGroup{name: "SQLite", icon: InitWinMedia_url(path + "node_db.png"), nodes: []*SAGroupNode{
+		{name: "sqlite_info", fn: SAExe_Sqlite_info},
 		{name: "sqlite_select", fn: SAExe_Sqlite_select},
 		{name: "sqlite_insert", fn: SAExe_Sqlite_insert},
 		//"sqlite_update", "sqlite_delete", "sqlite_execute" ........
