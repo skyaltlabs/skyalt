@@ -79,9 +79,9 @@ func (node *SANode) nodeToPixels(p OsV2f, canvas OsV4, ui *Ui) OsV2 {
 func (node *SANode) nodeToPixelsCoord(canvas OsV4, ui *Ui) (OsV4, OsV4, OsV4) {
 	var cq OsV4
 	var cq_sel OsV4
-	cellr := node.parent.cellZoom(ui)
+	cellr := node.cellZoom(ui)
 
-	mid := node.parent.nodeToPixels(node.Pos, canvas, ui) //.parent, because it has Cam
+	mid := node.nodeToPixels(node.Pos, canvas, ui) //.parent, because it has Cam
 	w := 4
 	h := 1
 
@@ -112,6 +112,27 @@ func (node *SANode) nodeToPixelsCoord(canvas OsV4, ui *Ui) (OsV4, OsV4, OsV4) {
 	return cq, cq.AddSpace(int(-0.15 * float64(cellr))), cq_sel
 }
 
+func (node *SANode) FindInsideParent(touchPos OsV2, canvas OsV4, ui *Ui) *SANode {
+
+	var found *SANode
+
+	if SAGroups_HasNodeSub(node.Exe) {
+		coord, _, _ := node.nodeToPixelsCoord(canvas, ui)
+		if coord.Inside(touchPos) {
+			found = node
+		}
+	}
+
+	for _, nd := range node.Subs {
+		ff := nd.FindInsideParent(touchPos, canvas, ui)
+		if ff != nil {
+			found = ff
+		}
+	}
+
+	return found
+}
+
 func (node *SANode) drawRectNode(someNodeIsDraged bool, app *SAApp) bool {
 	ui := app.base.ui
 	lv := ui.GetCall()
@@ -122,7 +143,7 @@ func (node *SANode) drawRectNode(someNodeIsDraged bool, app *SAApp) bool {
 	coord, selCoord, headerCoord := node.nodeToPixelsCoord(lv.call.canvas, ui)
 
 	bck := ui.win.io.ini.Dpi
-	ui.win.io.ini.Dpi = int(float32(ui.win.io.ini.Dpi) * float32(node.parent.app.Cam_z))
+	ui.win.io.ini.Dpi = int(float32(ui.win.io.ini.Dpi) * float32(node.app.Cam_z))
 
 	backCd := pl.GetGrey(1)
 
@@ -169,7 +190,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 	coord, selCoord, _ := node.nodeToPixelsCoord(lv.call.canvas, ui)
 
 	bck := ui.win.io.ini.Dpi
-	ui.win.io.ini.Dpi = int(float32(ui.win.io.ini.Dpi) * float32(node.parent.app.Cam_z))
+	ui.win.io.ini.Dpi = int(float32(ui.win.io.ini.Dpi) * float32(node.app.Cam_z))
 
 	ui.Div_startCoord(0, 0, 1, 1, coord, node.Name)
 	ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
@@ -208,7 +229,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 	isJobActive := node.progress > 0
 	if isJobActive {
 		if node.progress > 0 {
-			cellr := node.parent.cellZoom(ui)
+			cellr := node.cellZoom(ui)
 			cq := coord.AddSpace(int(-0.3 * float64(cellr)))
 			cq.Start.X = cq.End().X
 			ui.Div_startCoord(0, 0, 1, 1, cq, node.Name)
@@ -237,7 +258,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 		pl := ui.win.io.GetPalette()
 		cd := pl.P
 
-		cellr := node.parent.cellZoom(ui)
+		cellr := node.cellZoom(ui)
 		cq := coord.AddSpace(int(-0.3 * float64(cellr)))
 
 		ui.buff.AddRectRound(cq, selectRad, cd, ui.CellWidth(0.06)) //selected
