@@ -1,0 +1,919 @@
+{
+"Pos": {
+"X": 0,
+"Y": 0
+},
+"Name": "root",
+"Exe": "layout",
+"Attrs": [
+{
+"Name": "grid",
+"Value": "[0, 0, 0, 0]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": true
+}
+}
+],
+"Cols": [
+{
+"Pos": 0,
+"Min": 1,
+"Max": 3,
+"Resize": 1
+},
+{
+"Pos": 1,
+"Min": 1,
+"Max": 10,
+"Resize": 1
+}
+],
+"Rows": [
+{
+"Pos": 1,
+"Min": 1,
+"Max": 3,
+"Resize": 1
+},
+{
+"Pos": 2,
+"Min": 1,
+"Max": 1,
+"Resize": 1
+},
+{
+"Pos": 3,
+"Min": 1,
+"Max": 5,
+"Resize": 1
+}
+],
+"Subs": [
+{
+"Pos": {
+"X": 3.237378,
+"Y": 0.45665026
+},
+"Name": "sqlite_info",
+"Exe": "sqlite_info",
+"Attrs": [
+{
+"Name": "file",
+"Value": "db_picker.path",
+"ShowExp": false,
+"Ui": {
+"Fn": "file",
+"HideAddDel": false
+}
+},
+{
+"Name": "_info",
+"ShowExp": false,
+"Ui": {
+"Fn": "Code",
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": 11.086613,
+"Y": -0.8870739
+},
+"Name": "label_db",
+"Exe": "text",
+"Attrs": [
+{
+"Name": "grid",
+"Value": "[0, 0, 1, 1]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": true
+}
+},
+{
+"Name": "label",
+"Value": "\"Database\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "align_h",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prms": {
+"labels": "Left;Center;Right",
+"values": ""
+},
+"HideAddDel": false
+}
+},
+{
+"Name": "align_v",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prms": {
+"labels": "Top;Center;Bottom",
+"values": ""
+},
+"HideAddDel": false
+}
+},
+{
+"Name": "selection",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "multi_line",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "draw_border",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "grid_show",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": -2.5365608,
+"Y": 2.4994338
+},
+"Name": "editbox_task",
+"Exe": "editbox",
+"Attrs": [
+{
+"Name": "grid",
+"Value": "[1, 1, 1, 1]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": true
+}
+},
+{
+"Name": "value",
+"Value": "\"Show me last the last conversation.\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "align_h",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prms": {
+"labels": "Left;Center;Right",
+"values": ""
+},
+"HideAddDel": false
+}
+},
+{
+"Name": "align_v",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prms": {
+"labels": "Top;Center;Bottom",
+"values": ""
+},
+"HideAddDel": false
+}
+},
+{
+"Name": "enable",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "tempToValue",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "precision",
+"Value": "2",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "ghost",
+"Value": "\"\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "multi_line",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "multi_line_enter_finish",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "finished",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "enter_finished",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "grid_show",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": 0.5636543,
+"Y": 5.6793547
+},
+"Name": "build_prompt",
+"Exe": "vars",
+"Attrs": [
+{
+"Name": "intro",
+"Value": "\"This is a conversation between User and Llama, a friendly chatbot.\\nUser asks questions and Llama convert them into SQL with precision, and never fails to answer any requests.\\nHere is the list of table names with column names inside brackets:\\n\"",
+"ShowExp": false,
+"Ui": {
+"Fn": "Code",
+"HideAddDel": false
+}
+},
+{
+"Name": "prompt",
+"Value": "intro \u0026 build_table_list._list \u0026 \"\\n\\nUser: \" \u0026 editbox_task.value \u0026 \"\\nLlama:\"",
+"ShowExp": false,
+"Ui": {
+"Fn": "Code",
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": 3.1834474,
+"Y": 2.534802
+},
+"Name": "build_table_list",
+"Exe": "code_python",
+"Attrs": [
+{
+"Name": "code",
+"Value": "\"_list = \\\"\\\"\\ntbls = json.loads(tables)\\nfor tb in tbls:\\n\\t_list += tb['Name']\\n\\t_list += \\\"(\\\"\\n\\tfor cl in tb['Columns']:\\n\\t\\t_list += cl['Name'] + \\\",\\\"\\n\\t_list = _list[:-1]\\t#remove ','\\n\\t_list += \\\")\\\\n\\\"\\n_list = _list[:-1]\\t\\t#remove '\\\\n'\\n\"",
+"ShowExp": false,
+"Ui": {
+"Fn": "Code",
+"HideAddDel": false
+}
+},
+{
+"Name": "tables",
+"Value": "get(sqlite_info._info, \"Tables\")",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "_list",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": 0.43859598,
+"Y": 7.857456
+},
+"Name": "nn_llama_cpp",
+"Exe": "nn_llama_cpp",
+"Attrs": [
+{
+"Name": "model",
+"Value": "\"llama-2-7b.Q5_K_M.gguf\"",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prms": {
+"labels": ";llama-2-7b.Q5_K_M.gguf",
+"values": ";llama-2-7b.Q5_K_M.gguf"
+},
+"HideAddDel": false
+}
+},
+{
+"Name": "prompt",
+"Value": "build_prompt.prompt",
+"ShowExp": false,
+"Ui": {
+"Fn": "Code",
+"HideAddDel": false
+}
+},
+{
+"Name": "stop",
+"Value": "[\"\u003c/s\u003e\", \"Llama:\", \"User:\"]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "seed",
+"Value": "-1",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "n_predict",
+"Value": "400",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "temperature",
+"Value": "0.8",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "dynatemp_range",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "dynatemp_exponent",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "repeat_last_n",
+"Value": "256",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "repeat_penalty",
+"Value": "1.18",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "top_k",
+"Value": "40",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "top_p",
+"Value": "0.5",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "min_p",
+"Value": "0.05",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "tfs_z",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "typical_p",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "presence_penalty",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "frequency_penalty",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "mirostat",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "mirostat_tau",
+"Value": "5",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "mirostat_eta",
+"Value": "0.1",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "n_probs",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "cache_prompt",
+"Value": "\"0\"",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "slot_id",
+"Value": "-1",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "_out",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": 3.1777363,
+"Y": -1.8953636
+},
+"Name": "db_picker",
+"Exe": "file_picker",
+"Attrs": [
+{
+"Name": "grid",
+"Value": "[1, 0, 1, 1]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": true
+}
+},
+{
+"Name": "enable",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "path",
+"Value": "\"apps/LLM_chat/db.sqlite\"",
+"ShowExp": false,
+"Ui": {
+"Fn": "file",
+"HideAddDel": false
+}
+},
+{
+"Name": "grid_show",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": 11.145895,
+"Y": 0.7403118
+},
+"Name": "label_task",
+"Exe": "text",
+"Attrs": [
+{
+"Name": "grid",
+"Value": "[0, 1, 1, 1]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": true
+}
+},
+{
+"Name": "label",
+"Value": "\"Task\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "align_h",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prms": {
+"labels": "Left;Center;Right",
+"values": ""
+},
+"HideAddDel": false
+}
+},
+{
+"Name": "align_v",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prms": {
+"labels": "Top;Center;Bottom",
+"values": ""
+},
+"HideAddDel": false
+}
+},
+{
+"Name": "selection",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "multi_line",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "draw_border",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "grid_show",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": 11.176982,
+"Y": 2.3109455
+},
+"Name": "label__result",
+"Exe": "text",
+"Attrs": [
+{
+"Name": "grid",
+"Value": "[0, 3, 1, 1]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": true
+}
+},
+{
+"Name": "label",
+"Value": "\"Result\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "align_h",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prms": {
+"labels": "Left;Center;Right",
+"values": ""
+},
+"HideAddDel": false
+}
+},
+{
+"Name": "align_v",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prms": {
+"labels": "Top;Center;Bottom",
+"values": ""
+},
+"HideAddDel": false
+}
+},
+{
+"Name": "selection",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "multi_line",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "draw_border",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "grid_show",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": 0.42245024,
+"Y": 10.078482
+},
+"Name": "result",
+"Exe": "text",
+"Attrs": [
+{
+"Name": "grid",
+"Value": "[1, 3, 1, 1]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": true
+}
+},
+{
+"Name": "label",
+"Value": "cleanText(get(nn_llama_cpp._out, \"content\"))",
+"ShowExp": true,
+"Ui": {
+"HideAddDel": false
+}
+},
+{
+"Name": "align_h",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prms": {
+"labels": "Left;Center;Right",
+"values": ""
+},
+"HideAddDel": false
+}
+},
+{
+"Name": "align_v",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prms": {
+"labels": "Top;Center;Bottom",
+"values": ""
+},
+"HideAddDel": false
+}
+},
+{
+"Name": "selection",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "multi_line",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "draw_border",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "grid_show",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": 11.24277,
+"Y": 3.843985
+},
+"Name": "divider",
+"Exe": "divider",
+"Attrs": [
+{
+"Name": "grid",
+"Value": "[0, 2, 2, 1]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": true
+}
+},
+{
+"Name": "type",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "combo",
+"Prms": {
+"labels": "Column;Row",
+"values": ""
+},
+"HideAddDel": false
+}
+},
+{
+"Name": "grid_show",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+}
+]
+}
+]
+}
