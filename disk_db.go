@@ -19,7 +19,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"os"
 	"sync"
 )
 
@@ -46,8 +45,11 @@ type DiskDb struct {
 	lastWriteTicks int64
 	lastReadTicks  int64
 
-	file_time int64
-	written   bool
+	written bool
+
+	file_time     int64
+	file_time_wal int64
+	file_time_shm int64
 }
 
 func NewDiskDb(path string, inMemory bool, disk *Disk) (*DiskDb, error) {
@@ -90,14 +92,16 @@ func (db *DiskDb) Destroy() {
 }
 
 func (db *DiskDb) HasFileChanged() bool {
-	fileInfo, err := os.Stat(db.path)
-	if err != nil {
-		return false
-	}
-	tm := fileInfo.ModTime().Unix()
+	tm := OsFileTime(db.path)
+	tm_wal := OsFileTime(db.path + "-wal")
+	tm_shm := OsFileTime(db.path + "-shm")
 
-	changed := (tm != db.file_time)
-	db.file_time = tm //update
+	changed := (tm != db.file_time || tm_wal != db.file_time_wal || tm_shm != db.file_time_shm)
+
+	//update
+	db.file_time = tm
+	db.file_time_wal = tm_wal
+	db.file_time_shm = tm_shm
 
 	return changed
 }
