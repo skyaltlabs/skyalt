@@ -68,7 +68,7 @@ func SAExe_Sqlite_info(node *SANode) bool {
 	_infoAttr := node.GetAttr("_info", []byte("[]"))
 
 	type TableInfo struct {
-		Tables []*DiskIndexTable
+		Tables []*DiskDbIndexTable
 	}
 	var tinf TableInfo
 
@@ -189,7 +189,9 @@ func SAExe_Sqlite_select(node *SANode) bool {
 		return false
 	}
 
-	rows, err := db.Read(query)
+	db.Read_Lock()
+	defer db.Read_Unlock()
+	rows, err := db.Read_unsafe(query)
 	if err != nil {
 		queryAttr.SetError(fmt.Errorf("Query() failed: %w", err))
 		return false

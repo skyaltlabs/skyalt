@@ -133,7 +133,9 @@ func (ip *WinMedia) GetBlob(disk *Disk) ([]byte, error) {
 			return nil, fmt.Errorf("OpenDb(%s) failed: %w", ip.path, err)
 		}
 
-		row := db.ReadRow(fmt.Sprintf("SELECT %s FROM %s WHERE rowid==%d", ip.column, ip.table, ip.row))
+		db.Read_Lock()
+		defer db.Read_Unlock()
+		row := db.ReadRow_unsafe(fmt.Sprintf("SELECT %s FROM %s WHERE rowid==%d", ip.column, ip.table, ip.row))
 		err = row.Scan(&data)
 		if err != nil {
 			return nil, fmt.Errorf("QueryRow(%s) failed: %w", ip.path, err)

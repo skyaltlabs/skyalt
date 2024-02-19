@@ -20,6 +20,7 @@ import (
 	"database/sql"
 	"fmt"
 	"path/filepath"
+	"sync"
 
 	"github.com/mattn/go-sqlite3"
 )
@@ -38,46 +39,14 @@ func InitSQLiteGlobal() error {
 	return nil
 }
 
-type DiskIndexColumn struct {
-	Name string
-	Type string
-}
-
-type DiskIndexTable struct {
-	Name    string
-	Columns []*DiskIndexColumn
-}
-
-func (indt *DiskIndexTable) updateDb(db *DiskDb) error {
-
-	query := "pragma table_info(" + indt.Name + ");"
-	rows, err := db.Read(query)
-	if err != nil {
-		return fmt.Errorf("Query(%s) failed: %w", query, err)
-	}
-	for rows.Next() {
-		var cid int
-		var cname, ctype string
-		var pk int
-		var notnull, dflt_value interface{}
-		err = rows.Scan(&cid, &cname, &ctype, &notnull, &dflt_value, &pk)
-		if err != nil {
-			return fmt.Errorf("Scan(%s) failed: %w", db.path, err)
-		}
-
-		c := &DiskIndexColumn{Name: cname, Type: ctype}
-		indt.Columns = append(indt.Columns, c)
-	}
-
-	return nil
-}
-
 type Disk struct {
-	last_ticks int64
+	lock sync.Mutex
 
 	dbs map[string]*DiskDb
 
 	net *DiskNet
+
+	last_ticks int64
 }
 
 func NewDisk() (*Disk, error) {
@@ -99,6 +68,8 @@ func (disk *Disk) Destroy() {
 }
 
 func (disk *Disk) OpenDb(path string) (*DiskDb, bool, error) {
+	disk.lock.Lock()
+	defer disk.lock.Unlock()
 
 	//find
 	db, found := disk.dbs[path]
@@ -128,6 +99,9 @@ func (disk *Disk) ResetTick() {
 }
 
 func (disk *Disk) Tick() {
+	disk.lock.Lock()
+	defer disk.lock.Unlock()
+
 	/*if time.Now().UnixMilli() > disk.last_ticks+3000 {
 		disk.UpdateIndex()
 		disk.last_ticks = OsTicks()
