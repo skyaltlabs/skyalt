@@ -244,6 +244,8 @@ func (app *SAApp) Tick() {
 		app.exeNode = nil
 
 		app.exeState = SANode_STATE_WAITING
+
+		app.base.ui.win.SetRedraw()
 	}
 }
 
