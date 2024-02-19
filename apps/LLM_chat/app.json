@@ -52,8 +52,8 @@
 "Subs": [
 {
 "Pos": {
-"X": 7.6147194,
-"Y": -2.0745087
+"X": 7.5884037,
+"Y": -2.0218773
 },
 "Name": "build_prompt",
 "Exe": "vars",
@@ -79,8 +79,8 @@
 },
 {
 "Pos": {
-"X": 1.5078737,
-"Y": 7.334629
+"X": 1.5605053,
+"Y": 7.571471
 },
 "Name": "reset_editbox",
 "Exe": "setter",
@@ -168,7 +168,7 @@
 {
 "Name": "values",
 "Value": "[{\"value\":editbox.value, \"column\":\"user\", }, {\"value\":time(), \"column\":\"date\", }, {\"value\": if(nn_llama_cpp._out!=\"\", cleanText(get(nn_llama_cpp._out, \"content\")), \"\") , \"column\":\"bot\", }]",
-"ShowExp": false,
+"ShowExp": true,
 "Ui": {
 "Fn": "map",
 "Map": {
@@ -431,7 +431,7 @@
 },
 {
 "Name": "enable",
-"Value": "editbox.value != \"\"",
+"Value": "editbox.isEmpty==0",
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
@@ -511,8 +511,8 @@
 },
 {
 "Pos": {
-"X": 10.847921,
-"Y": -4.674262
+"X": 10.900553,
+"Y": -4.7005777
 },
 "Name": "json_into_single_string",
 "Exe": "code_python",
@@ -536,7 +536,6 @@
 },
 {
 "Name": "_chat",
-"Value": "\"\"",
 "ShowExp": false,
 "Ui": {
 "HideAddDel": false
@@ -729,7 +728,7 @@
 },
 {
 "Name": "_rows",
-"Value": "[]",
+"Value": "\"\"",
 "ShowExp": false,
 "Ui": {
 "HideAddDel": false
@@ -737,7 +736,7 @@
 },
 {
 "Name": "_columns",
-"Value": "[]",
+"Value": "\"\"",
 "ShowExp": false,
 "Ui": {
 "HideAddDel": false
@@ -752,6 +751,7 @@
 },
 "Name": "editbox",
 "Exe": "editbox",
+"Selected": true,
 "Attrs": [
 {
 "Name": "grid",
@@ -860,6 +860,15 @@
 {
 "Name": "enter_finished",
 "Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false
+}
+},
+{
+"Name": "isEmpty",
+"Value": "1",
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
