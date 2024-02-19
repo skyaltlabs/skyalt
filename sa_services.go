@@ -16,8 +16,6 @@ limitations under the License.
 
 package main
 
-import "time"
-
 type SAServices struct {
 	service_whisper_cpp *SAServiceWhisperCpp
 	service_llama_cpp   *SAServiceLLamaCpp
@@ -44,7 +42,6 @@ func (srv *SAServices) Destroy() {
 func (srv *SAServices) GetWhisper() *SAServiceWhisperCpp {
 	if srv.service_whisper_cpp == nil {
 		srv.service_whisper_cpp = NewSAServiceWhisperCpp("http://127.0.0.1", "8090")
-		time.Sleep(200 * time.Millisecond)
 	}
 	return srv.service_whisper_cpp
 }
@@ -59,7 +56,6 @@ func (srv *SAServices) GetLLama() *SAServiceLLamaCpp {
 func (srv *SAServices) GetPython() *SAServicePython {
 	if srv.service_python == nil {
 		srv.service_python = NewSAServicePython("http://127.0.0.1", "8092")
-		time.Sleep(200 * time.Millisecond)
 	}
 	return srv.service_python
 }

@@ -19,11 +19,13 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
+	"time"
 )
 
 type SAServicePython struct {
@@ -44,6 +46,16 @@ func NewSAServicePython(addr string, port string) *SAServicePython {
 		err := py.cmd.Start()
 		if err != nil {
 			fmt.Println(err)
+		}
+	}
+
+	//wait until it's running
+	{
+		err := errors.New("err")
+		st := OsTicks()
+		for err != nil && OsIsTicksIn(st, 3000) {
+			_, _, err = py.Exec([]byte(`{"code":"", "attrs":{}}`))
+			time.Sleep(50 * time.Millisecond)
 		}
 	}
 

@@ -19,6 +19,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -27,6 +28,7 @@ import (
 	"os/exec"
 	"strconv"
 	"sync"
+	"time"
 )
 
 type SAServiceWhisperCppProps struct {
@@ -134,6 +136,16 @@ func NewSAServiceWhisperCpp(addr string, port string) *SAServiceWhisperCpp {
 		err := wh.cmd.Start()
 		if err != nil {
 			fmt.Println(err)
+		}
+	}
+
+	//wait until it's running
+	{
+		err := errors.New("err")
+		st := OsTicks()
+		for err != nil && OsIsTicksIn(st, 3000) {
+			err = wh.setModel("")
+			time.Sleep(50 * time.Millisecond)
 		}
 	}
 
