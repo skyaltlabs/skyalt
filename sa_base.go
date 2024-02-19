@@ -347,7 +347,15 @@ func (base *SABase) Render() bool {
 			if app.ShowCode {
 				ui.Div_start(1, 0, 1, 1)
 				{
-					//...........
+					ui.Div_colMax(0, 100)
+					ui.Div_rowMax(0, 100)
+					_, _, _, fnshd, _ := ui.Comp_editbox(0, 0, 1, 1, &app.code, Comp_editboxProp().Align(0, 0).MultiLine(true).Ghost("Code"))
+					if fnshd {
+
+						//backup root ...
+						app.ImportCode(app.code)
+						//copy cols/rows + node.Pos from backup ...
+					}
 				}
 				ui.Div_end()
 			}
