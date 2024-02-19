@@ -73,6 +73,9 @@ type SAApp struct {
 	IDE  bool
 
 	Cam_x, Cam_y, Cam_z float64 `json:",omitempty"`
+	EnableExecution     bool
+
+	ShowCode bool
 
 	historyIt bool
 	exeIt     bool
@@ -91,8 +94,6 @@ type SAApp struct {
 	ops   *VmOps
 	apis  *VmApis
 	prior int
-
-	EnableExecution bool
 
 	iconPath string
 

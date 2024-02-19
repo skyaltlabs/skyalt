@@ -285,55 +285,75 @@ func (base *SABase) Render() bool {
 	if app.IDE {
 		ui.Div_start(2, 0, 1, 1)
 		{
+			ui.Div_col(0, 4)
 			ui.Div_colMax(0, 100)
-			ui.Div_rowResize(0, "node", 5, false)
-			ui.Div_rowMax(1, 100)
-
-			//attributes layout
-			sel := app.root.FindSelected()
-			if sel != nil {
-				ui.Div_start(0, 0, 1, 1)
-				sel.RenderAttrs()
-				ui.Div_end()
+			ui.Div_rowMax(0, 100)
+			if app.ShowCode {
+				ui.Div_col(1, 3)
+				ui.Div_colResize(1, "code", 4, false)
 			}
 
-			//graph layout
-			if app.Cam_z <= 0 {
-				app.Cam_z = 1
-			}
-
-			ui.Div_start(0, 1, 1, 1)
+			ui.Div_start(0, 0, 1, 1)
 			{
 				ui.Div_colMax(0, 100)
-				ui.Div_rowMax(0, 100)
-				pn_x := 1
-				if app.graph.showNodeList {
-					ui.Div_col(1, 3) //min
-					ui.Div_colResize(1, "node_list", 5, false)
-					pn_x = 2
-				}
+				ui.Div_rowResize(0, "node", 5, false)
+				ui.Div_rowMax(1, 100)
 
-				//graph
-				ui.Div_start(0, 0, 1, 1)
-				graphCanvas, keyAllow := app.graph.drawGraph(app.root, ui)
-				ui.Div_end()
-
-				//node list
-				if app.graph.showNodeList {
-					ui.Div_start(1, 0, 1, 1)
-					app.graph.drawNodeList(graphCanvas, app.root, ui)
+				//attributes layout
+				sel := app.root.FindSelected()
+				if sel != nil {
+					ui.Div_start(0, 0, 1, 1)
+					sel.RenderAttrs()
 					ui.Div_end()
 				}
 
-				//panel
-				ui.Div_start(pn_x, 0, 1, 1)
-				app.graph.drawPanel(graphCanvas, keyAllow, ui)
+				//graph layout
+				if app.Cam_z <= 0 {
+					app.Cam_z = 1
+				}
+
+				ui.Div_start(0, 1, 1, 1)
+				{
+					ui.Div_colMax(0, 100)
+					ui.Div_rowMax(0, 100)
+					pn_x := 1
+					if app.graph.showNodeList {
+						ui.Div_col(1, 3) //min
+						ui.Div_colResize(1, "node_list", 5, false)
+						pn_x = 2
+					}
+
+					//graph
+					ui.Div_start(0, 0, 1, 1)
+					graphCanvas, keyAllow := app.graph.drawGraph(app.root, ui)
+					ui.Div_end()
+
+					//node list
+					if app.graph.showNodeList {
+						ui.Div_start(1, 0, 1, 1)
+						app.graph.drawNodeList(graphCanvas, app.root, ui)
+						ui.Div_end()
+					}
+
+					//panel
+					ui.Div_start(pn_x, 0, 1, 1)
+					app.graph.drawPanel(graphCanvas, keyAllow, ui)
+					ui.Div_end()
+				}
 				ui.Div_end()
 			}
 			ui.Div_end()
 
+			if app.ShowCode {
+				ui.Div_start(1, 0, 1, 1)
+				{
+					//...........
+				}
+				ui.Div_end()
+			}
 		}
 		ui.Div_end()
+
 	}
 
 	app.History(ui)

@@ -706,7 +706,7 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool, ui *Ui) {
 	}
 	y++
 
-	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"list.png"), 0.2, "Show list of all nodes(Ctrl+F)", CdPalette_P, true, gr.showNodeList) > 0 || strings.EqualFold(keys.ctrlChar, "f") {
+	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"list.png"), 0.2, "Show/Hide list of all nodes(Ctrl+F)", CdPalette_P, true, gr.showNodeList) > 0 || strings.EqualFold(keys.ctrlChar, "f") {
 		gr.showNodeList = !gr.showNodeList
 		if gr.showNodeList {
 			gr.showNodeList_justOpen = true
@@ -715,6 +715,11 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool, ui *Ui) {
 	y++
 
 	y++ //space - adjust Div_rowMax()
+
+	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"code.png"), 0.2, "Show/Hide code", CdPalette_P, true, gr.app.ShowCode) > 0 || strings.EqualFold(keys.ctrlChar, "t") {
+		gr.app.ShowCode = !gr.app.ShowCode
+	}
+	y++
 
 	//if gr.app.exeState == SANode_STATE_RUNNING {
 	//ui.Comp_text(0, y, 1, 1, fmt.Sprintf("**%d**", gr.app.jobs.Num()), 1)
