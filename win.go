@@ -567,7 +567,7 @@ func (win *Win) UpdateIO() (bool, bool, error) {
 	}
 
 	//one more time
-	if win.num_redraws > 0 && win.num_redraws <= 3 {
+	if win.num_redraws >= 0 && win.num_redraws <= 3 {
 		redraw = true
 	}
 	win.num_redraws++
