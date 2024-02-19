@@ -21,7 +21,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -35,21 +34,12 @@ func _SAExe_Sqlite_open(node *SANode, fileAttr *SANodeAttr) *DiskDb {
 		return nil
 	}
 
-	_, err := os.Stat(file)
-	if os.IsNotExist(err) {
+	if !OsFileExists(file) {
 		fileAttr.SetError(fmt.Errorf("file(%s) doesn't exist", file))
 		return nil
 	}
 
-	/*db, err := sql.Open("sqlite3", "file:"+file+"?&_journal_mode=WAL")
-	if err != nil {
-		fileAttr.SetErrorExe(fmt.Sprintf("Open(%s) failed: %v", file, err))
-		return nil
-	}
-	return db*/
-
 	db, _, err := node.app.base.ui.win.disk.OpenDb(file)
-	//db, err := NewDiskDb(file, false, nil)
 	if err != nil {
 		fileAttr.SetError(err)
 		return nil
