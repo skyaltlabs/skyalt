@@ -220,40 +220,11 @@ func (base *SABase) tickMick() {
 	}
 }
 
-func (base *SABase) Render() bool {
-
+func (base *SABase) Tick() {
 	base.services.Tick()
-
 	base.tickMick()
 
 	base.HasApp() //fix range
-
-	base.ui.renderStart(0, 0, 1, 1, true)
-
-	//hard/soft render ...
-	base.drawFrame()
-
-	base.ui.renderEnd(true)
-
-	return !base.exit
-}
-
-func (base *SABase) GetApp() *SAApp {
-	app := base.Apps[base.Selected]
-	if app.root == nil {
-		app.root, _ = NewSANodeRoot(app.GetJsonPath(), app) //err ...
-
-		//testing import/export
-		/*if app.Name == "LLM_chat" {
-			code := app.ExportCode()
-			b := NewSAApp("dd", base)
-			b.ImportCode(code)
-		}*/
-	}
-	return app
-}
-
-func (base *SABase) drawFrame() {
 
 	//check if some db changed
 	if (!OsIsTicksIn(base.last_tick, 5000) && base.ui.win.disk.HasDbFileChanged()) ||
@@ -267,6 +238,13 @@ func (base *SABase) drawFrame() {
 
 	app := base.GetApp()
 	app.Tick()
+}
+
+func (base *SABase) Render() bool {
+	base.HasApp() //fix range
+	app := base.GetApp()
+
+	base.ui.renderStart(0, 0, 1, 1, true)
 
 	ui := base.ui
 	icon_rad := 1.5
@@ -359,4 +337,23 @@ func (base *SABase) drawFrame() {
 	}
 
 	app.History(ui)
+
+	base.ui.renderEnd(true)
+
+	return !base.exit
+}
+
+func (base *SABase) GetApp() *SAApp {
+	app := base.Apps[base.Selected]
+	if app.root == nil {
+		app.root, _ = NewSANodeRoot(app.GetJsonPath(), app) //err ...
+
+		//testing import/export
+		/*if app.Name == "LLM_chat" {
+			code := app.ExportCode()
+			b := NewSAApp("dd", base)
+			b.ImportCode(code)
+		}*/
+	}
+	return app
 }
