@@ -231,11 +231,12 @@ func SAExe_Render_Editbox(w *SANode, renderIt bool) {
 	prop.multi_line_enter_finish = w.GetAttrUi("multi_line_enter_finish", 0, SAAttrUi_SWITCH).GetBool()
 	finishedAttr := w.GetAttrUi("finished", 0, SAAttrUi_SWITCH)
 	enter_finishedAttr := w.GetAttrUi("enter_finished", 0, SAAttrUi_SWITCH)
+	isEmptyAttr := w.GetAttrUi("isEmpty", 0, SAAttrUi_SWITCH)
 
 	//temp, tempChanged? ...
 
 	if showIt {
-		_, _, chngd, fnshd, _ := ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, prop)
+		editedValue, _, chngd, fnshd, _ := ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, prop)
 		if fnshd || (prop.tempToValue && chngd) {
 			valueInstr.LineReplace(value, false)
 		}
@@ -250,6 +251,9 @@ func SAExe_Render_Editbox(w *SANode, renderIt bool) {
 				enter_finishedAttr.AddSetAttr("0")
 			}
 		}
+
+		isEmptyAttr.AddSetAttr(OsTrnString(editedValue == "", "1", "0"))
+		//_isEmptyAttr.GetResult().SetBool(editedValue == "")
 	}
 
 }
