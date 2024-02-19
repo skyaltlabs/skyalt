@@ -643,10 +643,7 @@ func (gr *SAGraph) drawNodeList(graphCanvas OsV4, act *SANode, ui *Ui) {
 
 	//search
 	ui.Div_colMax(0, 100)
-	ui.Comp_editbox(0, 0, 1, 1, &gr.node_search, Comp_editboxProp().Ghost(ui.trns.SEARCH).Highlight(gr.node_search != ""))
-	if ui.Comp_buttonText(1, 0, 1, 1, "X", "", ui.trns.CLOSE, true, false) > 0 {
-		gr.showNodeList = false //hide
-	}
+	ui.Comp_editbox(0, 0, 1, 1, &gr.node_search, Comp_editboxProp().TempToValue(true).Ghost(ui.trns.SEARCH).Highlight(gr.node_search != ""))
 
 	//items
 	y := 1
