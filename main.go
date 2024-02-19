@@ -106,7 +106,5 @@ func main() {
 		} else {
 			time.Sleep(20 * time.Millisecond)
 		}
-
-		disk.Tick()
 	}
 }
