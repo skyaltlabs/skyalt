@@ -19,6 +19,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"sync"
 )
 
@@ -44,6 +45,9 @@ type DiskDb struct {
 
 	lastWriteTicks int64
 	lastReadTicks  int64
+
+	file_time int64
+	written   bool
 }
 
 func NewDiskDb(path string, inMemory bool, disk *Disk) (*DiskDb, error) {
@@ -66,6 +70,8 @@ func NewDiskDb(path string, inMemory bool, disk *Disk) (*DiskDb, error) {
 		}
 	}
 
+	db.HasFileChanged() //set 'file_time'
+
 	return &db, nil
 }
 
@@ -81,6 +87,25 @@ func (db *DiskDb) Destroy() {
 	if err != nil {
 		fmt.Printf("db(%s).Destroy() failed: %v\n", db.path, err)
 	}
+}
+
+func (db *DiskDb) HasFileChanged() bool {
+	fileInfo, err := os.Stat(db.path)
+	if err != nil {
+		return false
+	}
+	tm := fileInfo.ModTime().Unix()
+
+	changed := (tm != db.file_time)
+	db.file_time = tm //update
+
+	return changed
+}
+func (db *DiskDb) HasBeenWritten() bool {
+	written := db.written
+	db.written = false
+
+	return written
 }
 
 func (db *DiskDb) GetTableInfo() ([]*DiskDbIndexTable, error) {
@@ -131,6 +156,7 @@ func (db *DiskDb) Vacuum() error {
 	defer db.lock.Unlock()
 
 	_, err := db.db.Exec("VACUUM;")
+	db.written = true
 	return err
 }
 
@@ -151,6 +177,7 @@ func (db *DiskDb) Write(query string, params ...any) (sql.Result, error) {
 
 	db.lastWriteTicks = int64(OsTicks())
 
+	db.written = true
 	return res, nil
 }
 

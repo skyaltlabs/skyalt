@@ -45,8 +45,6 @@ type Disk struct {
 	dbs map[string]*DiskDb
 
 	net *DiskNet
-
-	last_ticks int64
 }
 
 func NewDisk() (*Disk, error) {
@@ -94,20 +92,30 @@ func (disk *Disk) OpenDb(path string) (*DiskDb, bool, error) {
 	return db, found, nil
 }
 
-func (disk *Disk) ResetTick() {
-	disk.last_ticks = 0
-}
-
-func (disk *Disk) Tick() {
+func (disk *Disk) HasDbFileChanged() bool {
 	disk.lock.Lock()
 	defer disk.lock.Unlock()
 
-	/*if time.Now().UnixMilli() > disk.last_ticks+3000 {
-		disk.UpdateIndex()
-		disk.last_ticks = OsTicks()
-	}*/
+	changed := false
+	for _, db := range disk.dbs {
+		if db.HasFileChanged() {
+			changed = true
+		}
+	}
 
-	//close innactive databases
-	//..
+	return changed
+}
 
+func (disk *Disk) HasDbBeenWritten() bool {
+	disk.lock.Lock()
+	defer disk.lock.Unlock()
+
+	changed := false
+	for _, db := range disk.dbs {
+		if db.HasBeenWritten() {
+			changed = true
+		}
+	}
+
+	return changed
 }
