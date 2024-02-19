@@ -98,6 +98,8 @@ type SAApp struct {
 	iconPath string
 
 	mic_nodes []SANodePath
+
+	code string
 }
 
 func (a *SAApp) init(base *SABase) {
@@ -228,6 +230,8 @@ func (app *SAApp) Tick() {
 					fmt.Println("Error Copy()", err)
 					return
 				}
+
+				app.code = app.ExportCode()
 
 				app.exeState = SANode_STATE_RUNNING
 				go app.executeThread()
@@ -806,9 +810,16 @@ func (node *SANode) _importCode(line *SALine, ops *VmOps) {
 					break
 				}
 
-				if len(prm.subs) >= 3 && prm.subs[0].tp == VmLexerWord && prm.subs[1].tp == VmLexerDiv {
-					attr := nd.AddAttr(prm.subs[0].GetString(ln.line))
-					attr.Value = ln.line[:prm.subs[1].end]
+				prm_n := len(prm.subs)
+				if prm_n >= 3 && prm.subs[0].tp == VmLexerWord && prm.subs[1].tp == VmLexerDiv {
+					key := prm.Extract(0, 1).GetString(ln.line)
+					value := prm.Extract(2, -1).GetString(ln.line)
+
+					attr := nd.findAttr(key)
+					if attr == nil {
+						attr = nd.AddAttr(key)
+					}
+					attr.Value = value
 				} else {
 					fmt.Printf("Line(%d: %s) has param(%d) error\n", i, ln, prm_i)
 				}
