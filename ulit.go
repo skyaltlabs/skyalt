@@ -780,6 +780,14 @@ func OsFolderExists(fileName string) bool {
 	return info.IsDir()
 }
 
+func OsFileTime(fileName string) int64 {
+	info, err := os.Stat(fileName)
+	if os.IsNotExist(err) {
+		return -1
+	}
+	return info.ModTime().Unix()
+}
+
 func OsFolderCreate(path string) error {
 	return os.MkdirAll(path, os.ModePerm)
 }
