@@ -16,7 +16,9 @@ limitations under the License.
 
 package main
 
-import "strings"
+import (
+	"strings"
+)
 
 type SAGroupNode struct {
 	name   string
@@ -111,6 +113,34 @@ func InitSAGroups() SAGroups {
 
 	return grs
 }
+
+func SAGroups_GenerateDocumentation(app *SAApp) string {
+	str := ""
+
+	grs := InitSAGroups()
+	for _, gr := range grs.groups {
+
+		if gr.name == "Variables" {
+			continue //skip
+		}
+
+		for _, gnd := range gr.nodes {
+
+			node := NewSANode(app, nil, "", gnd.name, OsV4{}, OsV2f{}) //has Execute() inside
+			params := ""
+			for _, attr := range node.Attrs {
+				params += attr.Name + ","
+			}
+			params, _ = strings.CutSuffix(params, ",")
+
+			str += gnd.name + "(" + params + ")" + "\n"
+		}
+	}
+	str, _ = strings.CutSuffix(str, "\n")
+
+	return str
+}
+
 func SAGroups_HasNodeSub(node string) bool {
 	return strings.EqualFold(node, "layout") || strings.EqualFold(node, "dialog") || strings.EqualFold(node, "for") || strings.EqualFold(node, "if")
 }
