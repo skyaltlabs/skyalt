@@ -616,7 +616,6 @@ func (w *SANode) updateLinks(parent *SANode, app *SAApp) {
 	for _, it := range w.Subs {
 		it.updateLinks(w, app)
 	}
-
 }
 
 func (w *SANode) Copy() (*SANode, error) {
@@ -637,6 +636,8 @@ func (w *SANode) Copy() (*SANode, error) {
 
 func (dst *SANode) CopyPoses(src *SANode) {
 	dst.Pos = src.Pos
+	dst.Cols = src.Cols
+	dst.Rows = src.Rows
 
 	for _, dstIt := range dst.Subs {
 		srcIt := src.FindNode(dstIt.Name)
@@ -1394,7 +1395,7 @@ func (w *SANode) RenderAttrs() {
 
 		//Name
 		oldName := w.Name
-		_, _, _, fnshd, _ := ui.Comp_editbox_desc(ui.trns.NAME, 2, 2, 1, 0, 1, 1, &w.Name, Comp_editboxProp().Ghost(ui.trns.NAME))
+		_, _, _, fnshd, _ := ui.Comp_editbox_desc(ui.trns.NAME, 2, 2, 1, 0, 1, 1, &w.Name, Comp_editboxProp().Ghost(ui.trns.NAME).Formating(false))
 		if fnshd && w.parent != nil {
 			w.CheckUniqueName()
 
@@ -1508,7 +1509,7 @@ func (w *SANode) RenderAttrs() {
 					if ui.Dialog_start(dnm) {
 						ui.Div_colMax(0, 5)
 						oldAttrName := it.Name
-						_, _, _, fnsh, _ := ui.Comp_editbox(0, 0, 1, 1, &it.Name, Comp_editboxProp().Ghost(ui.trns.NAME))
+						_, _, _, fnsh, _ := ui.Comp_editbox(0, 0, 1, 1, &it.Name, Comp_editboxProp().Ghost(ui.trns.NAME).Formating(false))
 						if fnsh {
 							it.CheckUniqueName()
 							w.GetAbsoluteRoot().RenameSubAttrs(w.Name, oldAttrName, it.Name)
