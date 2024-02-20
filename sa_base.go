@@ -351,10 +351,9 @@ func (base *SABase) Render() bool {
 					ui.Div_rowMax(0, 100)
 					_, _, _, fnshd, _ := ui.Comp_editbox(0, 0, 1, 1, &app.code, Comp_editboxProp().Align(0, 0).MultiLine(true).Ghost("Code"))
 					if fnshd {
-
-						//backup root ...
+						root_backup := app.root
 						app.ImportCode(app.code)
-						//copy cols/rows + node.Pos from backup ...
+						app.root.CopyPoses(root_backup) //recover
 					}
 				}
 				ui.Div_end()
