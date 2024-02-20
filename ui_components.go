@@ -531,6 +531,7 @@ type Comp_editboxP struct {
 	multi_line              bool
 	multi_line_enter_finish bool
 	enable                  bool
+	formating               bool
 }
 
 func Comp_editboxProp() *Comp_editboxP {
@@ -539,7 +540,7 @@ func Comp_editboxProp() *Comp_editboxP {
 	p.value_precision = -1
 	p.align = OsV2{0, 1}
 	p.enable = true
-
+	p.formating = true
 	return &p
 }
 
@@ -577,6 +578,10 @@ func (p *Comp_editboxP) MultiLineEnterFinish(v bool) *Comp_editboxP {
 }
 func (p *Comp_editboxP) Enable(v bool) *Comp_editboxP {
 	p.enable = v
+	return p
+}
+func (p *Comp_editboxP) Formating(v bool) *Comp_editboxP {
+	p.formating = v
 	return p
 }
 
@@ -633,6 +638,7 @@ func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, prop *Comp_editb
 	style.enable = prop.enable
 	style.cd = CdPalette_B
 	style.label_align = prop.align
+	style.label_formating = prop.formating
 
 	editedValue, active, changed, finished := ui.Comp_edit_s(&style, value, value, prop.icon, prop.ghost, prop.highlight, prop.tempToValue, prop.multi_line, prop.multi_line_enter_finish)
 
