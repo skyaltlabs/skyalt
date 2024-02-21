@@ -299,23 +299,14 @@ func (base *SABase) Render() bool {
 			ui.Div_start(0, 0, 1, 1)
 			{
 				ui.Div_colMax(0, 100)
-				ui.Div_rowResize(0, "node", 5, false)
-				ui.Div_rowMax(1, 100)
-
-				//attributes layout
-				sel := app.root.FindSelected()
-				if sel != nil {
-					ui.Div_start(0, 0, 1, 1)
-					sel.RenderAttrs()
-					ui.Div_end()
-				}
+				ui.Div_rowMax(0, 100)
 
 				//graph layout
 				if app.Cam_z <= 0 {
 					app.Cam_z = 1
 				}
 
-				ui.Div_start(0, 1, 1, 1)
+				ui.Div_start(0, 0, 1, 1)
 				{
 					ui.Div_colMax(0, 100)
 					ui.Div_rowMax(0, 100)
