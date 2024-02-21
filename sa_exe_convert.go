@@ -41,7 +41,7 @@ type SAExe_ConvertGPX struct {
 func SAExe_Convert_GpxToJson(node *SANode) bool {
 
 	gpxAttr := node.GetAttr("gpx", "")
-	jsonAttr := node.GetAttr("_json", "")
+	jsonAttr := node.GetAttr("_json", []byte("{}"))
 
 	gpx := gpxAttr.GetBlob()
 	if gpx.Len() == 0 {

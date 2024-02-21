@@ -32,8 +32,8 @@ func SAExe_File_dir(node *SANode) bool {
 		exts = nil
 	}
 
-	filesAttr := node.GetAttr("_files", "")
-	dirsAttr := node.GetAttr("_dirs", "")
+	filesAttr := node.GetAttr("_files", []byte("[]"))
+	dirsAttr := node.GetAttr("_dirs", []byte("[]"))
 
 	path := pathAttr.GetString()
 	if path == "" {
@@ -118,7 +118,7 @@ func SAExe_File_read(node *SANode) bool {
 	pathAttr := node.GetAttrUi("path", "", SAAttrUi_FILE)
 	path := pathAttr.GetString()
 
-	outputAttr := node.GetAttrUi("_out", "", SAAttrUi_BLOB)
+	outputAttr := node.GetAttrUi("_out", []byte("[]"), SAAttrUi_BLOB)
 
 	if path == "" {
 		pathAttr.SetErrorStr("value is empty")
