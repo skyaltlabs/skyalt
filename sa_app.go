@@ -288,6 +288,25 @@ func (app *SAApp) renderIDE(ui *Ui) {
 
 	changed := false
 
+	//+
+	if ui.Comp_buttonLight(0, 0, 1, 1, "+", ui.trns.ADD_COLUMNS_ROWS, true) > 0 {
+		ui.Dialog_open("add_cols_rows", 1)
+		changed = true
+	}
+	if ui.Dialog_start("add_cols_rows") {
+		ui.Div_colMax(0, 4)
+		if ui.Comp_buttonMenu(0, 0, 1, 1, ui.trns.ADD_NEW_COLUMN, "", true, false) > 0 {
+			SANodeColRow_Insert(&node.Cols, nil, gridMax.X, true)
+			changed = true
+		}
+		if ui.Comp_buttonMenu(0, 1, 1, 1, ui.trns.ADD_NEW_ROW, "", true, false) > 0 {
+			SANodeColRow_Insert(&node.Rows, nil, gridMax.Y, true)
+			changed = true
+		}
+
+		ui.Dialog_end()
+	}
+
 	//cols header
 	ui.Div_start(1, 0, 1, 1)
 	{
@@ -333,12 +352,6 @@ func (app *SAApp) renderIDE(ui *Ui) {
 		}
 	}
 	ui.Div_end()
-
-	//+
-	if ui.Comp_buttonLight(2, 0, 1, 1, "+", ui.trns.ADD_NEW_COLUMN, true) > 0 {
-		SANodeColRow_Insert(&node.Cols, nil, gridMax.X, true)
-		changed = true
-	}
 
 	//rows header
 	ui.Div_start(0, 1, 1, 1)
@@ -387,12 +400,6 @@ func (app *SAApp) renderIDE(ui *Ui) {
 
 	}
 	ui.Div_end()
-
-	//+
-	if ui.Comp_buttonLight(0, 2, 1, 1, "+", ui.trns.ADD_NEW_ROW, true) > 0 {
-		SANodeColRow_Insert(&node.Rows, nil, gridMax.Y, true)
-		changed = true
-	}
 
 	//app
 	appDiv = ui.Div_start(1, 1, 1, 1)
