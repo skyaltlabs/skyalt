@@ -104,8 +104,9 @@ func main() {
 
 			win.EndRender(true)
 		} else {
-			base.Tick()
 			time.Sleep(20 * time.Millisecond)
 		}
+
+		base.Tick()
 	}
 }
