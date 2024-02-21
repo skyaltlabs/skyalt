@@ -761,6 +761,29 @@ func (w *SANode) RemoveSelectedNodes() {
 	}
 }
 
+func (w *SANode) ResetIsRead() {
+	for _, a := range w.Attrs {
+		a.isRead = false
+	}
+	for _, nd := range w.Subs {
+		nd.ResetIsRead()
+	}
+}
+
+func (w *SANode) UpdateIsRead() {
+	for _, a := range w.Attrs {
+		for _, d := range a.depends {
+			if d.node != w { //avoid self
+				d.isRead = true
+			}
+		}
+	}
+
+	for _, nd := range w.Subs {
+		nd.UpdateIsRead()
+	}
+}
+
 func (w *SANode) getPath() string {
 
 	var path string
@@ -1505,9 +1528,12 @@ func (w *SANode) RenderAttrs() {
 
 			x := 0
 
-			if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/copy.png"), 0.3, ui.trns.COPY, CdPalette_B, true, false) > 0 {
-				keys := &ui.win.io.keys
-				keys.clipboard = w.Name + "." + it.Name
+			if !it.IsOutput() {
+				if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/visibility.png"), 0.3, ui.trns.VISIBILITY, CdPalette_P, true, it.Ui.Visible) > 0 {
+					it.Ui.Visible = !it.Ui.Visible
+					//keys := &ui.win.io.keys
+					//keys.clipboard = w.Name + "." + it.Name
+				}
 			}
 			x++
 
