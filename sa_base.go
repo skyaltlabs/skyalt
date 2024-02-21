@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 )
 
 type SABase struct {
@@ -244,6 +245,8 @@ func (base *SABase) Render() bool {
 	base.HasApp() //fix range
 	app := base.GetApp()
 
+	//fmt.Println(SAGroups_GenerateDocumentation(app))
+
 	base.ui.renderStart(0, 0, 1, 1, true)
 
 	ui := base.ui
@@ -349,12 +352,38 @@ func (base *SABase) Render() bool {
 				{
 					ui.Div_colMax(0, 100)
 					ui.Div_rowMax(0, 100)
-					_, _, _, fnshd, _ := ui.Comp_editbox(0, 0, 1, 1, &app.code, Comp_editboxProp().Align(0, 0).MultiLine(true).Ghost("Code"))
+					_, active, _, fnshd, _ := ui.Comp_editbox(0, 0, 1, 1, &app.code, Comp_editboxProp().Align(0, 0).MultiLine(true).Ghost("Code"))
 					if fnshd {
+						//convert code -> graph
 						root_backup := app.root
 						app.ImportCode(app.code)
 						app.root.CopyPoses(root_backup) //recover
+					} else if active {
+						//select and zoom node with cursor on
+						code := base.ui.edit.temp
+						st := base.ui.edit.end
+						for st > 0 && (st == 0 || code[st-1] != '\n') {
+							st--
+						}
+						line := code[st:]
+						en := strings.IndexByte(line, '\n')
+						if en >= 0 {
+							line = line[:en]
+						}
+
+						lex, err := ParseLine(line, 0, app.ops_eq)
+						if err == nil && len(lex.subs) > 0 && lex.subs[0].tp == VmLexerWord {
+							nd := app.root.FindNode(lex.subs[0].GetString(line))
+							if nd != nil {
+								nd.SelectOnlyThis()
+								//app.graph.autoZoom(true, graphCanvas, ui)
+							}
+						}
+
 					}
+
+					//icon which opens dialog to generate code(it's added to current one) ................
+
 				}
 				ui.Div_end()
 			}
