@@ -178,10 +178,14 @@ func (ops *VmOps) _Add(item VmOp) {
 	ops.ops = append(ops.ops, item)
 }
 
-func NewVmOps() *VmOps {
+func NewVmOps(addEq bool) *VmOps {
 	var ops VmOps
 
 	//must be ordered by len(VmOp.name)
+
+	if addEq {
+		ops._Add(VmOp{100, false, "=", nil})
+	}
 	ops._Add(VmOp{50, true, "&&", VmOp_And})
 	ops._Add(VmOp{50, true, "||", VmOp_Or})
 
