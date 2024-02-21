@@ -403,6 +403,12 @@ func (gr *SAGraph) drawNodes(nodes []*SANode, rects bool, classic bool, ui *Ui) 
 }
 
 func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
+	if !ui.IsStackTop() {
+		//reset
+		gr.cam_move = false
+		gr.node_move = false
+		gr.node_select = false
+	}
 
 	nodes := gr.buildNodes(root)
 
