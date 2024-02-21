@@ -660,7 +660,7 @@ func (gph *WinGph) GetStringSize(prop WinFontProps, str string) (OsV2, fixed.Int
 		}
 		advance, _ := face.GlyphAdvance(ch)
 		if isTab {
-			advance *= 4
+			advance *= 8
 		}
 
 		w += advance
@@ -721,7 +721,7 @@ func (gph *WinGph) drawString(prop WinFontProps, str string) *WinGphItemText {
 			draw.DrawMask(d.Dst, dr, d.Src, image.Point{}, mask, maskp, draw.Over)
 		}
 		if isTab {
-			advance *= 4
+			advance *= 8
 		}
 
 		d.Dot.X += advance
