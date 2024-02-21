@@ -68,6 +68,7 @@ type SAAttrUiValue struct {
 	Prms       map[string]string        `json:",omitempty"`
 	Map        map[string]SAAttrUiValue `json:",omitempty"`
 	HideAddDel bool                     //hide +/-
+	Visible    bool
 }
 
 func (uiv *SAAttrUiValue) JSON() string {
@@ -108,6 +109,8 @@ type SANodeAttr struct {
 
 	instr   *VmInstr
 	depends []*SANodeAttr
+
+	isRead bool //by some other node(.depend)
 
 	errExp error
 	errExe error
