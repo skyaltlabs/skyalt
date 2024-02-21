@@ -415,6 +415,8 @@ func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
 
 	graphCanvas = ui.GetCall().call.canvas
 
+	changed := false
+
 	ui.Div_colMax(0, 100)
 	ui.Div_rowMax(0, 100)
 	ui.Paint_rect(0, 0, 1, 1, 0, pl.GetGrey(0.8), 0)
@@ -443,6 +445,7 @@ func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
 		//delete
 		if keys.delete {
 			gr.app.root.RemoveSelectedNodes()
+			changed = true
 		}
 
 		//copy
@@ -456,6 +459,7 @@ func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
 			//add selected into list
 			gr.app.base.copiedNodes = gr.app.root.BuildListOfSelected()
 			gr.app.root.RemoveSelectedNodes()
+			changed = true
 		}
 		//paste
 		if keys.paste {
@@ -499,6 +503,7 @@ func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
 				n.Selected = true
 			}
 			gr.autoZoom(true, graphCanvas, ui)
+			changed = true
 		}
 
 		if keys.copy {
@@ -628,6 +633,10 @@ func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
 		ui.Paint_rect(0, 0, 1, 1, 0, pl.P, 0.06) //exe rect
 	} else if !gr.app.EnableExecution {
 		ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0.03)
+	}
+
+	if changed {
+		gr.app.SetExecute()
 	}
 
 	return graphCanvas, keyAllow

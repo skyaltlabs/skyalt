@@ -394,10 +394,6 @@ func (app *SAApp) renderIDE(ui *Ui) {
 		changed = true
 	}
 
-	if changed {
-		app.SetExecute()
-	}
-
 	//app
 	appDiv = ui.Div_start(1, 1, 1, 1)
 	{
@@ -471,7 +467,6 @@ func (app *SAApp) renderIDE(ui *Ui) {
 							w.SelectOnlyThis()
 						}
 					}
-
 					break
 				}
 			}
@@ -483,6 +478,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 			stClick := app.canvas.startClick.FindPath(app.root)
 			if stClick != nil {
 				stClick.SetGridStart(newPos)
+				changed = true
 			}
 		}
 
@@ -497,6 +493,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 				grid.Size.Y = OsMax(0, pos.Start.Y-grid.Start.Y) + 1
 
 				res.SetGrid(grid)
+				changed = true
 			}
 		}
 
@@ -516,7 +513,12 @@ func (app *SAApp) renderIDE(ui *Ui) {
 		//delete
 		if keys.delete {
 			app.root.RemoveSelectedNodes()
+			changed = true
 		}
+	}
+
+	if changed {
+		app.SetExecute()
 	}
 }
 
