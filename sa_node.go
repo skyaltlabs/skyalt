@@ -291,6 +291,34 @@ func (node *SANode) GetDependDistance() float32 {
 	return sum
 }
 
+func (w *SANode) MakeGridSpace(colStart, rowStart, colMove, rowMove int) {
+
+	for _, it := range w.Subs {
+
+		grid := it.GetGrid()
+		changed := false
+
+		if grid.Start.X >= colStart {
+			grid.Start.X += colMove
+			if colMove != 0 {
+				changed = true
+			}
+		}
+
+		if grid.Start.Y >= rowStart {
+			grid.Start.Y += rowMove
+			if rowMove != 0 {
+				changed = true
+			}
+		}
+
+		if changed {
+			it.SetGrid(grid)
+			w.app.SetExecute()
+		}
+	}
+}
+
 func (w *SANode) Save(path string) error {
 	if path == "" {
 		return nil
