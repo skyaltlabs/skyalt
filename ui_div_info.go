@@ -81,7 +81,7 @@ func (ui *Ui) DivInfo_get(cmd uint8, uid float64) float64 {
 
 	switch cmd {
 	case SA_DIV_GET_uid:
-		return math.Float64frombits(div.data.hash)
+		return math.Float64frombits(div.GetHash())
 
 	case SA_DIV_GET_cell:
 		return float64(ui.win.Cell())

@@ -411,7 +411,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	touch := &ui.win.io.touch
 	keys := &ui.win.io.keys
 	//add node
-	if (!ui.touch.IsAnyActive() || ui.touch.canvas == appDiv) && !app.canvas.startClick.Is() && !keys.alt {
+	if (!ui.touch.IsAnyActive() || ui.touch.canvas == appDiv.GetHash()) && !app.canvas.startClick.Is() && !keys.alt {
 		if appDiv.IsOver(ui) {
 			grid := appDiv.GetCloseCell(ui.win.io.touch.pos)
 

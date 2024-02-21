@@ -149,7 +149,7 @@ func (ui *Ui) Div_colResize(pos int, name string, val float64, force bool) (bool
 	}
 	lv.call.GetInputCol(int(pos)).resize = res
 
-	active := (ui.touch.resize == lv.call && lv.call.touchResizeIsCol && pos == lv.call.touchResizeIndex)
+	active := (ui.touch.resize == lv.call.GetHash() && lv.call.touchResizeIsCol && pos == lv.call.touchResizeIndex)
 
 	return active, float64(lv.call.data.cols.GetOutput(int(pos))) / float64(ui.win.Cell())
 }
@@ -170,7 +170,7 @@ func (ui *Ui) Div_rowResize(pos int, name string, val float64, force bool) (bool
 	}
 	lv.call.GetInputRow(int(pos)).resize = res
 
-	active := (ui.touch.resize == lv.call && !lv.call.touchResizeIsCol && pos == lv.call.touchResizeIndex)
+	active := (ui.touch.resize == lv.call.GetHash() && !lv.call.touchResizeIsCol && pos == lv.call.touchResizeIndex)
 
 	return active, float64(lv.call.data.rows.GetOutput(int(pos))) / float64(ui.win.Cell())
 }

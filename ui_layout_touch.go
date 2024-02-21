@@ -17,17 +17,17 @@ limitations under the License.
 package main
 
 type UiLayoutTouch struct {
-	canvas  *UiLayoutDiv
-	scrollV *UiLayoutDiv
-	scrollH *UiLayoutDiv
-	resize  *UiLayoutDiv
+	canvas  uint64
+	scrollV uint64
+	scrollH uint64
+	resize  uint64
 
-	scrollWheel *UiLayoutDiv
+	scrollWheel uint64
 
 	ticks int64
 }
 
-func (layTouch *UiLayoutTouch) Set(canvas *UiLayoutDiv, scrollV *UiLayoutDiv, scrollH *UiLayoutDiv, resize *UiLayoutDiv) {
+func (layTouch *UiLayoutTouch) Set(canvas uint64, scrollV uint64, scrollH uint64, resize uint64) {
 	layTouch.canvas = canvas
 	layTouch.scrollV = scrollV
 	layTouch.scrollH = scrollH
@@ -41,16 +41,16 @@ func (layTouch *UiLayoutTouch) Reset() {
 }
 
 func (layTouch *UiLayoutTouch) IsAnyActive() bool {
-	return layTouch.canvas != nil || layTouch.scrollV != nil || layTouch.scrollH != nil || layTouch.resize != nil
+	return layTouch.canvas != 0 || layTouch.scrollV != 0 || layTouch.scrollH != 0 || layTouch.resize != 0
 }
 
 func (layTouch *UiLayoutTouch) IsResizeActive() bool {
-	return layTouch.resize != nil
+	return layTouch.resize != 0
 }
 func (layTouch *UiLayoutTouch) IsScrollOrResizeActive() bool {
-	return layTouch.scrollV != nil || layTouch.scrollH != nil || layTouch.resize != nil
+	return layTouch.scrollV != 0 || layTouch.scrollH != 0 || layTouch.resize != 0
 }
 
-func (layTouch *UiLayoutTouch) IsFnMove(canvas *UiLayoutDiv, scrollV *UiLayoutDiv, scrollH *UiLayoutDiv, resize *UiLayoutDiv) bool {
-	return ((canvas != nil && layTouch.canvas == canvas) || (scrollV != nil && layTouch.scrollV == scrollV) || (scrollH != nil && layTouch.scrollH == scrollH) || (resize != nil && layTouch.resize == resize))
+func (layTouch *UiLayoutTouch) IsFnMove(canvas uint64, scrollV uint64, scrollH uint64, resize uint64) bool {
+	return ((canvas != 0 && layTouch.canvas == canvas) || (scrollV != 0 && layTouch.scrollV == scrollV) || (scrollH != 0 && layTouch.scrollH == scrollH) || (resize != 0 && layTouch.resize == resize))
 }

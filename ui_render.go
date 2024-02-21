@@ -93,7 +93,7 @@ func (ui *Ui) renderStart(rx, ry, rw, rh float64, drawBack bool) {
 
 	if over && startTouch && enableInput {
 		if !ui.touch.IsScrollOrResizeActive() { //if lower resize or scroll is activated than don't rewrite it with higher canvas
-			ui.touch.Set(lv.call, nil, nil, nil)
+			ui.touch.Set(lv.call.GetHash(), 0, 0, 0)
 			//lv.call.Print(true)
 		}
 	}

@@ -888,7 +888,7 @@ func (ui *Ui) Comp_slider_s(style *UiComp, value *float64, minValue float64, max
 			ui.win.io.touch.wheel = 0 //bug: If slider has canvas which can scroll under, it will scroll and slider is ignored ...
 			end = true
 
-			ui.touch.scrollWheel = lv.call
+			ui.touch.scrollWheel = lv.call.GetHash()
 		}
 
 		if len(style.tooltip) > 0 {
@@ -995,7 +995,7 @@ func (ui *Ui) Comp_combo_s(style *UiComp, value string, options_names []string, 
 
 	lv := ui.GetCall()
 
-	nmd := "combo_" + strconv.Itoa(int(lv.call.data.hash))
+	nmd := "combo_" + strconv.Itoa(int(lv.call.GetHash()))
 
 	click, rclick, inside, active, _ := ui._compIsClicked(style.enable)
 	if style.enable {

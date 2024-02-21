@@ -104,28 +104,6 @@ func (div *UiLayoutDiv) ResetGridLock() {
 	}
 }
 
-func (div *UiLayoutDiv) computeHash() uint64 {
-	var tmp [8]byte
-
-	h := sha256.New()
-	for div != nil {
-
-		binary.LittleEndian.PutUint64(tmp[:], uint64(div.grid.Start.X))
-		h.Write(tmp[:])
-		binary.LittleEndian.PutUint64(tmp[:], uint64(div.grid.Start.Y))
-		h.Write(tmp[:])
-		binary.LittleEndian.PutUint64(tmp[:], uint64(div.grid.Size.X))
-		h.Write(tmp[:])
-		binary.LittleEndian.PutUint64(tmp[:], uint64(div.grid.Size.Y))
-		h.Write(tmp[:])
-
-		h.Write([]byte(div.name))
-
-		div = div.parent
-	}
-	return binary.LittleEndian.Uint64(h.Sum(nil))
-}
-
 func NewUiLayoutPack(parent *UiLayoutDiv, name string, grid OsV4, app *UiLayoutApp) *UiLayoutDiv {
 	var div UiLayoutDiv
 
@@ -353,7 +331,7 @@ func (div *UiLayoutDiv) RenderResizeSpliter(ui *Ui) {
 		// start
 		if ui.win.io.touch.start && (vHighlight || hHighlight) {
 			if vHighlight || hHighlight {
-				ui.touch.Set(nil, nil, nil, div)
+				ui.touch.Set(0, 0, 0, div.GetHash())
 			}
 
 			if vHighlight {
@@ -374,7 +352,7 @@ func (div *UiLayoutDiv) RenderResizeSpliter(ui *Ui) {
 	}
 
 	// resize
-	if ui.touch.IsFnMove(nil, nil, nil, div) {
+	if ui.touch.IsFnMove(0, 0, 0, div.GetHash()) {
 
 		r := 1.0
 		if div.touchResizeIsCol {
@@ -492,8 +470,34 @@ func (div *UiLayoutDiv) FindBaseApp() *UiLayoutDiv {
 	return ret
 }
 
+func (div *UiLayoutDiv) GetHash() uint64 {
+	return div.data.hash
+}
+
+func (div *UiLayoutDiv) computeHash() uint64 {
+	var tmp [8]byte
+
+	h := sha256.New()
+	for div != nil {
+
+		binary.LittleEndian.PutUint64(tmp[:], uint64(div.grid.Start.X))
+		h.Write(tmp[:])
+		binary.LittleEndian.PutUint64(tmp[:], uint64(div.grid.Start.Y))
+		h.Write(tmp[:])
+		binary.LittleEndian.PutUint64(tmp[:], uint64(div.grid.Size.X))
+		h.Write(tmp[:])
+		binary.LittleEndian.PutUint64(tmp[:], uint64(div.grid.Size.Y))
+		h.Write(tmp[:])
+
+		h.Write([]byte(div.name))
+
+		div = div.parent
+	}
+	return binary.LittleEndian.Uint64(h.Sum(nil))
+}
+
 func (div *UiLayoutDiv) FindHash(hash uint64) *UiLayoutDiv {
-	if div.data.hash == hash {
+	if div.GetHash() == hash {
 		return div
 	}
 
@@ -535,7 +539,7 @@ func (div *UiLayoutDiv) IsOverScroll(ui *Ui) bool {
 }
 
 func (div *UiLayoutDiv) IsTouchActive(ui *Ui) bool {
-	return ui.touch.IsFnMove(div, nil, nil, nil)
+	return ui.touch.IsFnMove(div.GetHash(), 0, 0, 0)
 }
 
 func (div *UiLayoutDiv) IsTouchInside(ui *Ui) bool {

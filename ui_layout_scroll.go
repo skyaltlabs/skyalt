@@ -276,7 +276,7 @@ func (scroll *UiLayoutScroll) TouchV(packLayout *UiLayoutDiv, ui *Ui) {
 	sliderFront := scroll._UpdateV(scrollCoord, win)
 	midSlider := sliderFront.Size.Y / 2
 
-	isTouched := ui.touch.IsFnMove(nil, packLayout, nil, nil)
+	isTouched := ui.touch.IsFnMove(0, packLayout.GetHash(), 0, 0)
 	if win.io.touch.start {
 		isTouched = sliderFront.Inside(win.io.touch.pos)
 		scroll.clickRel = win.io.touch.pos.Y - sliderFront.Start.Y - midSlider // rel to middle of front slide
@@ -296,7 +296,7 @@ func (scroll *UiLayoutScroll) TouchV(packLayout *UiLayoutDiv, ui *Ui) {
 	}
 
 	if isTouched {
-		ui.touch.Set(nil, packLayout, nil, nil)
+		ui.touch.Set(0, packLayout.GetHash(), 0, 0)
 	}
 
 	scroll.attach = nil //reset
@@ -362,7 +362,7 @@ func (scroll *UiLayoutScroll) TouchH(needShiftWheel bool, packLayout *UiLayoutDi
 	sliderFront := scroll._UpdateH(scrollCoord.Start, win)
 	midSlider := sliderFront.Size.X / 2
 
-	isTouched := ui.touch.IsFnMove(nil, nil, packLayout, nil)
+	isTouched := ui.touch.IsFnMove(0, 0, packLayout.GetHash(), 0)
 	if win.io.touch.start {
 		isTouched = sliderFront.Inside(win.io.touch.pos)
 		scroll.clickRel = win.io.touch.pos.X - sliderFront.Start.X - midSlider // rel to middle of front slide
@@ -381,7 +381,7 @@ func (scroll *UiLayoutScroll) TouchH(needShiftWheel bool, packLayout *UiLayoutDi
 	}
 
 	if isTouched {
-		ui.touch.Set(nil, nil, packLayout, nil)
+		ui.touch.Set(0, 0, packLayout.GetHash(), 0)
 	}
 
 }

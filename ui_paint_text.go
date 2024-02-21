@@ -422,7 +422,7 @@ func (ui *Ui) _UiPaint_TextSelectKeys(text string, lines []int, editable bool, p
 	//context dialog
 	{
 		lv := ui.GetCall()
-		dnm := strconv.Itoa(int(lv.call.data.hash))
+		dnm := strconv.Itoa(int(lv.call.GetHash()))
 		if lv.call.IsTouchInside(ui) && touch.end && touch.rm {
 			ui.Dialog_open(dnm, 2)
 		}
