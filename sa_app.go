@@ -91,7 +91,9 @@ type SAApp struct {
 	graph  *SAGraph
 	canvas SACanvas
 
-	ops   *VmOps
+	ops    *VmOps
+	ops_eq *VmOps
+
 	apis  *VmApis
 	prior int
 
@@ -105,7 +107,9 @@ type SAApp struct {
 func (a *SAApp) init(base *SABase) {
 	a.base = base
 
-	a.ops = NewVmOps()
+	a.ops = NewVmOps(false)
+	a.ops_eq = NewVmOps(true)
+
 	a.apis = NewVmApis()
 	a.prior = 100
 
@@ -795,14 +799,14 @@ type SALine struct {
 	subs []*SALine
 }
 
-func (node *SANode) _importCode(line *SALine, ops *VmOps) {
+func (node *SANode) _importCode(line *SALine) {
 
 	for i, ln := range line.subs {
 		if ln.line == "" {
 			continue //skip empty
 		}
 
-		lex, err := ParseLine(ln.line, 0, ops)
+		lex, err := ParseLine(ln.line, 0, node.app.ops_eq)
 		if err != nil {
 			fmt.Printf("Line(%d: %s) has parsing error: %v\n", i, ln, err)
 			continue
@@ -844,7 +848,7 @@ func (node *SANode) _importCode(line *SALine, ops *VmOps) {
 			}
 
 			//subs
-			nd._importCode(ln, ops)
+			nd._importCode(ln)
 		} else {
 			fmt.Printf("Line(%d: %s) has base error\n", i, ln)
 		}
@@ -902,14 +906,10 @@ func InitSALine(code string) *SALine {
 }
 
 func (app *SAApp) ImportCode(code string) {
-
 	ln := InitSALine(code)
 
-	ops := *app.ops
-	ops.ops = append(ops.ops, VmOp{100, false, "=", nil})
-
 	app.root, _ = NewSANodeRoot("", app)
-	app.root._importCode(ln, &ops)
+	app.root._importCode(ln)
 }
 
 func (node *SANode) _exportCode(depth int) string {
