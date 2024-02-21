@@ -64,7 +64,7 @@ func _SAGraph_drawConnectionV(start OsV2, end OsV2, active bool, cellr float32, 
 		cd = SAApp_getYellow()
 	}
 
-	t := cellr * 0.4
+	t := cellr * 0.3
 	end.Y -= int(t) //connect to top of arrow
 
 	//line
@@ -84,7 +84,7 @@ func _SAGraph_drawConnectionH(start OsV2, end OsV2, active bool, cellr float32, 
 		cd = SAApp_getYellow()
 	}
 
-	t := cellr * 0.4
+	t := cellr * 0.3
 	end.X -= int(t) //connect to left of arrow
 
 	//line
@@ -316,51 +316,40 @@ func (gr *SAGraph) drawConnections(nodes []*SANode, ui *Ui) {
 
 	for _, node := range nodes {
 
-		var depends []*SANode
-		for _, in := range node.Attrs {
-			for _, out := range in.depends {
-				if out.node != node {
+		{
+			coordNode, selCoordNode, _ := node.nodeToPixelsCoord(lv.call.canvas, ui)
+			if node.Selected {
+				coordNode.Start.X = selCoordNode.Start.X
+				coordNode.Size.X = selCoordNode.Size.X
+			}
 
-					//already added
-					found := false
-					for _, it := range depends {
-						if it == out.node {
-							found = true
-						}
+			//draw Setter connection
+			for _, in := range node.Attrs {
+				for _, out := range in.depends {
+
+					if out.node == node {
+						continue
 					}
-					if !found {
-						depends = append(depends, out.node)
+
+					coordOut, selCoordOut, _ := out.node.nodeToPixelsCoord(lv.call.canvas, ui)
+					if out.node.Selected {
+						coordOut.Start.X = selCoordOut.Start.X
+						coordOut.Size.X = selCoordOut.Size.X
 					}
+
+					var outPos OsV2
+					outPos.X = coordOut.End().X
+					outPos.Y += coordOut.Start.Y + int(cellr*(float32(out.node.VisiblePos(out))+0.5))
+
+					var inPos OsV2
+					inPos.X = coordNode.Start.X
+					inPos.Y += coordNode.Start.Y + int(cellr*(float32(node.VisiblePos(in))+0.5))
+
+					_SAGraph_drawConnectionH(outPos, inPos, node.Selected || out.node.Selected, cellr, ui, 0)
 				}
 			}
 		}
 
-		i_depends := 1 //center
-
-		coordIn, selCoordIn, _ := node.nodeToPixelsCoord(lv.call.canvas, ui)
-		if node.Selected {
-			coordIn = selCoordIn
-		}
-
-		for _, out := range depends {
-			coordOut, selCoordOut, coordOutSmall := out.nodeToPixelsCoord(lv.call.canvas, ui)
-			if out.Selected {
-				coordOut = selCoordOut
-			}
-
-			if node.FindParent(out) {
-				coordOut = coordOutSmall //for,if,etc. bottom = bottom of label
-			}
-
-			end := coordIn.Start
-			end.Y += int(float64(coordIn.Size.Y) * (float64(i_depends) / float64(len(depends)+1))) //+1 = center
-			//_SAGraph_drawConnectionV(OsV2{coordOut.Middle().X, coordOut.End().Y}, end, node.Selected || out.Selected, cellr, ui, 0)
-			_SAGraph_drawConnectionH(OsV2{coordOut.End().X, coordOut.Middle().Y}, end, node.Selected || out.Selected, cellr, ui, 0)
-			i_depends++
-
-		}
-
-		//draw Setter connection
 		if SAGroups_IsNodeSetter(node.Exe) {
 			dstNode, _ := SAExe_Setter_destNode(node)
 			if dstNode != nil {
@@ -373,7 +362,6 @@ func (gr *SAGraph) drawConnections(nodes []*SANode, ui *Ui) {
 				if dstNode.Selected {
 					coordIn = selCoordIn
 				}
-				//_SAGraph_drawConnectionH(OsV2{coordOut.End().X, coordOut.Middle().Y}, OsV2{coordIn.Start.X, coordIn.Middle().Y}, node.Selected || dstNode.Selected, cellr, ui)
 				_SAGraph_drawConnectionV(OsV2{coordOut.Middle().X, coordOut.End().Y}, OsV2{coordIn.Middle().X, coordIn.Start.Y}, node.Selected || dstNode.Selected, cellr, ui, cellr)
 			}
 		}
@@ -411,6 +399,9 @@ func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
 	}
 
 	nodes := gr.buildNodes(root)
+
+	root.ResetIsRead()
+	root.UpdateIsRead()
 
 	pl := ui.win.io.GetPalette()
 

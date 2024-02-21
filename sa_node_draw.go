@@ -40,6 +40,64 @@ func (node *SANode) KeyProgessSelection(keys *WinKeys) bool {
 	return node.selected_cover
 }
 
+func (attr *SANodeAttr) IsVisible() bool {
+
+	if attr.IsOutput() {
+		return false //outputs has special place
+	}
+
+	if attr.Ui.Visible {
+		return true
+	}
+
+	if attr.isRead {
+		return true
+	}
+
+	for _, d := range attr.depends {
+		if d.node != attr.node { //avoid self
+			return true
+		}
+	}
+
+	return false
+}
+func (node *SANode) NumVisibleAndCheck() int {
+	n := 0
+	for _, attr := range node.Attrs {
+		if attr.IsVisible() || attr.IsOutput() || attr.isRead {
+			//if i != n {
+			//Div_DropMoveElement(&node.Attrs, &node.Attrs, i, n, SA_Drop_V_LEFT)	//reorder
+			//}
+			n++
+		}
+
+	}
+	return n
+}
+func (node *SANode) VisiblePos(attr *SANodeAttr) int {
+
+	y := 1
+	for _, at := range node.Attrs {
+		if at.IsVisible() {
+			if attr == at {
+				return y
+			}
+			y++
+		}
+	}
+
+	for _, at := range node.Attrs {
+		if at.IsOutput() {
+			if attr == at {
+				return y
+			}
+			y++
+		}
+	}
+	return -1
+}
+
 func (w *SANode) cellZoom(ui *Ui) float32 {
 	return float32(ui.win.Cell()) * float32(w.app.Cam_z) * 1
 }
@@ -82,8 +140,9 @@ func (node *SANode) nodeToPixelsCoord(canvas OsV4, ui *Ui) (OsV4, OsV4, OsV4) {
 	cellr := node.cellZoom(ui)
 
 	mid := node.nodeToPixels(node.Pos, canvas, ui) //.parent, because it has Cam
+
 	w := 4
-	h := 1
+	h := 1 + node.NumVisibleAndCheck()
 
 	if SAGroups_HasNodeSub(node.Exe) {
 		//compute bound
@@ -113,7 +172,6 @@ func (node *SANode) nodeToPixelsCoord(canvas OsV4, ui *Ui) (OsV4, OsV4, OsV4) {
 }
 
 func (node *SANode) FindInsideParent(touchPos OsV2, canvas OsV4, ui *Ui) *SANode {
-
 	var found *SANode
 
 	if SAGroups_HasNodeSub(node.Exe) {
@@ -225,12 +283,31 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 		inside = div.crop.Inside(touch.pos)
 		//inside = lv.call.crop.Inside(touch.pos)
 
-		//settings
+		//open settings
 		if ui.Comp_buttonIcon(1, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/fullscreen_mode.png"), 0.3, "Show everything", CdPalette_B, true, false) > 0 {
 			node.SelectOnlyThis()
 			ui.Dialog_open("attributes", 0)
 			inside = false
 		}
+
+		//attributes
+		y := 1
+		for _, attr := range node.Attrs {
+			if attr.IsVisible() {
+				ui.Comp_textSelect(0, y, 1, 1, attr.Name, OsV2{0, 1}, false, false) //center
+				y++
+			}
+		}
+		for _, attr := range node.Attrs {
+			if attr.IsOutput() {
+				ui.Comp_textSelect(0, y, 2, 1, attr.Name, OsV2{2, 1}, false, false) //right
+				y++
+			}
+		}
+
+		//nepotřebuji visibility - zobrazuji jenom jména(aka data-flow) ............
+		//chci vytvořit spojení a není viditelný - dolů dát extra connect, který zobrazí dialog se všemy možnostmi ........
+
 	}
 	ui.Div_end()
 
@@ -240,7 +317,8 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 		if node.progress > 0 {
 			cellr := node.cellZoom(ui)
 			cq := coord.AddSpace(int(-0.3 * float64(cellr)))
-			cq.Start.X = cq.End().X
+			cq.Start.Y -= int(cellr) //cq.End().X
+			cq.Size.Y = int(cellr)
 			ui.Div_startCoord(0, 0, 1, 1, cq, node.Name)
 			{
 				ui.Div_colMax(0, 100)
