@@ -327,7 +327,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 				}
 			}
 
-			if _SAApp_drawColsRowsDialog(dnm, &node.Cols, i, ui) {
+			if _SAApp_drawColsRowsDialog(dnm, node, true, i, ui) {
 				changed = true
 			}
 		}
@@ -380,7 +380,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 				}
 			}
 
-			if _SAApp_drawColsRowsDialog(dnm, &node.Rows, i, ui) {
+			if _SAApp_drawColsRowsDialog(dnm, node, false, i, ui) {
 				changed = true
 			}
 		}
@@ -624,7 +624,12 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 	}
 }
 
-func _SAApp_drawColsRowsDialog(name string, items *[]*SANodeColRow, pos int, ui *Ui) bool {
+func _SAApp_drawColsRowsDialog(name string, node *SANode, isCol bool, pos int, ui *Ui) bool {
+
+	items := &node.Rows
+	if isCol {
+		items = &node.Cols
+	}
 
 	changed := false
 	if ui.Dialog_start(name) {
@@ -638,8 +643,9 @@ func _SAApp_drawColsRowsDialog(name string, items *[]*SANodeColRow, pos int, ui 
 			ui.Div_colMax(1, 100)
 			ui.Div_colMax(2, 100)
 
-			if ui.Comp_buttonLight(0, 0, 1, 1, ui.trns.ADD_BEFORE, "", pos > 0) > 0 {
+			if ui.Comp_buttonLight(0, 0, 1, 1, ui.trns.ADD_BEFORE, "", true) > 0 {
 				SANodeColRow_Insert(items, nil, pos, true)
+				node.MakeGridSpace(OsTrn(isCol, pos, 0), OsTrn(!isCol, pos, 0), OsTrn(isCol, 1, 0), OsTrn(!isCol, 1, 0))
 				ui.Dialog_close()
 				changed = true
 			}
@@ -648,6 +654,7 @@ func _SAApp_drawColsRowsDialog(name string, items *[]*SANodeColRow, pos int, ui 
 
 			if ui.Comp_buttonLight(2, 0, 1, 1, ui.trns.ADD_AFTER, "", true) > 0 {
 				SANodeColRow_Insert(items, nil, pos+1, true)
+				node.MakeGridSpace(OsTrn(isCol, pos+1, 0), OsTrn(!isCol, pos+1, 0), OsTrn(isCol, 1, 0), OsTrn(!isCol, 1, 0))
 				ui.Dialog_close()
 				changed = true
 			}
