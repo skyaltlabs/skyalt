@@ -340,6 +340,9 @@
 "BACKWARD.cs": "Zpět",
 
 "FORWARD.en": "Forward",
-"FORWARD.cs": "Vpřed"
+"FORWARD.cs": "Vpřed",
+
+"VISIBILITY.en": "Visibility",
+"VISIBILITY.cs": "Viditelnost"
 
 }

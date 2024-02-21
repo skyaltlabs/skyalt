@@ -170,6 +170,8 @@ type UiTranslations struct {
 	RESIZE           string
 	BACKWARD         string
 	FORWARD          string
+
+	VISIBILITY string
 }
 
 func (trns *UiTranslations) Find(name string) string {
