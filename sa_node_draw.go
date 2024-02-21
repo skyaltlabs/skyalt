@@ -192,11 +192,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 	bck := ui.win.io.ini.Dpi
 	ui.win.io.ini.Dpi = int(float32(ui.win.io.ini.Dpi) * float32(node.app.Cam_z))
 
-	ui.Div_startCoord(0, 0, 1, 1, coord, node.Name)
-	ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
-	ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
-	inside := coord.GetIntersect(lv.call.crop).Inside(touch.pos)
-	ui.Div_end()
+	inside := false
 
 	//back
 	{
@@ -219,9 +215,22 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 
 	ui.Div_startCoord(0, 0, 1, 1, coord, node.Name)
 	{
-		ui.Div_colMax(0, 1)
-		ui.Div_colMax(1, 100)
-		ui.Comp_textSelect(0, 0, 2, 1, node.Name, OsV2{1, 1}, false, false)
+		ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
+		ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
+
+		ui.Div_colMax(0, 100)
+
+		//name
+		div := ui.Comp_textSelect(0, 0, 1, 1, node.Name, OsV2{1, 1}, false, false) //double click? ........
+		inside = div.crop.Inside(touch.pos)
+		//inside = lv.call.crop.Inside(touch.pos)
+
+		//settings
+		if ui.Comp_buttonIcon(1, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/fullscreen_mode.png"), 0.3, "Show everything", CdPalette_B, true, false) > 0 {
+			node.SelectOnlyThis()
+			ui.Dialog_open("attributes", 0)
+			inside = false
+		}
 	}
 	ui.Div_end()
 
@@ -265,6 +274,21 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 	}
 
 	ui.win.io.ini.Dpi = bck
+
+	if ui.Dialog_start("attributes") {
+		sel := app.root.FindSelected()
+		if sel != nil {
+			ui.Div_colMax(0, 20)
+			ui.Div_rowMax(0, 20)
+			ui.Div_start(0, 0, 1, 1)
+			sel.RenderAttrs()
+			ui.Div_end()
+		} else {
+			ui.Dialog_close()
+		}
+
+		ui.Dialog_end()
+	}
 
 	return inside
 }
