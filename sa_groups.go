@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -129,11 +130,15 @@ func SAGroups_GenerateDocumentation(app *SAApp) string {
 			node := NewSANode(app, nil, "", gnd.name, OsV4{}, OsV2f{}) //has Execute() inside
 			params := ""
 			for _, attr := range node.Attrs {
-				params += attr.Name + ","
+				val := attr.Value
+				if val == "" {
+					val = "\"\""
+				}
+				params += fmt.Sprintf("%s: %s, ", attr.Name, val)
 			}
-			params, _ = strings.CutSuffix(params, ",")
+			params, _ = strings.CutSuffix(params, ", ")
 
-			str += gnd.name + "(" + params + ")" + "\n"
+			str += fmt.Sprintf("%s(%s)\n", gnd.name, params)
 		}
 	}
 	str, _ = strings.CutSuffix(str, "\n")
