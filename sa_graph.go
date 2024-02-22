@@ -418,7 +418,29 @@ func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
 
 	ui.Div_colMax(0, 100)
 	ui.Div_rowMax(0, 100)
+
+	//background
 	ui.Paint_rect(0, 0, 1, 1, 0, pl.GetGrey(0.8), 0)
+
+	//grid
+	{
+		lvBaseDiv := ui.GetCall().call
+		st := root.pixelsToNode(graphCanvas.Start, ui, lvBaseDiv)
+		en := root.pixelsToNode(graphCanvas.End(), ui, lvBaseDiv)
+
+		wi := ui.CellWidth(0.03)
+		cd := InitOsCdWhite().SetAlpha(70)
+		for x := int(st.X); x < int(en.X+1); x++ {
+			s := root.nodeToPixels(OsV2f{float32(x), st.Y}, graphCanvas, ui)
+			e := root.nodeToPixels(OsV2f{float32(x), en.Y}, graphCanvas, ui)
+			ui.buff.AddLine(s, e, cd, wi)
+		}
+		for y := int(st.Y); y < int(en.Y+1); y++ {
+			s := root.nodeToPixels(OsV2f{st.X, float32(y)}, graphCanvas, ui)
+			e := root.nodeToPixels(OsV2f{en.X, float32(y)}, graphCanvas, ui)
+			ui.buff.AddLine(s, e, cd, wi)
+		}
+	}
 
 	//fade "press tab" bottom - middle in background
 	lv := ui.GetCall()
