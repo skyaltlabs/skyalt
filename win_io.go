@@ -282,9 +282,11 @@ func (io *WinIO) GetPalette() *WinCdPalette {
 
 	hour := time.Now().Hour()
 
-	if (io.ini.UseDarkThemeStart < io.ini.UseDarkThemeEnd && hour >= io.ini.UseDarkThemeStart && hour < io.ini.UseDarkThemeEnd) ||
-		(io.ini.UseDarkThemeStart > io.ini.UseDarkThemeEnd && (hour >= io.ini.UseDarkThemeStart || hour < io.ini.UseDarkThemeEnd)) {
-		theme = "dark"
+	if io.ini.UseDarkTheme {
+		if (io.ini.UseDarkThemeStart < io.ini.UseDarkThemeEnd && hour >= io.ini.UseDarkThemeStart && hour < io.ini.UseDarkThemeEnd) ||
+			(io.ini.UseDarkThemeStart > io.ini.UseDarkThemeEnd && (hour >= io.ini.UseDarkThemeStart || hour < io.ini.UseDarkThemeEnd)) {
+			theme = "dark"
+		}
 	}
 
 	switch theme {
