@@ -47,7 +47,7 @@ func InitWinFontProps(weight int, textH, lineH float64, italic bool, enableForma
 	}
 
 	if textH <= 0 {
-		textH = 0.35
+		textH = 0.37
 	}
 	tPx := int(float64(win.Cell()) * textH)
 
