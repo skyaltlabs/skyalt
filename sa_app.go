@@ -115,8 +115,6 @@ func (a *SAApp) init(base *SABase) {
 
 	a.graph = NewSAGraph(a)
 
-	a.Cam_z = 1
-
 	ic := a.GetFolderPath() + "icon.png"
 	if OsFileExists(ic) {
 		a.iconPath = "file:" + ic
