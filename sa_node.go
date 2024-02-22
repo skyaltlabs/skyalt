@@ -676,7 +676,7 @@ func (dst *SANode) CopyPoses(src *SANode) {
 }
 
 func (w *SANode) SelectOnlyThis() {
-	w.parent.DeselectAll()
+	w.GetAbsoluteRoot().DeselectAll()
 	w.Selected = true
 }
 
