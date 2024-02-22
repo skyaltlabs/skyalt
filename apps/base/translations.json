@@ -343,6 +343,16 @@
 "FORWARD.cs": "Vpřed",
 
 "VISIBILITY.en": "Visibility",
-"VISIBILITY.cs": "Viditelnost"
+"VISIBILITY.cs": "Viditelnost",
+
+"USE_DARK_THEME.en": "Use Dark theme",
+"USE_DARK_THEME.cs": "Použíj Tmavý téma",
+
+"FROM.en": "From",
+"FROM.cs": "Od",
+
+"TO.en": "To",
+"TO.cs": "Do"
+
 
 }

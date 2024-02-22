@@ -236,10 +236,25 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 				}
 				ui.Div_end()
 				y += 2
-			}
 
-			y++
+				y++ //space
+			}
 		}
+
+		ui.Div_start(1, y, 1, 1)
+		{
+			ui.Div_colMax(0, 4) //empty space
+			ui.Div_colMax(1, 100)
+			ui.Div_colMax(2, 2)
+			ui.Div_colMax(3, 2)
+			ui.Div_colMax(4, 1)
+			ui.Comp_checkbox(1, 0, 1, 1, &ini.UseDarkTheme, false, ui.trns.USE_DARK_THEME, "", true)
+			ui.Comp_editbox_desc(ui.trns.FROM, 2, 1, 2, 0, 1, 1, &ini.UseDarkThemeStart, Comp_editboxProp().Precision(0).Enable(ini.UseDarkTheme))
+			ui.Comp_editbox_desc(ui.trns.TO, 2, 1, 3, 0, 1, 1, &ini.UseDarkThemeEnd, Comp_editboxProp().Precision(0).Enable(ini.UseDarkTheme))
+			ui.Comp_text(4, 0, 1, 1, ui.trns.HOUR, 0)
+		}
+		ui.Div_end()
+		y += 2 //space
 
 		ui.Comp_editbox_desc(ui.trns.DPI, 0, 4, 1, y, 1, 2, &ini.Dpi, Comp_editboxProp().Precision(0))
 		y += 2
@@ -253,10 +268,10 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 		ui.Comp_switch(1, y, 1, 1, &ini.Grid, false, ui.trns.SHOW_GRID, "", true)
 		y++
 
-		ui.Comp_switch(1, y, 1, 1, &ini.Offline, true, ui.trns.ONLINE, "", true) //reverseValue=true
+		ui.Comp_switch(1, y, 1, 1, &ini.Offline, true, ui.trns.ONLINE, "", true) //true = reverseValue
 		y++
 
-		ui.Comp_switch(1, y, 1, 1, &ini.MicOff, true, ui.trns.MICROPHONE, "", true) //reverseValue=true
+		ui.Comp_switch(1, y, 1, 1, &ini.MicOff, true, ui.trns.MICROPHONE, "", true) //true = reverseValue
 		y++
 
 		ui.Dialog_end()

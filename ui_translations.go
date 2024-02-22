@@ -172,6 +172,10 @@ type UiTranslations struct {
 	FORWARD          string
 
 	VISIBILITY string
+
+	USE_DARK_THEME string
+	FROM           string
+	TO             string
 }
 
 func (trns *UiTranslations) Find(name string) string {

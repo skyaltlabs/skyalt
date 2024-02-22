@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -110,8 +111,11 @@ type WinIni struct {
 	Languages              []string
 	WinX, WinY, WinW, WinH int
 
-	Theme         string
-	CustomPalette WinCdPalette
+	Theme             string
+	CustomPalette     WinCdPalette
+	UseDarkTheme      bool
+	UseDarkThemeStart int //hours from midnight
+	UseDarkThemeEnd   int
 
 	Offline bool
 	MicOff  bool
@@ -273,7 +277,17 @@ func (io *WinIO) Cell() int {
 }
 
 func (io *WinIO) GetPalette() *WinCdPalette {
-	switch io.ini.Theme {
+
+	theme := io.ini.Theme
+
+	hour := time.Now().Hour()
+
+	if (io.ini.UseDarkThemeStart < io.ini.UseDarkThemeEnd && hour >= io.ini.UseDarkThemeStart && hour < io.ini.UseDarkThemeEnd) ||
+		(io.ini.UseDarkThemeStart > io.ini.UseDarkThemeEnd && (hour >= io.ini.UseDarkThemeStart || hour < io.ini.UseDarkThemeEnd)) {
+		theme = "dark"
+	}
+
+	switch theme {
 	case "light":
 		return &io.palettes[0]
 	case "dark":
