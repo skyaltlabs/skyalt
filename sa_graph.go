@@ -63,13 +63,34 @@ func _SAGraph_drawConnectionV(start OsV2, end OsV2, active bool, cellr float32, 
 	if active {
 		cd = SAApp_getYellow()
 	}
-
 	t := cellr * 0.3
 	end.Y -= int(t) //connect to top of arrow
-
-	//line
 	mid := start.Aprox(end, 0.5)
-	ui.buff.AddBezier(start, OsV2{start.X, mid.Y}, OsV2{end.X, mid.Y}, end, cd, ui.CellWidth(0.03), dash)
+	wi := ui.CellWidth(0.03)
+
+	if start.Y < end.Y {
+		ui.buff.AddBezier(start, OsV2{start.X, mid.Y}, OsV2{end.X, mid.Y}, end, cd, wi, dash)
+	} else {
+		mv := int(cellr * 2)
+
+		end2 := mid
+		end2.Y = start.Y
+		ui.buff.AddBezier(start,
+			OsV2{start.X, start.Y + mv},
+			OsV2{end2.X, end2.Y + mv},
+			end2, //mid
+			cd, wi, dash)
+
+		end3 := mid
+		end3.Y = end.Y
+		ui.buff.AddBezier(end,
+			OsV2{end.X, end.Y - mv},
+			OsV2{end3.X, end3.Y - mv},
+			end3, //mid
+			cd, wi, dash)
+
+		ui.buff.AddLine(end2, end3, cd, wi)
+	}
 
 	//arrow
 	ui.buff.AddPoly(end.Add(OsV2{int(-t / 2), 0}), []OsV2f{{0, 0}, {-t / 2, -t}, {t / 2, -t}}, cd, 0)
@@ -80,13 +101,34 @@ func _SAGraph_drawConnectionH(start OsV2, end OsV2, active bool, cellr float32, 
 	if active {
 		cd = SAApp_getYellow()
 	}
-
 	t := cellr * 0.3
 	end.X -= int(t) //connect to left of arrow
-
-	//line
 	mid := start.Aprox(end, 0.5)
-	ui.buff.AddBezier(start, OsV2{mid.X, start.Y}, OsV2{mid.X, end.Y}, end, cd, ui.CellWidth(0.03), dash)
+	wi := ui.CellWidth(0.03)
+
+	if start.X < end.X {
+		ui.buff.AddBezier(start, OsV2{mid.X, start.Y}, OsV2{mid.X, end.Y}, end, cd, wi, dash)
+	} else {
+		mv := int(cellr * 2)
+
+		end2 := mid
+		end2.X = start.X
+		ui.buff.AddBezier(start,
+			OsV2{start.X + mv, start.Y},
+			OsV2{end2.X + mv, end2.Y},
+			end2, //mid
+			cd, wi, dash)
+
+		end3 := mid
+		end3.X = end.X
+		ui.buff.AddBezier(end,
+			OsV2{end.X - mv, end.Y},
+			OsV2{end3.X - mv, end3.Y},
+			end3, //mid
+			cd, wi, dash)
+
+		ui.buff.AddLine(end2, end3, cd, wi)
+	}
 
 	//arrow
 	ui.buff.AddPoly(end.Add(OsV2{0, int(-t / 2)}), []OsV2f{{0, 0}, {-t, -t / 2}, {-t, t / 2}}, cd, 0)
@@ -310,6 +352,7 @@ func (gr *SAGraph) drawConnections(nodes []*SANode, ui *Ui) {
 
 	for _, node := range nodes {
 
+		//attributtes connection
 		{
 			coordNode, selCoordNode, _ := node.nodeToPixelsCoord(lv.call.canvas, ui)
 			if node.Selected {
@@ -317,7 +360,6 @@ func (gr *SAGraph) drawConnections(nodes []*SANode, ui *Ui) {
 				coordNode.Size.X = selCoordNode.Size.X
 			}
 
-			//draw Setter connection
 			for _, in := range node.Attrs {
 				for _, out := range in.depends {
 
@@ -344,6 +386,7 @@ func (gr *SAGraph) drawConnections(nodes []*SANode, ui *Ui) {
 			}
 		}
 
+		//setter connections
 		if SAGroups_IsNodeSetter(node.Exe) {
 			dstNode, _ := SAExe_Setter_destNode(node)
 			if dstNode != nil {
