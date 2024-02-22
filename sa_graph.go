@@ -428,13 +428,6 @@ func (gr *SAGraph) drawNodes(nodes []*SANode, rects bool, classic bool, ui *Ui) 
 }
 
 func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
-	if !ui.IsStackTop() {
-		//reset
-		gr.cam_move = false
-		gr.node_move = false
-		gr.node_select = false
-	}
-
 	nodes := gr.buildNodes(root)
 
 	root.ResetIsRead()
@@ -493,9 +486,32 @@ func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
 	if tin != nil {
 		touchInsideNode = tin
 	}
-
 	if touch.rm {
 		touchInsideNode = nil
+	}
+
+	//attrs dialog
+	if ui.Dialog_start("attributes") {
+		sel := gr.app.root.FindSelected()
+		if sel != nil {
+			ui.Div_colMax(0, 20)
+			ui.Div_rowMax(0, 20)
+			ui.Div_start(0, 0, 1, 1)
+			sel.RenderAttrs()
+			ui.Div_end()
+		} else {
+			ui.Dialog_close()
+		}
+
+		ui.Dialog_end()
+	}
+
+	//must be below dialog!
+	if !ui.IsStackTop() {
+		//reset
+		gr.cam_move = false
+		gr.node_move = false
+		gr.node_select = false
 	}
 
 	//keys actions

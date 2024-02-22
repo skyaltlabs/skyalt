@@ -157,7 +157,7 @@ func (node *SANode) nodeToPixelsCoord(canvas OsV4, ui *Ui) (OsV4, OsV4, OsV4) {
 		}
 
 		//add 1cell around and 1cell header
-		header_h := int(1 * cellr)
+		header_h := int(float32(h) * cellr)
 		cq = bound.AddSpace(int(-1.0 * float64(cellr)))
 		cq = InitOsV4(cq.Start.X, cq.Start.Y-header_h, cq.Size.X, cq.Size.Y+header_h)
 
@@ -201,10 +201,55 @@ func (node *SANode) drawShadow(coord OsV4, roundc float64) {
 	ui.buff.AddRectRoundGrad(sh, rc*3, InitOsCdBlack().SetAlpha(130), 0) //smooth
 }
 
+func (node *SANode) drawHeader() bool {
+	ui := node.app.base.ui
+
+	ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
+	ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
+
+	ui.Div_colMax(0, 100)
+
+	inside := false
+
+	//name
+	ui.Comp_textSelect(0, 0, 1, 1, node.Name, OsV2{1, 1}, false, false)
+
+	if ui.IsStackTop() {
+		inside = ui.GetCall().call.crop.Inside(ui.win.io.touch.pos)
+		if inside && ui.win.io.touch.end && ui.win.io.touch.numClicks >= 2 {
+			node.SelectOnlyThis()
+			ui.Dialog_open("attributes", 0)
+			inside = false
+		}
+	}
+
+	//open settings
+	if ui.Comp_buttonIcon(1, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/fullscreen_mode.png"), 0.3, "Show everything", CdPalette_B, true, false) > 0 {
+		node.SelectOnlyThis()
+		ui.Dialog_open("attributes", 0)
+		inside = false
+	}
+
+	//attributes
+	y := 1
+	for _, attr := range node.Attrs {
+		if attr.IsVisible() {
+			ui.Comp_textSelect(0, y, 1, 1, attr.Name, OsV2{0, 1}, false, false) //center
+			y++
+		}
+	}
+	for _, attr := range node.Attrs {
+		if attr.IsOutput() {
+			ui.Comp_textSelect(0, y, 2, 1, attr.Name, OsV2{2, 1}, false, false) //right
+			y++
+		}
+	}
+
+	return inside
+}
 func (node *SANode) drawRectNode(someNodeIsDraged bool, app *SAApp) bool {
 	ui := app.base.ui
 	lv := ui.GetCall()
-	touch := &ui.win.io.touch
 	pl := ui.win.io.GetPalette()
 	roundc := 0.2
 
@@ -228,16 +273,8 @@ func (node *SANode) drawRectNode(someNodeIsDraged bool, app *SAApp) bool {
 	ui.buff.AddRectRound(coord, ui.CellWidth(roundc), backkCd, ui.CellWidth((0.03)))
 
 	//header
-	inside := false
 	ui.Div_startCoord(0, 0, 1, 1, headerCoord, node.Name)
-	{
-		ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
-		ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
-		ui.Div_colMax(0, 1)
-		ui.Div_colMax(1, 100)
-		ui.Comp_textSelect(0, 0, 2, 1, node.Name, OsV2{1, 1}, false, false)
-		inside = headerCoord.GetIntersect(lv.call.crop).Inside(touch.pos)
-	}
+	inside := node.drawHeader()
 	ui.Div_end()
 
 	//select rect
@@ -255,7 +292,6 @@ func (node *SANode) drawNode(someNodeIsDraged bool) bool {
 
 	ui := node.app.base.ui
 	lv := ui.GetCall()
-	touch := &ui.win.io.touch
 	pl := ui.win.io.GetPalette()
 	roundc := 0.2
 
@@ -263,8 +299,6 @@ func (node *SANode) drawNode(someNodeIsDraged bool) bool {
 
 	bck := ui.win.io.ini.Dpi
 	ui.win.io.ini.Dpi = int(float32(ui.win.io.ini.Dpi) * float32(node.app.Cam_z))
-
-	inside := false
 
 	//back
 	{
@@ -286,39 +320,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool) bool {
 	}
 
 	ui.Div_startCoord(0, 0, 1, 1, coord, node.Name)
-	{
-		ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
-		ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
-
-		ui.Div_colMax(0, 100)
-
-		//name
-		div := ui.Comp_textSelect(0, 0, 1, 1, node.Name, OsV2{1, 1}, false, false) //double click? ........
-		inside = div.crop.Inside(touch.pos)
-		//inside = lv.call.crop.Inside(touch.pos)
-
-		//open settings
-		if ui.Comp_buttonIcon(1, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/fullscreen_mode.png"), 0.3, "Show everything", CdPalette_B, true, false) > 0 {
-			node.SelectOnlyThis()
-			ui.Dialog_open("attributes", 0)
-			inside = false
-		}
-
-		//attributes
-		y := 1
-		for _, attr := range node.Attrs {
-			if attr.IsVisible() {
-				ui.Comp_textSelect(0, y, 1, 1, attr.Name, OsV2{0, 1}, false, false) //center
-				y++
-			}
-		}
-		for _, attr := range node.Attrs {
-			if attr.IsOutput() {
-				ui.Comp_textSelect(0, y, 2, 1, attr.Name, OsV2{2, 1}, false, false) //right
-				y++
-			}
-		}
-	}
+	inside := node.drawHeader()
 	ui.Div_end()
 
 	//draw progress text
@@ -362,21 +364,6 @@ func (node *SANode) drawNode(someNodeIsDraged bool) bool {
 	}
 
 	ui.win.io.ini.Dpi = bck
-
-	if ui.Dialog_start("attributes") {
-		sel := node.app.root.FindSelected()
-		if sel != nil {
-			ui.Div_colMax(0, 20)
-			ui.Div_rowMax(0, 20)
-			ui.Div_start(0, 0, 1, 1)
-			sel.RenderAttrs()
-			ui.Div_end()
-		} else {
-			ui.Dialog_close()
-		}
-
-		ui.Dialog_end()
-	}
 
 	return inside
 }
