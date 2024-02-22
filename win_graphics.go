@@ -297,6 +297,7 @@ type WinGphItemCircle struct {
 	size  OsV2
 	width float64
 	arc   OsV2f
+	grad  float64
 }
 type WinGphItemPoly struct {
 	item   *WinGphItem
@@ -465,7 +466,7 @@ func (gph *WinGph) GetCircle(size OsV2, width float64, arc OsV2f) *WinGphItemCir
 
 	//find
 	for _, it := range gph.circles {
-		if it.size.Cmp(size) && it.width == width && it.arc.Cmp(arc) {
+		if it.size.Cmp(size) && it.width == width && it.arc.Cmp(arc) && it.grad == 0 {
 			return it
 		}
 	}
@@ -512,6 +513,50 @@ func (gph *WinGph) GetCircle(size OsV2, width float64, arc OsV2f) *WinGphItemCir
 	it := NewWinGphItemAlpha(dst)
 	if it != nil {
 		circle = &WinGphItemCircle{item: it, size: size, width: width, arc: arc}
+		gph.circles = append(gph.circles, circle)
+	}
+	return circle
+}
+
+func (gph *WinGph) GetCircleGrad(size OsV2, arc OsV2f, alpha float64) *WinGphItemCircle {
+
+	//find
+	for _, it := range gph.circles {
+		if it.size.Cmp(size) && it.width == 0 && it.arc.Cmp(arc) && it.grad == alpha {
+			return it
+		}
+	}
+
+	//create
+	w := OsNextPowOf2(size.X)
+	h := OsNextPowOf2(size.Y)
+
+	dc := gg.NewContext(w, h)
+
+	rx := float64(size.X) / 2
+	ry := float64(size.Y) / 2
+	//sx := rx
+	//sy := ry
+
+	grad := gg.NewRadialGradient(rx, ry, 0, rx, ry, rx)
+	grad.AddColorStop(0, color.RGBA{255, 255, 255, 255})
+	grad.AddColorStop(1, color.RGBA{255, 255, 255, 0})
+
+	dc.SetFillStyle(grad)
+	dc.DrawRectangle(0, 0, float64(size.X), float64(size.Y))
+	dc.Fill()
+
+	//dc.SavePNG("out.png")
+
+	rect := image.Rect(0, 0, w, h)
+	dst := image.NewAlpha(rect)
+	draw.Draw(dst, rect, dc.Image(), rect.Min, draw.Src)
+
+	//add
+	var circle *WinGphItemCircle
+	it := NewWinGphItemAlpha(dst)
+	if it != nil {
+		circle = &WinGphItemCircle{item: it, size: size, width: 0, arc: arc, grad: alpha}
 		gph.circles = append(gph.circles, circle)
 	}
 	return circle

@@ -132,6 +132,23 @@ func _WinTexture_drawQuadNoUVs(coord OsV4, depth int) {
 	gl.Vertex3f(float32(s.X), float32(e.Y), float32(depth))
 }
 
+func _WinTexture_drawQuadNoUVs_cd(coord OsV4, depth int, cd OsCd, alphas [4]byte) {
+	s := coord.Start
+	e := coord.End()
+
+	gl.Color4ub(cd.R, cd.G, cd.B, alphas[0])
+	gl.Vertex3f(float32(s.X), float32(s.Y), float32(depth))
+
+	gl.Color4ub(cd.R, cd.G, cd.B, alphas[1])
+	gl.Vertex3f(float32(e.X), float32(s.Y), float32(depth))
+
+	gl.Color4ub(cd.R, cd.G, cd.B, alphas[2])
+	gl.Vertex3f(float32(e.X), float32(e.Y), float32(depth))
+
+	gl.Color4ub(cd.R, cd.G, cd.B, alphas[3])
+	gl.Vertex3f(float32(s.X), float32(e.Y), float32(depth))
+}
+
 func (tex *WinTexture) DrawQuadUV(coord OsV4, depth int, cd OsCd, sUV, eUV OsV2f) {
 	gl.Color4ub(cd.R, cd.G, cd.B, cd.A)
 

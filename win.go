@@ -841,7 +841,7 @@ func (win *Win) DrawRect_border(start OsV2, end OsV2, depth int, cd OsCd, thick 
 	win.DrawRect(OsV2{end.X - thick, start.Y}, end, depth, cd)   // right
 }
 
-func (win *Win) DrawRectRound(coord OsV4, rad int, depth int, cd OsCd, thick int) {
+func (win *Win) DrawRectRound(coord OsV4, rad int, depth int, cd OsCd, thick int, grad bool) {
 
 	rad = OsMin(rad, coord.Size.X/2)
 	rad = OsMin(rad, coord.Size.Y/2)
@@ -872,12 +872,26 @@ func (win *Win) DrawRectRound(coord OsV4, rad int, depth int, cd OsCd, thick int
 	} else {
 		gl.Begin(gl.QUADS)
 
-		//top
-		_WinTexture_drawQuadNoUVs(InitOsV4(coord.Start.X+rad, coord.Start.Y, coord.Size.X-2*rad, rad), depth)
-		//middle
-		_WinTexture_drawQuadNoUVs(InitOsV4(coord.Start.X, coord.Start.Y+rad, coord.Size.X, coord.Size.Y-2*rad), depth)
-		//bottom
-		_WinTexture_drawQuadNoUVs(InitOsV4(coord.Start.X+rad, coord.Start.Y+coord.Size.Y-rad, coord.Size.X-2*rad, rad), depth)
+		if !grad {
+			//top
+			_WinTexture_drawQuadNoUVs(InitOsV4(coord.Start.X+rad, coord.Start.Y, coord.Size.X-2*rad, rad), depth)
+			//middle
+			_WinTexture_drawQuadNoUVs(InitOsV4(coord.Start.X, coord.Start.Y+rad, coord.Size.X, coord.Size.Y-2*rad), depth)
+			//bottom
+			_WinTexture_drawQuadNoUVs(InitOsV4(coord.Start.X+rad, coord.Start.Y+coord.Size.Y-rad, coord.Size.X-2*rad, rad), depth)
+		} else {
+			//top
+			_WinTexture_drawQuadNoUVs_cd(InitOsV4(coord.Start.X+rad, coord.Start.Y, coord.Size.X-2*rad, rad), depth, cd, [4]byte{0, 0, cd.A, cd.A})
+			//bottom
+			_WinTexture_drawQuadNoUVs_cd(InitOsV4(coord.Start.X+rad, coord.Start.Y+coord.Size.Y-rad, coord.Size.X-2*rad, rad), depth, cd, [4]byte{cd.A, cd.A, 0, 0})
+			//left
+			_WinTexture_drawQuadNoUVs_cd(InitOsV4(coord.Start.X, coord.Start.Y+rad, rad, coord.Size.Y-2*rad), depth, cd, [4]byte{0, cd.A, cd.A, 0})
+			//right
+			_WinTexture_drawQuadNoUVs_cd(InitOsV4(coord.Start.X+coord.Size.X-rad, coord.Start.Y+rad, rad, coord.Size.Y-2*rad), depth, cd, [4]byte{cd.A, 0, 0, cd.A})
+			//middle
+			gl.Color4ub(cd.R, cd.G, cd.B, cd.A)
+			_WinTexture_drawQuadNoUVs(InitOsV4(coord.Start.X+rad, coord.Start.Y+rad, coord.Size.X-2*rad, coord.Size.Y-2*rad), depth)
+		}
 
 		gl.End()
 	}
@@ -889,7 +903,13 @@ func (win *Win) DrawRectRound(coord OsV4, rad int, depth int, cd OsCd, thick int
 		s := coord.Start
 		e := coord.End()
 
-		circle := win.gph.GetCircle(OsV2{rad * 2, rad * 2}, float64(thick), OsV2f{})
+		var circle *WinGphItemCircle
+		if !grad {
+			circle = win.gph.GetCircle(OsV2{rad * 2, rad * 2}, float64(thick), OsV2f{})
+		} else {
+			circle = win.gph.GetCircleGrad(OsV2{rad * 2, rad * 2}, OsV2f{}, 0.5)
+		}
+
 		circle.item.DrawUV(circle.size, InitOsV4(s.X, s.Y, rad, rad), depth, cd, OsV2f{0, 0}, OsV2f{0.5, 0.5})
 		circle.item.DrawUV(circle.size, InitOsV4(e.X-rad, s.Y, rad, rad), depth, cd, OsV2f{0.5, 0}, OsV2f{1, 0.5})
 		circle.item.DrawUV(circle.size, InitOsV4(s.X, e.Y-rad, rad, rad), depth, cd, OsV2f{0, 0.5}, OsV2f{0.5, 1})

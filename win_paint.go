@@ -113,7 +113,10 @@ func (b *WinPaintBuff) AddRect(coord OsV4, cd OsCd, thick int) {
 
 }
 func (b *WinPaintBuff) AddRectRound(coord OsV4, rad int, cd OsCd, thick int) {
-	b.win.DrawRectRound(coord, rad, b.getDepth(), cd, thick)
+	b.win.DrawRectRound(coord, rad, b.getDepth(), cd, thick, false)
+}
+func (b *WinPaintBuff) AddRectRoundGrad(coord OsV4, rad int, cd OsCd, thick int) {
+	b.win.DrawRectRound(coord, rad, b.getDepth(), cd, thick, true)
 }
 
 func (b *WinPaintBuff) AddLine(start OsV2, end OsV2, cd OsCd, thick int) {
