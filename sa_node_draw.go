@@ -257,18 +257,24 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 		backCd := pl.GetGrey(1)
 
 		if node.CanBeRenderOnCanvas() {
-			backCd = pl.P //InitOsCd32(50, 50, 180, 255)
-			backCd.A = 150
+			backCd = pl.P.Aprox(InitOsCdWhite(), 0.3)
 		}
 
 		if node.HasError() {
 			backCd = pl.E
 		}
 
-		ui.buff.AddRectRound(coord, ui.CellWidth(roundc), backCd, 0)
+		// shadow
+		{
+			rc := ui.CellWidth(roundc)
+			sh := coord
+			sh = sh.AddSpace((-rc * 1))
+			sh.Start = sh.Start.Add(OsV2{rc / 2, rc / 2})
+			ui.buff.AddRectRoundGrad(sh, rc*3, InitOsCdBlack().SetAlpha(130), 0) //smooth
+		}
 
-		//shadow
-		ui.buff.AddRectRound(coord, ui.CellWidth(roundc), pl.GetGrey(0.4), ui.CellWidth(0.03)) //smooth
+		//background
+		ui.buff.AddRectRound(coord, ui.CellWidth(roundc), backCd, 0)
 	}
 
 	ui.Div_startCoord(0, 0, 1, 1, coord, node.Name)
