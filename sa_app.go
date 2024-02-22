@@ -943,7 +943,9 @@ func (node *SANode) _exportCode(depth int) string {
 		params := ""
 		for _, attr := range nd.Attrs {
 			if !attr.IsOutput() {
-				params += fmt.Sprintf("%s: %s,", attr.Name, OsTrnString(attr.Value == "", `""`, attr.Value))
+				if attr.Value != attr.defaultValue {
+					params += fmt.Sprintf("%s: %s, ", attr.Name, OsTrnString(attr.Value == "", `""`, attr.Value))
+				}
 			}
 		}
 		params, _ = strings.CutSuffix(params, ", ")
