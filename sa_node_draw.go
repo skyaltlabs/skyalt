@@ -191,6 +191,16 @@ func (node *SANode) FindInsideParent(touchPos OsV2, canvas OsV4, ui *Ui) *SANode
 	return found
 }
 
+func (node *SANode) drawShadow(coord OsV4, roundc float64) {
+	ui := node.app.base.ui
+
+	rc := ui.CellWidth(roundc)
+	sh := coord
+	sh = sh.AddSpace((-rc * 1))
+	sh.Start = sh.Start.Add(OsV2{rc / 2, rc / 2})
+	ui.buff.AddRectRoundGrad(sh, rc*3, InitOsCdBlack().SetAlpha(130), 0) //smooth
+}
+
 func (node *SANode) drawRectNode(someNodeIsDraged bool, app *SAApp) bool {
 	ui := app.base.ui
 	lv := ui.GetCall()
@@ -203,11 +213,21 @@ func (node *SANode) drawRectNode(someNodeIsDraged bool, app *SAApp) bool {
 	bck := ui.win.io.ini.Dpi
 	ui.win.io.ini.Dpi = int(float32(ui.win.io.ini.Dpi) * float32(node.app.Cam_z))
 
-	backCd := pl.GetGrey(1)
+	// shadow
+	node.drawShadow(coord, roundc)
 
-	backCd.A = 255
-	ui.buff.AddRectRound(headerCoord, ui.CellWidth(roundc), backCd, 0)
+	//background
+	backCd := pl.GetGrey(0.8)
+	ui.buff.AddRectRound(coord, ui.CellWidth(roundc), backCd, 0)
 
+	//header background
+	backkCd := pl.GetGrey(1)
+	ui.buff.AddRectRound(headerCoord, ui.CellWidth(roundc), backkCd, 0)
+
+	//border
+	ui.buff.AddRectRound(coord, ui.CellWidth(roundc), backkCd, ui.CellWidth((0.03)))
+
+	//header
 	inside := false
 	ui.Div_startCoord(0, 0, 1, 1, headerCoord, node.Name)
 	{
@@ -220,12 +240,6 @@ func (node *SANode) drawRectNode(someNodeIsDraged bool, app *SAApp) bool {
 	}
 	ui.Div_end()
 
-	backCd.A = 50
-	ui.buff.AddRectRound(coord, ui.CellWidth(roundc), backCd, 0)
-
-	backCd.A = 255
-	ui.buff.AddRectRound(coord, ui.CellWidth(roundc), backCd, ui.CellWidth((0.03)))
-
 	//select rect
 	selectRad := ui.CellWidth(roundc * 1.3)
 	if (someNodeIsDraged && node.KeyProgessSelection(&ui.win.io.keys)) || (!someNodeIsDraged && node.Selected) {
@@ -237,9 +251,9 @@ func (node *SANode) drawRectNode(someNodeIsDraged bool, app *SAApp) bool {
 	return inside
 }
 
-func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
+func (node *SANode) drawNode(someNodeIsDraged bool) bool {
 
-	ui := app.base.ui
+	ui := node.app.base.ui
 	lv := ui.GetCall()
 	touch := &ui.win.io.touch
 	pl := ui.win.io.GetPalette()
@@ -265,13 +279,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 		}
 
 		// shadow
-		{
-			rc := ui.CellWidth(roundc)
-			sh := coord
-			sh = sh.AddSpace((-rc * 1))
-			sh.Start = sh.Start.Add(OsV2{rc / 2, rc / 2})
-			ui.buff.AddRectRoundGrad(sh, rc*3, InitOsCdBlack().SetAlpha(130), 0) //smooth
-		}
+		node.drawShadow(coord, roundc)
 
 		//background
 		ui.buff.AddRectRound(coord, ui.CellWidth(roundc), backCd, 0)
@@ -310,10 +318,6 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 				y++
 			}
 		}
-
-		//nepotřebuji visibility - zobrazuji jenom jména(aka data-flow) ............
-		//chci vytvořit spojení a není viditelný - dolů dát extra connect, který zobrazí dialog se všemy možnostmi ........
-
 	}
 	ui.Div_end()
 
@@ -360,7 +364,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool, app *SAApp) bool {
 	ui.win.io.ini.Dpi = bck
 
 	if ui.Dialog_start("attributes") {
-		sel := app.root.FindSelected()
+		sel := node.app.root.FindSelected()
 		if sel != nil {
 			ui.Div_colMax(0, 20)
 			ui.Div_rowMax(0, 20)

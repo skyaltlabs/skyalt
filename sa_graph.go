@@ -73,9 +73,6 @@ func _SAGraph_drawConnectionV(start OsV2, end OsV2, active bool, cellr float32, 
 
 	//arrow
 	ui.buff.AddPoly(end.Add(OsV2{int(-t / 2), 0}), []OsV2f{{0, 0}, {-t / 2, -t}, {t / 2, -t}}, cd, 0)
-
-	//label
-	//.........
 }
 
 func _SAGraph_drawConnectionH(start OsV2, end OsV2, active bool, cellr float32, ui *Ui, dash float32) {
@@ -93,9 +90,6 @@ func _SAGraph_drawConnectionH(start OsV2, end OsV2, active bool, cellr float32, 
 
 	//arrow
 	ui.buff.AddPoly(end.Add(OsV2{0, int(-t / 2)}), []OsV2f{{0, 0}, {-t, -t / 2}, {-t, t / 2}}, cd, 0)
-
-	//label
-	//.........
 }
 
 func _reorder_layer(nodes_layer []*SANode, max_width int) []float32 {
@@ -380,7 +374,7 @@ func (gr *SAGraph) drawNodes(nodes []*SANode, rects bool, classic bool, ui *Ui) 
 			}
 		} else {
 			if classic {
-				if n.drawNode(gr.node_select, gr.app) { //inside
+				if n.drawNode(gr.node_select) { //inside
 					touchInsideNode = n
 				}
 			}
