@@ -666,6 +666,7 @@ func (dst *SANode) CopyPoses(src *SANode) {
 	dst.Pos = src.Pos
 	dst.Cols = src.Cols
 	dst.Rows = src.Rows
+	dst.Selected = src.Selected
 
 	for _, dstIt := range dst.Subs {
 		srcIt := src.FindNode(dstIt.Name)
