@@ -102,23 +102,25 @@ func (w *SANode) cellZoom(ui *Ui) float32 {
 	return float32(ui.win.Cell()) * float32(w.app.Cam_z) * 1
 }
 
-func (w *SANode) pixelsToNode(touchPos OsV2, ui *Ui, lvDiv *UiLayoutDiv) OsV2f {
+func (node *SANode) pixelsToNode(touchPos OsV2, lvDiv *UiLayoutDiv) OsV2f {
 
+	ui := node.app.base.ui
 	cell := ui.win.Cell()
 
 	p := touchPos.Sub(lvDiv.canvas.Start).Sub(lvDiv.canvas.Size.MulV(0.5))
 
 	var r OsV2f
-	r.X = float32(p.X) / float32(w.app.Cam_z) / float32(cell)
-	r.Y = float32(p.Y) / float32(w.app.Cam_z) / float32(cell)
+	r.X = float32(p.X) / float32(node.app.Cam_z) / float32(cell)
+	r.Y = float32(p.Y) / float32(node.app.Cam_z) / float32(cell)
 
-	r.X += float32(w.app.Cam_x)
-	r.Y += float32(w.app.Cam_y)
+	r.X += float32(node.app.Cam_x)
+	r.Y += float32(node.app.Cam_y)
 
 	return r
 }
 
-func (node *SANode) nodeToPixels(p OsV2f, canvas OsV4, ui *Ui) OsV2 {
+func (node *SANode) nodeToPixels(p OsV2f, canvas OsV4) OsV2 {
+	ui := node.app.base.ui
 
 	node = node.GetAbsoluteRoot()
 
@@ -134,12 +136,14 @@ func (node *SANode) nodeToPixels(p OsV2f, canvas OsV4, ui *Ui) OsV2 {
 	return r.Add(canvas.Start).Add(canvas.Size.MulV(0.5))
 }
 
-func (node *SANode) nodeToPixelsCoord(canvas OsV4, ui *Ui) (OsV4, OsV4, OsV4) {
+func (node *SANode) nodeToPixelsCoord(canvas OsV4) (OsV4, OsV4, OsV4) {
+	ui := node.app.base.ui
+
 	var cq OsV4
 	var cq_sel OsV4
 	cellr := node.cellZoom(ui)
 
-	mid := node.nodeToPixels(node.Pos, canvas, ui) //.parent, because it has Cam
+	mid := node.nodeToPixels(node.Pos, canvas) //.parent, because it has Cam
 
 	w := 4
 	h := 1 + node.NumVisibleAndCheck()
@@ -148,7 +152,7 @@ func (node *SANode) nodeToPixelsCoord(canvas OsV4, ui *Ui) (OsV4, OsV4, OsV4) {
 		//compute bound
 		bound := InitOsV4Mid(mid, OsV2{int(float32(w) * cellr), int(float32(h) * cellr)})
 		for i, nd := range node.Subs {
-			coord, _, _ := nd.nodeToPixelsCoord(canvas, ui)
+			coord, _, _ := nd.nodeToPixelsCoord(canvas)
 			if i == 0 {
 				bound = coord
 			} else {
@@ -171,18 +175,18 @@ func (node *SANode) nodeToPixelsCoord(canvas OsV4, ui *Ui) (OsV4, OsV4, OsV4) {
 	return cq, cq.AddSpace(int(-0.15 * float64(cellr))), cq_sel
 }
 
-func (node *SANode) FindInsideParent(touchPos OsV2, canvas OsV4, ui *Ui) *SANode {
+func (node *SANode) FindInsideParent(touchPos OsV2, canvas OsV4) *SANode {
 	var found *SANode
 
 	if SAGroups_HasNodeSub(node.Exe) {
-		coord, _, _ := node.nodeToPixelsCoord(canvas, ui)
+		coord, _, _ := node.nodeToPixelsCoord(canvas)
 		if coord.Inside(touchPos) {
 			found = node
 		}
 	}
 
 	for _, nd := range node.Subs {
-		ff := nd.FindInsideParent(touchPos, canvas, ui)
+		ff := nd.FindInsideParent(touchPos, canvas)
 		if ff != nil {
 			found = ff
 		}
@@ -253,7 +257,7 @@ func (node *SANode) drawRectNode(someNodeIsDraged bool, app *SAApp) bool {
 	pl := ui.win.io.GetPalette()
 	roundc := 0.2
 
-	coord, selCoord, headerCoord := node.nodeToPixelsCoord(lv.call.canvas, ui)
+	coord, selCoord, headerCoord := node.nodeToPixelsCoord(lv.call.canvas)
 
 	bck := ui.win.io.ini.Dpi
 	ui.win.io.ini.Dpi = int(float32(ui.win.io.ini.Dpi) * float32(node.app.Cam_z))
@@ -295,7 +299,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool) bool {
 	pl := ui.win.io.GetPalette()
 	roundc := 0.2
 
-	coord, selCoord, _ := node.nodeToPixelsCoord(lv.call.canvas, ui)
+	coord, selCoord, _ := node.nodeToPixelsCoord(lv.call.canvas)
 
 	bck := ui.win.io.ini.Dpi
 	ui.win.io.ini.Dpi = int(float32(ui.win.io.ini.Dpi) * float32(node.app.Cam_z))

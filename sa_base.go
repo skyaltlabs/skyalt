@@ -264,6 +264,8 @@ func (base *SABase) Render() bool {
 	ui.Div_end()
 
 	if base.HasApp() {
+		app.rebuildLists() //!!!
+
 		ui.Div_startName(1, 0, 1, 1, base.Apps[base.Selected].Name)
 		{
 			if app.IDE {
@@ -319,19 +321,19 @@ func (base *SABase) Render() bool {
 
 					//graph
 					ui.Div_start(0, 0, 1, 1)
-					graphCanvas, keyAllow := app.graph.drawGraph(app.root, ui)
+					graphCanvas, keyAllow := app.graph.drawGraph(app.root)
 					ui.Div_end()
 
 					//node list
 					if app.graph.showNodeList {
 						ui.Div_start(1, 0, 1, 1)
-						app.graph.drawNodeList(graphCanvas, app.root, ui)
+						app.graph.drawNodeList(graphCanvas)
 						ui.Div_end()
 					}
 
 					//panel
 					ui.Div_start(pn_x, 0, 1, 1)
-					app.graph.drawPanel(graphCanvas, keyAllow, ui)
+					app.graph.drawPanel(graphCanvas, keyAllow)
 					ui.Div_end()
 				}
 				ui.Div_end()
@@ -364,17 +366,18 @@ func (base *SABase) Render() bool {
 
 						lex, err := ParseLine(line, 0, app.ops_eq)
 						if err == nil && len(lex.subs) > 0 && lex.subs[0].tp == VmLexerWord {
-							nd := app.root.FindNode(lex.subs[0].GetString(line))
-							if nd != nil {
-								nd.SelectOnlyThis()
-								//app.graph.autoZoom(true, graphCanvas, ui)
+							nm := lex.subs[0].GetString(line)
+							for _, n := range app.all_nodes {
+								if n.Name == nm {
+									n.SelectOnlyThis()
+									//app.graph.autoZoom(true, graphCanvas, ui)
+									break
+								}
 							}
 						}
-
 					}
 
 					//icon which opens dialog to generate code(it's added to current one) ................
-
 				}
 				ui.Div_end()
 			}

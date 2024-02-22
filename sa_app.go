@@ -102,6 +102,9 @@ type SAApp struct {
 	mic_nodes []SANodePath
 
 	code string
+
+	all_nodes      []*SANode
+	selected_nodes []*SANode
 }
 
 func (a *SAApp) init(base *SABase) {
@@ -194,6 +197,24 @@ func (app *SAApp) AddMic(data audio.IntBuffer) {
 			app.mic_nodes = append(app.mic_nodes[:i], app.mic_nodes[i+1:]...) //remove
 		}
 	}
+}
+
+func (app *SAApp) buildNodes(node *SANode, onlySelected bool) []*SANode {
+	var list []*SANode
+
+	for _, nd := range node.Subs {
+
+		if !onlySelected || nd.Selected {
+			list = append(list, nd)
+		}
+		list = append(list, app.buildNodes(nd, onlySelected)...)
+	}
+	return list
+}
+
+func (app *SAApp) rebuildLists() {
+	app.all_nodes = app.buildNodes(app.root, false)
+	app.selected_nodes = app.buildNodes(app.root, true)
 }
 
 func (app *SAApp) Tick() {
@@ -448,7 +469,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 		touch_grid := appDiv.GetCloseCell(touch.pos)
 
 		//find resizer
-		for _, w := range app.root.Subs {
+		for _, w := range app.all_nodes {
 			if !w.CanBeRenderOnCanvas() {
 				continue
 			}
@@ -463,7 +484,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 
 		//find select/move node
 		if !app.canvas.resize.Is() {
-			for _, w := range app.root.Subs {
+			for _, w := range app.all_nodes {
 				if !w.CanBeRenderOnCanvas() {
 					continue
 				}

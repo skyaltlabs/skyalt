@@ -49,9 +49,9 @@ func (gr *SAGraph) drawCreateNode(ui *Ui) {
 	if !ui.edit.IsActive() {
 		if ui.win.io.keys.tab && lvBaseDiv.IsOver(ui) {
 			gr.app.canvas.addGrid = InitOsV4(0, 0, 1, 1)
-			gr.app.canvas.addPos = gr.app.root.pixelsToNode(ui.win.io.touch.pos, ui, lvBaseDiv)
+			gr.app.canvas.addPos = gr.app.root.pixelsToNode(ui.win.io.touch.pos, lvBaseDiv)
 			gr.app.canvas.addnode_search = ""
-			gr.app.canvas.addParent = NewSANodePath(gr.app.root.FindInsideParent(ui.win.io.touch.pos, lvBaseDiv.canvas, ui))
+			gr.app.canvas.addParent = NewSANodePath(gr.app.root.FindInsideParent(ui.win.io.touch.pos, lvBaseDiv.canvas))
 
 			ui.Dialog_open("nodes_list", 2)
 		}
@@ -153,7 +153,7 @@ func _reorder_layer(nodes_layer []*SANode, max_width int) []float32 {
 
 		//set random positions
 		for i, n := range nodes_layer {
-			n.Pos.X = float32(ids[i])
+			n.Pos.Y = float32(ids[i])
 		}
 
 		//get score
@@ -166,7 +166,7 @@ func _reorder_layer(nodes_layer []*SANode, max_width int) []float32 {
 		if best_score < 0 || score < best_score {
 			p := 0
 			for _, n := range nodes_layer {
-				best_poses[p] = n.Pos.X
+				best_poses[p] = n.Pos.Y
 				p++
 			}
 
@@ -179,23 +179,20 @@ func _reorder_layer(nodes_layer []*SANode, max_width int) []float32 {
 
 	//set nodes with best_poses
 	for i, n := range nodes_layer {
-		n.Pos.X = float32(best_poses[i])
+		n.Pos.Y = float32(best_poses[i])
 	}
 
 	return best_poses
 }
 
-func (gr *SAGraph) reorder(onlySelected bool, ui *Ui) {
-	x_jump := float32(6)
+func (gr *SAGraph) reorder(onlySelected bool) {
 	y_jump := float32(6)
+	x_jump := float32(6)
 
-	//create list
-	var nodes []*SANode
-	for _, n := range gr.app.root.Subs {
-		if onlySelected && !n.Selected {
-			continue //skip
-		}
-		nodes = append(nodes, n)
+	//list
+	nodes := gr.app.all_nodes
+	if onlySelected {
+		nodes = gr.app.selected_nodes
 	}
 
 	//vertical
@@ -208,9 +205,9 @@ func (gr *SAGraph) reorder(onlySelected bool, ui *Ui) {
 		for _, n := range nodes {
 			n.UpdateDepth(n)
 		}
-		//set posY
+		//set posX
 		for _, n := range nodes {
-			n.Pos.Y = float32(n.sort_depth)
+			n.Pos.X = float32(n.sort_depth)
 		}
 	}
 	//horizontal
@@ -268,8 +265,8 @@ func (gr *SAGraph) reorder(onlySelected bool, ui *Ui) {
 			p := 0
 			for _, n := range nodes {
 				if n.sort_depth == depth {
-					n.Pos.X = best_poses[depth][p] * x_jump
-					n.Pos.Y *= y_jump
+					n.Pos.X *= x_jump
+					n.Pos.Y = best_poses[depth][p] * y_jump
 					p++
 				}
 			}
@@ -277,17 +274,20 @@ func (gr *SAGraph) reorder(onlySelected bool, ui *Ui) {
 	}
 }
 
-func (gr *SAGraph) autoZoom(onlySelected bool, canvas OsV4, ui *Ui) {
+func (gr *SAGraph) autoZoom(onlySelected bool, canvas OsV4) {
 	//zoom to all
 	first := true
 	var mn OsV2f
 	var mx OsV2f
 	num := 0
-	for _, n := range gr.app.root.Subs {
-		if onlySelected && !n.Selected {
-			continue //skip
-		}
 
+	//list
+	nodes := gr.app.all_nodes
+	if onlySelected {
+		nodes = gr.app.selected_nodes
+	}
+
+	for _, n := range nodes {
 		if first {
 			mn = n.Pos
 			mx = n.Pos
@@ -317,12 +317,8 @@ func (gr *SAGraph) autoZoom(onlySelected bool, canvas OsV4, ui *Ui) {
 	gr.app.Cam_z = 1
 	for gr.app.Cam_z > 0.1 {
 		areIn := true
-		for _, n := range gr.app.root.Subs {
-			if onlySelected && !n.Selected {
-				continue //skip
-			}
-
-			_, cq, _ := n.nodeToPixelsCoord(canvas, ui)
+		for _, n := range nodes {
+			_, cq, _ := n.nodeToPixelsCoord(canvas)
 			if !canvas.GetIntersect(cq).Cmp(cq) {
 				areIn = false
 				break
@@ -335,26 +331,17 @@ func (gr *SAGraph) autoZoom(onlySelected bool, canvas OsV4, ui *Ui) {
 	}
 }
 
-func (gr *SAGraph) buildNodes(node *SANode) []*SANode {
-	var list []*SANode
+func (gr *SAGraph) drawConnections() {
 
-	for _, nd := range node.Subs {
-		list = append(list, nd)
-		list = append(list, gr.buildNodes(nd)...)
-	}
-	return list
-}
-
-func (gr *SAGraph) drawConnections(nodes []*SANode, ui *Ui) {
-
+	ui := gr.app.base.ui
 	lv := ui.GetCall()
 	cellr := gr.app.root.cellZoom(ui)
 
-	for _, node := range nodes {
+	for _, node := range gr.app.all_nodes {
 
 		//attributtes connection
 		{
-			coordNode, selCoordNode, _ := node.nodeToPixelsCoord(lv.call.canvas, ui)
+			coordNode, selCoordNode, _ := node.nodeToPixelsCoord(lv.call.canvas)
 			if node.Selected {
 				coordNode.Start.X = selCoordNode.Start.X
 				coordNode.Size.X = selCoordNode.Size.X
@@ -367,7 +354,7 @@ func (gr *SAGraph) drawConnections(nodes []*SANode, ui *Ui) {
 						continue
 					}
 
-					coordOut, selCoordOut, _ := out.node.nodeToPixelsCoord(lv.call.canvas, ui)
+					coordOut, selCoordOut, _ := out.node.nodeToPixelsCoord(lv.call.canvas)
 					if out.node.Selected {
 						coordOut.Start.X = selCoordOut.Start.X
 						coordOut.Size.X = selCoordOut.Size.X
@@ -390,8 +377,8 @@ func (gr *SAGraph) drawConnections(nodes []*SANode, ui *Ui) {
 		if SAGroups_IsNodeSetter(node.Exe) {
 			dstNode, _ := SAExe_Setter_destNode(node)
 			if dstNode != nil {
-				coordOut, selCoordOut, _ := node.nodeToPixelsCoord(lv.call.canvas, ui)
-				coordIn, selCoordIn, _ := dstNode.nodeToPixelsCoord(lv.call.canvas, ui)
+				coordOut, selCoordOut, _ := node.nodeToPixelsCoord(lv.call.canvas)
+				coordIn, selCoordIn, _ := dstNode.nodeToPixelsCoord(lv.call.canvas)
 
 				if node.Selected {
 					coordOut = selCoordOut
@@ -405,10 +392,10 @@ func (gr *SAGraph) drawConnections(nodes []*SANode, ui *Ui) {
 	}
 }
 
-func (gr *SAGraph) drawNodes(nodes []*SANode, rects bool, classic bool, ui *Ui) *SANode {
+func (gr *SAGraph) drawNodes(rects bool, classic bool) *SANode {
 
 	var touchInsideNode *SANode
-	for _, n := range nodes {
+	for _, n := range gr.app.all_nodes {
 		if SAGroups_HasNodeSub(n.Exe) {
 			if rects {
 				if n.drawRectNode(gr.node_select, gr.app) { //inside
@@ -427,12 +414,12 @@ func (gr *SAGraph) drawNodes(nodes []*SANode, rects bool, classic bool, ui *Ui) 
 	return touchInsideNode
 }
 
-func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
-	nodes := gr.buildNodes(root)
+func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 
 	root.ResetIsRead()
 	root.UpdateIsRead()
 
+	ui := gr.app.base.ui
 	pl := ui.win.io.GetPalette()
 
 	touch := &ui.win.io.touch
@@ -455,19 +442,19 @@ func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
 	//grid
 	{
 		lvBaseDiv := ui.GetCall().call
-		st := root.pixelsToNode(graphCanvas.Start, ui, lvBaseDiv)
-		en := root.pixelsToNode(graphCanvas.End(), ui, lvBaseDiv)
+		st := root.pixelsToNode(graphCanvas.Start, lvBaseDiv)
+		en := root.pixelsToNode(graphCanvas.End(), lvBaseDiv)
 
 		wi := ui.CellWidth(0.03)
 		cd := InitOsCdWhite().SetAlpha(70)
 		for x := int(st.X); x < int(en.X+1); x++ {
-			s := root.nodeToPixels(OsV2f{float32(x), st.Y}, graphCanvas, ui)
-			e := root.nodeToPixels(OsV2f{float32(x), en.Y}, graphCanvas, ui)
+			s := root.nodeToPixels(OsV2f{float32(x), st.Y}, graphCanvas)
+			e := root.nodeToPixels(OsV2f{float32(x), en.Y}, graphCanvas)
 			ui.buff.AddLine(s, e, cd, wi)
 		}
 		for y := int(st.Y); y < int(en.Y+1); y++ {
-			s := root.nodeToPixels(OsV2f{st.X, float32(y)}, graphCanvas, ui)
-			e := root.nodeToPixels(OsV2f{en.X, float32(y)}, graphCanvas, ui)
+			s := root.nodeToPixels(OsV2f{st.X, float32(y)}, graphCanvas)
+			e := root.nodeToPixels(OsV2f{en.X, float32(y)}, graphCanvas)
 			ui.buff.AddLine(s, e, cd, wi)
 		}
 	}
@@ -479,10 +466,10 @@ func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
 	//+
 	gr.drawCreateNode(ui)
 
-	touchInsideNode := gr.drawNodes(nodes, true, false, ui)
+	touchInsideNode := gr.drawNodes(true, false)
 
-	gr.drawConnections(nodes, ui)
-	tin := gr.drawNodes(nodes, false, true, ui)
+	gr.drawConnections()
+	tin := gr.drawNodes(false, true)
 	if tin != nil {
 		touchInsideNode = tin
 	}
@@ -576,21 +563,19 @@ func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
 			for _, n := range newNodes {
 				n.Selected = true
 			}
-			gr.autoZoom(true, graphCanvas, ui)
+			gr.autoZoom(true, graphCanvas)
 			changed = true
 		}
 
 		if keys.copy {
-			for _, n := range nodes {
-				if n.Selected {
-					keys.clipboard = n.Name //copy name into clipboard
-					break
-				}
+			for _, n := range gr.app.selected_nodes {
+				keys.clipboard = n.Name //copy name into clipboard
+				break
 			}
 		}
 
 		if keys.selectAll {
-			for _, n := range nodes {
+			for _, n := range gr.app.all_nodes {
 				n.Selected = true
 			}
 		}
@@ -607,10 +592,7 @@ func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
 
 			//click on un-selected => de-select all & select only current
 			if !touchInsideNode.Selected {
-				for _, n := range nodes {
-					n.Selected = false
-				}
-				touchInsideNode.Selected = true
+				touchInsideNode.SelectOnlyThis()
 			}
 		}
 		if gr.node_move {
@@ -620,7 +602,7 @@ func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
 			r.X = float32(p.X) / float32(gr.app.Cam_z) / float32(cell)
 			r.Y = float32(p.Y) / float32(gr.app.Cam_z) / float32(cell)
 
-			for _, n := range nodes {
+			for _, n := range gr.app.selected_nodes {
 				if n.Selected {
 					n.AddPos(r)
 				}
@@ -669,8 +651,8 @@ func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
 			ui.buff.AddRect(coord, pl.P, ui.CellWidth(0.03)) //border
 
 			//update
-			for _, n := range nodes {
-				_, _, sel := n.nodeToPixelsCoord(lv.call.canvas, ui)
+			for _, n := range gr.app.all_nodes {
+				_, _, sel := n.nodeToPixelsCoord(lv.call.canvas)
 				n.selected_cover = coord.HasCover(sel)
 			}
 		}
@@ -681,7 +663,7 @@ func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
 		//when it's clicked on selected node, but it's not moved => select only this node
 		if gr.node_move && gr.node_move_selected.Is() {
 			if gr.touch_start.Distance(touch.pos) < float32(ui.win.Cell())/5 {
-				for _, n := range nodes {
+				for _, n := range gr.app.all_nodes {
 					n.Selected = false
 				}
 
@@ -693,7 +675,7 @@ func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
 		}
 
 		if gr.node_select {
-			for _, n := range nodes {
+			for _, n := range gr.app.all_nodes {
 				n.Selected = n.KeyProgessSelection(keys)
 			}
 		}
@@ -716,7 +698,8 @@ func (gr *SAGraph) drawGraph(root *SANode, ui *Ui) (OsV4, bool) {
 	return graphCanvas, keyAllow
 }
 
-func (gr *SAGraph) drawNodeList(graphCanvas OsV4, act *SANode, ui *Ui) {
+func (gr *SAGraph) drawNodeList(graphCanvas OsV4) {
+	ui := gr.app.base.ui
 
 	//activate editbox
 	if gr.showNodeList_justOpen {
@@ -731,19 +714,20 @@ func (gr *SAGraph) drawNodeList(graphCanvas OsV4, act *SANode, ui *Ui) {
 	//items
 	y := 1
 	searches := strings.Split(strings.ToLower(gr.node_search), " ")
-	for _, n := range act.Subs {
+	for _, n := range gr.app.all_nodes {
 		if gr.node_search == "" || SAApp_IsSearchedName(n.Name, searches) {
 			if ui.Comp_buttonMenu(0, y, 1, 1, n.Name, n.Exe, true, n.Selected) > 0 {
 				n.SelectOnlyThis()
-				gr.autoZoom(true, graphCanvas, ui)
+				gr.autoZoom(true, graphCanvas)
 			}
 			y++
 		}
 	}
 }
 
-func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool, ui *Ui) {
+func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 
+	ui := gr.app.base.ui
 	keys := &ui.win.io.keys
 
 	ui.DivInfo_set(SA_DIV_SET_scrollVnarrow, 1, 0)
@@ -768,24 +752,24 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool, ui *Ui) {
 	y++
 
 	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"home.png"), 0.3, "Zoom all nodes(H)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
-		gr.autoZoom(false, graphCanvas, ui) //zoom to all
+		gr.autoZoom(false, graphCanvas) //zoom to all
 	}
 	y++
 
 	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"home_select.png"), 0.2, "Zoom selected nodes(G)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "g")) {
-		gr.autoZoom(true, graphCanvas, ui) //zoom to selected
+		gr.autoZoom(true, graphCanvas) //zoom to selected
 	}
 	y++
 
 	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy.png"), 0.25, "Reoder all nodes(L)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "l")) {
-		gr.reorder(false, ui)               //reorder nodes
-		gr.autoZoom(false, graphCanvas, ui) //zoom to all
+		gr.reorder(false)               //reorder nodes
+		gr.autoZoom(false, graphCanvas) //zoom to all
 	}
 	y++
 
 	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy_select.png"), 0.2, "Reorder selected nodes(K)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "k")) {
-		gr.reorder(true, ui)               //reorder only selected nodes
-		gr.autoZoom(true, graphCanvas, ui) //zoom to selected
+		gr.reorder(true)               //reorder only selected nodes
+		gr.autoZoom(true, graphCanvas) //zoom to selected
 	}
 	y++
 
