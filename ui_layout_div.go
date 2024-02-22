@@ -555,3 +555,29 @@ func (div *UiLayoutDiv) IsTouchInside(ui *Ui) bool {
 func (div *UiLayoutDiv) IsTouchEnd(ui *Ui) bool {
 	return div.enableInput && ui.win.io.touch.end && div.IsTouchActive(ui) //doesn't have to be inside!
 }
+
+func (div *UiLayoutDiv) IsClicked(enable bool, ui *Ui) (int, int, bool, bool, bool) {
+	var click, rclick int
+	var inside, active, end bool
+	if enable {
+		inside = div.IsTouchInside(ui)
+		active = div.IsTouchActive(ui)
+		end = div.IsTouchEnd(ui)
+
+		force := ui.win.io.touch.rm
+
+		if inside && end {
+			click = 1
+			rclick = OsTrn(force, 1, 0)
+		}
+
+		if click > 0 {
+			click = int(ui.win.io.touch.numClicks)
+		}
+		if rclick > 0 {
+			rclick = int(ui.win.io.touch.numClicks)
+		}
+	}
+
+	return click, rclick, inside, active, end
+}

@@ -36,33 +36,6 @@ type UiComp struct {
 	tooltip         string
 }
 
-func (ui *Ui) _compIsClicked(enable bool) (int, int, bool, bool, bool) {
-	var click, rclick int
-	var inside, active, end bool
-	if enable {
-		lv := ui.GetCall()
-		inside = lv.call.IsTouchInside(ui)
-		active = lv.call.IsTouchActive(ui)
-		end = lv.call.IsTouchEnd(ui)
-
-		force := ui.win.io.touch.rm
-
-		if inside && end {
-			click = 1
-			rclick = OsTrn(force, 1, 0)
-		}
-
-		if click > 0 {
-			click = int(ui.win.io.touch.numClicks)
-		}
-		if rclick > 0 {
-			rclick = int(ui.win.io.touch.numClicks)
-		}
-	}
-
-	return click, rclick, inside, active, end
-}
-
 func (ui *Ui) _compGetTextImageCoord(coord OsV4, image_width float64, imageAlignH uint8, isImg bool, isText bool) (OsV4, OsV4) {
 
 	lv := ui.GetCall()
@@ -360,7 +333,7 @@ func (ui *Ui) Comp_button_s(style *UiComp, label string, icon *WinMedia, url str
 
 	lv := ui.GetCall()
 
-	click, rclick, inside, active, _ := ui._compIsClicked(style.enable)
+	click, rclick, inside, active, _ := lv.call.IsClicked(style.enable, ui)
 	if click > 0 && len(url) > 0 {
 		//SA_DialogStart() warning which open dialog ...
 		OsUlit_OpenBrowser(url)
@@ -860,7 +833,7 @@ func (ui *Ui) Comp_slider_s(style *UiComp, value *float64, minValue float64, max
 
 	old_value := *value
 
-	_, _, inside, active, end := ui._compIsClicked(style.enable)
+	_, _, inside, active, end := lv.call.IsClicked(style.enable, ui)
 
 	pl := ui.win.io.GetPalette()
 	cd, _ := pl.GetCd(style.cd, style.fade, style.enable, false, false)
@@ -997,9 +970,8 @@ func (ui *Ui) Comp_combo_s(style *UiComp, value string, options_names []string, 
 
 	nmd := "combo_" + strconv.Itoa(int(lv.call.GetHash()))
 
-	click, rclick, inside, active, _ := ui._compIsClicked(style.enable)
+	click, rclick, inside, active, _ := lv.call.IsClicked(style.enable, ui)
 	if style.enable {
-
 		if active || inside {
 			ui.Paint_cursor("hand")
 		}
@@ -1154,9 +1126,8 @@ func (ui *Ui) Comp_checkbox_s(style *UiComp, value float64, label string) float6
 
 	lv := ui.GetCall()
 
-	click, rclick, inside, active, _ := ui._compIsClicked(style.enable)
+	click, rclick, inside, active, _ := lv.call.IsClicked(style.enable, ui)
 	if style.enable {
-
 		if active || inside {
 			ui.Paint_cursor("hand")
 		}
@@ -1289,7 +1260,7 @@ func (ui *Ui) Comp_switch_s(style *UiComp, value bool, label string) bool {
 
 	lv := ui.GetCall()
 
-	click, rclick, inside, active, _ := ui._compIsClicked(style.enable)
+	click, rclick, inside, active, _ := lv.call.IsClicked(style.enable, ui)
 	if style.enable {
 		if active || inside {
 			ui.Paint_cursor("hand")
