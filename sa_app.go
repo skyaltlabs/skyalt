@@ -922,13 +922,13 @@ func (node *SANode) _exportCode(depth int) string {
 		params := ""
 		for _, attr := range nd.Attrs {
 			if !attr.IsOutput() {
-				params += fmt.Sprintf("%s:%s,", attr.Name, OsTrnString(attr.Value == "", `""`, attr.Value))
+				params += fmt.Sprintf("%s: %s,", attr.Name, OsTrnString(attr.Value == "", `""`, attr.Value))
 			}
 		}
-		params, _ = strings.CutSuffix(params, ",")
+		params, _ = strings.CutSuffix(params, ", ")
 
 		//line
-		str += fmt.Sprintf("%s%s=%s(%s)\n", tabs, nd.Name, nd.Exe, params)
+		str += fmt.Sprintf("%s%s = %s(%s)\n", tabs, nd.Name, nd.Exe, params)
 
 		//subs
 		if len(nd.Subs) > 0 {
