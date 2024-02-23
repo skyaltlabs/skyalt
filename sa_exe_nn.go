@@ -315,7 +315,6 @@ func SAExe_NN_llama_cpp_downloader(node *SANode) bool {
 }
 
 func SAExe_NN_llama_cpp(node *SANode) bool {
-
 	modelsFolder := "services/llama.cpp/models/"
 	labels := ";" //empty
 	modelFiles := OsFileListBuild(modelsFolder, "", true)
@@ -390,6 +389,58 @@ func SAExe_NN_llama_cpp(node *SANode) bool {
 		node.progress_desc = "Predicting"
 		node.progress = 0.5 //...
 		str, _, _, err := node.app.base.services.GetLLama().Complete(modelPath, &props)
+		if err != nil {
+			node.SetError(err)
+			return false
+		}
+		_outAttr.SetOutBlob([]byte(str))
+	}
+
+	return true
+}
+
+func SAExe_nn_g4f(node *SANode) bool {
+
+	modelList := "gpt-3.5-turbo;gpt-4;gpt-4-turbo"
+	modelAttr := node.GetAttrUi("model", "", SAAttrUi_COMBO(modelList, modelList))
+
+	promptAttr := node.GetAttr("prompt", "")
+
+	var props SAServiceG4FProps
+	{
+		props.Model = modelAttr.GetString()
+		props.Prompt = promptAttr.GetString()
+	}
+
+	_outAttr := node.GetAttr("_out", "")
+
+	if modelAttr.GetString() == "" {
+		modelAttr.SetErrorStr("empty")
+		return false
+	}
+
+	if promptAttr.GetString() == "" {
+		promptAttr.SetErrorStr("empty")
+		return false
+	}
+
+	propHash, err := props.Hash()
+	if err != nil {
+		modelAttr.SetError(err)
+		return false
+	}
+
+	//try find in cache
+	str, found := node.app.base.services.GetG4F().FindCache(propHash)
+	if found {
+		_outAttr.SetOutBlob([]byte(str))
+	} else {
+		//run
+		fmt.Println("Completing")
+
+		node.progress_desc = "Predicting"
+		node.progress = 0.5 //...
+		str, _, err := node.app.base.services.GetG4F().Complete(&props)
 		if err != nil {
 			node.SetError(err)
 			return false

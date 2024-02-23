@@ -232,6 +232,8 @@ func (node *SANode) drawHeader() bool {
 			ui.Dialog_open("attributes", 0)
 			inside = false
 		}
+
+		ui.Paint_tooltip(0, 0, 1, 1, "Type: "+node.Exe)
 	}
 	ui.Div_end()
 
@@ -249,13 +251,15 @@ func (node *SANode) drawHeader() bool {
 	y := 1
 	for _, attr := range node.Attrs {
 		if attr.IsVisible() {
-			ui.Comp_textSelect(0, y, 1, 1, attr.Name, OsV2{1, 1}, false, false) //center
+			div := ui.Comp_textSelect(0, y, 1, 1, attr.Name, OsV2{1, 1}, false, false) //center
+			ui.Paint_tooltipDiv(div, 0, 0, 1, 1, attr.Name+": "+attr.GetString())
 			y++
 		}
 	}
 	for _, attr := range node.Attrs {
 		if attr.IsOutput() {
-			ui.Comp_textSelect(0, y, 1, 1, attr.Name, OsV2{2, 1}, false, false) //right
+			div := ui.Comp_textSelect(0, y, 1, 1, attr.Name, OsV2{2, 1}, false, false) //right
+			ui.Paint_tooltipDiv(div, 0, 0, 1, 1, attr.Name+": "+attr.GetString())
 			y++
 		}
 	}
