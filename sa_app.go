@@ -454,10 +454,10 @@ func (app *SAApp) renderIDE(ui *Ui) {
 
 				if appDiv.IsTouchEnd(ui) {
 					app.canvas.addGrid = grid
-					app.canvas.addPos = OsV2f{}
+					app.canvas.addPos = OsV2f{float32(app.Cam_x), float32(app.Cam_y)}
 					app.canvas.addParent = NewSANodePath(app.root)
 					app.canvas.addnode_search = ""
-					ui.Dialog_open("nodes_list", 2)
+					ui.Dialog_open("nodes_list_ui", 2)
 				}
 			}
 		}
@@ -588,7 +588,8 @@ func SAApp_IsSearchedName(name string, search []string) bool {
 
 func (app *SAApp) drawCreateNode(ui *Ui) {
 
-	if ui.Dialog_start("nodes_list") {
+	only_ui_group := ui.Dialog_start("nodes_list_ui")
+	if only_ui_group || ui.Dialog_start("nodes_list") {
 		ui.Div_colMax(0, 5)
 
 		y := 0
@@ -600,6 +601,11 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 			keys := &ui.win.io.keys
 			searches := strings.Split(strings.ToLower(app.canvas.addnode_search), " ")
 			for _, gr := range app.base.node_groups.groups {
+
+				if only_ui_group && gr == app.base.node_groups.GetGroupUI() {
+					continue
+				}
+
 				for _, nd := range gr.nodes {
 					if app.canvas.addnode_search == "" || SAApp_IsSearchedName(nd.name, searches) {
 						if keys.enter || ui.Comp_buttonMenuIcon(0, y, 1, 1, nd.name, gr.icon, 0.2, "", true, false) > 0 {
@@ -616,33 +622,48 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 				}
 			}
 		} else {
-			for _, gr := range app.base.node_groups.groups {
-				//folders
-				dnm := "node_group_" + gr.name
-				if ui.Comp_buttonMenuIcon(0, y, 1, 1, gr.name, gr.icon, 0.2, "", true, false) > 0 {
-					ui.Dialog_open(dnm, 1)
+
+			if only_ui_group {
+				gr := app.base.node_groups.GetGroupUI()
+				for _, nd := range gr.nodes {
+					if ui.Comp_buttonMenuIcon(0, y, 1, 1, nd.name, gr.icon, 0.2, "", true, false) > 0 {
+						//add new node
+						nw := app.root.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name, nd.name)
+						nw.SelectOnlyThis()
+
+						ui.CloseAll()
+					}
+					y++
 				}
-				//ui.Comp_text(1, y, 1, 1, "►", 1)
 
-				if ui.Dialog_start(dnm) {
-					ui.Div_colMax(0, 5)
+			} else {
+				for _, gr := range app.base.node_groups.groups {
+					//folders
+					dnm := "node_group_" + gr.name
+					if ui.Comp_buttonMenuIcon(0, y, 1, 1, gr.name, gr.icon, 0.2, "", true, false) > 0 {
+						ui.Dialog_open(dnm, 1)
+					}
+					//ui.Comp_text(1, y, 1, 1, "►", 1)
 
-					for i, nd := range gr.nodes {
-						if ui.Comp_buttonMenuIcon(0, i, 1, 1, nd.name, gr.icon, 0.2, "", true, false) > 0 {
-							//add new node
-							nw := app.root.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name, nd.name)
-							nw.SelectOnlyThis()
+					if ui.Dialog_start(dnm) {
+						ui.Div_colMax(0, 5)
 
-							ui.CloseAll()
+						for i, nd := range gr.nodes {
+							if ui.Comp_buttonMenuIcon(0, i, 1, 1, nd.name, gr.icon, 0.2, "", true, false) > 0 {
+								//add new node
+								nw := app.root.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name, nd.name)
+								nw.SelectOnlyThis()
+
+								ui.CloseAll()
+							}
 						}
+
+						ui.Dialog_end()
 					}
 
-					ui.Dialog_end()
+					y++
 				}
-
-				y++
 			}
-
 		}
 
 		if ui.win.io.keys.tab {
