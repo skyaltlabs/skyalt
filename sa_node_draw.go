@@ -145,7 +145,7 @@ func (node *SANode) nodeToPixelsCoord(canvas OsV4) (OsV4, OsV4, OsV4) {
 
 	mid := node.nodeToPixels(node.Pos, canvas) //.parent, because it has Cam
 
-	w := 4
+	w := 6
 	h := 1 + node.NumVisibleAndCheck()
 
 	if SAGroups_HasNodeSub(node.Exe) {
@@ -215,9 +215,27 @@ func (node *SANode) drawHeader() bool {
 
 	inside := false
 
-	//name
-	ui.Comp_textSelect(0, 0, 1, 1, node.Name, OsV2{1, 1}, false, false)
+	ui.Div_start(0, 0, 1, 1)
+	{
+		ui.Div_colMax(1, 100)
 
+		//icon
+		pl := ui.win.io.GetPalette()
+		ui.Comp_image(0, 0, 1, 1, node.app.base.node_groups.FindNodeGroupIcon(node.Exe), pl.OnB, 0.3, 1, 1, false)
+
+		//name
+		ui.Comp_textSelect(1, 0, 1, 1, node.Name, OsV2{1, 1}, false, false)
+
+		//settings
+		if ui.Comp_buttonIcon(2, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/fullscreen_mode.png"), 0.3, "Show everything", CdPalette_B, true, false) > 0 {
+			node.SelectOnlyThis()
+			ui.Dialog_open("attributes", 0)
+			inside = false
+		}
+	}
+	ui.Div_end()
+
+	//inside & double-click
 	if ui.IsStackTop() {
 		inside = ui.GetCall().call.crop.Inside(ui.win.io.touch.pos)
 		if inside && ui.win.io.touch.end && ui.win.io.touch.numClicks >= 2 {
@@ -227,24 +245,17 @@ func (node *SANode) drawHeader() bool {
 		}
 	}
 
-	//open settings
-	if ui.Comp_buttonIcon(1, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/fullscreen_mode.png"), 0.3, "Show everything", CdPalette_B, true, false) > 0 {
-		node.SelectOnlyThis()
-		ui.Dialog_open("attributes", 0)
-		inside = false
-	}
-
 	//attributes
 	y := 1
 	for _, attr := range node.Attrs {
 		if attr.IsVisible() {
-			ui.Comp_textSelect(0, y, 1, 1, attr.Name, OsV2{0, 1}, false, false) //center
+			ui.Comp_textSelect(0, y, 1, 1, attr.Name, OsV2{1, 1}, false, false) //center
 			y++
 		}
 	}
 	for _, attr := range node.Attrs {
 		if attr.IsOutput() {
-			ui.Comp_textSelect(0, y, 2, 1, attr.Name, OsV2{2, 1}, false, false) //right
+			ui.Comp_textSelect(0, y, 1, 1, attr.Name, OsV2{2, 1}, false, false) //right
 			y++
 		}
 	}
