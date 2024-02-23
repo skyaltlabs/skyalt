@@ -166,10 +166,6 @@ func (grs *SAGroups) IsUI(node string) bool {
 	return grs.ui.Find(node) != nil
 }
 
-func (grs *SAGroups) GetGroupUI() *SAGroup {
-	return grs.groups[0]
-}
-
 func (grs *SAGroups) FindNode(node string) *SAGroupNode {
 	for _, gr := range grs.groups {
 		nd := gr.Find(node)

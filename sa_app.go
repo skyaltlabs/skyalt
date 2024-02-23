@@ -602,7 +602,7 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 			searches := strings.Split(strings.ToLower(app.canvas.addnode_search), " ")
 			for _, gr := range app.base.node_groups.groups {
 
-				if only_ui_group && gr == app.base.node_groups.GetGroupUI() {
+				if only_ui_group && gr == app.base.node_groups.ui {
 					continue
 				}
 
@@ -624,7 +624,7 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 		} else {
 
 			if only_ui_group {
-				gr := app.base.node_groups.GetGroupUI()
+				gr := app.base.node_groups.ui
 				for _, nd := range gr.nodes {
 					if ui.Comp_buttonMenuIcon(0, y, 1, 1, nd.name, gr.icon, 0.2, "", true, false) > 0 {
 						//add new node
