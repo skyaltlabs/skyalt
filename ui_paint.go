@@ -100,11 +100,10 @@ func (ui *Ui) Paint_tooltipDiv(div *UiLayoutDiv, x, y, w, h float64, text string
 	}
 
 	if div.enableInput {
-		coord := ui.getCoord(x, y, w, h, 0, 0, 0)
-
-		if coord.HasIntersect(div.crop) {
-			ui.tile.Set(ui.win.io.touch.pos, coord, false, text, ui.win.io.GetPalette().OnB)
-		}
+		//coord := ui.getCoord(x, y, w, h, 0, 0, 0)
+		//if coord.HasIntersect(div.crop) {
+		ui.tile.Set(ui.win.io.touch.pos, div.crop, false, text, ui.win.io.GetPalette().OnB)
+		//}
 	}
 	return true
 }
