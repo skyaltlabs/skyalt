@@ -186,8 +186,8 @@ func _reorder_layer(nodes_layer []*SANode, max_width int) []float32 {
 }
 
 func (gr *SAGraph) reorder(onlySelected bool) {
-	y_jump := float32(6)
-	x_jump := float32(6)
+	x_jump := float32(8)
+	y_jump := float32(4)
 
 	//list
 	nodes := gr.app.all_nodes
