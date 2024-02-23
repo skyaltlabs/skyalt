@@ -75,6 +75,8 @@ func (ui *Ui) _compDrawShape(coord OsV4, shape uint8, cd OsCd, margin float64, b
 		case 0:
 			ui.buff.AddRect(coord, cd, b)
 		case 1:
+			mn := OsMin(coord.Size.X, coord.Size.Y)
+			coord = InitOsV4Mid(coord.Middle(), OsV2{mn, mn})
 			ui.buff.AddCircle(coord, cd, b)
 		}
 	}
@@ -148,6 +150,23 @@ func (ui *Ui) Comp_button(x, y, w, h int, label string, tooltip string, enable b
 
 	style := ui._buttonBasicStyle(enable, tooltip)
 	click, rclick := ui.Comp_button_s(&style, label, nil, "", 1, false)
+
+	ui.Div_end()
+	if rclick > 0 {
+		return 2
+	} else if click > 0 {
+		return 1
+	}
+	return 0
+}
+
+func (ui *Ui) Comp_buttonCircle(x, y, w, h int, label string, tooltip string, cd uint8, drawBorder bool, enable bool) int {
+	ui.Div_start(x, y, w, h)
+
+	style := ui._buttonBasicStyle(enable, tooltip)
+	style.shape = 1
+	style.cd = cd
+	click, rclick := ui.Comp_button_s(&style, label, nil, "", 1, drawBorder)
 
 	ui.Div_end()
 	if rclick > 0 {
