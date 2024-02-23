@@ -17,9 +17,10 @@ limitations under the License.
 package main
 
 type SAServices struct {
-	service_whisper_cpp *SAServiceWhisperCpp
-	service_llama_cpp   *SAServiceLLamaCpp
-	service_python      *SAServicePython
+	whisper_cpp *SAServiceWhisperCpp
+	llama_cpp   *SAServiceLLamaCpp
+	g4f         *SAServiceG4F
+	python      *SAServicePython
 }
 
 func NewSAServices() *SAServices {
@@ -28,36 +29,46 @@ func NewSAServices() *SAServices {
 }
 
 func (srv *SAServices) Destroy() {
-	if srv.service_whisper_cpp != nil {
-		srv.service_whisper_cpp.Destroy()
+	if srv.whisper_cpp != nil {
+		srv.whisper_cpp.Destroy()
 	}
-	if srv.service_llama_cpp != nil {
-		srv.service_llama_cpp.Destroy()
+	if srv.llama_cpp != nil {
+		srv.llama_cpp.Destroy()
 	}
-	if srv.service_python != nil {
-		srv.service_python.Destroy()
+	if srv.g4f != nil {
+		srv.g4f.Destroy()
+	}
+	if srv.python != nil {
+		srv.python.Destroy()
 	}
 }
 
 func (srv *SAServices) GetWhisper() *SAServiceWhisperCpp {
-	if srv.service_whisper_cpp == nil {
-		srv.service_whisper_cpp = NewSAServiceWhisperCpp("http://127.0.0.1", "8090")
+	if srv.whisper_cpp == nil {
+		srv.whisper_cpp = NewSAServiceWhisperCpp("http://127.0.0.1", "8090")
 	}
-	return srv.service_whisper_cpp
+	return srv.whisper_cpp
 }
 
 func (srv *SAServices) GetLLama() *SAServiceLLamaCpp {
-	if srv.service_llama_cpp == nil {
-		srv.service_llama_cpp = NewSAServiceLLamaCpp("http://127.0.0.1", "8091")
+	if srv.llama_cpp == nil {
+		srv.llama_cpp = NewSAServiceLLamaCpp("http://127.0.0.1", "8091")
 	}
-	return srv.service_llama_cpp
+	return srv.llama_cpp
+}
+
+func (srv *SAServices) GetG4F() *SAServiceG4F {
+	if srv.g4f == nil {
+		srv.g4f = NewSAServiceG4F("http://127.0.0.1", "8093")
+	}
+	return srv.g4f
 }
 
 func (srv *SAServices) GetPython() *SAServicePython {
-	if srv.service_python == nil {
-		srv.service_python = NewSAServicePython("http://127.0.0.1", "8092")
+	if srv.python == nil {
+		srv.python = NewSAServicePython("http://127.0.0.1", "8092")
 	}
-	return srv.service_python
+	return srv.python
 }
 
 func (srv *SAServices) Render() {
@@ -69,13 +80,13 @@ func (srv *SAServices) Render() {
 }
 
 func (srv *SAServices) Tick() {
-	/*if srv.service_whisper_cpp != nil {
+	/*if srv.whisper_cpp != nil {
 		//...
 	}
-	if srv.service_llama_cpp != nil {
+	if srv.llama_cpp != nil {
 		//...
 	}
-	if srv.service_python != nil {
+	if srv.python != nil {
 		//...
 	}*/
 }
