@@ -342,10 +342,10 @@ func (gr *SAGraph) drawConnections() {
 		//attributtes connection
 		{
 			coordNode, selCoordNode, _ := node.nodeToPixelsCoord(lv.call.canvas)
-			if node.Selected {
-				coordNode.Start.X = selCoordNode.Start.X
-				coordNode.Size.X = selCoordNode.Size.X
-			}
+			//if node.Selected {
+			coordNode.Start.X = selCoordNode.Start.X
+			coordNode.Size.X = selCoordNode.Size.X
+			//}
 
 			for _, in := range node.Attrs {
 				for _, out := range in.depends {
@@ -355,10 +355,10 @@ func (gr *SAGraph) drawConnections() {
 					}
 
 					coordOut, selCoordOut, _ := out.node.nodeToPixelsCoord(lv.call.canvas)
-					if out.node.Selected {
-						coordOut.Start.X = selCoordOut.Start.X
-						coordOut.Size.X = selCoordOut.Size.X
-					}
+					//if out.node.Selected {
+					coordOut.Start.X = selCoordOut.Start.X
+					coordOut.Size.X = selCoordOut.Size.X
+					//}
 
 					var outPos OsV2
 					outPos.X = coordOut.End().X

@@ -172,7 +172,7 @@ func (node *SANode) nodeToPixelsCoord(canvas OsV4) (OsV4, OsV4, OsV4) {
 		cq_sel = cq //same
 	}
 
-	return cq, cq.AddSpace(int(-0.15 * float64(cellr))), cq_sel
+	return cq, cq.AddSpace(int(-0.25 * float64(cellr))), cq_sel
 }
 
 func (node *SANode) FindInsideParent(touchPos OsV2, canvas OsV4) *SANode {
@@ -211,11 +211,15 @@ func (node *SANode) drawHeader() bool {
 	ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
 	ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
 
-	ui.Div_colMax(0, 100)
+	//ui.Div_colMax(0, 100)
+	ui.Div_col(0, 0.5)
+	ui.Div_colMax(1, 100)
+	ui.Div_col(2, 0.5)
+	//ui.Div_rowMax(0, 100)
 
 	inside := false
 
-	ui.Div_start(0, 0, 1, 1)
+	ui.Div_start(1, 0, 1, 1)
 	{
 		ui.Div_colMax(1, 100)
 
@@ -248,18 +252,30 @@ func (node *SANode) drawHeader() bool {
 	}
 
 	//attributes
+	circleCd := CdPalette_S
+	if node.app.base.node_groups.IsUI(node.Exe) {
+		circleCd = CdPalette_P
+	}
+
 	y := 1
 	for _, attr := range node.Attrs {
 		if attr.IsVisible() {
-			div := ui.Comp_textSelect(0, y, 1, 1, attr.Name, OsV2{1, 1}, false, false) //center
+			div := ui.Comp_textSelect(1, y, 1, 1, attr.Name, OsV2{1, 1}, false, false) //center
 			ui.Paint_tooltipDiv(div, 0, 0, 1, 1, attr.Name+": "+attr.GetString())
+
+			ui.Comp_buttonCircle(0, y, 1, 1, "", "", circleCd, true, true)
+			ui.Comp_buttonCircle(2, y, 1, 1, "", "", circleCd, true, true)
+
 			y++
 		}
 	}
 	for _, attr := range node.Attrs {
 		if attr.IsOutput() {
-			div := ui.Comp_textSelect(0, y, 1, 1, attr.Name, OsV2{2, 1}, false, false) //right
+			div := ui.Comp_textSelect(1, y, 1, 1, attr.Name, OsV2{2, 1}, false, false) //right
 			ui.Paint_tooltipDiv(div, 0, 0, 1, 1, attr.Name+": "+attr.GetString())
+
+			ui.Comp_buttonCircle(2, y, 1, 1, "", "", circleCd, true, true)
+
 			y++
 		}
 	}
@@ -277,7 +293,7 @@ func (node *SANode) drawRectNode(someNodeIsDraged bool, app *SAApp) bool {
 	bck := ui.win.io.ini.Dpi
 	ui.win.io.ini.Dpi = int(float32(ui.win.io.ini.Dpi) * float32(node.app.Cam_z))
 
-	// shadow
+	//shadow
 	node.drawShadow(coord, roundc)
 
 	//background
@@ -292,7 +308,7 @@ func (node *SANode) drawRectNode(someNodeIsDraged bool, app *SAApp) bool {
 	ui.buff.AddRectRound(coord, ui.CellWidth(roundc), backkCd, ui.CellWidth((0.03)))
 
 	//header
-	ui.Div_startCoord(0, 0, 1, 1, headerCoord, node.Name)
+	ui.Div_startCoord(0, 0, 1, 1, headerCoord.AddSpaceX(-ui.CellWidth(0.25)), node.Name)
 	inside := node.drawHeader()
 	ui.Div_end()
 
@@ -338,7 +354,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool) bool {
 		ui.buff.AddRectRound(coord, ui.CellWidth(roundc), backCd, 0)
 	}
 
-	ui.Div_startCoord(0, 0, 1, 1, coord, node.Name)
+	ui.Div_startCoord(0, 0, 1, 1, coord.AddSpaceX(-ui.CellWidth(0.25)), node.Name)
 	inside := node.drawHeader()
 	ui.Div_end()
 
