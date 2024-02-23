@@ -11,27 +11,40 @@
 "Value": "[0, 0, 0, 0]",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": true,
+"Visible": false
 }
 }
 ],
 "Cols": [
 {
 "Pos": 0,
+"Min": 0.1,
+"Max": 100,
+"Resize": 1
+},
+{
+"Pos": 1,
 "Min": 1,
 "Max": 1,
 "Resize": 1
 },
 {
-"Pos": 1,
+"Pos": 2,
 "Min": 5,
 "Max": 20,
 "Resize": 1
 },
 {
-"Pos": 2,
+"Pos": 3,
 "Min": 2,
 "Max": 2,
+"Resize": 1
+},
+{
+"Pos": 4,
+"Min": 0.1,
+"Max": 100,
 "Resize": 1
 }
 ],
@@ -52,8 +65,8 @@
 "Subs": [
 {
 "Pos": {
-"X": 7.5884037,
-"Y": -2.0218773
+"X": 11.979129,
+"Y": -9.306692
 },
 "Name": "build_prompt",
 "Exe": "vars",
@@ -63,7 +76,8 @@
 "Value": "\"This is a conversation between User and Llama, a friendly chatbot. Llama is helpful, kind, honest, good at writing, and never fails to answer any requests immediately and with precision.\"",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -71,16 +85,25 @@
 "Value": "intro \u0026 \"\\n\"  \u0026 json_into_single_string._chat \u0026 \"\\nUser: \" \u0026 editbox.value \u0026\"\\nLlama:\"",
 "ShowExp": false,
 "Ui": {
-"Fn": "Code",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
+}
+},
+{
+"Name": "grid",
+"Value": "[1, 0, 1, 1]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false,
+"Visible": false
 }
 }
 ]
 },
 {
 "Pos": {
-"X": 1.5605053,
-"Y": 7.571471
+"X": 36.773533,
+"Y": -16.228455
 },
 "Name": "reset_editbox",
 "Exe": "setter",
@@ -91,7 +114,8 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -99,7 +123,8 @@
 "Value": "\"\"",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -107,7 +132,8 @@
 "Value": "\"editbox\"",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -115,15 +141,16 @@
 "Value": "\"value\"",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 }
 ]
 },
 {
 "Pos": {
-"X": -1.9717629,
-"Y": 3.501769
+"X": 15.821488,
+"Y": -10.070763
 },
 "Name": "if",
 "Exe": "if",
@@ -134,15 +161,25 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
+}
+},
+{
+"Name": "grid",
+"Value": "[1, 0, 1, 1]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false,
+"Visible": false
 }
 }
 ],
 "Subs": [
 {
 "Pos": {
-"X": -1.9225148,
-"Y": 4.365288
+"X": 28.558855,
+"Y": -8.926152
 },
 "Name": "db_insert",
 "Exe": "sqlite_insert",
@@ -153,7 +190,8 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "file",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -161,42 +199,25 @@
 "Value": "\"chat\"",
 "ShowExp": false,
 "Ui": {
-"Fn": "combo",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
 "Name": "values",
 "Value": "[{\"value\":editbox.value, \"column\":\"user\", }, {\"value\":time(), \"column\":\"date\", }, {\"value\": if(nn_llama_cpp._out!=\"\", cleanText(get(nn_llama_cpp._out, \"content\")), \"\") , \"column\":\"bot\", }]",
-"ShowExp": true,
-"Ui": {
-"Fn": "map",
-"Map": {
-"column": {
-"Fn": "combo",
-"HideAddDel": false
-},
-"value": {
-"HideAddDel": false
-}
-},
-"HideAddDel": true
-}
-},
-{
-"Name": "_query",
-"Value": "\"\"",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 }
 ]
 },
 {
 "Pos": {
-"X": 0.47692204,
-"Y": 0.97462326
+"X": 20.456673,
+"Y": -12.668569
 },
 "Name": "nn_llama_cpp",
 "Exe": "nn_llama_cpp",
@@ -211,16 +232,18 @@
 "labels": ";llama-2-7b.Q5_K_M.gguf",
 "values": ";llama-2-7b.Q5_K_M.gguf"
 },
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
 "Name": "prompt",
 "Value": "build_prompt.prompt",
-"ShowExp": true,
+"ShowExp": false,
 "Ui": {
 "Fn": "Code",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -228,7 +251,8 @@
 "Value": "[\"\u003c/s\u003e\", \"Llama:\", \"User:\"]",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -236,7 +260,8 @@
 "Value": "-1",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -244,7 +269,8 @@
 "Value": "400",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -252,7 +278,8 @@
 "Value": "0.8",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -260,7 +287,8 @@
 "Value": "0",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -268,7 +296,8 @@
 "Value": "1",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -276,7 +305,8 @@
 "Value": "256",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -284,7 +314,8 @@
 "Value": "1.18",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -292,7 +323,8 @@
 "Value": "40",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -300,7 +332,8 @@
 "Value": "0.5",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -308,7 +341,8 @@
 "Value": "0.05",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -316,7 +350,8 @@
 "Value": "1",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -324,7 +359,8 @@
 "Value": "1",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -332,7 +368,8 @@
 "Value": "0",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -340,7 +377,8 @@
 "Value": "0",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -348,7 +386,8 @@
 "Value": "0",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -356,7 +395,8 @@
 "Value": "5",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -364,7 +404,8 @@
 "Value": "0.1",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -372,7 +413,8 @@
 "Value": "0",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -381,7 +423,8 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -389,15 +432,16 @@
 "Value": "-1",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
 "Name": "_out",
-"Value": "\"\"",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 }
 ]
@@ -406,27 +450,19 @@
 },
 {
 "Pos": {
-"X": -0.011428356,
-"Y": -6.8745685
+"X": 10.326139,
+"Y": -17.947025
 },
 "Name": "button_send",
 "Exe": "button",
 "Attrs": [
 {
 "Name": "grid",
-"Value": "[2, 1, 1, 1]",
+"Value": "[3, 1, 1, 1]",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "grid_show",
-"Value": "1",
-"ShowExp": false,
-"Ui": {
-"Fn": "switch",
-"HideAddDel": false
+"HideAddDel": true,
+"Visible": false
 }
 },
 {
@@ -435,7 +471,8 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -444,7 +481,12 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "combo",
-"HideAddDel": false
+"Prms": {
+"labels": "Classic;Light;Menu",
+"values": ""
+},
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -452,7 +494,8 @@
 "Value": "\"Send\"",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -461,34 +504,47 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
+}
+},
+{
+"Name": "grid_show",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false,
+"Visible": false
 }
 }
 ]
 },
 {
 "Pos": {
-"X": -1.7839718,
-"Y": -10.918579
+"X": 6.0713053,
+"Y": -22.008133
 },
 "Name": "set_editbox",
 "Exe": "setter",
 "Attrs": [
 {
 "Name": "trigger",
-"Value": "nn_whisper_cpp._done",
-"ShowExp": false,
+"Value": "microphone.finished",
+"ShowExp": true,
 "Ui": {
 "Fn": "switch",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
 "Name": "value",
-"Value": "nn_whisper_cpp._text",
-"ShowExp": false,
+"Value": "get(nn_whisper_cpp._out, \"text\")",
+"ShowExp": true,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -496,7 +552,8 @@
 "Value": "\"editbox\"",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -504,15 +561,16 @@
 "Value": "\"value\"",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 }
 ]
 },
 {
 "Pos": {
-"X": 10.900553,
-"Y": -4.7005777
+"X": 4.7031846,
+"Y": -6.73128
 },
 "Name": "json_into_single_string",
 "Exe": "code_python",
@@ -523,7 +581,8 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "Code",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -531,32 +590,44 @@
 "Value": "db_select._rows",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
+}
+},
+{
+"Name": "grid",
+"Value": "[1, 0, 1, 1]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
 "Name": "_chat",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 }
 ]
 },
 {
 "Pos": {
-"X": 13.5005,
-"Y": -2.0410404
+"X": 11.861131,
+"Y": -4.0857973
 },
 "Name": "chat_history",
 "Exe": "text",
 "Attrs": [
 {
 "Name": "grid",
-"Value": "[0, 0, 3, 1]",
+"Value": "[1, 0, 3, 1]",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": true,
+"Visible": false
 }
 },
 {
@@ -564,43 +635,8 @@
 "Value": "json_into_single_string._chat",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "selection",
-"Value": "1",
-"ShowExp": false,
-"Ui": {
-"Fn": "switch",
-"HideAddDel": false
-}
-},
-{
-"Name": "multi_line",
-"Value": "1",
-"ShowExp": false,
-"Ui": {
-"Fn": "switch",
-"HideAddDel": false
-}
-},
-{
-"Name": "grid_show",
-"Value": "1",
-"ShowExp": false,
-"Ui": {
-"Fn": "switch",
-"HideAddDel": false
-}
-},
-{
-"Name": "draw_border",
-"Value": "1",
-"ShowExp": false,
-"Ui": {
-"Fn": "switch",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -609,7 +645,12 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "combo",
-"HideAddDel": false
+"Prms": {
+"labels": "Left;Center;Right",
+"values": ""
+},
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -618,25 +659,42 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "combo",
-"HideAddDel": false
+"Prms": {
+"labels": "Top;Center;Bottom",
+"values": ""
+},
+"HideAddDel": false,
+"Visible": false
 }
-}
-]
 },
 {
-"Pos": {
-"X": -1.8117747,
-"Y": -15.631628
-},
-"Name": "microphone",
-"Exe": "microphone",
-"Attrs": [
-{
-"Name": "grid",
-"Value": "[0, 1, 1, 1]",
+"Name": "selection",
+"Value": "1",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"Fn": "switch",
+"HideAddDel": false,
+"Visible": false
+}
+},
+{
+"Name": "multi_line",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false,
+"Visible": false
+}
+},
+{
+"Name": "draw_border",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -645,7 +703,27 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
+}
+}
+]
+},
+{
+"Pos": {
+"X": -8.5998335,
+"Y": -21.931551
+},
+"Name": "microphone",
+"Exe": "microphone",
+"Attrs": [
+{
+"Name": "grid",
+"Value": "[1, 1, 1, 1]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": true,
+"Visible": false
 }
 },
 {
@@ -654,32 +732,8 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
-"HideAddDel": false
-}
-},
-{
-"Name": "path",
-"Value": "\"mic.wav\"",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "active",
-"Value": "0",
-"ShowExp": false,
-"Ui": {
-"Fn": "switch",
-"HideAddDel": false
-}
-},
-{
-"Name": "_out",
-"Value": "\"\"",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -687,7 +741,17 @@
 "Value": "\"temp_mic.wav\"",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
+}
+},
+{
+"Name": "_out",
+"Value": "\"\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -696,15 +760,26 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
+}
+},
+{
+"Name": "grid_show",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false,
+"Visible": false
 }
 }
 ]
 },
 {
 "Pos": {
-"X": 10.84749,
-"Y": -7.2656975
+"X": -2.7836819,
+"Y": -6.792572
 },
 "Name": "db_select",
 "Exe": "sqlite_select",
@@ -715,7 +790,8 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "file",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -723,51 +799,52 @@
 "Value": "\"SELECT user, bot FROM chat ORDER by date\"",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
 "Name": "_rows",
-"Value": "\"\"",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
 "Name": "_columns",
-"Value": "\"\"",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
+}
+},
+{
+"Name": "grid",
+"Value": "[1, 0, 1, 1]",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false,
+"Visible": false
 }
 }
 ]
 },
 {
 "Pos": {
-"X": 8.395125,
-"Y": -10.9470625
+"X": -2.9953098,
+"Y": -11.656739
 },
 "Name": "editbox",
 "Exe": "editbox",
-"Selected": true,
 "Attrs": [
 {
 "Name": "grid",
-"Value": "[1, 1, 1, 1]",
+"Value": "[2, 1, 1, 1]",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": true
-}
-},
-{
-"Name": "grid_show",
-"Value": "1",
-"ShowExp": false,
-"Ui": {
-"Fn": "switch",
-"HideAddDel": false
+"HideAddDel": true,
+"Visible": false
 }
 },
 {
@@ -775,50 +852,8 @@
 "Value": "\"\"",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "enable",
-"Value": "1",
-"ShowExp": false,
-"Ui": {
-"Fn": "switch",
-"HideAddDel": false
-}
-},
-{
-"Name": "tempToValue",
-"Value": "0",
-"ShowExp": false,
-"Ui": {
-"Fn": "switch",
-"HideAddDel": false
-}
-},
-{
-"Name": "precision",
-"Value": "2",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "ghost",
-"Value": "\"Message\"",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "multi_line",
-"Value": "1",
-"ShowExp": false,
-"Ui": {
-"Fn": "switch",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -827,7 +862,12 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "combo",
-"HideAddDel": false
+"Prms": {
+"labels": "Left;Center;Right",
+"values": ""
+},
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -836,16 +876,60 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "combo",
-"HideAddDel": false
+"Prms": {
+"labels": "Top;Center;Bottom",
+"values": ""
+},
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
-"Name": "finished",
+"Name": "enable",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false,
+"Visible": false
+}
+},
+{
+"Name": "tempToValue",
 "Value": "0",
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
+}
+},
+{
+"Name": "precision",
+"Value": "2",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false,
+"Visible": false
+}
+},
+{
+"Name": "ghost",
+"Value": "\"Message\"",
+"ShowExp": false,
+"Ui": {
+"HideAddDel": false,
+"Visible": false
+}
+},
+{
+"Name": "multi_line",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -854,7 +938,18 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
+}
+},
+{
+"Name": "finished",
+"Value": "0",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -863,7 +958,8 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -872,15 +968,26 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
+}
+},
+{
+"Name": "grid_show",
+"Value": "1",
+"ShowExp": false,
+"Ui": {
+"Fn": "switch",
+"HideAddDel": false,
+"Visible": false
 }
 }
 ]
 },
 {
 "Pos": {
-"X": -1.82402,
-"Y": -13.259906
+"X": -1.2282504,
+"Y": -19.165276
 },
 "Name": "nn_whisper_cpp",
 "Exe": "nn_whisper_cpp",
@@ -895,29 +1002,17 @@
 "labels": ";ggml-tiny.en",
 "values": ";ggml-tiny.en"
 },
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
-"Name": "audio",
+"Name": "input",
 "Value": "microphone._out",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "_text",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "_done",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -925,7 +1020,8 @@
 "Value": "0",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -933,7 +1029,8 @@
 "Value": "0",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -941,7 +1038,8 @@
 "Value": "0",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -949,7 +1047,8 @@
 "Value": "-1",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -957,7 +1056,8 @@
 "Value": "0",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -965,7 +1065,8 @@
 "Value": "2",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -973,7 +1074,8 @@
 "Value": "-1",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -981,7 +1083,8 @@
 "Value": "0.01",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -989,7 +1092,8 @@
 "Value": "2.4",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -997,7 +1101,8 @@
 "Value": "-1",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -1006,7 +1111,8 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -1015,7 +1121,8 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -1024,7 +1131,8 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -1033,7 +1141,8 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -1042,7 +1151,8 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -1050,7 +1160,8 @@
 "Value": "\"\"",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -1059,7 +1170,8 @@
 "ShowExp": false,
 "Ui": {
 "Fn": "switch",
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -1067,7 +1179,8 @@
 "Value": "0",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -1075,7 +1188,8 @@
 "Value": "0.2",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
@@ -1088,23 +1202,16 @@
 "labels": "verbose_json;json;text;srt;vtt",
 "values": "verbose_json;json;text;srt;vtt"
 },
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 },
 {
 "Name": "_out",
-"Value": "\"\"",
 "ShowExp": false,
 "Ui": {
-"HideAddDel": false
-}
-},
-{
-"Name": "input",
-"Value": "\"\"",
-"ShowExp": false,
-"Ui": {
-"HideAddDel": false
+"HideAddDel": false,
+"Visible": false
 }
 }
 ]
