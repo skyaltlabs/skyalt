@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"strings"
 )
@@ -31,6 +32,9 @@ type SAGraph struct {
 	touch_start        OsV2
 	node_move_selected SANodePath
 
+	connect_in  *SANodeAttr
+	connect_out *SANodeAttr
+
 	showNodeList          bool
 	showNodeList_justOpen bool
 	node_search           string
@@ -42,8 +46,24 @@ func NewSAGraph(app *SAApp) *SAGraph {
 	return &gr
 }
 
-func (gr *SAGraph) drawCreateNode(ui *Ui) {
+func (gr *SAGraph) tryConnect() {
+	if gr.connect_out != nil && gr.connect_in != nil {
+		gr.connect_in.setValue(fmt.Sprintf("%s.%s", gr.connect_out.node.Name, gr.connect_out.Name))
+		gr.connect_out = nil
+		gr.connect_in = nil
+	}
+}
 
+func (gr *SAGraph) SetConnectIn(attr *SANodeAttr) {
+	gr.connect_in = attr
+	gr.tryConnect()
+}
+func (gr *SAGraph) SetConnectOut(attr *SANodeAttr) {
+	gr.connect_out = attr
+	gr.tryConnect()
+}
+
+func (gr *SAGraph) drawCreateNode(ui *Ui) {
 	lvBaseDiv := ui.GetCall().call
 
 	if !ui.edit.IsActive() {

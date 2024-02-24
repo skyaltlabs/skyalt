@@ -257,14 +257,29 @@ func (node *SANode) drawHeader() bool {
 		circleCd = CdPalette_P
 	}
 
+	connIn := node.app.graph.connect_in
+	connOut := node.app.graph.connect_out
+
+	{
+		bIn := ui.Comp_buttonCircle(0, 0, 1, 1, "", "", circleCd, circleCd, connIn == nil) > 0
+		bOut := ui.Comp_buttonCircle(2, 0, 1, 1, "", "", circleCd, circleCd, connOut == nil) > 0
+		if bIn || bOut {
+			//dialog ...
+		}
+	}
+
 	y := 1
 	for _, attr := range node.Attrs {
 		if attr.IsVisible() {
 			div := ui.Comp_textSelect(1, y, 1, 1, attr.Name, OsV2{1, 1}, false, false) //center
 			ui.Paint_tooltipDiv(div, 0, 0, 1, 1, attr.Name+": "+attr.GetString())
 
-			ui.Comp_buttonCircle(0, y, 1, 1, "", "", circleCd, true, true)
-			ui.Comp_buttonCircle(2, y, 1, 1, "", "", circleCd, true, true)
+			if ui.Comp_buttonCircle(0, y, 1, 1, "", "", CdPalette_B, circleCd, connIn == nil) > 0 {
+				node.app.graph.SetConnectIn(attr)
+			}
+			if ui.Comp_buttonCircle(2, y, 1, 1, "", "", CdPalette_B, circleCd, connOut == nil) > 0 {
+				node.app.graph.SetConnectOut(attr)
+			}
 
 			y++
 		}
@@ -274,7 +289,9 @@ func (node *SANode) drawHeader() bool {
 			div := ui.Comp_textSelect(1, y, 1, 1, attr.Name, OsV2{2, 1}, false, false) //right
 			ui.Paint_tooltipDiv(div, 0, 0, 1, 1, attr.Name+": "+attr.GetString())
 
-			ui.Comp_buttonCircle(2, y, 1, 1, "", "", circleCd, true, true)
+			if ui.Comp_buttonCircle(2, y, 1, 1, "", "", CdPalette_B, circleCd, connOut == nil) > 0 {
+				node.app.graph.SetConnectOut(attr)
+			}
 
 			y++
 		}
