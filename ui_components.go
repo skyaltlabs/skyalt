@@ -25,7 +25,8 @@ import (
 type UiComp struct {
 	enable          bool
 	shape           uint8 //0=rect, 1=sphere
-	cd              uint8
+	cd              uint8 //back
+	cd_border       uint8
 	fade            bool
 	label_align     OsV2
 	label_formating bool
@@ -138,6 +139,7 @@ func (ui *Ui) _buttonBasicStyle(enable bool, tooltip string) UiComp {
 	style.tooltip = tooltip
 	style.enable = enable
 	style.cd = CdPalette_P
+	style.cd_border = CdPalette_P
 	style.label_align = OsV2{1, 1}
 	style.image_alignH = 0
 	style.image_alignV = 1
@@ -160,13 +162,14 @@ func (ui *Ui) Comp_button(x, y, w, h int, label string, tooltip string, enable b
 	return 0
 }
 
-func (ui *Ui) Comp_buttonCircle(x, y, w, h int, label string, tooltip string, cd uint8, drawBorder bool, enable bool) int {
+func (ui *Ui) Comp_buttonCircle(x, y, w, h int, label string, tooltip string, cd_back uint8, cd_border uint8, enable bool) int {
 	ui.Div_start(x, y, w, h)
 
 	style := ui._buttonBasicStyle(enable, tooltip)
 	style.shape = 1
-	style.cd = cd
-	click, rclick := ui.Comp_button_s(&style, label, nil, "", 1, drawBorder)
+	style.cd = cd_back
+	style.cd_border = cd_border
+	click, rclick := ui.Comp_button_s(&style, label, nil, "", 2, true)
 
 	ui.Div_end()
 	if rclick > 0 {
@@ -183,6 +186,7 @@ func (ui *Ui) Comp_buttonError(x, y, w, h int, label string, tooltip string, isE
 	style := ui._buttonBasicStyle(enable, tooltip)
 	if isError {
 		style.cd = CdPalette_E
+		style.cd_border = CdPalette_E
 	}
 	click, rclick := ui.Comp_button_s(&style, label, nil, "", 1, false)
 
@@ -315,6 +319,7 @@ func (ui *Ui) Comp_buttonMenuIcon(x, y, w, h int, label string, icon WinMedia, i
 	style.image_margin = iconMargin
 	if !selected {
 		style.cd = CdPalette_B
+		style.cd_border = CdPalette_B
 	}
 
 	click, rclick := ui.Comp_button_s(&style, label, &icon, "", OsTrnFloat(selected, 1, 0), false)
@@ -335,6 +340,7 @@ func (ui *Ui) Comp_buttonMenu(x, y, w, h int, label string, tooltip string, enab
 	style.label_align = OsV2{0, 1}
 	if !selected {
 		style.cd = CdPalette_B
+		style.cd_border = CdPalette_B
 	}
 
 	click, rclick := ui.Comp_button_s(&style, label, nil, "", OsTrnFloat(selected, 1, 0), false)
@@ -360,6 +366,7 @@ func (ui *Ui) Comp_button_s(style *UiComp, label string, icon *WinMedia, url str
 
 	pl := ui.win.io.GetPalette()
 	cd, onCd := pl.GetCd(style.cd, style.fade, style.enable, inside, active)
+	cdBorder, _ := pl.GetCd(style.cd_border, style.fade, style.enable, inside, active)
 
 	coord := lv.call.canvas
 
@@ -396,7 +403,7 @@ func (ui *Ui) Comp_button_s(style *UiComp, label string, icon *WinMedia, url str
 	}
 
 	if drawBorder {
-		ui._compDrawShape(coord, style.shape, cd, 0, 0.03)
+		ui._compDrawShape(coord, style.shape, cdBorder, 0, 0.03)
 	}
 
 	if icon != nil && label != "" {
