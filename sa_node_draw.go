@@ -18,9 +18,16 @@ package main
 
 import "fmt"
 
-func Node_connectionCd(ui *Ui) OsCd {
+func Node_connectionCd(active bool, ui *Ui) OsCd {
 	pl := ui.win.io.GetPalette()
-	return pl.GetGrey(0.2)
+
+	cd := pl.GetGrey(0.2)
+
+	if active {
+		cd = SAApp_getYellow()
+	}
+
+	return cd
 }
 
 func (node *SANode) KeyProgessSelection(keys *WinKeys) bool {
@@ -51,6 +58,10 @@ func (attr *SANodeAttr) IsVisible() bool {
 	}
 
 	if attr.isRead {
+		return true
+	}
+
+	if attr == attr.node.app.graph.connect_in || attr == attr.node.app.graph.connect_out {
 		return true
 	}
 
@@ -260,11 +271,13 @@ func (node *SANode) drawHeader() bool {
 	connIn := node.app.graph.connect_in
 	connOut := node.app.graph.connect_out
 
+	//make connection - dialog attr list
 	{
-		bIn := ui.Comp_buttonCircle(0, 0, 1, 1, "", "", circleCd, circleCd, connIn == nil) > 0
-		bOut := ui.Comp_buttonCircle(2, 0, 1, 1, "", "", circleCd, circleCd, connOut == nil) > 0
-		if bIn || bOut {
-			//dialog ...
+		if ui.Comp_buttonCircle(0, 0, 1, 1, "", "", circleCd, circleCd, connIn == nil) > 0 {
+			ui.Dialog_open("ins", 1)
+		}
+		if ui.Comp_buttonCircle(2, 0, 1, 1, "", "", circleCd, circleCd, connOut == nil) > 0 {
+			ui.Dialog_open("outs", 1)
 		}
 	}
 
@@ -274,6 +287,7 @@ func (node *SANode) drawHeader() bool {
 			div := ui.Comp_textSelect(1, y, 1, 1, attr.Name, OsV2{1, 1}, false, false) //center
 			ui.Paint_tooltipDiv(div, 0, 0, 1, 1, attr.Name+": "+attr.GetString())
 
+			//make connection
 			if ui.Comp_buttonCircle(0, y, 1, 1, "", "", CdPalette_B, circleCd, connIn == nil) > 0 {
 				node.app.graph.SetConnectIn(attr)
 			}
@@ -289,6 +303,7 @@ func (node *SANode) drawHeader() bool {
 			div := ui.Comp_textSelect(1, y, 1, 1, attr.Name, OsV2{2, 1}, false, false) //right
 			ui.Paint_tooltipDiv(div, 0, 0, 1, 1, attr.Name+": "+attr.GetString())
 
+			//make connection
 			if ui.Comp_buttonCircle(2, y, 1, 1, "", "", CdPalette_B, circleCd, connOut == nil) > 0 {
 				node.app.graph.SetConnectOut(attr)
 			}

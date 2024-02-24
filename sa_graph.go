@@ -78,11 +78,8 @@ func (gr *SAGraph) drawCreateNode(ui *Ui) {
 	}
 }
 
-func _SAGraph_drawConnectionV(start OsV2, end OsV2, active bool, cellr float32, ui *Ui, dash float32) {
-	cd := Node_connectionCd(ui)
-	if active {
-		cd = SAApp_getYellow()
-	}
+func _SAGraph_drawConnectionV(start OsV2, end OsV2, cellr float32, ui *Ui, dash float32, cd OsCd) {
+
 	t := cellr * 0.3
 	end.Y -= int(t) //connect to top of arrow
 	mid := start.Aprox(end, 0.5)
@@ -116,11 +113,7 @@ func _SAGraph_drawConnectionV(start OsV2, end OsV2, active bool, cellr float32, 
 	ui.buff.AddPoly(end.Add(OsV2{int(-t / 2), 0}), []OsV2f{{0, 0}, {-t / 2, -t}, {t / 2, -t}}, cd, 0)
 }
 
-func _SAGraph_drawConnectionH(start OsV2, end OsV2, active bool, cellr float32, ui *Ui, dash float32) {
-	cd := Node_connectionCd(ui)
-	if active {
-		cd = SAApp_getYellow()
-	}
+func _SAGraph_drawConnectionH(start OsV2, end OsV2, cellr float32, ui *Ui, dash float32, cd OsCd) {
 	t := cellr * 0.3
 	end.X -= int(t) //connect to left of arrow
 	mid := start.Aprox(end, 0.5)
@@ -351,6 +344,36 @@ func (gr *SAGraph) autoZoom(onlySelected bool, canvas OsV4) {
 	}
 }
 
+func (attr *SANodeAttr) getConnectionPosOut(canvas OsV4) OsV2 {
+	ui := attr.node.app.base.ui
+	cellr := attr.node.app.root.cellZoom(ui)
+
+	coord, selCoord, _ := attr.node.nodeToPixelsCoord(canvas)
+	coord.Start.X = selCoord.Start.X //only x
+	coord.Size.X = selCoord.Size.X   //only x
+
+	var pos OsV2
+	pos.X = coord.End().X
+	pos.Y += coord.Start.Y + int(cellr*(float32(attr.node.VisiblePos(attr))+0.5))
+
+	return pos
+}
+
+func (attr *SANodeAttr) getConnectionPosIn(canvas OsV4) OsV2 {
+	ui := attr.node.app.base.ui
+	cellr := attr.node.app.root.cellZoom(ui)
+
+	coord, selCoord, _ := attr.node.nodeToPixelsCoord(canvas)
+	coord.Start.X = selCoord.Start.X //only x
+	coord.Size.X = selCoord.Size.X   //only x
+
+	var pos OsV2
+	pos.X = coord.Start.X
+	pos.Y += coord.Start.Y + int(cellr*(float32(attr.node.VisiblePos(attr))+0.5))
+
+	return pos
+}
+
 func (gr *SAGraph) drawConnections() {
 
 	ui := gr.app.base.ui
@@ -361,12 +384,6 @@ func (gr *SAGraph) drawConnections() {
 
 		//attributtes connection
 		{
-			coordNode, selCoordNode, _ := node.nodeToPixelsCoord(lv.call.canvas)
-			//if node.Selected {
-			coordNode.Start.X = selCoordNode.Start.X
-			coordNode.Size.X = selCoordNode.Size.X
-			//}
-
 			for _, in := range node.Attrs {
 				for _, out := range in.depends {
 
@@ -374,21 +391,10 @@ func (gr *SAGraph) drawConnections() {
 						continue
 					}
 
-					coordOut, selCoordOut, _ := out.node.nodeToPixelsCoord(lv.call.canvas)
-					//if out.node.Selected {
-					coordOut.Start.X = selCoordOut.Start.X
-					coordOut.Size.X = selCoordOut.Size.X
-					//}
+					outPos := out.getConnectionPosOut(lv.call.canvas)
+					inPos := in.getConnectionPosIn(lv.call.canvas)
 
-					var outPos OsV2
-					outPos.X = coordOut.End().X
-					outPos.Y += coordOut.Start.Y + int(cellr*(float32(out.node.VisiblePos(out))+0.5))
-
-					var inPos OsV2
-					inPos.X = coordNode.Start.X
-					inPos.Y += coordNode.Start.Y + int(cellr*(float32(node.VisiblePos(in))+0.5))
-
-					_SAGraph_drawConnectionH(outPos, inPos, node.Selected || out.node.Selected, cellr, ui, 0)
+					_SAGraph_drawConnectionH(outPos, inPos, cellr, ui, 0, Node_connectionCd(node.Selected || out.node.Selected, ui))
 				}
 			}
 		}
@@ -406,7 +412,7 @@ func (gr *SAGraph) drawConnections() {
 				if dstNode.Selected {
 					coordIn = selCoordIn
 				}
-				_SAGraph_drawConnectionV(OsV2{coordOut.Middle().X, coordOut.End().Y}, OsV2{coordIn.Middle().X, coordIn.Start.Y}, node.Selected || dstNode.Selected, cellr, ui, cellr)
+				_SAGraph_drawConnectionV(OsV2{coordOut.Middle().X, coordOut.End().Y}, OsV2{coordIn.Middle().X, coordIn.Start.Y}, cellr, ui, cellr, Node_connectionCd(node.Selected || dstNode.Selected, ui))
 			}
 		}
 	}
@@ -497,6 +503,23 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 		touchInsideNode = nil
 	}
 
+	//making connection
+	{
+		cellr := gr.app.root.cellZoom(ui)
+		cd := pl.P
+
+		if gr.connect_out != nil {
+			outPos := gr.connect_out.getConnectionPosOut(lv.call.canvas)
+			_SAGraph_drawConnectionH(outPos, ui.win.io.touch.pos, cellr, ui, 0, cd)
+		}
+
+		if gr.connect_in != nil {
+			inPos := gr.connect_in.getConnectionPosIn(lv.call.canvas)
+			_SAGraph_drawConnectionH(ui.win.io.touch.pos, inPos, cellr, ui, 0, cd)
+		}
+
+	}
+
 	//attrs dialog
 	if ui.Dialog_start("attributes") {
 		sel := gr.app.root.FindSelected()
@@ -506,6 +529,47 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 			ui.Div_start(0, 0, 1, 1)
 			sel.RenderAttrs()
 			ui.Div_end()
+		} else {
+			ui.Dialog_close()
+		}
+
+		ui.Dialog_end()
+	}
+
+	if ui.Dialog_start("ins") {
+		sel := gr.app.root.FindSelected()
+		if sel != nil {
+			ui.Div_colMax(0, 5)
+			yy := 0
+			for _, attr := range sel.Attrs {
+				if attr.IsOutput() { //not outputs
+					continue
+				}
+				if ui.Comp_buttonMenu(0, yy, 1, 1, attr.Name, "", true, false) > 0 {
+					gr.SetConnectIn(attr)
+					ui.Dialog_close()
+				}
+				yy++
+			}
+		} else {
+			ui.Dialog_close()
+		}
+
+		ui.Dialog_end()
+	}
+	if ui.Dialog_start("outs") {
+		sel := gr.app.root.FindSelected()
+		if sel != nil {
+			ui.Div_colMax(0, 5)
+			yy := 0
+			for _, attr := range sel.Attrs {
+				//all
+				if ui.Comp_buttonMenu(0, yy, 1, 1, attr.Name, "", true, false) > 0 {
+					gr.SetConnectOut(attr)
+					ui.Dialog_close()
+				}
+				yy++
+			}
 		} else {
 			ui.Dialog_close()
 		}
