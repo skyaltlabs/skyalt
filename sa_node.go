@@ -1748,7 +1748,7 @@ func (w *SANode) RenderAttrs() {
 
 					//default value
 					if ui.Comp_buttonMenu(0, y, 1, 1, "Set default value", "", true, false) > 0 {
-						it.Value = it.defaultValue
+						it.setValue(it.defaultValue)
 						ui.Dialog_close()
 					}
 					y++
