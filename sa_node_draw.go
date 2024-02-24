@@ -242,7 +242,7 @@ func (node *SANode) drawHeader() bool {
 		ui.Comp_textSelect(1, 0, 1, 1, node.Name, OsV2{1, 1}, false, false)
 
 		//settings
-		if ui.Comp_buttonIcon(2, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/fullscreen_mode.png"), 0.3, "Show everything", CdPalette_B, true, false) > 0 {
+		if ui.Comp_buttonIcon(2, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/fullscreen_mode.png"), 0.3, "Settings", CdPalette_B, !node.app.graph.isConnecting(), false) > 0 {
 			node.SelectOnlyThis()
 			ui.Dialog_open("attributes", 0)
 			inside = false
@@ -251,16 +251,6 @@ func (node *SANode) drawHeader() bool {
 		ui.Paint_tooltip(0, 0, 1, 1, "Type: "+node.Exe)
 	}
 	ui.Div_end()
-
-	//inside & double-click
-	if ui.IsStackTop() {
-		inside = ui.GetCall().call.crop.Inside(ui.win.io.touch.pos)
-		if inside && ui.win.io.touch.end && ui.win.io.touch.numClicks >= 2 {
-			node.SelectOnlyThis()
-			ui.Dialog_open("attributes", 0)
-			inside = false
-		}
-	}
 
 	//attributes
 	circleCd := CdPalette_S
@@ -274,9 +264,11 @@ func (node *SANode) drawHeader() bool {
 	//make connection - dialog attr list
 	{
 		if ui.Comp_buttonCircle(0, 0, 1, 1, "", "", circleCd, circleCd, connIn == nil) > 0 {
+			node.SelectOnlyThis()
 			ui.Dialog_open("ins", 1)
 		}
 		if ui.Comp_buttonCircle(2, 0, 1, 1, "", "", circleCd, circleCd, connOut == nil) > 0 {
+			node.SelectOnlyThis()
 			ui.Dialog_open("outs", 1)
 		}
 	}
@@ -309,6 +301,17 @@ func (node *SANode) drawHeader() bool {
 			}
 
 			y++
+		}
+	}
+
+	//inside & double-click
+	if ui.IsStackTop() {
+		inside = ui.GetCall().call.crop.Inside(ui.win.io.touch.pos)
+
+		if inside && ui.win.io.touch.end && ui.win.io.touch.numClicks >= 2 && !node.app.graph.isConnecting() {
+			node.SelectOnlyThis()
+			ui.Dialog_open("attributes", 0)
+			inside = false
 		}
 	}
 

@@ -46,11 +46,23 @@ func NewSAGraph(app *SAApp) *SAGraph {
 	return &gr
 }
 
+func (gr *SAGraph) isConnecting() bool {
+	return gr.connect_in != nil || gr.connect_out != nil
+}
+
+func (gr *SAGraph) resetConnect(tryResetIn bool) {
+	if tryResetIn && gr.connect_in != nil {
+		gr.connect_in.setValue(gr.connect_in.defaultValue)
+	}
+
+	gr.connect_in = nil
+	gr.connect_out = nil
+}
+
 func (gr *SAGraph) tryConnect() {
 	if gr.connect_out != nil && gr.connect_in != nil {
 		gr.connect_in.setValue(fmt.Sprintf("%s.%s", gr.connect_out.node.Name, gr.connect_out.Name))
-		gr.connect_out = nil
-		gr.connect_in = nil
+		gr.resetConnect(false)
 	}
 }
 
@@ -383,19 +395,16 @@ func (gr *SAGraph) drawConnections() {
 	for _, node := range gr.app.all_nodes {
 
 		//attributtes connection
-		{
-			for _, in := range node.Attrs {
-				for _, out := range in.depends {
-
-					if out.node == node {
-						continue
-					}
-
-					outPos := out.getConnectionPosOut(lv.call.canvas)
-					inPos := in.getConnectionPosIn(lv.call.canvas)
-
-					_SAGraph_drawConnectionH(outPos, inPos, cellr, ui, 0, Node_connectionCd(node.Selected || out.node.Selected, ui))
+		for _, in := range node.Attrs {
+			for _, out := range in.depends {
+				if out.node == node {
+					continue
 				}
+
+				outPos := out.getConnectionPosOut(lv.call.canvas)
+				inPos := in.getConnectionPosIn(lv.call.canvas)
+
+				_SAGraph_drawConnectionH(outPos, inPos, cellr, ui, 0, Node_connectionCd(node.Selected || out.node.Selected, ui))
 			}
 		}
 
@@ -453,7 +462,7 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 	var graphCanvas OsV4
 
 	over := ui.GetCall().call.IsOver(ui)
-	keyAllow := (over && !ui.edit.IsActive())
+	keyAllow := (over && !ui.edit.IsActive() && ui.IsStackTop())
 
 	graphCanvas = ui.GetCall().call.canvas
 
@@ -587,6 +596,11 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 
 	//keys actions
 	if keyAllow {
+		//reset connecting
+		if keys.esc {
+			gr.resetConnect(false)
+		}
+
 		//delete
 		if keys.delete {
 			gr.app.root.RemoveSelectedNodes()
@@ -668,7 +682,7 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 	//touch actions
 	{
 		//nodes
-		if touchInsideNode != nil && over && touch.start && !keys.shift && !keys.ctrl {
+		if touchInsideNode != nil && over && touch.start && !keys.shift && !keys.ctrl && !gr.isConnecting() {
 			gr.node_move = true
 			gr.touch_start = touch.pos
 			gr.app.root.SetPosStart() //ALL nodes(not only selected)
@@ -712,6 +726,8 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 				//start selection
 				gr.node_select = true
 				gr.touch_start = touch.pos
+
+				gr.resetConnect(true)
 			}
 		}
 
