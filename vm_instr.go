@@ -155,15 +155,7 @@ func (instr *VmInstr) LineReplace(value string, mapOrArray bool) {
 		newValue = value
 	}
 
-	if newValue != instr.pos_attr.Value {
-		instr.pos_attr.node.app.SetExecute() //update network
-	}
-
-	instr.pos_attr.Value = newValue //replace
-
-	//update constant positions: SetExecute() will update, but it can be call multiple times before 'exeIt' is triggered
-	instr.pos_attr.ParseExpresion()
-	instr.pos_attr.ExecuteExpression()
+	instr.pos_attr.setValue(newValue)
 }
 
 func (instr *VmInstr) LineExtract(line string, value string) string {

@@ -137,6 +137,18 @@ func (attr *SANodeAttr) CheckUniqueName() {
 	}
 }
 
+func (attr *SANodeAttr) setValue(newValue string) {
+	if newValue != attr.Value {
+		attr.node.app.SetExecute() //update network
+	}
+
+	attr.Value = newValue //replace
+
+	// update constant positions: SetExecute() will update, but it can be call multiple times before 'exeIt' is triggered
+	attr.ParseExpresion()
+	attr.ExecuteExpression()
+}
+
 func (attr *SANodeAttr) AddSetAttrExe() {
 	attr.node.app.AddSetAttr(nil, "", false, true)
 }
