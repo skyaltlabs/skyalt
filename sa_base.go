@@ -247,7 +247,7 @@ func (base *SABase) Render() bool {
 
 	//fmt.Println(SAGroups_GenerateDocumentation(app))
 
-	base.ui.renderStart(0, 0, 1, 1, true)
+	base.ui.renderStart(0, 0, 1, 1)
 
 	ui := base.ui
 	icon_rad := 1.5
@@ -383,8 +383,9 @@ func (base *SABase) Render() bool {
 			}
 		}
 		ui.Div_end()
-
 	}
+
+	app.flamingo.Tick()
 
 	app.History(ui)
 

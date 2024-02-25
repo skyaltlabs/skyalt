@@ -105,6 +105,8 @@ type SAApp struct {
 
 	all_nodes      []*SANode
 	selected_nodes []*SANode
+
+	flamingo *SAFlamingo
 }
 
 func (a *SAApp) init(base *SABase) {
@@ -122,6 +124,8 @@ func (a *SAApp) init(base *SABase) {
 	if OsFileExists(ic) {
 		a.iconPath = "file:" + ic
 	}
+
+	a.flamingo = NewSAFlamingo(a)
 }
 
 func NewSAApp(name string, base *SABase) *SAApp {
