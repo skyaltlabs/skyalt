@@ -728,7 +728,17 @@ func (ui *Ui) Comp_edit_s(style *UiComp, valueIn string, valueInOrig string, ico
 	return edit.last_edit, active, (active && value != edit.last_edit), (active && this_uid != edit.uid)
 }
 
-func (ui *Ui) Comp_progress(style *UiComp, value float64, prec int) int64 {
+func (ui *Ui) Comp_progress(x, y, w, h int, value float64, prec int, tooltip string, enable bool) {
+
+	ui.Div_start(x, y, w, h)
+
+	style := UiComp{enable: enable, label_formating: true, cd: CdPalette_P, tooltip: tooltip, label_align: OsV2{2, 1}}
+	ui.Comp_progress_s(&style, value, prec)
+
+	ui.Div_end()
+}
+
+func (ui *Ui) Comp_progress_s(style *UiComp, value float64, prec int) {
 
 	lv := ui.GetCall()
 
@@ -755,8 +765,6 @@ func (ui *Ui) Comp_progress(style *UiComp, value float64, prec int) int64 {
 			ui.Paint_tooltip(0, 0, 1, 1, style.tooltip)
 		}
 	}
-
-	return 1
 }
 
 func (ui *Ui) Comp_slider(x, y, w, h int, valueIn interface{}, minValue float64, maxValue float64, stepValue float64, enable bool) bool {
