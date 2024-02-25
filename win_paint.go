@@ -21,12 +21,9 @@ import (
 )
 
 type WinPaintBuff struct {
-	win *Win
-
-	crop OsV4
-
-	depth       int
-	dialogs_max int
+	win   *Win
+	crop  OsV4
+	depth int
 }
 
 const WinPaintBuff_MAX_ITER = 2
@@ -49,16 +46,16 @@ func (b *WinPaintBuff) Prepare(crop OsV4, drawBack bool) {
 	b.depth += 10 //items or are depth=110
 }
 
-func (b *WinPaintBuff) DialogStart(crop OsV4) error {
+func (b *WinPaintBuff) DialogStart(crop OsV4, drawBack bool) error {
 	b.crop = crop
 
 	b.depth = (b.depth + 100) - ((b.depth + 100) % 100)
 
-	b.dialogs_max++
-
 	//dialog's background
 	b.AddCrop(crop)
-	b.AddRect(crop, b.win.io.GetPalette().B, 0)
+	if drawBack {
+		b.AddRect(crop, b.win.io.GetPalette().B, 0)
+	}
 
 	return nil
 }
@@ -73,19 +70,21 @@ func (b *WinPaintBuff) DialogEnd() error {
 	return nil
 }
 
+func (b *WinPaintBuff) DrawDialogSurround(i int) {
+	win, _ := b.win.GetScreenCoord()
+	b.win.SetClipRect(win)
+	b.depth = 0
+
+	//grey
+	b.win.DrawRect(win.Start, win.End(), i*100+50, OsCd{0, 0, 0, 80})
+}
+
 func (b *WinPaintBuff) FinalDraw() error {
 
 	win, _ := b.win.GetScreenCoord()
 	b.win.SetClipRect(win)
 
-	//grey
-	for i := 0; i < b.dialogs_max; i++ {
-		b.win.DrawRect(win.Start, win.End(), i*100+50, OsCd{0, 0, 0, 80})
-	}
-
 	b.depth = 0
-	b.dialogs_max = 0
-
 	return nil
 }
 

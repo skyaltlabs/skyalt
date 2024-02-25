@@ -235,6 +235,15 @@ func (ui *Ui) CloseAndAbove(dialog *UiLayoutLevel) {
 		}
 	}
 }
+
+func (ui *Ui) CloseName(name string) {
+	for _, l := range ui.dialogs {
+		if l.name == name {
+			l.close = true
+		}
+	}
+}
+
 func (ui *Ui) CloseAll() {
 
 	if len(ui.dialogs) > 1 {
@@ -336,5 +345,12 @@ func (ui *Ui) EndRender() {
 	}
 
 	ui.Maintenance()
+
+	for i, dia := range ui.dialogs {
+		if dia.greySurround {
+			ui.buff.DrawDialogSurround(i - 1) //-1 because dialogs[0] is base, not dialog
+		}
+	}
+
 	ui.buff.FinalDraw()
 }

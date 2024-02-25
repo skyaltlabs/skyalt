@@ -23,6 +23,8 @@ type UiLayoutLevel struct {
 	base *UiLayoutDiv
 	call *UiLayoutDiv
 
+	greySurround bool
+
 	src_coordMoveCut OsV4
 
 	close bool

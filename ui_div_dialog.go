@@ -22,6 +22,10 @@ func (ui *Ui) Dialog_close() {
 	ui.CloseAndAbove(ui.GetCall())
 }
 
+func (ui *Ui) Dialog_closeName(name string) {
+	ui.CloseName(name)
+}
+
 func (ui *Ui) Dialog_end() {
 	lv := ui.GetCall()
 
@@ -90,7 +94,7 @@ func (ui *Ui) Dialog_open(name string, tp uint8) bool {
 	return true
 }
 
-func (ui *Ui) Dialog_start(name string) bool {
+func (ui *Ui) Dialog_startEx(name string, drawBack bool, greySurround bool) bool {
 	lv := ui.GetCall()
 
 	//name
@@ -125,16 +129,21 @@ func (ui *Ui) Dialog_start(name string) bool {
 	coord = lev.GetCoord(coord, winRect)
 	lev.base.canvas = coord
 	lev.base.crop = coord
+	lev.greySurround = greySurround
 
 	ui.StartCall(lev)
 
-	ui.renderStart(0, 0, 1, 1, true)
+	ui.renderStart(0, 0, 1, 1)
 	//a = OsTime()
 
-	err := ui.buff.DialogStart(coord) //rewrite buffer with background
+	err := ui.buff.DialogStart(coord, drawBack) //rewrite buffer with background
 	if err != nil {
 		lv.call.data.app.AddLogErr(err)
 	}
 
 	return true //active/open
+}
+
+func (ui *Ui) Dialog_start(name string) bool {
+	return ui.Dialog_startEx(name, true, true)
 }

@@ -70,7 +70,7 @@ func (ui *Ui) _renderScroll(packLayout *UiLayoutDiv, showBackground bool) {
 	}
 }
 
-func (ui *Ui) renderStart(rx, ry, rw, rh float64, drawBack bool) {
+func (ui *Ui) renderStart(rx, ry, rw, rh float64) {
 
 	lv := ui.GetCall()
 
