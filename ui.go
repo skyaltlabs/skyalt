@@ -275,7 +275,7 @@ func (ui *Ui) ResetStack() {
 	ui.app_calls = append(ui.app_calls, ui.base_app)
 }
 
-func (ui *Ui) Find(name string) *UiLayoutLevel {
+func (ui *Ui) FindDialog(name string) *UiLayoutLevel {
 
 	for _, l := range ui.dialogs {
 		if l.name == name {
@@ -283,6 +283,15 @@ func (ui *Ui) Find(name string) *UiLayoutLevel {
 		}
 	}
 	return nil
+}
+
+func (ui *Ui) FindDialogPos(name string) int {
+	for i, l := range ui.dialogs {
+		if l.name == name {
+			return i
+		}
+	}
+	return -1
 }
 
 func (ui *Ui) UpdateTile(win *Win) bool {
