@@ -982,7 +982,6 @@ func (w *SANode) GetGridShow() bool {
 }
 
 func (w *SANode) Render() {
-
 	ui := w.app.base.ui
 
 	w.ExecuteGui()
@@ -1517,7 +1516,7 @@ func (w *SANode) RenderAttrs() {
 		h := _SANode_renderAttrValueHeight(it, it.instr, &it.Ui)
 		h = OsMin(h, 5)
 
-		ui.Div_start(0, y, 1, h)
+		attrDiv := ui.Div_start(0, y, 1, h)
 		{
 			ui.Div_colMax(1, 4)
 			ui.Div_colMax(2, 100)
@@ -1777,6 +1776,9 @@ func (w *SANode) RenderAttrs() {
 
 		}
 		ui.Div_end()
+
+		w.app.flamingo.TryAddItemFromDiv(attrDiv, it)
+
 		y += h
 	}
 }

@@ -69,7 +69,8 @@ func SAExe_Render_Button(w *SANode, renderIt bool) {
 
 	enable := w.GetAttrUi("enable", 1, SAAttrUi_SWITCH).GetBool()
 	tp := w.GetAttrUi("type", 0, SAAttrUi_COMBO("Classic;Light;Menu", "")).GetInt()
-	label := w.GetAttr("label", "").GetString()
+	labelAttr := w.GetAttr("label", "")
+	label := labelAttr.GetString()
 	clickedAttr := w.GetAttrUi("clicked", 0, SAAttrUi_SWITCH) //can't be _output, because it's set when render(not graph execution)
 
 	clicked := false
@@ -90,6 +91,8 @@ func SAExe_Render_Button(w *SANode, renderIt bool) {
 			if clicked {
 				selectedAttr.AddSetAttr(OsTrnString(selectedAttr.GetBool(), "0", "1")) //reverse
 			}
+
+			w.app.flamingo.TryAddItemFromAttr(labelAttr)
 		}
 	}
 
@@ -106,7 +109,8 @@ func SAExe_Render_Text(w *SANode, renderIt bool) {
 
 	grid := w.GetGrid()
 
-	label := w.GetAttr("label", "").GetString()
+	labelAttr := w.GetAttr("label", "")
+	label := labelAttr.GetString()
 	align_h := w.GetAttrUi("align_h", 0, SAAttrUi_COMBO("Left;Center;Right", "")).GetInt()
 	align_v := w.GetAttrUi("align_v", 1, SAAttrUi_COMBO("Top;Center;Bottom", "")).GetInt()
 	selection := w.GetAttrUi("selection", 1, SAAttrUi_SWITCH).GetBool()
@@ -119,6 +123,8 @@ func SAExe_Render_Text(w *SANode, renderIt bool) {
 		} else {
 			ui.Comp_textSelect(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, OsV2{align_h, align_v}, selection, drawBorder)
 		}
+
+		w.app.flamingo.TryAddItemFromAttr(labelAttr)
 	}
 }
 
@@ -140,6 +146,8 @@ func SAExe_Render_Switch(w *SANode, renderIt bool) {
 		if ui.Comp_switch(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, label, "", enable) {
 			valueInstr.LineReplace(value, false)
 		}
+
+		w.app.flamingo.TryAddItemFromAttr(valueAttr)
 	}
 }
 
@@ -161,6 +169,8 @@ func SAExe_Render_Checkbox(w *SANode, renderIt bool) {
 		if ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, label, "", enable) {
 			valueInstr.LineReplace(value, false)
 		}
+
+		w.app.flamingo.TryAddItemFromAttr(valueAttr)
 	}
 }
 
@@ -184,6 +194,8 @@ func SAExe_Render_Slider(w *SANode, renderIt bool) {
 		if ui.Comp_slider(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, min, max, step, enable) {
 			valueInstr.LineReplace(value, false)
 		}
+
+		w.app.flamingo.TryAddItemFromAttr(valueAttr)
 	}
 }
 
@@ -206,6 +218,8 @@ func SAExe_Render_Combo(w *SANode, renderIt bool) {
 		if ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, strings.Split(options_names, ";"), strings.Split(options_values, ";"), "", enable, search) {
 			valueInstr.LineReplace(value, false)
 		}
+
+		w.app.flamingo.TryAddItemFromAttr(valueAttr)
 	}
 }
 
@@ -254,6 +268,8 @@ func SAExe_Render_Editbox(w *SANode, renderIt bool) {
 
 		isEmptyAttr.AddSetAttr(OsTrnString(editedValue == "", "1", "0"))
 		//_isEmptyAttr.GetResult().SetBool(editedValue == "")
+
+		w.app.flamingo.TryAddItemFromAttr(valueAttr)
 	}
 
 }
@@ -293,6 +309,8 @@ func SAExe_Render_ColorPalette(w *SANode, renderIt bool) {
 			}
 		}
 		ui.Div_end()
+
+		w.app.flamingo.TryAddItemFromAttr(cdAttr)
 	}
 }
 
@@ -310,6 +328,8 @@ func SAExe_Render_ColorPicker(w *SANode, renderIt bool) {
 		if ui.comp_colorPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &cd, w.getPath(), enable) {
 			cdAttr.ReplaceCd(cd)
 		}
+
+		w.app.flamingo.TryAddItemFromAttr(cdAttr)
 	}
 }
 
@@ -332,6 +352,8 @@ func _SAExe_Render_FileAndDirPicker(selectFile bool, dialogName string, w *SANod
 		if ui.comp_dirPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &path, selectFile, dialogName, enable) {
 			pathAttr.AddSetAttr(path)
 		}
+
+		w.app.flamingo.TryAddItemFromAttr(pathAttr)
 	}
 }
 
@@ -366,6 +388,8 @@ func SAExe_Render_Calendar(w *SANode, renderIt bool) {
 			}
 		}
 		ui.Div_end()
+
+		w.app.flamingo.TryAddItemFromAttr(valueAttr)
 	}
 }
 
@@ -388,6 +412,8 @@ func SAExe_Render_Date(w *SANode, renderIt bool) {
 			}
 		}
 		ui.Div_end()
+
+		w.app.flamingo.TryAddItemFromAttr(valueAttr)
 	}
 }
 
@@ -426,6 +452,8 @@ func SAExe_Render_Image(w *SANode, renderIt bool) {
 			ui.Paint_file(0, 0, 1, 1, margin, path, cd, alignV, alignH, fill, background)
 		}
 		ui.Div_end()
+
+		w.app.flamingo.TryAddItemFromAttr(blobAttr)
 	}
 }
 
@@ -462,6 +490,8 @@ func SAExe_Render_FileDrop(w *SANode, renderIt bool) {
 					instr.LineReplace(value, false)
 				}
 			}
+
+			w.app.flamingo.TryAddItemFromAttr(pathAttr)
 		}
 		ui.Div_end()
 	}
@@ -557,6 +587,8 @@ func SAExe_Render_Map(w *SANode, renderIt bool) {
 				}
 			}
 			ui.Div_end()
+
+			//w.app.flamingo.tryAddItemFromAttr(valueAttr)	? //add every item alone = attr + index .......
 		}
 	}
 }
