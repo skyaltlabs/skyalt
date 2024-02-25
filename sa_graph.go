@@ -554,7 +554,7 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 				if attr.IsOutput() { //not outputs
 					continue
 				}
-				if ui.Comp_buttonMenu(0, yy, 1, 1, attr.Name, "", true, false) > 0 {
+				if ui.Comp_buttonMenu(0, yy, 1, 1, attr.Name, attr.Name+": "+attr.GetString(), true, false) > 0 {
 					gr.SetConnectIn(attr)
 					ui.Dialog_close()
 				}
@@ -573,7 +573,7 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 			yy := 0
 			for _, attr := range sel.Attrs {
 				//all
-				if ui.Comp_buttonMenu(0, yy, 1, 1, attr.Name, "", true, false) > 0 {
+				if ui.Comp_buttonMenu(0, yy, 1, 1, attr.Name, attr.Name+": "+attr.GetString(), true, false) > 0 {
 					gr.SetConnectOut(attr)
 					ui.Dialog_close()
 				}
