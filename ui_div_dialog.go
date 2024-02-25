@@ -65,7 +65,7 @@ func (ui *Ui) Dialog_open(name string, tp uint8) bool {
 	}
 
 	//find
-	act := ui.Find(name)
+	act := ui.FindDialog(name)
 	if act != nil {
 		lv.call.data.app.AddLogErr(errors.New("dialog already opened"))
 		return false //already open
@@ -103,7 +103,7 @@ func (ui *Ui) Dialog_startEx(name string, drawBack bool, greySurround bool) bool
 	}
 
 	//find
-	lev := ui.Find(name)
+	lev := ui.FindDialog(name)
 	if lev == nil {
 		return false //dialog not open, which is NOT error
 	}
@@ -136,7 +136,7 @@ func (ui *Ui) Dialog_startEx(name string, drawBack bool, greySurround bool) bool
 	ui.renderStart(0, 0, 1, 1)
 	//a = OsTime()
 
-	err := ui.buff.DialogStart(coord, drawBack) //rewrite buffer with background
+	err := ui.buff.DialogStart(coord, drawBack, ui.FindDialogPos(name)) //rewrite buffer with background
 	if err != nil {
 		lv.call.data.app.AddLogErr(err)
 	}

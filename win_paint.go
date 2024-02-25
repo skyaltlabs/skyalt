@@ -24,6 +24,8 @@ type WinPaintBuff struct {
 	win   *Win
 	crop  OsV4
 	depth int
+
+	dialog_depth_backups []int
 }
 
 const WinPaintBuff_MAX_ITER = 2
@@ -46,10 +48,12 @@ func (b *WinPaintBuff) Prepare(crop OsV4, drawBack bool) {
 	b.depth += 10 //items or are depth=110
 }
 
-func (b *WinPaintBuff) DialogStart(crop OsV4, drawBack bool) error {
+func (b *WinPaintBuff) DialogStart(crop OsV4, drawBack bool, index int) error {
 	b.crop = crop
 
-	b.depth = (b.depth + 100) - ((b.depth + 100) % 100)
+	b.dialog_depth_backups = append(b.dialog_depth_backups, b.depth)
+
+	b.depth = index * 100 //(b.depth + 100) - ((b.depth + 100) % 100)
 
 	//dialog's background
 	b.AddCrop(crop)
@@ -62,9 +66,12 @@ func (b *WinPaintBuff) DialogStart(crop OsV4, drawBack bool) error {
 
 func (b *WinPaintBuff) DialogEnd() error {
 	if b.depth > 0 {
-		b.depth = (b.depth - 100) - ((b.depth - 100) % 100)
 
-		b.depth += 10 //items or are depth=110
+		b.depth = b.dialog_depth_backups[len(b.dialog_depth_backups)-1]
+		b.dialog_depth_backups = b.dialog_depth_backups[:len(b.dialog_depth_backups)-1]
+
+		//b.depth = (b.depth - 100) - ((b.depth - 100) % 100)
+		//b.depth += 10 //items or are depth=110
 	}
 
 	return nil
@@ -73,7 +80,7 @@ func (b *WinPaintBuff) DialogEnd() error {
 func (b *WinPaintBuff) DrawDialogSurround(i int) {
 	win, _ := b.win.GetScreenCoord()
 	b.win.SetClipRect(win)
-	b.depth = 0
+	//b.depth = 0
 
 	//grey
 	b.win.DrawRect(win.Start, win.End(), i*100+50, OsCd{0, 0, 0, 80})
@@ -97,45 +104,41 @@ func (b *WinPaintBuff) AddCrop(crop OsV4) OsV4 {
 	return ret
 }
 
-func (b *WinPaintBuff) getDepth() int {
-	return b.depth
-}
-
 func (b *WinPaintBuff) AddRect(coord OsV4, cd OsCd, thick int) {
 	start := coord.Start
 	end := coord.End()
 	if thick == 0 {
-		b.win.DrawRect(start, end, b.getDepth(), cd)
+		b.win.DrawRect(start, end, b.depth, cd)
 	} else {
-		b.win.DrawRect_border(start, end, b.getDepth(), cd, thick)
+		b.win.DrawRect_border(start, end, b.depth, cd, thick)
 	}
 
 }
 func (b *WinPaintBuff) AddRectRound(coord OsV4, rad int, cd OsCd, thick int) {
-	b.win.DrawRectRound(coord, rad, b.getDepth(), cd, thick, false)
+	b.win.DrawRectRound(coord, rad, b.depth, cd, thick, false)
 }
 func (b *WinPaintBuff) AddRectRoundGrad(coord OsV4, rad int, cd OsCd, thick int) {
-	b.win.DrawRectRound(coord, rad, b.getDepth(), cd, thick, true)
+	b.win.DrawRectRound(coord, rad, b.depth, cd, thick, true)
 }
 
 func (b *WinPaintBuff) AddLine(start OsV2, end OsV2, cd OsCd, thick int) {
 	v := end.Sub(start)
 	if !v.IsZero() {
-		b.win.DrawLine(start, end, b.getDepth(), thick, cd)
+		b.win.DrawLine(start, end, b.depth, thick, cd)
 	}
 }
 
 func (buf *WinPaintBuff) AddBezier(a OsV2, b OsV2, c OsV2, d OsV2, cd OsCd, thick int, dash_len float32) {
-	buf.win.DrawBezier(a, b, c, d, buf.getDepth(), thick, cd, dash_len)
+	buf.win.DrawBezier(a, b, c, d, buf.depth, thick, cd, dash_len)
 }
 
 func (buf *WinPaintBuff) AddPoly(start OsV2, points []OsV2f, cd OsCd, width float64) {
-	buf.win.DrawPoly(start, points, buf.getDepth(), cd, width)
+	buf.win.DrawPoly(start, points, buf.depth, cd, width)
 }
 
 func (b *WinPaintBuff) AddCircle(coord OsV4, cd OsCd, width int) {
 	p := coord.Middle()
-	b.win.DrawCicle(p, OsV2{coord.Size.X / 2, coord.Size.Y / 2}, b.getDepth(), cd, width)
+	b.win.DrawCicle(p, OsV2{coord.Size.X / 2, coord.Size.Y / 2}, b.depth, cd, width)
 }
 
 func (b *WinPaintBuff) AddImage(path WinMedia, coord OsV4, cd OsCd, alignV int, alignH int, fill bool, background bool) {
@@ -181,7 +184,7 @@ func (b *WinPaintBuff) AddImage(path WinMedia, coord OsV4, cd OsCd, alignV int, 
 
 	//draw image
 	imgRectBackup := b.AddCrop(b.crop.GetIntersect(coord))
-	err = img.Draw(q, b.getDepth()-OsTrn(background, 1, 0), cd)
+	err = img.Draw(q, b.depth-OsTrn(background, 1, 0), cd)
 	if err != nil {
 		fmt.Printf("Draw() failed: %v\n", err)
 	}
@@ -189,7 +192,7 @@ func (b *WinPaintBuff) AddImage(path WinMedia, coord OsV4, cd OsCd, alignV int, 
 }
 
 func (b *WinPaintBuff) AddText(ln string, prop WinFontProps, coord OsV4, frontCd OsCd, align OsV2, yLine, num_lines int) {
-	b.win.DrawText(ln, prop, coord, b.getDepth(), align, frontCd, yLine, num_lines)
+	b.win.DrawText(ln, prop, coord, b.depth, align, frontCd, yLine, num_lines)
 }
 
 func (b *WinPaintBuff) AddTextBack(rangee OsV2, ln string, prop WinFontProps, coord OsV4, cd OsCd, align OsV2, underline bool, yLine, num_lines int) {
