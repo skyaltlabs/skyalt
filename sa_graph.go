@@ -462,7 +462,7 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 	var graphCanvas OsV4
 
 	over := ui.GetCall().call.IsOver(ui)
-	keyAllow := (over && !ui.edit.IsActive() && ui.IsStackTop())
+	keyAllow := (over && !ui.edit.IsActive() && ui.GetCall().call.enableInput)
 
 	graphCanvas = ui.GetCall().call.canvas
 
@@ -587,7 +587,7 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 	}
 
 	//must be below dialog!
-	if !ui.IsStackTop() {
+	if !ui.GetCall().call.enableInput {
 		//reset
 		gr.cam_move = false
 		gr.node_move = false

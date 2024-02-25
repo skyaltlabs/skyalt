@@ -305,7 +305,7 @@ func (node *SANode) drawHeader() bool {
 	}
 
 	//inside & double-click
-	if ui.IsStackTop() {
+	if ui.GetCall().call.enableInput {
 		inside = ui.GetCall().call.crop.Inside(ui.win.io.touch.pos)
 
 		if inside && ui.win.io.touch.end && ui.win.io.touch.numClicks >= 2 && !node.app.graph.isConnecting() {
