@@ -116,7 +116,7 @@ func (ui *Ui) _compDrawText(coord OsV4,
 		value, valueOrigEdit,
 		frontCd,
 		prop,
-		"", align,
+		align,
 		selection, editable, true, multi_line, multi_line_enter_finish)
 
 	if active {
@@ -459,6 +459,26 @@ func (ui *Ui) Comp_text(x, y, w, h int, label string, alignH int) *UiLayoutDiv {
 	style.cd = CdPalette_B
 	style.label_align = OsV2{alignH, 1}
 
+	ui.Comp_text_s(&style, label, nil, true, false, false)
+
+	ui.Div_end()
+	return div
+}
+
+func (ui *Ui) Comp_textCd(x, y, w, h int, label string, alignH int, cd uint8) *UiLayoutDiv {
+	ui.Div_start(x, y, w, h)
+	div := ui.GetCall().call
+
+	var style UiComp
+	style.enable = true
+	style.cd = cd
+	style.label_align = OsV2{alignH, 1}
+
+	//background
+	//backCd, _ := ui.win.io.GetPalette().GetCd(cd, false, true, false, false)
+	//ui.Paint_rect(0, 0, 1, 1, 0, backCd, 0)
+
+	//text
 	ui.Comp_text_s(&style, label, nil, true, false, false)
 
 	ui.Div_end()
