@@ -340,8 +340,8 @@ func InitWinCdPalette_light() WinCdPalette {
 	pl.T = InitOsCd32(90, 95, 115, 255)
 	pl.OnT = InitOsCdWhite()
 	//Err
-	pl.E = InitOsCd32(180, 40, 30, 255)
-	pl.OnE = InitOsCdWhite()
+	pl.E = InitOsCdWhite()
+	pl.OnE = InitOsCd32(180, 40, 30, 255)
 	//Surface(background)
 	pl.B = InitOsCd32(240, 245, 245, 255)
 	pl.OnB = InitOsCd32(25, 27, 30, 255)
@@ -360,8 +360,8 @@ func InitWinCdPalette_dark() WinCdPalette {
 	pl.T = InitOsCd32(195, 200, 220, 255)
 	pl.OnT = InitOsCd32(75, 35, 50, 255)
 
-	pl.E = InitOsCd32(240, 185, 180, 255)
-	pl.OnE = InitOsCd32(45, 45, 65, 255)
+	pl.E = InitOsCd32(45, 45, 65, 255)
+	pl.OnE = InitOsCd32(240, 185, 180, 255)
 
 	pl.B = InitOsCd32(25, 30, 30, 255)
 	pl.OnB = InitOsCd32(230, 230, 230, 255)
