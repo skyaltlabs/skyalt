@@ -77,7 +77,8 @@ func InitSAGroups() SAGroups {
 	}})
 
 	grs.groups = append(grs.groups, &SAGroup{name: "Disk access", icon: InitWinMedia_url(path + "node_file.png"), nodes: []*SAGroupNode{
-		{name: "disk_dir", attrs: UiDiskDir_Attrs},
+		{name: "disk_dir", render: UiDiskDir_render, attrs: UiDiskDir_Attrs},
+		{name: "disk_file", render: UiDiskFile_render, attrs: UiDiskFile_Attrs},
 		/*{name: "sqlite", fn: SAExe_File_sqlite},
 		{name: "read_file", fn: SAExe_File_read},
 		{name: "write_file", fn: SAExe_File_write},*/

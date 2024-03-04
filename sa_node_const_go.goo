@@ -72,6 +72,42 @@ type Switch struct {
 	Changed bool   `json:"changed"`
 }
 
+type Switch struct {
+	Grid_x  int  `json:"grid_x"`
+	Grid_y  int  `json:"grid_y"`
+	Grid_w  int  `json:"grid_w"`
+	Grid_h  int  `json:"grid_h"`
+	Grid_show  bool  `json:"grid_show"`
+	Value   bool   `json:"value"`
+	Label   string `json:"label"`
+	Tooltip string `json:"tooltip"`
+	Enable  bool   `json:"enable"`
+	Changed bool   `json:"changed"`
+}
+
+type DirPath struct {
+	Grid_x  int  `json:"grid_x"`
+	Grid_y  int  `json:"grid_y"`
+	Grid_w  int  `json:"grid_w"`
+	Grid_h  int  `json:"grid_h"`
+	Grid_show  bool  `json:"grid_show"`
+	Path   string `json:"path"`
+	Write  bool   `json:"write"`
+	Enable  bool   `json:"enable"`
+	Changed bool   `json:"changed"`
+}
+
+type FilePath struct {
+	Grid_x  int  `json:"grid_x"`
+	Grid_y  int  `json:"grid_y"`
+	Grid_w  int  `json:"grid_w"`
+	Grid_h  int  `json:"grid_h"`
+	Grid_show  bool  `json:"grid_show"`
+	Path   string `json:"path"`
+	Write  bool   `json:"write"`
+	Enable  bool   `json:"enable"`
+	Changed bool   `json:"changed"`
+}
 
 type SQL struct {
 	Grid_x  int  `json:"grid_x"`

@@ -134,11 +134,10 @@ func (node *SANode) IsTriggered() bool {
 		return node.GetAttrBool("finished", false)
 	}
 
-	if node.Exe == "checkbox" {
-		return node.GetAttrBool("changed", false)
-	}
-
-	if node.Exe == "switch" {
+	if node.Exe == "checkbox" ||
+		node.Exe == "switch" ||
+		node.Exe == "disk_dir" ||
+		node.Exe == "disk_file" {
 		return node.GetAttrBool("changed", false)
 	}
 
@@ -154,11 +153,10 @@ func (node *SANode) ResetTriggers() {
 		node.Attrs["finished"] = false
 	}
 
-	if node.Exe == "checkbox" {
-		node.Attrs["changed"] = false
-	}
-
-	if node.Exe == "switch" {
+	if node.Exe == "checkbox" ||
+		node.Exe == "switch" ||
+		node.Exe == "disk_dir" ||
+		node.Exe == "disk_file" {
 		node.Attrs["changed"] = false
 	}
 }

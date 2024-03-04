@@ -260,7 +260,7 @@ func (node *SANode) ShowAttrFilePicker(grid *OsV4, name string, defValue string,
 
 	ui.Comp_text(grid.Start.X+0, grid.Start.Y, grid.Size.X, grid.Size.Y, name, 0)
 
-	if ui.comp_dirPicker(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, selectFile, "dir_picker_"+node.Name, true) {
+	if ui.Comp_dirPicker(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, selectFile, "dir_picker_"+node.Name, true) {
 		node.Attrs[name] = value
 	}
 

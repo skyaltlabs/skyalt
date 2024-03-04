@@ -177,6 +177,58 @@ func UiSwitch_render(node *SANode) {
 	}
 }
 
+func UiDiskDir_Attrs(node *SANode) {
+	ui := node.app.base.ui
+	ui.Div_colMax(0, 3)
+	ui.Div_colMax(1, 100)
+
+	ui.Comp_text(0, 0, 1, 1, "path", 0)
+
+	grid := InitOsV4(0, 0, 1, 1)
+
+	node.ShowAttrFilePicker(&grid, "path", "", false)
+	node.ShowAttrBool(&grid, "write", false)
+	node.ShowAttrBool(&grid, "changed", false)
+}
+
+func UiDiskDir_render(node *SANode) {
+	grid := node.GetGrid()
+	path := node.GetAttrString("path", "")
+	enable := node.GetAttrBool("enable", true)
+	//changed := node.GetAttrBool("changed", false)
+
+	if node.app.base.ui.Comp_dirPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &path, false, "dir_picker_"+node.Name, enable) {
+		node.Attrs["path"] = path
+		node.Attrs["changed"] = true
+	}
+}
+
+func UiDiskFile_Attrs(node *SANode) {
+	ui := node.app.base.ui
+	ui.Div_colMax(0, 3)
+	ui.Div_colMax(1, 100)
+
+	ui.Comp_text(0, 0, 1, 1, "path", 0)
+
+	grid := InitOsV4(0, 0, 1, 1)
+
+	node.ShowAttrFilePicker(&grid, "path", "", true)
+	node.ShowAttrBool(&grid, "write", false)
+	node.ShowAttrBool(&grid, "changed", false)
+}
+
+func UiDiskFile_render(node *SANode) {
+	grid := node.GetGrid()
+	path := node.GetAttrString("path", "")
+	enable := node.GetAttrBool("enable", true)
+	//changed := node.GetAttrBool("changed", false)
+
+	if node.app.base.ui.Comp_dirPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &path, true, "dir_picker_"+node.Name, enable) {
+		node.Attrs["path"] = path
+		node.Attrs["changed"] = true
+	}
+}
+
 func UiCodeGo_Attrs(node *SANode) {
 	ui := node.app.base.ui
 	ui.Div_colMax(0, 3)
@@ -229,19 +281,6 @@ func UiCodeGo_Attrs(node *SANode) {
 		}
 	}
 	ui.Div_end()
-}
-
-func UiDiskDir_Attrs(node *SANode) {
-	ui := node.app.base.ui
-	ui.Div_colMax(0, 3)
-	ui.Div_colMax(1, 100)
-
-	ui.Comp_text(0, 0, 1, 1, "path", 0)
-
-	grid := InitOsV4(0, 0, 1, 1)
-
-	node.ShowAttrFilePicker(&grid, "path", "", false)
-	node.ShowAttrBool(&grid, "write", false)
 }
 
 var g_whisper_formats = []string{"verbose_json", "json", "text", "srt", "vtt"}

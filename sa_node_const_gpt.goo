@@ -32,6 +32,14 @@ type Switch struct {
 	Changed bool
 }
 
+type DirPath struct {
+	Path   string
+	Write  bool
+}
+type FilePath struct {
+	Path   string
+	Write  bool
+}
 
 type SQL struct {
 	Path string
