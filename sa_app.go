@@ -516,19 +516,17 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 		gr := app.base.node_groups.groups[0]
 		app.drawCreateNodeGroup(OsV2{0, 1}, gr, searches, only_ui, ui)
 
-		if !only_ui {
-			//group: Disk
-			gr = app.base.node_groups.groups[1]
-			p := app.drawCreateNodeGroup(OsV2{1, 1}, gr, searches, only_ui, ui)
+		//group: Disk
+		gr = app.base.node_groups.groups[1]
+		p := app.drawCreateNodeGroup(OsV2{1, 1}, gr, searches, only_ui, ui)
 
-			//group: NN
-			gr = app.base.node_groups.groups[2]
-			p = app.drawCreateNodeGroup(p, gr, searches, only_ui, ui)
+		//group: NN
+		gr = app.base.node_groups.groups[2]
+		p = app.drawCreateNodeGroup(p, gr, searches, only_ui, ui)
 
-			//group: code
-			gr = app.base.node_groups.groups[3]
-			app.drawCreateNodeGroup(p, gr, searches, only_ui, ui)
-		}
+		//group: code
+		gr = app.base.node_groups.groups[3]
+		app.drawCreateNodeGroup(p, gr, searches, only_ui, ui)
 
 		if ui.win.io.keys.tab {
 			ui.edit.uid = nil //non-standard(not save src) end of editbox
