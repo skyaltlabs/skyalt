@@ -23,7 +23,7 @@ import (
 	"strings"
 )
 
-func (ui *Ui) comp_dirPicker(x, y, w, h int, path *string, selectFile bool, dialogName string, enable bool) bool {
+func (ui *Ui) Comp_dirPicker(x, y, w, h int, path *string, selectFile bool, dialogName string, enable bool) bool {
 	origPath := *path
 
 	ui.Div_start(x, y, w, h)
