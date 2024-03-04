@@ -127,7 +127,7 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 				continue //skip files when picking folder
 			}
 
-			if ui.dir.search != "" && !SAApp_IsSearchedName(f.Name(), searches) {
+			if ui.dir.search != "" && !OsIsSearchedName(f.Name(), searches) {
 				continue
 			}
 

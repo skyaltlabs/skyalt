@@ -1043,3 +1043,13 @@ func OsNextPowOf2(n int) int {
 	}
 	return k
 }
+
+func OsIsSearchedName(name string, search []string) bool {
+	name = strings.ToLower(name)
+	for _, se := range search {
+		if !strings.Contains(name, se) {
+			return false //must has all
+		}
+	}
+	return true
+}
