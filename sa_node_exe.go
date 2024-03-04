@@ -30,7 +30,7 @@ func UiButton_Attrs(node *SANode) {
 
 	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
 	node.ShowAttrBool(&grid, "grid_show", true)
-	node.ShowAttrString(&grid, "label", "", node.GetAttrBool("multi_line", false))
+	node.ShowAttrString(&grid, "label", "", false)
 	node.ShowAttrString(&grid, "tooltip", "", false)
 	node.ShowAttrBool(&grid, "enable", true)
 	node.ShowAttrBool(&grid, "clicked", false)
@@ -114,6 +114,66 @@ func UiEditbox_render(node *SANode) {
 	if fnshd {
 		node.Attrs["value"] = value
 		node.Attrs["finished"] = true
+	}
+}
+
+func UiCheckbox_Attrs(node *SANode) {
+	ui := node.app.base.ui
+	ui.Div_colMax(0, 4)
+	ui.Div_colMax(1, 100)
+
+	grid := InitOsV4(0, 0, 1, 1)
+
+	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
+	node.ShowAttrBool(&grid, "grid_show", true)
+	node.ShowAttrBool(&grid, "value", false)
+	node.ShowAttrString(&grid, "label", "", false)
+	node.ShowAttrString(&grid, "tooltip", "", false)
+	node.ShowAttrBool(&grid, "enable", true)
+	node.ShowAttrBool(&grid, "changed", false)
+}
+
+func UiCheckbox_render(node *SANode) {
+	grid := node.GetGrid()
+	value := node.GetAttrBool("value", false)
+	label := node.GetAttrString("label", "")
+	tooltip := node.GetAttrString("tooltip", "")
+	enable := node.GetAttrBool("enable", true)
+	//changed := node.GetAttrBool("changed", false)
+
+	if node.app.base.ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, label, tooltip, enable) {
+		node.Attrs["value"] = value
+		node.Attrs["changed"] = true
+	}
+}
+
+func UiSwitch_Attrs(node *SANode) {
+	ui := node.app.base.ui
+	ui.Div_colMax(0, 4)
+	ui.Div_colMax(1, 100)
+
+	grid := InitOsV4(0, 0, 1, 1)
+
+	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
+	node.ShowAttrBool(&grid, "grid_show", true)
+	node.ShowAttrBool(&grid, "value", false)
+	node.ShowAttrString(&grid, "label", "", false)
+	node.ShowAttrString(&grid, "tooltip", "", false)
+	node.ShowAttrBool(&grid, "enable", true)
+	node.ShowAttrBool(&grid, "changed", false)
+}
+
+func UiSwitch_render(node *SANode) {
+	grid := node.GetGrid()
+	value := node.GetAttrBool("value", false)
+	label := node.GetAttrString("label", "")
+	tooltip := node.GetAttrString("tooltip", "")
+	enable := node.GetAttrBool("enable", true)
+	//changed := node.GetAttrBool("changed", false)
+
+	if node.app.base.ui.Comp_switch(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, label, tooltip, enable) {
+		node.Attrs["value"] = value
+		node.Attrs["changed"] = true
 	}
 }
 

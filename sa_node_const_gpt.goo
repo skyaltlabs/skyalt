@@ -18,6 +18,21 @@ type Button struct {
 	Clicked bool
 }
 
+type Checkbox struct {
+	Value   bool
+	Label   string
+	Enable  bool
+	Changed bool
+}
+
+type Switch struct {
+	Value   bool
+	Label   string
+	Enable  bool
+	Changed bool
+}
+
+
 type SQL struct {
 	Path string
 }

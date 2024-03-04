@@ -134,6 +134,14 @@ func (node *SANode) IsTriggered() bool {
 		return node.GetAttrBool("finished", false)
 	}
 
+	if node.Exe == "checkbox" {
+		return node.GetAttrBool("changed", false)
+	}
+
+	if node.Exe == "switch" {
+		return node.GetAttrBool("changed", false)
+	}
+
 	return false
 }
 
@@ -144,6 +152,14 @@ func (node *SANode) ResetTriggers() {
 
 	if node.Exe == "editbox" {
 		node.Attrs["finished"] = false
+	}
+
+	if node.Exe == "checkbox" {
+		node.Attrs["changed"] = false
+	}
+
+	if node.Exe == "switch" {
+		node.Attrs["changed"] = false
 	}
 }
 
