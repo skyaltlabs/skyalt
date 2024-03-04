@@ -254,9 +254,7 @@ func (win *Win) SaveScreenshot() error {
 
 	//copies pixels
 	gl.ReadPixels(0, 0, int32(screen.Size.X), int32(screen.Size.Y), gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&surface.Pixels()[0])) //int(surface.Pitch) ...
-	if err != nil {
-		return fmt.Errorf("ReadPixels() failed: %w", err)
-	}
+
 	img := image.NewRGBA(image.Rectangle{image.Point{0, 0}, image.Point{int(surface.W), int(surface.H)}})
 	for y := int32(0); y < surface.H; y++ {
 		for x := int32(0); x < surface.W; x++ {
