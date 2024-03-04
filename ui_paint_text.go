@@ -272,7 +272,7 @@ func _UiPaint_CursorLine(text string, lines []int, cursor int) (string, int) {
 	return text[st:en], cursor - st
 }
 
-func _UiPaint_GetLineYCrop(startY int, num_lines int, coord OsV4, crop OsV4, prop WinFontProps) (int, int) {
+func _UiPaint_GetLineYCrop(startY int, num_lines int, crop OsV4, prop WinFontProps) (int, int) {
 
 	sy := (crop.Start.Y - startY) / prop.lineH
 	ey := OsRoundUp(float64(crop.End().Y-startY) / float64(prop.lineH))
@@ -755,7 +755,6 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 	value string, valueOrigEdit string,
 	frontCd OsCd,
 	prop WinFontProps,
-	font_path string,
 	align OsV2,
 	selection, editable, tabIsChar bool,
 	multi_line bool, multi_line_enter_finish bool) bool {
@@ -855,7 +854,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 					curr_sy, curr_ey = curr_ey, curr_sy //swap
 				}
 
-				crop_sy, crop_ey := _UiPaint_GetLineYCrop(startY, len(lines), coord, lv.call.crop, prop) //only rows which are on screen
+				crop_sy, crop_ey := _UiPaint_GetLineYCrop(startY, len(lines), lv.call.crop, prop) //only rows which are on screen
 
 				yst := OsMax(curr_sy, crop_sy)
 				yen := OsMin(curr_ey, crop_ey)
@@ -887,7 +886,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 
 	// draw
 	if multi_line {
-		sy, ey := _UiPaint_GetLineYCrop(startY, len(lines), coord, lv.call.crop, prop) //only rows which are on screen
+		sy, ey := _UiPaint_GetLineYCrop(startY, len(lines), lv.call.crop, prop) //only rows which are on screen
 		for y := sy; y < ey; y++ {
 			st, en := _UiPaint_PosLineRange(lines, y)
 			ui.buff.AddText(value[st:en], prop, coord, frontCd, align, y, len(lines))
