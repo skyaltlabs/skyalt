@@ -1,0 +1,182 @@
+type Text struct {
+	Grid_x  int  `json:"grid_x"`
+	Grid_y  int  `json:"grid_y"`
+	Grid_w  int  `json:"grid_w"`
+	Grid_h  int  `json:"grid_h"`
+	Grid_show  bool  `json:"grid_show"`
+	Label string `json:"label"`
+	Align_h int`json:"align_h"`
+	Align_v int	`json:"align_v"`
+	Multi_line       bool	`json:"multi_line"`
+	Selection        bool	`json:"selection"`
+	Show_border      bool	`json:"show_border"`
+}
+type Number struct {
+	Grid_x  int  `json:"grid_x"`
+	Grid_y  int  `json:"grid_y"`
+	Grid_w  int  `json:"grid_w"`
+	Grid_h  int  `json:"grid_h"`
+	Grid_show  bool  `json:"grid_show"`
+	Value float64 `json:"value"`
+}
+type Editbox struct {
+	Grid_x  int  `json:"grid_x"`
+	Grid_y  int  `json:"grid_y"`
+	Grid_w  int  `json:"grid_w"`
+	Grid_h  int  `json:"grid_h"`
+	Grid_show  bool  `json:"grid_show"`
+	Value    string `json:"value"`
+	Ghost    string `json:"ghost"`
+	Align_h int`json:"align_h"`
+	Align_v int	`json:"align_v"`
+	Enable   bool   `json:"enable"`
+	Multi_line bool  `json:"multi_line"`
+	Multi_line_enter_finish bool `json:"multi_line_enter_finish"`
+	Finished bool   `json:"finished"`
+}
+type Button struct {
+	Grid_x  int  `json:"grid_x"`
+	Grid_y  int  `json:"grid_y"`
+	Grid_w  int  `json:"grid_w"`
+	Grid_h  int  `json:"grid_h"`
+	Grid_show  bool  `json:"grid_show"`
+	Label   string `json:"label"`
+	Tooltip string `json:"tooltip"`
+	Enable  bool   `json:"enable"`
+	Clicked bool   `json:"clicked"`
+}
+
+type SQL struct {
+	Grid_x  int  `json:"grid_x"`
+	Grid_y  int  `json:"grid_y"`
+	Grid_w  int  `json:"grid_w"`
+	Grid_h  int  `json:"grid_h"`
+	Grid_show  bool  `json:"grid_show"`
+	Path   string `json:"path"`
+}
+
+type LLama struct {
+	Node	 string `json:"node"`
+	Prompt   string `json:"prompt"`
+}
+
+func (ll *LLama) Complete(prompt string) (string, error) {
+	ll.Prompt = prompt
+
+	js, err := json.Marshal(ll)
+	if err != nil {
+		return "", fmt.Errorf("Marshal() failed: %w", err)
+	}
+
+	resBody, err := _send("llama", js)
+	return string(resBody), err
+}
+
+type Whisper struct {
+	Node	 string `json:"node"`
+	File_path string  `json:"file_path"`
+	Data     []byte	`json:"data"`
+}
+
+func (w *Whisper) Translate(filePath string) (string, error) {
+	w.File_path = filePath
+
+	//find
+	var err error
+	w.Data, err = os.ReadFile(filePath)
+	if err != nil {
+		return "", err
+	}
+
+	js, err := json.Marshal(w)
+	if err != nil {
+		return "", fmt.Errorf("Marshal() failed: %w", err)
+	}
+
+	resBody, err := _send("whisper", js)
+	return string(resBody), err
+}
+
+type G4F struct {
+	Node	 string `json:"node"`
+	Prompt string `json:"prompt"`
+}
+
+func (gf *G4F) Complete(prompt string) (string, error) {
+	gf.Prompt = prompt
+
+	js, err := json.Marshal(gf)
+	if err != nil {
+		return "", fmt.Errorf("Marshal() failed: %w", err)
+	}
+
+	resBody, err := _send("g4f", js)
+	return string(resBody), err
+}
+
+func _send(url string, js []byte) ([]byte, error) {
+
+	body := bytes.NewReader([]byte(js))
+
+	req, err := http.NewRequest(http.MethodPost, G_SERVER_ADDR+url, body)
+	if err != nil {
+		return nil, fmt.Errorf("NewRequest() failed: %w", err)
+	}
+	req.Header.Add("Content-Type", "application/json")
+
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("Do() failed: %w", err)
+	}
+
+	resBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("ReadAll() failed: %w", err)
+	}
+
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("statusCode != 200, response: %s", resBody)
+	}
+
+	return resBody, nil
+}
+
+var G_SERVER_ADDR = "http://127.0.0.1:8080/"
+
+func main() {
+	if len(os.Args) < 2 {
+		fmt.Println("Missing <port>")
+		return
+	}
+
+	G_PORT, err := strconv.Atoi(os.Args[1])
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	G_SERVER_ADDR = fmt.Sprintf("http://127.0.0.1:%d/", G_PORT)
+
+	fmt.Println("Asking for job . . .")
+	job, err := _send("getjob", []byte("{}"))
+	if err != nil {
+		fmt.Println("_send() failed:", err)
+		return
+	}
+
+	fmt.Println("Running for job . . .")
+	jobBack, err := _callIt(job)
+	if err != nil {
+		jobBack = []byte(err.Error()) //only string, no {}
+	}
+
+	fmt.Println("Sending job . . .")
+	_, err = _send("setresult", jobBack)
+	if err != nil {
+		fmt.Println("_send() failed:", err)
+		return
+	}
+
+	fmt.Println("Done")
+}

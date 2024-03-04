@@ -16,15 +16,32 @@ limitations under the License.
 
 package main
 
+import (
+	"context"
+	"io"
+	"net/http"
+	"strconv"
+	"sync"
+)
+
 type SAServices struct {
+	port   int
+	server *http.Server
+
 	whisper_cpp *SAServiceWhisperCpp
 	llama_cpp   *SAServiceLLamaCpp
 	g4f         *SAServiceG4F
-	python      *SAServicePython
+
+	job      []byte
+	result   []byte
+	resultWg sync.WaitGroup
 }
 
 func NewSAServices() *SAServices {
 	srv := &SAServices{}
+	srv.port = 8080
+
+	srv.Run(srv.port)
 	return srv
 }
 
@@ -38,9 +55,18 @@ func (srv *SAServices) Destroy() {
 	if srv.g4f != nil {
 		srv.g4f.Destroy()
 	}
-	if srv.python != nil {
-		srv.python.Destroy()
-	}
+
+	srv.server.Shutdown(context.Background())
+}
+
+func (srv *SAServices) SetJob(job []byte) {
+	srv.job = job
+	srv.resultWg.Add(1)
+}
+
+func (srv *SAServices) GetResult() []byte {
+	srv.resultWg.Wait()
+	return srv.result
 }
 
 func (srv *SAServices) GetWhisper() *SAServiceWhisperCpp {
@@ -64,13 +90,6 @@ func (srv *SAServices) GetG4F() *SAServiceG4F {
 	return srv.g4f
 }
 
-func (srv *SAServices) GetPython() *SAServicePython {
-	if srv.python == nil {
-		srv.python = NewSAServicePython("http://127.0.0.1", "8092")
-	}
-	return srv.python
-}
-
 func (srv *SAServices) Render() {
 	//dialog layout ...
 	//running on/off
@@ -85,8 +104,87 @@ func (srv *SAServices) Tick() {
 	}
 	if srv.llama_cpp != nil {
 		//...
-	}
-	if srv.python != nil {
-		//...
 	}*/
+}
+
+func (srv *SAServices) handlerGetJob(w http.ResponseWriter, r *http.Request) {
+	_, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(srv.job)
+}
+
+func (srv *SAServices) handlerSetResult(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+
+	srv.result = body
+	srv.resultWg.Done()
+
+	w.Write([]byte("{}"))
+}
+
+func (srv *SAServices) handlerWhisper(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+
+	var res []byte
+	res = body
+	//srv.GetWhisper() ...
+
+	w.Write(res)
+}
+
+func (srv *SAServices) handlerLLama(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+
+	var res []byte
+	res = body
+	//...
+
+	w.Write(res)
+}
+
+func (srv *SAServices) handlerG4F(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+
+	var res []byte
+	res = body
+	//...
+
+	w.Write(res)
+}
+func (srv *SAServices) Run(port int) {
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/getjob", srv.handlerGetJob)
+	mux.HandleFunc("/setresult", srv.handlerSetResult)
+	mux.HandleFunc("/whisper", srv.handlerWhisper)
+	mux.HandleFunc("/llama", srv.handlerLLama)
+	mux.HandleFunc("/g4f", srv.handlerG4F)
+	srv.server = &http.Server{Addr: ":" + strconv.Itoa(port), Handler: mux}
+
+	go func() {
+		err := srv.server.ListenAndServe()
+		if err != nil {
+			return
+		}
+	}()
 }

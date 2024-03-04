@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 )
 
 type SABase struct {
@@ -231,9 +230,9 @@ func (base *SABase) Tick() {
 	if (!OsIsTicksIn(base.last_tick, 5000) && base.ui.win.disk.HasDbFileChanged()) ||
 		base.ui.win.disk.HasDbBeenWritten() {
 
-		for _, a := range base.Apps {
-			a.SetExecute()
-		}
+		//for _, a := range base.Apps {
+		//a.SetExecute()
+		//}
 		base.last_tick = OsTicks()
 	}
 
@@ -245,8 +244,6 @@ func (base *SABase) Render() bool {
 	base.HasApp() //fix range
 	app := base.GetApp()
 
-	//fmt.Println(SAGroups_GenerateDocumentation(app))
-
 	base.ui.renderStart(0, 0, 1, 1)
 
 	ui := base.ui
@@ -256,13 +253,14 @@ func (base *SABase) Render() bool {
 	ui.Div_col(0, icon_rad)
 	ui.Div_colMax(1, 100)
 	if app.IDE {
-		ui.Div_colResize(2, "parameters", 8, false)
+		ui.Div_colResize(2, "graph", 8, false)
 	}
 
 	ui.Div_start(0, 0, 1, 1)
 	base.drawLauncher(app, icon_rad)
 	ui.Div_end()
 
+	//canvas
 	if base.HasApp() {
 		app.rebuildLists() //!!!
 
@@ -287,105 +285,73 @@ func (base *SABase) Render() bool {
 		ui.Div_end()
 	}
 
+	//graph
 	if app.IDE {
 		ui.Div_start(2, 0, 1, 1)
 		{
 			ui.Div_col(0, 4)
 			ui.Div_colMax(0, 100)
-			ui.Div_rowMax(0, 100)
-			if app.ShowCode {
-				ui.Div_col(1, 3)
-				ui.Div_colResize(1, "code", 4, false)
-			}
 
+			ui.Div_row(0, 3)
+			ui.Div_rowResize(0, "attributes", 4, false)
+			ui.Div_rowMax(1, 100)
+
+			//attributes
 			ui.Div_start(0, 0, 1, 1)
+			{
+				selNode := app.root.FindSelected()
+				if selNode != nil {
+					selNode.RenderAttrs()
+				} else {
+					ui.Div_colMax(0, 100)
+					ui.Div_rowMax(0, 100)
+					ui.Comp_text(0, 0, 1, 1, "No node selected", 1)
+				}
+
+			}
+			ui.Div_end()
+
+			//graph layout
+			ui.Div_start(0, 1, 1, 1)
 			{
 				ui.Div_colMax(0, 100)
 				ui.Div_rowMax(0, 100)
 
-				//graph layout
 				if app.Cam_z <= 0 {
 					app.Cam_z = 1
 				}
 
+				pn_x := 1
+				if app.graph.showNodeList {
+					ui.Div_col(1, 3) //min
+					ui.Div_colResize(1, "node_list", 5, false)
+					pn_x = 2
+				}
+
+				//graph
 				ui.Div_start(0, 0, 1, 1)
-				{
-					ui.Div_colMax(0, 100)
-					ui.Div_rowMax(0, 100)
-					pn_x := 1
-					if app.graph.showNodeList {
-						ui.Div_col(1, 3) //min
-						ui.Div_colResize(1, "node_list", 5, false)
-						pn_x = 2
-					}
+				graphCanvas, keyAllow := app.graph.drawGraph(app.root)
+				ui.Div_end()
 
-					//graph
-					ui.Div_start(0, 0, 1, 1)
-					graphCanvas, keyAllow := app.graph.drawGraph(app.root)
-					ui.Div_end()
-
-					//node list
-					if app.graph.showNodeList {
-						ui.Div_start(1, 0, 1, 1)
-						app.graph.drawNodeList(graphCanvas)
-						ui.Div_end()
-					}
-
-					//panel
-					ui.Div_start(pn_x, 0, 1, 1)
-					app.graph.drawPanel(graphCanvas, keyAllow)
+				//node list
+				if app.graph.showNodeList {
+					ui.Div_start(1, 0, 1, 1)
+					app.graph.drawNodeList(graphCanvas)
 					ui.Div_end()
 				}
+
+				//panel
+				ui.Div_start(pn_x, 0, 1, 1)
+				app.graph.drawPanel(graphCanvas, keyAllow)
 				ui.Div_end()
+
 			}
 			ui.Div_end()
-
-			if app.ShowCode {
-				ui.Div_start(1, 0, 1, 1)
-				{
-					ui.Div_colMax(0, 100)
-					ui.Div_rowMax(0, 100)
-					_, active, _, fnshd, _ := ui.Comp_editbox(0, 0, 1, 1, &app.code, Comp_editboxProp().Align(0, 0).MultiLine(true).Ghost("Code"))
-					if fnshd {
-						//convert code -> graph
-						root_backup := app.root
-						app.ImportCode(app.code)
-						app.root.CopyPoses(root_backup) //recover
-					} else if active {
-						//select and zoom node with cursor on
-						code := base.ui.edit.temp
-						st := base.ui.edit.end
-						for st > 0 && (st == 0 || code[st-1] != '\n') {
-							st--
-						}
-						line := code[st:]
-						en := strings.IndexByte(line, '\n')
-						if en >= 0 {
-							line = line[:en]
-						}
-
-						lex, err := ParseLine(line, 0, app.ops_eq)
-						if err == nil && len(lex.subs) > 0 && lex.subs[0].tp == VmLexerWord {
-							nm := lex.subs[0].GetString(line)
-							for _, n := range app.all_nodes {
-								if n.Name == nm {
-									n.SelectOnlyThis()
-									//app.graph.autoZoom(true, graphCanvas, ui)
-									break
-								}
-							}
-						}
-					}
-
-					//icon which opens dialog to generate code(it's added to current one) ................
-				}
-				ui.Div_end()
-			}
 		}
 		ui.Div_end()
 	}
 
-	app.flamingo.Tick()
+	//app.flamingo.Tick()
 
 	app.History(ui)
 
@@ -398,13 +364,6 @@ func (base *SABase) GetApp() *SAApp {
 	app := base.Apps[base.Selected]
 	if app.root == nil {
 		app.root, _ = NewSANodeRoot(app.GetJsonPath(), app) //err ...
-
-		//testing import/export
-		/*if app.Name == "LLM_chat" {
-			code := app.ExportCode()
-			b := NewSAApp("dd", base)
-			b.ImportCode(code)
-		}*/
 	}
 	return app
 }

@@ -39,33 +39,6 @@ type SACanvas struct { // widgets
 	addnode_search string
 }
 
-type SASetAttr struct {
-	node       SANodePath
-	attr       string
-	value      string
-	mapOrArray bool
-	exeIt      bool
-}
-
-func (sa *SASetAttr) Write(root *SANode) bool {
-	if sa.exeIt {
-		return true
-	}
-
-	node := sa.node.FindPath(root)
-	if node == nil {
-		return false
-	}
-
-	attr := node.findAttr(sa.attr)
-	if attr == nil {
-		return false
-	}
-
-	attr.SetExpString(sa.value, sa.mapOrArray)
-	return true
-}
-
 type SAApp struct {
 	base *SABase
 
@@ -75,48 +48,24 @@ type SAApp struct {
 	Cam_x, Cam_y, Cam_z float64 `json:",omitempty"`
 	EnableExecution     bool
 
-	ShowCode bool
-
-	historyIt bool
-	exeIt     bool
-	root      *SANode
+	root *SANode
 
 	history     [][]byte //JSONs
 	history_pos int
 
-	setAttrs []SASetAttr
-	exeNode  *SANode //copy, not pointer
-	exeState int     //0=SANode_STATE_WAITING, 1=SANode_STATE_RUNNING, 2=SANode_STATE_DONE
-
 	graph  *SAGraph
 	canvas SACanvas
-
-	ops    *VmOps
-	ops_eq *VmOps
-
-	apis  *VmApis
-	prior int
 
 	iconPath string
 
 	mic_nodes []SANodePath
 
-	code string
-
 	all_nodes      []*SANode
 	selected_nodes []*SANode
-
-	flamingo *SAFlamingo
 }
 
 func (a *SAApp) init(base *SABase) {
 	a.base = base
-
-	a.ops = NewVmOps(false)
-	a.ops_eq = NewVmOps(true)
-
-	a.apis = NewVmApis()
-	a.prior = 100
 
 	a.graph = NewSAGraph(a)
 
@@ -124,8 +73,6 @@ func (a *SAApp) init(base *SABase) {
 	if OsFileExists(ic) {
 		a.iconPath = "file:" + ic
 	}
-
-	a.flamingo = NewSAFlamingo(a)
 }
 
 func NewSAApp(name string, base *SABase) *SAApp {
@@ -138,22 +85,6 @@ func NewSAApp(name string, base *SABase) *SAApp {
 	return app
 }
 func (app *SAApp) Destroy() {
-}
-
-func (app *SAApp) AddSetAttr(attr *SANodeAttr, value string, mapOrArray bool, exeIt bool) {
-
-	if len(app.setAttrs) > 0 && exeIt && app.setAttrs[len(app.setAttrs)-1].exeIt {
-		return
-	}
-
-	var node SANodePath
-	var name string
-	if attr != nil {
-		node = NewSANodePath(attr.node)
-		name = attr.Name
-	}
-
-	app.setAttrs = append(app.setAttrs, SASetAttr{node: node, attr: name, value: value, mapOrArray: mapOrArray, exeIt: exeIt})
 }
 
 func SAApp_GetNewFolderPath(name string) string {
@@ -223,72 +154,15 @@ func (app *SAApp) rebuildLists() {
 
 func (app *SAApp) Tick() {
 
-	switch app.exeState {
-	case SANode_STATE_WAITING:
-
-		if app.EnableExecution {
-			//save changes
-			n := 0
-			for _, sa := range app.setAttrs {
-				sa.Write(app.root) //if different, app.exeIt = true
-
-				n++
-				if sa.exeIt {
-					break
-				}
-			}
-
-			if n > 0 {
-				app.setAttrs = app.setAttrs[n:]
-			}
-
-			if n == 0 && app.historyIt && !app.base.ui.touch.IsAnyActive() {
-				app.historyIt = false
-				app.addHistory()
-			}
-
-			if app.exeIt {
-				app.exeIt = false
-				app.historyIt = true
-
-				var err error
-				app.exeNode, err = app.root.Copy()
-				if err != nil {
-					fmt.Println("Error Copy()", err)
-					return
-				}
-
-				app.code = app.ExportCode()
-
-				app.exeState = SANode_STATE_RUNNING
-				go app.executeThread()
-			}
-
+	for _, nd := range app.all_nodes {
+		if nd.Code.IsTriggered() {
+			nd.Code.Execute()
 		}
-
-	case SANode_STATE_RUNNING:
-		//nothing ...
-
-	case SANode_STATE_DONE:
-		//copy result back
-		app.exeNode.CopyPoses(app.root)
-		app.root = app.exeNode
-		app.exeNode = nil
-
-		app.exeState = SANode_STATE_WAITING
-
-		app.base.ui.win.SetRedraw()
 	}
-}
 
-func (app *SAApp) executeThread() {
-
-	app.exeNode.PrepareExe() //.state = WAITING(to be executed)
-	app.exeNode.ParseExpresions()
-	app.exeNode.CheckForLoops()
-
-	app.exeNode.ExecuteSubs()
-	app.exeState = SANode_STATE_DONE
+	for _, nd := range app.all_nodes {
+		nd.ResetTriggers()
+	}
 }
 
 func (app *SAApp) RenderApp(ide bool) {
@@ -337,6 +211,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	//cols header
 	ui.Div_start(1, 0, 1, 1)
 	{
+		colDiv = ui.GetCall().call
 		ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
 		ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
 
@@ -552,7 +427,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	}
 
 	if changed {
-		app.SetExecute()
+		//app.SetExecute()
 	}
 }
 
@@ -590,84 +465,69 @@ func SAApp_IsSearchedName(name string, search []string) bool {
 	return true
 }
 
+func (app *SAApp) drawCreateNodeGroup(start OsV2, gr *SAGroup, searches []string, only_ui bool, ui *Ui) OsV2 {
+	keys := &ui.win.io.keys
+
+	ui.Div_start(start.X, start.Y, 1, 1+len(gr.nodes))
+	{
+		ui.Div_colMax(0, 100)
+
+		ui.Comp_text(0, 0, 1, 1, gr.name, 1)
+
+		y := 1
+		for _, nd := range gr.nodes {
+			if !only_ui || nd.render != nil {
+				if app.canvas.addnode_search == "" || SAApp_IsSearchedName(nd.name, searches) {
+					if keys.enter || ui.Comp_buttonMenuIcon(0, y, 1, 1, nd.name, gr.icon, 0.2, "", true, false) > 0 {
+
+						//add new node
+						parent := app.canvas.addParent.FindPath(app.root)
+						nw := parent.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name, nd.name)
+						nw.SelectOnlyThis()
+						ui.CloseAll()
+						keys.enter = false
+					}
+					y++
+				}
+			}
+		}
+
+		pl := ui.win.io.GetPalette()
+		ui.Paint_rect(0, 0, 1, 1, 0.03, pl.GetGrey(0.2), 0.03)
+	}
+	ui.Div_end()
+	start.Y += 1 + len(gr.nodes)
+	return start
+}
+
 func (app *SAApp) drawCreateNode(ui *Ui) {
 
-	only_ui_group := ui.Dialog_start("nodes_list_ui")
-	if only_ui_group || ui.Dialog_start("nodes_list") {
+	only_ui := ui.Dialog_start("nodes_list_ui")
+	if only_ui || ui.Dialog_start("nodes_list") {
 		ui.Div_colMax(0, 5)
+		ui.Div_colMax(1, 5)
 
-		y := 0
-		ui.Comp_editbox(0, 0, 1, 1, &app.canvas.addnode_search, Comp_editboxProp().TempToValue(true).Ghost(ui.trns.SEARCH).Highlight(app.canvas.addnode_search != ""))
-		y++
+		ui.Comp_editbox(0, 0, 2, 1, &app.canvas.addnode_search, Comp_editboxProp().TempToValue(true).Ghost(ui.trns.SEARCH).Highlight(app.canvas.addnode_search != ""))
 
-		if app.canvas.addnode_search != "" {
-			//search
-			keys := &ui.win.io.keys
-			searches := strings.Split(strings.ToLower(app.canvas.addnode_search), " ")
-			for _, gr := range app.base.node_groups.groups {
+		//search
+		searches := strings.Split(strings.ToLower(app.canvas.addnode_search), " ")
 
-				if only_ui_group && gr == app.base.node_groups.ui {
-					continue
-				}
+		//group: UI
+		gr := app.base.node_groups.groups[0]
+		app.drawCreateNodeGroup(OsV2{0, 1}, gr, searches, only_ui, ui)
 
-				for _, nd := range gr.nodes {
-					if app.canvas.addnode_search == "" || SAApp_IsSearchedName(nd.name, searches) {
-						if keys.enter || ui.Comp_buttonMenuIcon(0, y, 1, 1, nd.name, gr.icon, 0.2, "", true, false) > 0 {
-							//add new node
-							parent := app.canvas.addParent.FindPath(app.root)
-							nw := parent.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name, nd.name)
-							nw.SelectOnlyThis()
+		if !only_ui {
+			//group: Disk
+			gr = app.base.node_groups.groups[1]
+			p := app.drawCreateNodeGroup(OsV2{1, 1}, gr, searches, only_ui, ui)
 
-							ui.Dialog_close()
-							keys.enter = false
-						}
-						y++
-					}
-				}
-			}
-		} else {
+			//group: NN
+			gr = app.base.node_groups.groups[2]
+			p = app.drawCreateNodeGroup(p, gr, searches, only_ui, ui)
 
-			if only_ui_group {
-				gr := app.base.node_groups.ui
-				for _, nd := range gr.nodes {
-					if ui.Comp_buttonMenuIcon(0, y, 1, 1, nd.name, gr.icon, 0.2, "", true, false) > 0 {
-						//add new node
-						nw := app.root.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name, nd.name)
-						nw.SelectOnlyThis()
-
-						ui.CloseAll()
-					}
-					y++
-				}
-
-			} else {
-				for _, gr := range app.base.node_groups.groups {
-					//folders
-					dnm := "node_group_" + gr.name
-					if ui.Comp_buttonMenuIcon(0, y, 1, 1, gr.name, gr.icon, 0.2, "", true, false) > 0 {
-						ui.Dialog_open(dnm, 1)
-					}
-					//ui.Comp_text(1, y, 1, 1, "►", 1)
-
-					if ui.Dialog_start(dnm) {
-						ui.Div_colMax(0, 5)
-
-						for i, nd := range gr.nodes {
-							if ui.Comp_buttonMenuIcon(0, i, 1, 1, nd.name, gr.icon, 0.2, "", true, false) > 0 {
-								//add new node
-								nw := app.root.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name, nd.name)
-								nw.SelectOnlyThis()
-
-								ui.CloseAll()
-							}
-						}
-
-						ui.Dialog_end()
-					}
-
-					y++
-				}
-			}
+			//group: code
+			gr = app.base.node_groups.groups[3]
+			app.drawCreateNodeGroup(p, gr, searches, only_ui, ui)
 		}
 
 		if ui.win.io.keys.tab {
@@ -800,7 +660,7 @@ func (app *SAApp) recoverHistory() {
 	dst.updateLinks(nil, app)
 	app.root = dst
 
-	app.SetExecute()
+	//app.SetExecute()
 }
 
 func (app *SAApp) canHistoryBack() bool {
@@ -830,165 +690,6 @@ func (app *SAApp) stepHistoryForward() bool {
 	return true
 }
 
-func (app *SAApp) SetExecute() {
-	app.exeIt = true
-}
-
 func SAApp_getYellow() OsCd {
 	return OsCd{204, 204, 0, 255} //...
-}
-
-type SALine struct {
-	line string
-	subs []*SALine
-}
-
-func (node *SANode) _importCode(line *SALine) {
-
-	for i, ln := range line.subs {
-		if ln.line == "" {
-			continue //skip empty
-		}
-
-		lex, err := ParseLine(ln.line, 0, node.app.ops_eq)
-		if err != nil {
-			fmt.Printf("Line(%d: %s) has parsing error: %v\n", i, ln, err)
-			continue
-		}
-
-		if len(lex.subs) >= 3 &&
-			lex.subs[0].tp == VmLexerWord &&
-			lex.subs[1].tp == VmLexerOp &&
-			lex.subs[1].GetString(ln.line) == "=" &&
-			lex.subs[2].tp == VmLexerWord &&
-			lex.subs[3].tp == VmLexerBracketRound {
-
-			nd := node.AddNode(OsV4{}, OsV2f{}, lex.subs[0].GetString(ln.line), lex.subs[2].GetString(ln.line)) //grid ... pos ...
-
-			//parameters
-			prms := lex.subs[3]
-			prm_i := 0
-			for {
-				prm := prms.ExtractParam(prm_i)
-				if prm == nil {
-					break
-				}
-
-				prm_n := len(prm.subs)
-				if prm_n >= 3 && prm.subs[0].tp == VmLexerWord && prm.subs[1].tp == VmLexerDiv {
-					key := prm.Extract(0, 1).GetString(ln.line)
-					value := prm.Extract(2, -1).GetString(ln.line)
-
-					attr := nd.findAttr(key)
-					if attr == nil {
-						attr = nd.AddAttr(key)
-					}
-					attr.Value = value
-				} else {
-					fmt.Printf("Line(%d: %s) has param(%d) error\n", i, ln, prm_i)
-				}
-
-				prm_i++
-			}
-
-			//subs
-			nd._importCode(ln)
-		} else {
-			fmt.Printf("Line(%d: %s) has base error\n", i, ln)
-		}
-	}
-}
-
-func _SALine_countTabs(line string) int {
-	tabs := 0
-	for _, ch := range line {
-		if ch == '\t' {
-			tabs++
-		} else {
-			break
-		}
-	}
-	return tabs
-
-}
-
-func InitSALine(code string) *SALine {
-	root_ln := &SALine{}
-
-	var list []*SALine
-	list = append(list, root_ln) //keep depth
-	code_lines := strings.Split(code, "\n")
-	for i := 0; i < len(code_lines); i++ {
-
-		line := code_lines[i]
-
-		tabs := _SALine_countTabs(line)
-		line = line[tabs:] //cut
-
-		depth := len(list) - 1
-		if tabs == depth {
-			list[depth].subs = append(list[depth].subs, &SALine{line: line})
-		} else if tabs < depth {
-			list = list[:tabs+1]
-			i-- //do the line again
-		} else if tabs == depth+1 {
-
-			if len(list[depth].subs) > 0 {
-				parent := list[depth].subs[len(list[depth].subs)-1]
-				//go deep
-				list = append(list, parent)
-				i-- //do the line again
-			} else {
-				fmt.Printf("Error on line(%d): First line must be 0 tabs\n", i)
-			}
-		} else if tabs > depth+1 {
-			fmt.Printf("Error on line(%d): Too many tabs\n", i)
-		}
-	}
-
-	return root_ln
-}
-
-func (app *SAApp) ImportCode(code string) {
-	ln := InitSALine(code)
-
-	app.root, _ = NewSANodeRoot("", app)
-	app.root._importCode(ln)
-}
-
-func (node *SANode) _exportCode(depth int) string {
-	tabs := ""
-	for i := 0; i < depth; i++ {
-		tabs += "\t"
-	}
-
-	str := ""
-	for _, nd := range node.Subs {
-		//params
-		params := ""
-		for _, attr := range nd.Attrs {
-			if !attr.IsOutput() {
-				if attr.Value != attr.defaultValue {
-					params += fmt.Sprintf("%s: %s, ", attr.Name, OsTrnString(attr.Value == "", `""`, attr.Value))
-				}
-			}
-		}
-		params, _ = strings.CutSuffix(params, ", ")
-
-		//line
-		str += fmt.Sprintf("%s%s = %s(%s)\n", tabs, nd.Name, nd.Exe, params)
-
-		//subs
-		if len(nd.Subs) > 0 {
-			str += nd._exportCode(depth + 1)
-		}
-	}
-
-	return str
-}
-
-func (app *SAApp) ExportCode() string {
-	str := app.root._exportCode(0)
-	str, _ = strings.CutSuffix(str, "\n")
-	return str
 }

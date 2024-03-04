@@ -17,14 +17,13 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
 	"strings"
 )
 
 type SAGroupNode struct {
 	name   string
-	fn     func(node *SANode) bool
-	render func(node *SANode, renderIt bool)
+	render func(node *SANode)
+	attrs  func(node *SANode)
 }
 
 type SAGroup struct {
@@ -44,7 +43,6 @@ func (gr *SAGroup) Find(name string) *SAGroupNode {
 
 type SAGroups struct {
 	groups []*SAGroup
-	ui     *SAGroup
 }
 
 func InitSAGroups() SAGroups {
@@ -52,15 +50,13 @@ func InitSAGroups() SAGroups {
 
 	path := "file:apps/base/resources/"
 
-	grs.ui = &SAGroup{name: "UI", icon: InitWinMedia_url(path + "node_ui.png"), nodes: []*SAGroupNode{
-		{name: "layout", render: SAExe_Render_Layout},
-		{name: "dialog", render: SAExe_Render_Dialog},
-		{name: "button", render: SAExe_Render_Button},
-		{name: "text", render: SAExe_Render_Text},
-		{name: "checkbox", render: SAExe_Render_Checkbox},
+	grs.groups = append(grs.groups, &SAGroup{name: "UI", icon: InitWinMedia_url(path + "node_ui.png"), nodes: []*SAGroupNode{
+		{name: "button", render: UiButton_render, attrs: UiButton_Attrs},
+		{name: "text", render: UiText_render, attrs: UiText_Attrs},
+		{name: "editbox", render: UiEditbox_render, attrs: UiEditbox_Attrs},
+		/*{name: "checkbox", render: SAExe_Render_Checkbox},
 		{name: "switch", render: SAExe_Render_Switch},
 		{name: "slider", render: SAExe_Render_Slider},
-		{name: "editbox", render: SAExe_Render_Editbox},
 		{name: "divider", render: SAExe_Render_Divider},
 		{name: "combo", render: SAExe_Render_Combo},
 		{name: "color_palette", render: SAExe_Render_ColorPalette},
@@ -75,95 +71,46 @@ func InitSAGroups() SAGroups {
 		{name: "list", render: SAExe_Render_List},
 		{name: "table", render: SAExe_Render_Table},
 		{name: "microphone", render: SAExe_Render_Microphone},
-	}}
-	grs.groups = append(grs.groups, grs.ui)
-
-	grs.groups = append(grs.groups, &SAGroup{name: "Variables", icon: InitWinMedia_url(path + "node_vars.png"), nodes: []*SAGroupNode{
-		{name: "vars", fn: SAExe_Vars},
-		{name: "if", fn: SAExe_If},
-		{name: "for", fn: SAExe_For},
-		{name: "setter", fn: SAExe_Setter},
+		{name: "layout", render: SAExe_Render_Layout},
+		{name: "dialog", render: SAExe_Render_Dialog},*/
 	}})
 
-	grs.groups = append(grs.groups, &SAGroup{name: "File", icon: InitWinMedia_url(path + "node_file.png"), nodes: []*SAGroupNode{
-		{name: "read_dir", fn: SAExe_File_dir},
+	grs.groups = append(grs.groups, &SAGroup{name: "Disk access", icon: InitWinMedia_url(path + "node_file.png"), nodes: []*SAGroupNode{
+		{name: "disk_dir", attrs: UiDiskDir_Attrs},
+		/*{name: "sqlite", fn: SAExe_File_sqlite},
 		{name: "read_file", fn: SAExe_File_read},
-		{name: "write_file", fn: SAExe_File_write},
-	}})
-	grs.groups = append(grs.groups, &SAGroup{name: "Convert", icon: InitWinMedia_url(path + "node_convert.png"), nodes: []*SAGroupNode{
-		{name: "csv_to_json", fn: SAExe_Convert_CsvToJson},
-		{name: "gpx_to_json", fn: SAExe_Convert_GpxToJson},
-	}})
-	grs.groups = append(grs.groups, &SAGroup{name: "SQLite", icon: InitWinMedia_url(path + "node_db.png"), nodes: []*SAGroupNode{
-		{name: "sqlite_info", fn: SAExe_Sqlite_info},
-		{name: "sqlite_select", fn: SAExe_Sqlite_select},
-		{name: "sqlite_insert", fn: SAExe_Sqlite_insert},
-		//"sqlite_update", "sqlite_delete", "sqlite_execute" ........
+		{name: "write_file", fn: SAExe_File_write},*/
 	}})
 
 	grs.groups = append(grs.groups, &SAGroup{name: "Neural networks", icon: InitWinMedia_url(path + "node_nn.png"), nodes: []*SAGroupNode{
-		{name: "nn_whisper_cpp", fn: SAExe_NN_whisper_cpp},
-		{name: "nn_llama_cpp", fn: SAExe_NN_llama_cpp},
-		{name: "nn_g4f", fn: SAExe_nn_g4f},
-		{name: "nn_whisper_cpp_downloader", fn: SAExe_NN_whisper_cpp_downloader},
-		{name: "nn_llama_cpp_downloader", fn: SAExe_NN_llama_cpp_downloader},
+		{name: "nn_whisper_cpp", attrs: UiWhisperCpp_Attrs},
+		{name: "nn_llama_cpp", attrs: UiLLamaCpp_Attrs},
+		{name: "nn_g4f", attrs: UiG4F_Attrs},
 	}})
 
 	grs.groups = append(grs.groups, &SAGroup{name: "Coding", icon: InitWinMedia_url(path + "node_code.png"), nodes: []*SAGroupNode{
-		{name: "code_python", fn: SAExe_Code_python},
+		{name: "code_go", attrs: UiCodeGo_Attrs},
+		//{name: "code_python", fn: SAExe_Code_python},
 	}})
 
 	return grs
 }
 
-func SAGroups_GenerateDocumentation(app *SAApp) string {
-	str := ""
-
-	grs := InitSAGroups()
-	for _, gr := range grs.groups {
-
-		if gr.name == "Variables" {
-			continue //skip
-		}
-
-		for _, gnd := range gr.nodes {
-
-			node := NewSANode(app, nil, "", gnd.name, OsV4{}, OsV2f{}) //has Execute() inside
-			params := ""
-			for _, attr := range node.Attrs {
-				val := attr.Value
-				if val == "" {
-					val = "\"\""
-				}
-				params += fmt.Sprintf("%s: %s, ", attr.Name, val)
-			}
-			params, _ = strings.CutSuffix(params, ", ")
-
-			str += fmt.Sprintf("%s(%s)\n", gnd.name, params)
-		}
-	}
-	str, _ = strings.CutSuffix(str, "\n")
-
-	return str
-}
-
 func SAGroups_HasNodeSub(node string) bool {
-	return strings.EqualFold(node, "layout") || strings.EqualFold(node, "dialog") || strings.EqualFold(node, "for") || strings.EqualFold(node, "if")
-}
-
-func SAGroups_IsNodeIf(node string) bool {
-	return strings.EqualFold(node, "if")
-}
-func SAGroups_IsNodeFor(node string) bool {
-	return strings.EqualFold(node, "for")
-}
-
-func SAGroups_IsNodeSetter(node string) bool {
-	return strings.EqualFold(node, "setter")
+	return strings.EqualFold(node, "layout") || strings.EqualFold(node, "dialog") // || strings.EqualFold(node, "for") || strings.EqualFold(node, "if")
 }
 
 func (grs *SAGroups) IsUI(node string) bool {
-	return grs.ui.Find(node) != nil
+	gr := grs.FindNode(node)
+	return gr != nil && gr.render != nil
+}
+
+func (grs *SAGroups) IsTrigger(node string) bool {
+	return strings.EqualFold(node, "button") || strings.EqualFold(node, "editbox")
+}
+
+func (grs *SAGroups) IsCode(node string) bool {
+	return strings.EqualFold(node, "code_go") || strings.EqualFold(node, "code_python")
 }
 
 func (grs *SAGroups) FindNode(node string) *SAGroupNode {

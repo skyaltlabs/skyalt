@@ -119,24 +119,24 @@ func (wh *SAServiceG4F) addCache(propsHash OsHash, value string) {
 	wh.cache[propsHash.Hex()] = value
 }
 
-func (wh *SAServiceG4F) Complete(props *SAServiceG4FProps) (string, bool, error) {
+func (wh *SAServiceG4F) Complete(props *SAServiceG4FProps) (string, error) {
 	//find
 	propsHash, err := props.Hash()
 	if err != nil {
-		return "", false, fmt.Errorf("Hash() failed: %w", err)
+		return "", fmt.Errorf("Hash() failed: %w", err)
 	}
 	str, found := wh.FindCache(propsHash)
 	if found {
-		return "", true, nil
+		return str, nil
 	}
 
 	str, err = wh.complete(props)
 	if err != nil {
-		return "", false, fmt.Errorf("complete() failed: %w", err)
+		return "", fmt.Errorf("complete() failed: %w", err)
 	}
 
 	wh.addCache(propsHash, str)
-	return str, true, nil
+	return str, nil
 }
 
 func (wh *SAServiceG4F) complete(props *SAServiceG4FProps) (string, error) {

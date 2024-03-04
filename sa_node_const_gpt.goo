@@ -1,0 +1,47 @@
+type Text struct {
+	Label string
+}
+
+type Number struct {
+	Value float64
+}
+
+type Editbox struct {
+	Value    string
+	Enable   bool
+	Finished bool
+}
+
+type Button struct {
+	Label   string
+	Enable  bool
+	Clicked bool
+}
+
+type SQL struct {
+	Path string
+}
+
+type LLama struct {
+	Model string
+}
+func (ll *LLama) Complete(prompt string) (string, error) {
+	//TBD
+	return anwer
+}
+
+type Whisper struct {
+	Model    string
+}
+func (w *Whisper) Translate(audioFilePath string) (string, error) {
+	//TBD
+	return text
+}
+
+type G4F struct {
+	Model string
+}
+func (g4f *G4F) Complete(prompt string) (string, error) {
+	//TBD
+	return anwer
+}

@@ -3,6 +3,30 @@ import sys, traceback
 import json
 
 
+class Text: #render text on screen
+	def __init__(self):
+		self.class_name = "Text"
+		self.grid = [0, 0, 1, 1]	#coordinates on screen
+		self.label = "example text"
+
+class Editbox: #render editbox on screen
+	def __init__(self):
+		self.class_name = "Editbox"
+		self.grid = [0, 0, 1, 1]	#coordinates on screen
+		self.enable = True
+		self.value = "example text"
+		self.empty = 0
+		self.finished = 0
+
+class Button:
+	def __init__(self):
+		self.class_name = "Button"
+		self.grid = [0, 0, 1, 1]	#coordinates on screen
+		self.enable = True
+		self.label = "Click me!"
+		self.clicked = False
+
+
 class MyHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])
@@ -12,27 +36,36 @@ class MyHandler(BaseHTTPRequestHandler):
         #print(f"Received JSON: {received_json}")
 
         code = received_json['code']
-        attrs = received_json['attrs']
         errStr = ""
-          
-        try:
-            exec(code, {'json': json}, attrs)
-        except SyntaxError as err:
-            error_class = err.__class__.__name__
-            detail = err.args[0]
-            line_number = err.lineno
-            errStr = "%s at line %d: %s" % (error_class, line_number, detail)
-            print(err)
-        except Exception as err:
-            error_class = err.__class__.__name__
-            detail = err.args[0]
-            cl, exc, tb = sys.exc_info()
-            line_number = traceback.extract_tb(tb)[-1][1]
-            errStr = "%s at line %d: %s" % (error_class, line_number, detail)
-            print(err)
+
+        resValues = {} 
+        if code != "":          
+            try:
+                attrs = {}
+                exec(code, {'Text': Text, 'Button': Button}, attrs)
+            except SyntaxError as err:
+                error_class = err.__class__.__name__
+                detail = err.args[0]
+                line_number = err.lineno
+                errStr = "%s at line %d: %s" % (error_class, line_number, detail)
+                print(err)
+            except Exception as err:
+                error_class = err.__class__.__name__
+                detail = err.args[0]
+                cl, exc, tb = sys.exc_info()
+                line_number = traceback.extract_tb(tb)[-1][1]
+                errStr = "%s at line %d: %s" % (error_class, line_number, detail)
+                print(err)
+
+
+            for key, v in attrs["sa"].__dict__.items():
+                if hasattr(v, "__dict__"):
+                    resValues[key] = v.__dict__
+                else:
+                    resValues[key] = v
 
         res = {}
-        res['attrs'] = attrs
+        res['attrs'] = resValues
         res['err'] = errStr
         js = json.dumps(res)
 

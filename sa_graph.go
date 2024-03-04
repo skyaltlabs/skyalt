@@ -17,8 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
-	"math/rand"
 	"strings"
 )
 
@@ -32,8 +30,8 @@ type SAGraph struct {
 	touch_start        OsV2
 	node_move_selected SANodePath
 
-	connect_in  *SANodeAttr
-	connect_out *SANodeAttr
+	connect_in  *SANode
+	connect_out *SANode
 
 	showNodeList          bool
 	showNodeList_justOpen bool
@@ -52,7 +50,7 @@ func (gr *SAGraph) isConnecting() bool {
 
 func (gr *SAGraph) resetConnect(tryResetIn bool) {
 	if tryResetIn && gr.connect_in != nil {
-		gr.connect_in.setValue(gr.connect_in.defaultValue)
+		gr.connect_in.Code.Triggers = nil
 	}
 
 	gr.connect_in = nil
@@ -61,16 +59,16 @@ func (gr *SAGraph) resetConnect(tryResetIn bool) {
 
 func (gr *SAGraph) tryConnect() {
 	if gr.connect_out != nil && gr.connect_in != nil {
-		gr.connect_in.setValue(fmt.Sprintf("%s.%s", gr.connect_out.node.Name, gr.connect_out.Name))
+		gr.connect_in.Code.addTrigger(gr.connect_out.Name)
 		gr.resetConnect(false)
 	}
 }
 
-func (gr *SAGraph) SetConnectIn(attr *SANodeAttr) {
+func (gr *SAGraph) SetConnectIn(attr *SANode) {
 	gr.connect_in = attr
 	gr.tryConnect()
 }
-func (gr *SAGraph) SetConnectOut(attr *SANodeAttr) {
+func (gr *SAGraph) SetConnectOut(attr *SANode) {
 	gr.connect_out = attr
 	gr.tryConnect()
 }
@@ -159,146 +157,6 @@ func _SAGraph_drawConnectionH(start OsV2, end OsV2, cellr float32, ui *Ui, dash 
 	ui.buff.AddPoly(end.Add(OsV2{0, int(-t / 2)}), []OsV2f{{0, 0}, {-t, -t / 2}, {-t, t / 2}}, cd, 0)
 }
 
-func _reorder_layer(nodes_layer []*SANode, max_width int) []float32 {
-
-	best_poses := make([]float32, len(nodes_layer))
-	best_score := float32(-1)
-
-	ids := make([]int, max_width)
-	for i := range ids {
-		ids[i] = i
-	}
-
-	for ii := 0; ii < 1000; ii++ {
-		//prepare random position
-		for s := 0; s < len(ids); s++ {
-			d := rand.Int() % len(ids)
-			ids[s], ids[d] = ids[d], ids[s] //swap
-		}
-
-		//set random positions
-		for i, n := range nodes_layer {
-			n.Pos.Y = float32(ids[i])
-		}
-
-		//get score
-		score := float32(0)
-		for _, n := range nodes_layer {
-			score += n.GetDependDistance()
-		}
-
-		//update best
-		if best_score < 0 || score < best_score {
-			p := 0
-			for _, n := range nodes_layer {
-				best_poses[p] = n.Pos.Y
-				p++
-			}
-
-			best_score = score
-			if score == 0 {
-				break //1st layer
-			}
-		}
-	}
-
-	//set nodes with best_poses
-	for i, n := range nodes_layer {
-		n.Pos.Y = float32(best_poses[i])
-	}
-
-	return best_poses
-}
-
-func (gr *SAGraph) reorder(onlySelected bool) {
-	x_jump := float32(8)
-	y_jump := float32(4)
-
-	//list
-	nodes := gr.app.all_nodes
-	if onlySelected {
-		nodes = gr.app.selected_nodes
-	}
-
-	//vertical
-	{
-		//reset
-		for _, n := range nodes {
-			n.sort_depth = 0
-		}
-		//update depth
-		for _, n := range nodes {
-			n.UpdateDepth(n)
-		}
-		//set posX
-		for _, n := range nodes {
-			n.Pos.X = float32(n.sort_depth)
-		}
-	}
-	//horizontal
-	{
-		//get num layers
-		num_depth := 0
-		for _, n := range nodes {
-			num_depth = OsMax(num_depth, n.sort_depth+1)
-		}
-
-		max_width := 0
-		for depth := 0; depth < num_depth; depth++ {
-			width := 0
-			for _, n := range nodes {
-				if n.sort_depth == depth {
-					width++
-				}
-			}
-			if width > max_width {
-				max_width = width
-			}
-		}
-
-		var best_poses [][]float32
-		best_score := float32(-1)
-		for i := 0; i < 100; i++ {
-
-			poses := make([][]float32, num_depth)
-
-			for depth := 0; depth < num_depth; depth++ {
-
-				var nodes_layer []*SANode
-				for _, n := range nodes {
-					if n.sort_depth == depth {
-						nodes_layer = append(nodes_layer, n)
-					}
-				}
-
-				poses[depth] = _reorder_layer(nodes_layer, max_width)
-			}
-
-			score := float32(0)
-			for _, n := range nodes {
-				score += n.GetDependDistance()
-			}
-
-			if best_score < 0 || score < best_score {
-				best_poses = poses
-				best_score = score
-			}
-		}
-
-		//set final x poses
-		for depth := 0; depth < num_depth; depth++ {
-			p := 0
-			for _, n := range nodes {
-				if n.sort_depth == depth {
-					n.Pos.X *= x_jump
-					n.Pos.Y = best_poses[depth][p] * y_jump
-					p++
-				}
-			}
-		}
-	}
-}
-
 func (gr *SAGraph) autoZoom(onlySelected bool, canvas OsV4) {
 	//zoom to all
 	first := true
@@ -356,73 +214,49 @@ func (gr *SAGraph) autoZoom(onlySelected bool, canvas OsV4) {
 	}
 }
 
-func (attr *SANodeAttr) getConnectionPosOut(canvas OsV4) OsV2 {
-	ui := attr.node.app.base.ui
-	cellr := attr.node.app.root.cellZoom(ui)
-
-	coord, selCoord, _ := attr.node.nodeToPixelsCoord(canvas)
-	coord.Start.X = selCoord.Start.X //only x
-	coord.Size.X = selCoord.Size.X   //only x
-
-	var pos OsV2
-	pos.X = coord.End().X
-	pos.Y += coord.Start.Y + int(cellr*(float32(attr.node.VisiblePos(attr))+0.5))
-
-	return pos
-}
-
-func (attr *SANodeAttr) getConnectionPosIn(canvas OsV4) OsV2 {
-	ui := attr.node.app.base.ui
-	cellr := attr.node.app.root.cellZoom(ui)
-
-	coord, selCoord, _ := attr.node.nodeToPixelsCoord(canvas)
-	coord.Start.X = selCoord.Start.X //only x
-	coord.Size.X = selCoord.Size.X   //only x
-
-	var pos OsV2
-	pos.X = coord.Start.X
-	pos.Y += coord.Start.Y + int(cellr*(float32(attr.node.VisiblePos(attr))+0.5))
-
-	return pos
-}
-
 func (gr *SAGraph) drawConnections() {
 
 	ui := gr.app.base.ui
 	lv := ui.GetCall()
 	cellr := gr.app.root.cellZoom(ui)
 
-	for _, node := range gr.app.all_nodes {
+	for _, out := range gr.app.all_nodes {
 
-		//attributtes connection
-		for _, in := range node.Attrs {
-			for _, out := range in.depends {
-				if out.node == node {
-					continue
-				}
-
-				outPos := out.getConnectionPosOut(lv.call.canvas)
-				inPos := in.getConnectionPosIn(lv.call.canvas)
-
-				_SAGraph_drawConnectionH(outPos, inPos, cellr, ui, 0, Node_connectionCd(node.Selected || out.node.Selected, ui))
-			}
+		coordOut, selCoordOut, _ := out.nodeToPixelsCoord(lv.call.canvas)
+		if out.Selected {
+			coordOut = selCoordOut
 		}
 
-		//setter connections
-		if SAGroups_IsNodeSetter(node.Exe) {
-			dstNode, _ := SAExe_Setter_destNode(node)
-			if dstNode != nil {
-				coordOut, selCoordOut, _ := node.nodeToPixelsCoord(lv.call.canvas)
-				coordIn, selCoordIn, _ := dstNode.nodeToPixelsCoord(lv.call.canvas)
-
-				if node.Selected {
-					coordOut = selCoordOut
-				}
-				if dstNode.Selected {
-					coordIn = selCoordIn
-				}
-				_SAGraph_drawConnectionV(OsV2{coordOut.Middle().X, coordOut.End().Y}, OsV2{coordIn.Middle().X, coordIn.Start.Y}, cellr, ui, cellr, Node_connectionCd(node.Selected || dstNode.Selected, ui))
+		//attributtes connection
+		for _, in := range out.Code.depends {
+			if in == out {
+				continue
 			}
+
+			coordIn, selCoordIn, _ := in.nodeToPixelsCoord(lv.call.canvas)
+			if in.Selected {
+				coordIn = selCoordIn
+			}
+
+			_SAGraph_drawConnectionV(OsV2{coordIn.Middle().X, coordIn.End().Y}, OsV2{coordOut.Middle().X, coordOut.Start.Y}, cellr, ui, 0, Node_connectionCd(in.Selected || out.Selected, ui))
+		}
+
+		for _, inName := range out.Code.Triggers {
+
+			in := out.FindNode(inName)
+			if in == nil {
+				continue
+			}
+			if in == out {
+				continue
+			}
+
+			coordIn, selCoordIn, _ := in.nodeToPixelsCoord(lv.call.canvas)
+			if in.Selected {
+				coordIn = selCoordIn
+			}
+
+			_SAGraph_drawConnectionH(OsV2{coordIn.End().X, coordIn.Middle().Y}, OsV2{coordOut.Start.X, coordOut.Middle().Y}, cellr, ui, cellr, Node_connectionCd(in.Selected || out.Selected, ui))
 		}
 	}
 }
@@ -450,10 +284,6 @@ func (gr *SAGraph) drawNodes(rects bool, classic bool) *SANode {
 }
 
 func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
-
-	root.ResetIsRead()
-	root.UpdateIsRead()
-
 	ui := gr.app.base.ui
 	pl := ui.win.io.GetPalette()
 
@@ -518,72 +348,20 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 		cd := pl.P
 
 		if gr.connect_out != nil {
-			outPos := gr.connect_out.getConnectionPosOut(lv.call.canvas)
-			_SAGraph_drawConnectionH(outPos, ui.win.io.touch.pos, cellr, ui, 0, cd)
+			coordIn, selCoordIn, _ := gr.connect_out.nodeToPixelsCoord(lv.call.canvas)
+			if gr.connect_out.Selected {
+				coordIn = selCoordIn
+			}
+			_SAGraph_drawConnectionH(OsV2{coordIn.End().X, coordIn.Middle().Y}, ui.win.io.touch.pos, cellr, ui, 0, cd)
 		}
 
 		if gr.connect_in != nil {
-			inPos := gr.connect_in.getConnectionPosIn(lv.call.canvas)
-			_SAGraph_drawConnectionH(ui.win.io.touch.pos, inPos, cellr, ui, 0, cd)
-		}
-
-	}
-
-	//attrs dialog
-	if ui.Dialog_start("attributes") {
-		sel := gr.app.root.FindSelected()
-		if sel != nil {
-			ui.Div_colMax(0, 20)
-			ui.Div_rowMax(0, 20)
-			ui.Div_start(0, 0, 1, 1)
-			sel.RenderAttrs()
-			ui.Div_end()
-		} else {
-			ui.Dialog_close()
-		}
-
-		ui.Dialog_end()
-	}
-
-	if ui.Dialog_start("ins") {
-		sel := gr.app.root.FindSelected()
-		if sel != nil {
-			ui.Div_colMax(0, 5)
-			yy := 0
-			for _, attr := range sel.Attrs {
-				if attr.IsOutput() { //not outputs
-					continue
-				}
-				if ui.Comp_buttonMenu(0, yy, 1, 1, attr.Name, attr.Name+": "+attr.GetString(), true, false) > 0 {
-					gr.SetConnectIn(attr)
-					ui.Dialog_close()
-				}
-				yy++
+			coordOut, selCoordOut, _ := gr.connect_in.nodeToPixelsCoord(lv.call.canvas)
+			if gr.connect_in.Selected {
+				coordOut = selCoordOut
 			}
-		} else {
-			ui.Dialog_close()
+			_SAGraph_drawConnectionH(ui.win.io.touch.pos, OsV2{coordOut.Start.X, coordOut.Middle().Y}, cellr, ui, 0, cd)
 		}
-
-		ui.Dialog_end()
-	}
-	if ui.Dialog_start("outs") {
-		sel := gr.app.root.FindSelected()
-		if sel != nil {
-			ui.Div_colMax(0, 5)
-			yy := 0
-			for _, attr := range sel.Attrs {
-				//all
-				if ui.Comp_buttonMenu(0, yy, 1, 1, attr.Name, attr.Name+": "+attr.GetString(), true, false) > 0 {
-					gr.SetConnectOut(attr)
-					ui.Dialog_close()
-				}
-				yy++
-			}
-		} else {
-			ui.Dialog_close()
-		}
-
-		ui.Dialog_end()
 	}
 
 	//must be below dialog!
@@ -646,13 +424,13 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 			for i := 0; i < len(newNodes); i++ {
 
 				node := newNodes[i]
-				node.ParseExpresions()
+				//node.ParseExpresions()
 
 				for j := 0; j < len(newNodes); j++ {
 					oldName := origNodes[j].Name
 					newName := newNodes[j].Name
 
-					node.RenameExpressionAccessNode(oldName, newName)
+					node.RenameDepends(oldName, newName)
 				}
 			}
 
@@ -785,14 +563,14 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 		gr.node_select = false
 	}
 
-	if gr.app.exeState == SANode_STATE_RUNNING {
-		ui.Paint_rect(0, 0, 1, 1, 0, pl.P, 0.06) //exe rect
-	} else if !gr.app.EnableExecution {
-		ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0.03)
-	}
+	//if gr.app.exeState == SANode_STATE_RUNNING {
+	//	ui.Paint_rect(0, 0, 1, 1, 0, pl.P, 0.06) //exe rect
+	//} else if !gr.app.EnableExecution {
+	//	ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0.03)
+	//}
 
 	if changed {
-		gr.app.SetExecute()
+		//gr.app.SetExecute()
 	}
 
 	return graphCanvas, keyAllow
@@ -815,7 +593,7 @@ func (gr *SAGraph) drawNodeList(graphCanvas OsV4) {
 	y := 1
 	searches := strings.Split(strings.ToLower(gr.node_search), " ")
 	for _, n := range gr.app.all_nodes {
-		if gr.node_search == "" || SAApp_IsSearchedName(n.Name, searches) {
+		if gr.node_search == "" || OsIsSearchedName(n.Name, searches) {
 			if ui.Comp_buttonMenu(0, y, 1, 1, n.Name, n.Exe, true, n.Selected) > 0 {
 				n.SelectOnlyThis()
 				gr.autoZoom(true, graphCanvas)
@@ -838,18 +616,18 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 	path := "file:apps/base/resources/"
 
 	y := 0
-	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+OsTrnString(gr.app.EnableExecution, "pause.png", "play.png")), 0.25, "Enable/Disable nodes execution", uint8(OsTrn(gr.app.EnableExecution, int(CdPalette_B), int(CdPalette_E))), true, false) > 0 {
-		gr.app.EnableExecution = !gr.app.EnableExecution
-		if gr.app.EnableExecution {
-			gr.app.SetExecute()
-		}
-	}
-	y++
+	//if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+OsTrnString(gr.app.EnableExecution, "pause.png", "play.png")), 0.25, "Enable/Disable nodes execution", uint8(OsTrn(gr.app.EnableExecution, int(CdPalette_B), int(CdPalette_E))), true, false) > 0 {
+	//	gr.app.EnableExecution = !gr.app.EnableExecution
+	//	if gr.app.EnableExecution {
+	//		gr.app.SetExecute()
+	//	}
+	//}
+	//y++
 
-	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"update.png"), 0.25, "Recompute all nodes", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
-		gr.app.SetExecute()
-	}
-	y++
+	//if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"update.png"), 0.25, "Recompute all nodes", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
+	//	gr.app.SetExecute()
+	//}
+	//y++
 
 	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"home.png"), 0.3, "Zoom all nodes(H)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
 		gr.autoZoom(false, graphCanvas) //zoom to all
@@ -861,17 +639,17 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 	}
 	y++
 
-	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy.png"), 0.25, "Reoder all nodes(L)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "l")) {
-		gr.reorder(false)               //reorder nodes
-		gr.autoZoom(false, graphCanvas) //zoom to all
-	}
-	y++
+	//if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy.png"), 0.25, "Reoder all nodes(L)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "l")) {
+	//	gr.reorder(false)               //reorder nodes
+	//	gr.autoZoom(false, graphCanvas) //zoom to all
+	//}
+	//y++
 
-	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy_select.png"), 0.2, "Reorder selected nodes(K)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "k")) {
-		gr.reorder(true)               //reorder only selected nodes
-		gr.autoZoom(true, graphCanvas) //zoom to selected
-	}
-	y++
+	//if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy_select.png"), 0.2, "Reorder selected nodes(K)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "k")) {
+	//	gr.reorder(true)               //reorder only selected nodes
+	//	gr.autoZoom(true, graphCanvas) //zoom to selected
+	//}
+	//y++
 
 	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"list.png"), 0.2, "Show/Hide list of all nodes(Ctrl+F)", CdPalette_P, true, gr.showNodeList) > 0 || strings.EqualFold(keys.ctrlChar, "f") {
 		gr.showNodeList = !gr.showNodeList
@@ -882,14 +660,4 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 	y++
 
 	y++ //space - adjust Div_rowMax()
-
-	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"code.png"), 0.2, "Show/Hide code", CdPalette_P, true, gr.app.ShowCode) > 0 || strings.EqualFold(keys.ctrlChar, "t") {
-		gr.app.ShowCode = !gr.app.ShowCode
-	}
-	y++
-
-	//if gr.app.exeState == SANode_STATE_RUNNING {
-	//ui.Comp_text(0, y, 1, 1, fmt.Sprintf("**%d**", gr.app.jobs.Num()), 1)
-	//ui.Comp_text(0, y, 1, 1, OsTrnString(done > 0, fmt.Sprintf("%.0f%%", done*100), "---"), 1)
-	//}
 }

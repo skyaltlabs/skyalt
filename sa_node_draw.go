@@ -47,68 +47,6 @@ func (node *SANode) KeyProgessSelection(keys *WinKeys) bool {
 	return node.selected_cover
 }
 
-func (attr *SANodeAttr) IsVisible() bool {
-
-	if attr.IsOutput() {
-		return false //outputs has special place
-	}
-
-	if attr.Ui.Visible {
-		return true
-	}
-
-	if attr.isRead {
-		return true
-	}
-
-	if attr == attr.node.app.graph.connect_in || attr == attr.node.app.graph.connect_out {
-		return true
-	}
-
-	for _, d := range attr.depends {
-		if d.node != attr.node { //avoid self
-			return true
-		}
-	}
-
-	return false
-}
-func (node *SANode) NumVisibleAndCheck() int {
-	n := 0
-	for _, attr := range node.Attrs {
-		if attr.IsVisible() || attr.IsOutput() || attr.isRead {
-			//if i != n {
-			//Div_DropMoveElement(&node.Attrs, &node.Attrs, i, n, SA_Drop_V_LEFT)	//reorder
-			//}
-			n++
-		}
-
-	}
-	return n
-}
-func (node *SANode) VisiblePos(attr *SANodeAttr) int {
-
-	y := 1
-	for _, at := range node.Attrs {
-		if at.IsVisible() {
-			if attr == at {
-				return y
-			}
-			y++
-		}
-	}
-
-	for _, at := range node.Attrs {
-		if at.IsOutput() {
-			if attr == at {
-				return y
-			}
-			y++
-		}
-	}
-	return -1
-}
-
 func (w *SANode) cellZoom(ui *Ui) float32 {
 	return float32(ui.win.Cell()) * float32(w.app.Cam_z) * 1
 }
@@ -157,7 +95,7 @@ func (node *SANode) nodeToPixelsCoord(canvas OsV4) (OsV4, OsV4, OsV4) {
 	mid := node.nodeToPixels(node.Pos, canvas) //.parent, because it has Cam
 
 	w := 6
-	h := 1 + node.NumVisibleAndCheck()
+	h := 1 //+ node.NumVisibleAndCheck()
 
 	if SAGroups_HasNodeSub(node.Exe) {
 		//compute bound
@@ -222,33 +160,23 @@ func (node *SANode) drawHeader() bool {
 	ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
 	ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
 
-	//ui.Div_colMax(0, 100)
 	ui.Div_col(0, 0.5)
 	ui.Div_colMax(1, 100)
 	ui.Div_col(2, 0.5)
-	//ui.Div_rowMax(0, 100)
 
 	inside := false
 
 	ui.Div_start(1, 0, 1, 1)
 	{
-		ui.Div_colMax(1, 100)
-
-		//icon
-		pl := ui.win.io.GetPalette()
-		ui.Comp_image(0, 0, 1, 1, node.app.base.node_groups.FindNodeGroupIcon(node.Exe), pl.OnB, 0.3, 1, 1, false)
+		ui.Div_colMax(0, 100)
 
 		//name
-		ui.Comp_textSelect(1, 0, 1, 1, node.Name, OsV2{1, 1}, false, false)
-
-		//settings
-		if ui.Comp_buttonIcon(2, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/fullscreen_mode.png"), 0.3, "Settings", CdPalette_B, !node.app.graph.isConnecting(), false) > 0 {
-			node.SelectOnlyThis()
-			ui.Dialog_open("attributes", 0)
-			inside = false
+		div := ui.Comp_textSelect(0, 0, 1, 1, node.Name+"("+node.Exe+")", OsV2{1, 1}, false, false)
+		if div.IsTouchEndSubs(ui) && ui.win.io.touch.rm {
+			ui.win.io.keys.clipboard = "'" + node.Name + "'"
 		}
 
-		ui.Paint_tooltip(0, 0, 1, 1, "Type: "+node.Exe)
+		//ui.Paint_tooltip(0, 0, 1, 1, "Type: "+node.Exe)
 	}
 	ui.Div_end()
 
@@ -263,44 +191,16 @@ func (node *SANode) drawHeader() bool {
 
 	//make connection - dialog attr list
 	{
-		if ui.Comp_buttonCircle(0, 0, 1, 1, "", "", circleCd, circleCd, connIn == nil) > 0 {
-			node.SelectOnlyThis()
-			ui.Dialog_open("ins", 1)
-		}
-		if ui.Comp_buttonCircle(2, 0, 1, 1, "", "", circleCd, circleCd, connOut == nil) > 0 {
-			node.SelectOnlyThis()
-			ui.Dialog_open("outs", 1)
-		}
-	}
-
-	y := 1
-	for _, attr := range node.Attrs {
-		if attr.IsVisible() {
-			div := ui.Comp_textSelect(1, y, 1, 1, attr.Name, OsV2{1, 1}, false, false) //center
-			ui.Paint_tooltipDiv(div, 0, 0, 1, 1, attr.Name+": "+attr.GetString())
-
-			//make connection
-			if ui.Comp_buttonCircle(0, y, 1, 1, "", "", CdPalette_B, circleCd, connIn == nil) > 0 {
-				node.app.graph.SetConnectIn(attr)
+		if node.app.base.node_groups.IsCode(node.Exe) {
+			if ui.Comp_buttonCircle(0, 0, 1, 1, "", "", circleCd, circleCd, connIn == nil) > 0 {
+				node.app.graph.SetConnectIn(node)
 			}
-			if ui.Comp_buttonCircle(2, y, 1, 1, "", "", CdPalette_B, circleCd, connOut == nil) > 0 {
-				node.app.graph.SetConnectOut(attr)
-			}
-
-			y++
 		}
-	}
-	for _, attr := range node.Attrs {
-		if attr.IsOutput() {
-			div := ui.Comp_textSelect(1, y, 1, 1, attr.Name, OsV2{2, 1}, false, false) //right
-			ui.Paint_tooltipDiv(div, 0, 0, 1, 1, attr.Name+": "+attr.GetString())
 
-			//make connection
-			if ui.Comp_buttonCircle(2, y, 1, 1, "", "", CdPalette_B, circleCd, connOut == nil) > 0 {
-				node.app.graph.SetConnectOut(attr)
+		if node.app.base.node_groups.IsTrigger(node.Exe) {
+			if ui.Comp_buttonCircle(2, 0, 1, 1, "", "", circleCd, circleCd, connOut == nil) > 0 {
+				node.app.graph.SetConnectOut(node)
 			}
-
-			y++
 		}
 	}
 
