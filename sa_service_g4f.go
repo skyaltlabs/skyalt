@@ -29,11 +29,10 @@ import (
 	"time"
 )
 
+// Doc: https://help.openai.com/en/articles/7042661-moving-from-completions-to-chat-completions-in-the-openai-api
 type SAServiceG4FProps struct {
-	Role   string `json:"role"`
-	Model  string `json:"model"`
-	Prompt string `json:"prompt"`
-	Answer string `json:"answer"`
+	Model    string `json:"model"`
+	Messages string `json:"messages"`
 }
 
 func (p *SAServiceG4FProps) Hash() (OsHash, error) {
@@ -48,7 +47,7 @@ type SAServiceG4F struct {
 	cmd  *exec.Cmd
 	addr string //http://127.0.0.1:8080/
 
-	cache      map[string]string //results
+	cache      map[string][]byte //results
 	cache_lock sync.Mutex        //for cache
 }
 
@@ -61,7 +60,7 @@ func NewSAServiceG4F(addr string, port string) *SAServiceG4F {
 
 	wh.addr = addr + ":" + port + "/"
 
-	wh.cache = make(map[string]string)
+	wh.cache = make(map[string][]byte)
 
 	//load cache
 	{
@@ -105,71 +104,74 @@ func (wh *SAServiceG4F) Destroy() {
 	}
 }
 
-func (wh *SAServiceG4F) FindCache(propsHash OsHash) (string, bool) {
+func (wh *SAServiceG4F) FindCache(propsHash OsHash) ([]byte, bool) {
 	wh.cache_lock.Lock()
 	defer wh.cache_lock.Unlock()
 
 	str, found := wh.cache[propsHash.Hex()]
 	return str, found
 }
-func (wh *SAServiceG4F) addCache(propsHash OsHash, value string) {
+func (wh *SAServiceG4F) addCache(propsHash OsHash, value []byte) {
 	wh.cache_lock.Lock()
 	defer wh.cache_lock.Unlock()
 
 	wh.cache[propsHash.Hex()] = value
 }
 
-func (wh *SAServiceG4F) Complete(props *SAServiceG4FProps) (string, error) {
+func (wh *SAServiceG4F) Complete(props *SAServiceG4FProps) ([]byte, error) {
 	//find
 	propsHash, err := props.Hash()
 	if err != nil {
-		return "", fmt.Errorf("Hash() failed: %w", err)
+		return nil, fmt.Errorf("Hash() failed: %w", err)
 	}
 	str, found := wh.FindCache(propsHash)
 	if found {
 		return str, nil
 	}
 
-	str, err = wh.complete(props)
+	out, err := wh.complete(props)
 	if err != nil {
-		return "", fmt.Errorf("complete() failed: %w", err)
+		return nil, fmt.Errorf("complete() failed: %w", err)
 	}
 
-	wh.addCache(propsHash, str)
-	return str, nil
+	wh.addCache(propsHash, out)
+	return out, nil
 }
 
-func (wh *SAServiceG4F) complete(props *SAServiceG4FProps) (string, error) {
+func (wh *SAServiceG4F) complete(props *SAServiceG4FProps) ([]byte, error) {
 	js, err := json.Marshal(props)
 	if err != nil {
-		return "", fmt.Errorf("Marshal() failed: %w", err)
+		return nil, fmt.Errorf("Marshal() failed: %w", err)
 	}
 
 	body := bytes.NewReader([]byte(js))
 
 	req, err := http.NewRequest(http.MethodPost, wh.addr+"completion", body)
 	if err != nil {
-		return "", fmt.Errorf("NewRequest() failed: %w", err)
+		return nil, fmt.Errorf("NewRequest() failed: %w", err)
 	}
 	req.Header.Add("Content-Type", "application/json")
 
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("Do() failed: %w", err)
+		return nil, fmt.Errorf("Do() failed: %w", err)
 	}
 
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		return "", fmt.Errorf("ReadAll() failed: %w", err)
+		return nil, fmt.Errorf("ReadAll() failed: %w", err)
 	}
 
 	if res.StatusCode != 200 {
-		return "", fmt.Errorf("statusCode != 200, response: %s", resBody)
+		return nil, fmt.Errorf("statusCode != 200, response: %s", resBody)
 	}
 
-	var props2 SAServiceG4FProps
-	json.Unmarshal(resBody, &props2)
+	var str string
+	err = json.Unmarshal(resBody, &str)
+	if err != nil {
+		return nil, fmt.Errorf("Unmarshal() failed: %w", err)
+	}
 
-	return props2.Answer, nil
+	return []byte(str), nil
 }

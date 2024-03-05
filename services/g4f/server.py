@@ -13,20 +13,17 @@ class MyHandler(BaseHTTPRequestHandler):
         received_json = json.loads(post_data.decode('utf-8'))
         #print(f"Received JSON: {received_json}")
 
-        role = received_json['role']
         model = received_json['model']
-        prompt = received_json['prompt']
-        if role == "":
-            role = "user"
+        messages = json.loads(received_json['messages'])
         if model == "":
             model = "gpt-4-turbo"
 
         answer = ""
-        if prompt != "":
+        if model != "" and len(messages) > 0:
             client = Client()
             stream = client.chat.completions.create(
                 model=model,
-                messages=[{"role": role, "content": prompt}],
+                messages=messages,
                 stream=True,
             )
 
@@ -35,13 +32,7 @@ class MyHandler(BaseHTTPRequestHandler):
                     answer += chunk.choices[0].delta.content
                     print(chunk.choices[0].delta.content, flush=True, end='')
 
-        res = {}
-        res['role'] = role
-        res['model'] = model
-        res['prompt'] = prompt
-        res['answer'] = answer
-        js = json.dumps(res)
-
+        js = json.dumps(answer)
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
         self.end_headers()
@@ -52,6 +43,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         port = int(sys.argv[1])
     
+    print('args: port =', port)
     server_address = ('', port)
     httpd = HTTPServer(server_address, MyHandler)
     print('HTTP server is runnning on port', port)

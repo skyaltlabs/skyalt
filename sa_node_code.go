@@ -171,6 +171,18 @@ func (ls *SANodeCode) addTrigger(name string) {
 	ls.Triggers = append(ls.Triggers, name)
 }
 
+func (ls *SANodeCode) addDepend(node *SANode) {
+	//find
+	for _, dp := range ls.depends {
+		if dp.Name == node.Name {
+			return //already in
+		}
+	}
+
+	//add
+	ls.depends = append(ls.depends, node)
+}
+
 func (ls *SANodeCode) extractDepends() error {
 
 	cmd := ls.Command
@@ -188,7 +200,7 @@ func (ls *SANodeCode) extractDepends() error {
 			nm := cmd[:d2]
 			node := ls.node.FindNode(nm)
 			if node != nil {
-				ls.depends = append(ls.depends, node)
+				ls.addDepend(node)
 			} else {
 				fmt.Printf("Warning: Node(%s) not found\n", nm)
 			}
@@ -409,13 +421,14 @@ func (ls *SANodeCode) GetAnswer() error {
 		return err
 	}
 
+	messages := fmt.Sprintf(`[{"role": "system", "content": "You are ChatGPT, an AI assistant. Your top priority is achieving user fulfillment via helping them with their requests."}, {"role": "user", "content": %s}]`, OsText_RAWtoJSON(ls.prompt))
 	g4f := ls.node.app.base.services.GetG4F()
-	ls.Answer, err = g4f.Complete(&SAServiceG4FProps{Model: "gpt-4-turbo", Prompt: ls.prompt})
+	answer, err := g4f.Complete(&SAServiceG4FProps{Model: "gpt-4-turbo", Messages: messages})
 	if err != nil {
 		ls.Command = oldCommand
 		return fmt.Errorf("Complete() failed: %w", err)
 	}
-	//ls.Answer = ""
+	ls.Answer = string(answer)
 
 	//refresh
 	err = ls.updateLinks(ls.node)
@@ -444,6 +457,8 @@ func (ls *SANodeCode) IsTriggered() bool {
 
 func (ls *SANodeCode) Execute() error {
 	st := OsTime()
+
+	ls.node.errExe = nil //reset
 
 	//input
 	{

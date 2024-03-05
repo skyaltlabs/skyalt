@@ -1,116 +1,116 @@
 type Text struct {
-	Grid_x  int  `json:"grid_x"`
-	Grid_y  int  `json:"grid_y"`
-	Grid_w  int  `json:"grid_w"`
-	Grid_h  int  `json:"grid_h"`
-	Grid_show  bool  `json:"grid_show"`
-	Label string `json:"label"`
-	Align_h int`json:"align_h"`
-	Align_v int	`json:"align_v"`
-	Multi_line       bool	`json:"multi_line"`
-	Selection        bool	`json:"selection"`
-	Show_border      bool	`json:"show_border"`
+	Grid_x      int    `json:"grid_x"`
+	Grid_y      int    `json:"grid_y"`
+	Grid_w      int    `json:"grid_w"`
+	Grid_h      int    `json:"grid_h"`
+	Grid_show   bool   `json:"grid_show"`
+	Label       string `json:"label"`
+	Align_h     int    `json:"align_h"`
+	Align_v     int    `json:"align_v"`
+	Multi_line  bool   `json:"multi_line"`
+	Selection   bool   `json:"selection"`
+	Show_border bool   `json:"show_border"`
 }
 type Number struct {
-	Grid_x  int  `json:"grid_x"`
-	Grid_y  int  `json:"grid_y"`
-	Grid_w  int  `json:"grid_w"`
-	Grid_h  int  `json:"grid_h"`
-	Grid_show  bool  `json:"grid_show"`
-	Value float64 `json:"value"`
+	Grid_x    int     `json:"grid_x"`
+	Grid_y    int     `json:"grid_y"`
+	Grid_w    int     `json:"grid_w"`
+	Grid_h    int     `json:"grid_h"`
+	Grid_show bool    `json:"grid_show"`
+	Value     float64 `json:"value"`
 }
 type Editbox struct {
-	Grid_x  int  `json:"grid_x"`
-	Grid_y  int  `json:"grid_y"`
-	Grid_w  int  `json:"grid_w"`
-	Grid_h  int  `json:"grid_h"`
-	Grid_show  bool  `json:"grid_show"`
-	Value    string `json:"value"`
-	Ghost    string `json:"ghost"`
-	Align_h int`json:"align_h"`
-	Align_v int	`json:"align_v"`
-	Enable   bool   `json:"enable"`
-	Multi_line bool  `json:"multi_line"`
-	Multi_line_enter_finish bool `json:"multi_line_enter_finish"`
-	Finished bool   `json:"finished"`
+	Grid_x                  int    `json:"grid_x"`
+	Grid_y                  int    `json:"grid_y"`
+	Grid_w                  int    `json:"grid_w"`
+	Grid_h                  int    `json:"grid_h"`
+	Grid_show               bool   `json:"grid_show"`
+	Value                   string `json:"value"`
+	Ghost                   string `json:"ghost"`
+	Align_h                 int    `json:"align_h"`
+	Align_v                 int    `json:"align_v"`
+	Enable                  bool   `json:"enable"`
+	Multi_line              bool   `json:"multi_line"`
+	Multi_line_enter_finish bool   `json:"multi_line_enter_finish"`
+	Finished                bool   `json:"finished"`
 }
 type Button struct {
-	Grid_x  int  `json:"grid_x"`
-	Grid_y  int  `json:"grid_y"`
-	Grid_w  int  `json:"grid_w"`
-	Grid_h  int  `json:"grid_h"`
-	Grid_show  bool  `json:"grid_show"`
-	Label   string `json:"label"`
-	Tooltip string `json:"tooltip"`
-	Enable  bool   `json:"enable"`
-	Clicked bool   `json:"clicked"`
+	Grid_x    int    `json:"grid_x"`
+	Grid_y    int    `json:"grid_y"`
+	Grid_w    int    `json:"grid_w"`
+	Grid_h    int    `json:"grid_h"`
+	Grid_show bool   `json:"grid_show"`
+	Label     string `json:"label"`
+	Tooltip   string `json:"tooltip"`
+	Enable    bool   `json:"enable"`
+	Clicked   bool   `json:"clicked"`
 }
 
 type Checkbox struct {
-	Grid_x  int  `json:"grid_x"`
-	Grid_y  int  `json:"grid_y"`
-	Grid_w  int  `json:"grid_w"`
-	Grid_h  int  `json:"grid_h"`
-	Grid_show  bool  `json:"grid_show"`
-	Value   bool   `json:"value"`
-	Label   string `json:"label"`
-	Tooltip string `json:"tooltip"`
-	Enable  bool   `json:"enable"`
-	Changed bool   `json:"changed"`
+	Grid_x    int    `json:"grid_x"`
+	Grid_y    int    `json:"grid_y"`
+	Grid_w    int    `json:"grid_w"`
+	Grid_h    int    `json:"grid_h"`
+	Grid_show bool   `json:"grid_show"`
+	Value     bool   `json:"value"`
+	Label     string `json:"label"`
+	Tooltip   string `json:"tooltip"`
+	Enable    bool   `json:"enable"`
+	Changed   bool   `json:"changed"`
 }
 
 type Switch struct {
-	Grid_x  int  `json:"grid_x"`
-	Grid_y  int  `json:"grid_y"`
-	Grid_w  int  `json:"grid_w"`
-	Grid_h  int  `json:"grid_h"`
-	Grid_show  bool  `json:"grid_show"`
-	Value   bool   `json:"value"`
-	Label   string `json:"label"`
-	Tooltip string `json:"tooltip"`
-	Enable  bool   `json:"enable"`
-	Changed bool   `json:"changed"`
+	Grid_x    int    `json:"grid_x"`
+	Grid_y    int    `json:"grid_y"`
+	Grid_w    int    `json:"grid_w"`
+	Grid_h    int    `json:"grid_h"`
+	Grid_show bool   `json:"grid_show"`
+	Value     bool   `json:"value"`
+	Label     string `json:"label"`
+	Tooltip   string `json:"tooltip"`
+	Enable    bool   `json:"enable"`
+	Changed   bool   `json:"changed"`
 }
 
 type Disk_dir struct {
-	Grid_x  int  `json:"grid_x"`
-	Grid_y  int  `json:"grid_y"`
-	Grid_w  int  `json:"grid_w"`
-	Grid_h  int  `json:"grid_h"`
-	Grid_show  bool  `json:"grid_show"`
-	Path   string `json:"path"`
-	Write  bool   `json:"write"`
-	Enable  bool   `json:"enable"`
-	Changed bool   `json:"changed"`
+	Grid_x    int    `json:"grid_x"`
+	Grid_y    int    `json:"grid_y"`
+	Grid_w    int    `json:"grid_w"`
+	Grid_h    int    `json:"grid_h"`
+	Grid_show bool   `json:"grid_show"`
+	Path      string `json:"path"`
+	Write     bool   `json:"write"`
+	Enable    bool   `json:"enable"`
+	Changed   bool   `json:"changed"`
 }
 
 type Disk_file struct {
-	Grid_x  int  `json:"grid_x"`
-	Grid_y  int  `json:"grid_y"`
-	Grid_w  int  `json:"grid_w"`
-	Grid_h  int  `json:"grid_h"`
-	Grid_show  bool  `json:"grid_show"`
-	Path   string `json:"path"`
-	Write  bool   `json:"write"`
-	Enable  bool   `json:"enable"`
-	Changed bool   `json:"changed"`
+	Grid_x    int    `json:"grid_x"`
+	Grid_y    int    `json:"grid_y"`
+	Grid_w    int    `json:"grid_w"`
+	Grid_h    int    `json:"grid_h"`
+	Grid_show bool   `json:"grid_show"`
+	Path      string `json:"path"`
+	Write     bool   `json:"write"`
+	Enable    bool   `json:"enable"`
+	Changed   bool   `json:"changed"`
 }
 
 type Sqlite struct {
-	Grid_x  int  `json:"grid_x"`
-	Grid_y  int  `json:"grid_y"`
-	Grid_w  int  `json:"grid_w"`
-	Grid_h  int  `json:"grid_h"`
-	Grid_show  bool  `json:"grid_show"`
-	Path   string `json:"path"`
-	Write  bool   `json:"write"`
-	Enable  bool   `json:"enable"`
-	Changed bool   `json:"changed"`
+	Grid_x    int    `json:"grid_x"`
+	Grid_y    int    `json:"grid_y"`
+	Grid_w    int    `json:"grid_w"`
+	Grid_h    int    `json:"grid_h"`
+	Grid_show bool   `json:"grid_show"`
+	Path      string `json:"path"`
+	Write     bool   `json:"write"`
+	Enable    bool   `json:"enable"`
+	Changed   bool   `json:"changed"`
 }
 
 type Llama_cpp struct {
-	Node	 string `json:"node"`
-	Prompt   string `json:"prompt"`
+	Node   string `json:"node"`
+	Prompt string `json:"prompt"`
 }
 
 func (ll *Llama_cpp) Complete(prompt string) (string, error) {
@@ -126,9 +126,9 @@ func (ll *Llama_cpp) Complete(prompt string) (string, error) {
 }
 
 type Whisper_cpp struct {
-	Node	 string `json:"node"`
-	File_path string  `json:"file_path"`
-	Data     []byte	`json:"data"`
+	Node      string `json:"node"`
+	File_path string `json:"file_path"`
+	Data      []byte `json:"data"`
 }
 
 func (w *Whisper_cpp) Translate(filePath string) (string, error) {
@@ -150,13 +150,17 @@ func (w *Whisper_cpp) Translate(filePath string) (string, error) {
 	return string(resBody), err
 }
 
+type G4fMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
 type G4f struct {
-	Node	 string `json:"node"`
-	Prompt string `json:"prompt"`
+	Node     string       `json:"node"`
+	Messages []G4fMessage `json:"messages"`
 }
 
-func (gf *G4f) Complete(prompt string) (string, error) {
-	gf.Prompt = prompt
+func (gf *G4f) Complete(messages []G4fMessage) (string, error) {
+	gf.Messages = messages
 
 	js, err := json.Marshal(gf)
 	if err != nil {

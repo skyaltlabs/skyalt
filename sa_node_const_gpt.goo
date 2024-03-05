@@ -52,7 +52,7 @@ type Llama_cpp struct {
 
 func (ll *Llama_cpp) Complete(prompt string) (string, error) {
 	//TBD
-	return anwer
+	return answer
 }
 
 type Whisper_cpp struct {
@@ -64,11 +64,15 @@ func (w *Whisper_cpp) Translate(filePath string) (string, error) {
 	return text
 }
 
+type G4fMessage struct {
+	Role    string
+	Content string
+}
 type G4f struct {
 	Model string
 }
 
-func (g4f *G4f) Complete(prompt string) (string, error) {
+func (g4f *G4f) Complete(messages []G4fMessage) (string, error) {
 	//TBD
-	return anwer
+	return answer
 }

@@ -146,8 +146,8 @@ func (srv *SAServices) handlerWhisper(w http.ResponseWriter, r *http.Request) {
 		File_path string `json:"file_path"`
 		Data      []byte `json:"data"`
 	}
-	var wh Whisper_cpp
-	err = json.Unmarshal(body, &wh)
+	var st Whisper_cpp
+	err = json.Unmarshal(body, &st)
 	if err != nil {
 		http.Error(w, "Unmarshal() 1 failed: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -158,7 +158,7 @@ func (srv *SAServices) handlerWhisper(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "job_app is nil", http.StatusInternalServerError)
 		return
 	}
-	node := srv.job_app.root.FindNode(wh.Node) //...
+	node := srv.job_app.root.FindNode(st.Node)
 	if node == nil {
 		http.Error(w, "Node not found", http.StatusInternalServerError)
 		return
@@ -178,7 +178,7 @@ func (srv *SAServices) handlerWhisper(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//translate
-	outJs, _, _, err := srv.GetWhisper().Translate(node.GetAttrString("model", ""), InitOsBlob(wh.Data), &props)
+	outJs, _, _, err := srv.GetWhisper().Translate(node.GetAttrString("model", ""), InitOsBlob(st.Data), &props)
 	if err != nil {
 		http.Error(w, "Whisper() failed: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -208,14 +208,50 @@ func (srv *SAServices) handlerG4F(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var res []byte
-	res = body
-	//...
+	//get base struct
+	type G4fMessage struct {
+		Role    string `json:"role"`
+		Content string `json:"content"`
+	}
+	type G4f struct {
+		Node     string       `json:"node"`
+		Messages []G4fMessage `json:"messages"`
+	}
+	var st G4f
+	err = json.Unmarshal(body, &st)
+	if err != nil {
+		http.Error(w, "Unmarshal() 1 failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	w.Write(res)
+	//find node
+	if srv.job_app == nil {
+		http.Error(w, "job_app is nil", http.StatusInternalServerError)
+		return
+	}
+	node := srv.job_app.root.FindNode(st.Node)
+	if node == nil {
+		http.Error(w, "Node not found", http.StatusInternalServerError)
+		return
+	}
+
+	// build messages
+	messagesJs, err := json.Marshal(node.Attrs)
+	if err != nil {
+		http.Error(w, "Marshal() failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	//complete
+	answer, err := srv.GetG4F().Complete(&SAServiceG4FProps{Model: "gpt-4-turbo", Messages: string(messagesJs)})
+	if err != nil {
+		http.Error(w, "G4F() failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(answer)
 }
 func (srv *SAServices) Run(port int) {
-
 	mux := http.NewServeMux()
 	mux.HandleFunc("/getjob", srv.handlerGetJob)
 	mux.HandleFunc("/setresult", srv.handlerSetResult)
