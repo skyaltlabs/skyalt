@@ -27,14 +27,25 @@ func (ui *Ui) Comp_dirPicker(x, y, w, h int, path *string, selectFile bool, dial
 	origPath := *path
 
 	ui.Div_start(x, y, w, h)
-	ui.Div_colMax(0, 100)
-	ui.Div_rowMax(0, 100)
+	{
+		ui.Div_colMax(0, 100)
+		ui.Div_rowMax(0, 100)
 
-	exist := OsTrnBool(selectFile, OsFileExists(*path), OsFolderExists(*path))
+		exist := OsTrnBool(selectFile, OsFileExists(*path), OsFolderExists(*path)) || *path == ""
 
-	if ui.Comp_buttonError(0, 0, 1, 1, *path, "Select file/folder", !exist, enable) > 0 {
-		ui.Dialog_open(dialogName, 1)
-		ui.dir = UiDir{tempPath: *path} //reset
+		if ui.Comp_buttonError(0, 0, 1, 1, *path, "Select file/folder", !exist, enable) > 0 {
+			ui.Dialog_open(dialogName, 1)
+			ui.dir = UiDir{tempPath: *path} //reset
+		}
+
+		drop_path := ui.win.io.touch.drop_path
+		if ui.GetCall().call.IsOverSubs(ui) && drop_path != "" {
+			if !selectFile {
+				drop_path = filepath.Dir(drop_path)
+			}
+			*path = drop_path
+		}
+
 	}
 	ui.Div_end()
 
