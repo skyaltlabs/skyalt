@@ -440,12 +440,12 @@ func (node *SANode) RemoveSelectedNodes() {
 	}
 }
 
-func (node *SANode) getPath() string {
+func (node *SANode) GetPath() string {
 
 	var path string
 
 	if node.parent != nil {
-		path += node.parent.getPath()
+		path += node.parent.GetPath()
 	}
 
 	path += node.Name + "/"
@@ -586,8 +586,8 @@ func (node *SANode) RenderCanvas() {
 	}
 }
 
-func (node *SANode) GetResizerCoord(ui *Ui) OsV4 {
-	s := ui.CellWidth(0.3)
+func (node *SANode) GetResizerCoord() OsV4 {
+	s := node.app.base.ui.CellWidth(0.3)
 	return InitOsV4Mid(node.selected_canvas.End(), OsV2{s, s})
 }
 

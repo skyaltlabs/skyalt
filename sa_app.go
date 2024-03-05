@@ -171,7 +171,9 @@ func (app *SAApp) RenderApp(ide bool) {
 	app.root.renderLayout()
 }
 
-func (app *SAApp) renderIDE(ui *Ui) {
+func (app *SAApp) renderIDE() {
+
+	ui := app.base.ui
 
 	ui.Div_colMax(1, 100)
 	ui.Div_rowMax(1, 100)
@@ -189,22 +191,17 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	gridMax.X = OsMax(gridMax.X, SANodeColRow_GetMaxPos(&node.Cols)+1)
 	gridMax.Y = OsMax(gridMax.Y, SANodeColRow_GetMaxPos(&node.Rows)+1)
 
-	changed := false
-
 	//+
 	if ui.Comp_buttonLight(0, 0, 1, 1, "+", ui.trns.ADD_COLUMNS_ROWS, true) > 0 {
 		ui.Dialog_open("add_cols_rows", 1)
-		changed = true
 	}
 	if ui.Dialog_start("add_cols_rows") {
 		ui.Div_colMax(0, 4)
 		if ui.Comp_buttonMenu(0, 0, 1, 1, ui.trns.ADD_NEW_COLUMN, "", true, false) > 0 {
 			SANodeColRow_Insert(&node.Cols, nil, gridMax.X, true)
-			changed = true
 		}
 		if ui.Comp_buttonMenu(0, 1, 1, 1, ui.trns.ADD_NEW_ROW, "", true, false) > 0 {
 			SANodeColRow_Insert(&node.Rows, nil, gridMax.Y, true)
-			changed = true
 		}
 
 		ui.Dialog_end()
@@ -234,7 +231,6 @@ func (app *SAApp) renderIDE(ui *Ui) {
 					if cp != nil {
 						SANodeColRow_Remove(&node.Cols, src)
 						SANodeColRow_Insert(&node.Cols, cp, dst_i, true)
-						changed = true
 					}
 				}
 			}
@@ -250,9 +246,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 				}
 			}
 
-			if _SAApp_drawColsRowsDialog(dnm, node, true, i, ui) {
-				changed = true
-			}
+			app.drawColsRowsDialog(dnm, node, true, i)
 		}
 	}
 	ui.Div_end()
@@ -281,7 +275,6 @@ func (app *SAApp) renderIDE(ui *Ui) {
 					if cp != nil {
 						SANodeColRow_Remove(&node.Rows, src)
 						SANodeColRow_Insert(&node.Rows, cp, dst_i, true)
-						changed = true
 					}
 				}
 			}
@@ -297,9 +290,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 				}
 			}
 
-			if _SAApp_drawColsRowsDialog(dnm, node, false, i, ui) {
-				changed = true
-			}
+			app.drawColsRowsDialog(dnm, node, false, i)
 		}
 
 	}
@@ -343,7 +334,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 			}
 		}
 	}
-	app.drawCreateNode(ui)
+	app.drawCreateNode()
 
 	//select/move/resize node
 	if appDiv.IsOver(ui) {
@@ -354,7 +345,7 @@ func (app *SAApp) renderIDE(ui *Ui) {
 			if !w.CanBeRenderOnCanvas() {
 				continue
 			}
-			if w.Selected && w.GetResizerCoord(ui).Inside(touch.pos) {
+			if w.Selected && w.GetResizerCoord().Inside(touch.pos) {
 				//resize start
 				if touch.start && keys.alt {
 					app.canvas.resize = NewSANodePath(w)
@@ -389,7 +380,6 @@ func (app *SAApp) renderIDE(ui *Ui) {
 			stClick := app.canvas.startClick.FindPath(app.root)
 			if stClick != nil {
 				stClick.SetGridStart(newPos)
-				changed = true
 			}
 		}
 
@@ -404,7 +394,6 @@ func (app *SAApp) renderIDE(ui *Ui) {
 				grid.Size.Y = OsMax(0, pos.Start.Y-grid.Start.Y) + 1
 
 				res.SetGrid(grid)
-				changed = true
 			}
 		}
 
@@ -424,18 +413,15 @@ func (app *SAApp) renderIDE(ui *Ui) {
 		//delete
 		if keys.delete {
 			app.root.RemoveSelectedNodes()
-			changed = true
 		}
 	}
 
-	if changed {
-		//app.SetExecute()
-	}
-
-	app.graph.History(ui)
+	app.graph.History()
 }
 
-func (app *SAApp) ComboListOfNodes(x, y, w, h int, act string, ui *Ui) string {
+func (app *SAApp) ComboListOfNodes(x, y, w, h int, act string) string {
+	ui := app.base.ui
+
 	fns_values := app.base.node_groups.getList()
 
 	ui.Comp_combo(x, y, w, h, &act, fns_values, fns_values, "", true, true) //add icons ...
@@ -452,7 +438,8 @@ func SAApp_IsSearchedName(name string, search []string) bool {
 	return true
 }
 
-func (app *SAApp) drawCreateNodeGroup(start OsV2, gr *SAGroup, searches []string, only_ui bool, ui *Ui) OsV2 {
+func (app *SAApp) drawCreateNodeGroup(start OsV2, gr *SAGroup, searches []string, only_ui bool) OsV2 {
+	ui := app.base.ui
 	keys := &ui.win.io.keys
 
 	ui.Div_start(start.X, start.Y, 1, 1+len(gr.nodes))
@@ -487,7 +474,8 @@ func (app *SAApp) drawCreateNodeGroup(start OsV2, gr *SAGroup, searches []string
 	return start
 }
 
-func (app *SAApp) drawCreateNode(ui *Ui) {
+func (app *SAApp) drawCreateNode() {
+	ui := app.base.ui
 
 	only_ui := ui.Dialog_start("nodes_list_ui")
 	if only_ui || ui.Dialog_start("nodes_list") {
@@ -501,19 +489,19 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 
 		//group: UI
 		gr := app.base.node_groups.groups[0]
-		app.drawCreateNodeGroup(OsV2{0, 1}, gr, searches, only_ui, ui)
+		app.drawCreateNodeGroup(OsV2{0, 1}, gr, searches, only_ui)
 
 		//group: Disk
 		gr = app.base.node_groups.groups[1]
-		p := app.drawCreateNodeGroup(OsV2{1, 1}, gr, searches, only_ui, ui)
+		p := app.drawCreateNodeGroup(OsV2{1, 1}, gr, searches, only_ui)
 
 		//group: NN
 		gr = app.base.node_groups.groups[2]
-		p = app.drawCreateNodeGroup(p, gr, searches, only_ui, ui)
+		p = app.drawCreateNodeGroup(p, gr, searches, only_ui)
 
 		//group: code
 		gr = app.base.node_groups.groups[3]
-		app.drawCreateNodeGroup(p, gr, searches, only_ui, ui)
+		app.drawCreateNodeGroup(p, gr, searches, only_ui)
 
 		if ui.win.io.keys.tab {
 			ui.edit.uid = nil //non-standard(not save src) end of editbox
@@ -524,7 +512,9 @@ func (app *SAApp) drawCreateNode(ui *Ui) {
 	}
 }
 
-func _SAApp_drawColsRowsDialog(name string, node *SANode, isCol bool, pos int, ui *Ui) bool {
+func (app *SAApp) drawColsRowsDialog(name string, node *SANode, isCol bool, pos int) bool {
+
+	ui := app.base.ui
 
 	items := &node.Rows
 	if isCol {
@@ -600,18 +590,3 @@ func _SAApp_drawColsRowsDialog(name string, node *SANode, isCol bool, pos int, u
 
 	return changed
 }
-
-/*func (app *SAApp) RenderHeader(ui *Ui) {
-	ui.Div_colMax(1, 100)
-	ui.Div_colMax(2, 6)
-
-	ui.Comp_text(2, 0, 1, 1, "Press Alt-key to select nodes", 1)
-
-	if ui.Comp_buttonLight(3, 0, 1, 1, "←", fmt.Sprintf("%s(%d)", ui.trns.BACKWARD, app.history_pos), app.canHistoryBack()) > 0 {
-		app.stepHistoryBack()
-
-	}
-	if ui.Comp_buttonLight(4, 0, 1, 1, "→", fmt.Sprintf("%s(%d)", ui.trns.FORWARD, len(app.history)-app.history_pos-1), app.canHistoryForward()) > 0 {
-		app.stepHistoryForward()
-	}
-}*/

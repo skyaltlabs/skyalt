@@ -267,7 +267,7 @@ func (base *SABase) Render() bool {
 		ui.Div_startName(1, 0, 1, 1, base.Apps[base.Selected].Name)
 		{
 			if app.IDE {
-				app.renderIDE(ui)
+				app.renderIDE()
 			} else {
 				app.RenderApp(false)
 			}

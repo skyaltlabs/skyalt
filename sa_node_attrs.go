@@ -300,7 +300,7 @@ func (node *SANode) RenderAttrs() {
 		}
 
 		//type
-		node.Exe = node.app.ComboListOfNodes(2, 0, 1, 1, node.Exe, ui)
+		node.Exe = node.app.ComboListOfNodes(2, 0, 1, 1, node.Exe)
 
 		//context
 		{
