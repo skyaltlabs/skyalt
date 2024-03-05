@@ -33,30 +33,32 @@ type Switch struct {
 }
 
 type DirPath struct {
-	Path   string
-	Write  bool
+	Path  string
+	Write bool
 }
 type FilePath struct {
-	Path   string
-	Write  bool
+	Path  string
+	Write bool
 }
 
 type SQLite struct {
-	Path   string
-	Write  bool
+	Path  string
+	Write bool
 }
 
 type LLama struct {
 	Model string
 }
+
 func (ll *LLama) Complete(prompt string) (string, error) {
 	//TBD
 	return anwer
 }
 
 type Whisper struct {
-	Model    string
+	Model string
 }
+
 func (w *Whisper) Translate(audioFilePath string) (string, error) {
 	//TBD
 	return text
@@ -65,6 +67,7 @@ func (w *Whisper) Translate(audioFilePath string) (string, error) {
 type G4F struct {
 	Model string
 }
+
 func (g4f *G4F) Complete(prompt string) (string, error) {
 	//TBD
 	return anwer
