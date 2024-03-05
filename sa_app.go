@@ -18,6 +18,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"strconv"
 	"strings"
 
@@ -325,8 +326,9 @@ func (app *SAApp) renderIDE() {
 				ui.buff.AddText("+", InitWinFontPropsDef(ui.win), rect, SAApp_getYellow(), OsV2{1, 1}, 0, 1)
 
 				if appDiv.IsTouchEnd(ui) {
+
 					app.canvas.addGrid = grid
-					app.canvas.addPos = OsV2f{float32(app.Cam_x), float32(app.Cam_y)}
+					app.canvas.addPos = OsV2f{float32(app.Cam_x + rand.Float64()*4 - 2), float32(app.Cam_y + rand.Float64()*4 - 2)}
 					app.canvas.addParent = NewSANodePath(app.root)
 					app.canvas.addnode_search = ""
 					ui.Dialog_open("nodes_list_ui", 2)
