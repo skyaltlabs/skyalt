@@ -137,7 +137,8 @@ func (node *SANode) IsTriggered() bool {
 	if node.Exe == "checkbox" ||
 		node.Exe == "switch" ||
 		node.Exe == "disk_dir" ||
-		node.Exe == "disk_file" {
+		node.Exe == "disk_file" ||
+		node.Exe == "sqlite" {
 		return node.GetAttrBool("changed", false)
 	}
 
@@ -156,7 +157,8 @@ func (node *SANode) ResetTriggers() {
 	if node.Exe == "checkbox" ||
 		node.Exe == "switch" ||
 		node.Exe == "disk_dir" ||
-		node.Exe == "disk_file" {
+		node.Exe == "disk_file" ||
+		node.Exe == "sqlite" {
 		node.Attrs["changed"] = false
 	}
 }
