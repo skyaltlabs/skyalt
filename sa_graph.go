@@ -251,12 +251,10 @@ func (gr *SAGraph) drawConnections() {
 				continue
 			}
 
-			coordIn, selCoordIn, _ := in.nodeToPixelsCoord(lv.call.canvas)
-			if in.Selected {
-				coordIn = selCoordIn
-			}
+			_, selCoordIn, _ := in.nodeToPixelsCoord(lv.call.canvas)
+			coordOut = selCoordOut //move by button_circle_rad
 
-			_SAGraph_drawConnectionH(OsV2{coordIn.End().X, coordIn.Middle().Y}, OsV2{coordOut.Start.X, coordOut.Middle().Y}, cellr, ui, cellr, Node_connectionCd(in.Selected || out.Selected, ui))
+			_SAGraph_drawConnectionH(OsV2{selCoordIn.End().X, selCoordIn.Middle().Y}, OsV2{coordOut.Start.X, coordOut.Middle().Y}, cellr, ui, cellr, Node_connectionCd(in.Selected || out.Selected, ui))
 		}
 	}
 }
