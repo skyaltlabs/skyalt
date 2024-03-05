@@ -134,9 +134,7 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 		y := 0
 		for _, f := range dir {
 			isDir := f.IsDir()
-			if !selectFile && !isDir {
-				continue //skip files when picking folder
-			}
+			enable := selectFile || isDir //show both, but enable only what can be selected
 
 			if ui.dir.search != "" && !OsIsSearchedName(f.Name(), searches) {
 				continue
@@ -147,7 +145,7 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 
 			selected := (directory + "/" + f.Name()) == ui.dir.tempPath
 
-			if ui.Comp_buttonMenuIcon(0, y, 1, 1, f.Name(), InitWinMedia_url("file:apps/base/resources/"+iconFile), 0.2, "", true, selected) > 0 {
+			if ui.Comp_buttonMenuIcon(0, y, 1, 1, f.Name(), InitWinMedia_url("file:apps/base/resources/"+iconFile), 0.2, "", enable, selected) > 0 {
 				if isDir {
 					if directory != "/" {
 						directory += "/"
