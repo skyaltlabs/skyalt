@@ -125,6 +125,10 @@ func (node *SANode) AddPos(r OsV2f) {
 	}
 }
 
+func (node *SANode) HasNodeAttr() bool {
+	return node.Exe == "whisper_cpp" || node.Exe == "llama_cpp" || node.Exe == "g4f"
+}
+
 func (node *SANode) IsTriggered() bool {
 	if node.Exe == "button" {
 		return node.GetAttrBool("clicked", false)
@@ -310,11 +314,9 @@ func (node *SANode) updateLinks(parent *SANode, app *SAApp) {
 		node.Attrs = make(map[string]interface{})
 	}
 
-	if node.IsCode() {
-		err := node.Code.updateLinks(node)
-		if err != nil {
-			fmt.Printf("updateLinks() for node '%s' failed: %v\n", node.Name, err)
-		}
+	err := node.Code.updateLinks(node)
+	if err != nil {
+		fmt.Printf("updateLinks() for node '%s' failed: %v\n", node.Name, err)
 	}
 
 	for _, it := range node.Subs {

@@ -64,6 +64,10 @@ func InitSANodeCode(node *SANode) SANodeCode {
 func (ls *SANodeCode) updateLinks(node *SANode) error {
 	ls.node = node
 
+	if !node.IsCode() {
+		return nil
+	}
+
 	//refresh
 	err := ls.buildPrompt()
 	if err != nil {
@@ -248,7 +252,7 @@ func (ls *SANodeCode) buildSqlInfos() (string, error) {
 	str := ""
 
 	for _, prmNode := range ls.depends {
-		if prmNode.Exe == "UiSQL" {
+		if prmNode.Exe == "sqlite" {
 			str += fmt.Sprintf("'%s' is SQLite database which includes these tables(columns): ", prmNode.Name)
 
 			tablesStr := ""
@@ -292,7 +296,9 @@ func (ls *SANodeCode) buildPrompt() error {
 
 	params := ""
 	for _, prmNode := range ls.depends {
-		params += fmt.Sprintf("%s *%s, ", prmNode.Name, prmNode.Exe)
+
+		StructName := strings.ToUpper(prmNode.Exe[0:1]) + prmNode.Exe[1:] //1st letter must be upper
+		params += fmt.Sprintf("%s *%s, ", prmNode.Name, StructName)
 	}
 	params, _ = strings.CutSuffix(params, ", ")
 	str += fmt.Sprintf("\nfunc %s(%s) error {\n\n}\n\n", ls.node.Name, params)
@@ -444,13 +450,21 @@ func (ls *SANodeCode) Execute() error {
 		vars := make(map[string]interface{})
 		for _, prmNode := range ls.depends {
 			vars[prmNode.Name] = prmNode.Attrs
+
+			attrs := prmNode.Attrs
+			if prmNode.HasNodeAttr() {
+				attrs = make(map[string]interface{})
+				attrs["node"] = prmNode.Name
+
+			}
+			vars[prmNode.Name] = attrs
 		}
 		inputJs, err := json.Marshal(vars)
 		if err != nil {
 			return fmt.Errorf("Marshal() failed: %w", err)
 		}
 
-		ls.node.app.base.services.SetJob(inputJs)
+		ls.node.app.base.services.SetJob(inputJs, ls.node.app)
 	}
 
 	//process
@@ -460,7 +474,7 @@ func (ls *SANodeCode) Execute() error {
 		cmd.Stderr = os.Stderr
 		err := cmd.Start()
 		if err != nil {
-			fmt.Println(err)
+			return err
 		}
 		defer cmd.Wait()
 	}
@@ -478,14 +492,17 @@ func (ls *SANodeCode) Execute() error {
 		for key, node := range vars {
 			prmNode := ls.node.FindNode(key)
 			if prmNode != nil {
-				switch vv := node.(type) {
-				case map[string]interface{}:
-					prmNode.Attrs = vv
+				if !prmNode.HasNodeAttr() {
+					switch vv := node.(type) {
+					case map[string]interface{}:
+						prmNode.Attrs = vv
+					}
 				}
 			} else {
 				fmt.Println("Error: Node not found", key)
 			}
 		}
+
 	}
 
 	ls.exeTimeSec = OsTime() - st
