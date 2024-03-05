@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"strconv"
@@ -32,9 +33,10 @@ type SAServices struct {
 	llama_cpp   *SAServiceLLamaCpp
 	g4f         *SAServiceG4F
 
-	job      []byte
-	result   []byte
-	resultWg sync.WaitGroup
+	job_str       []byte
+	job_app       *SAApp
+	job_result    []byte
+	job_result_wg sync.WaitGroup
 }
 
 func NewSAServices() *SAServices {
@@ -59,14 +61,15 @@ func (srv *SAServices) Destroy() {
 	srv.server.Shutdown(context.Background())
 }
 
-func (srv *SAServices) SetJob(job []byte) {
-	srv.job = job
-	srv.resultWg.Add(1)
+func (srv *SAServices) SetJob(job []byte, app *SAApp) {
+	srv.job_str = job
+	srv.job_app = app
+	srv.job_result_wg.Add(1)
 }
 
 func (srv *SAServices) GetResult() []byte {
-	srv.resultWg.Wait()
-	return srv.result
+	srv.job_result_wg.Wait()
+	return srv.job_result
 }
 
 func (srv *SAServices) GetWhisper() *SAServiceWhisperCpp {
@@ -114,7 +117,7 @@ func (srv *SAServices) handlerGetJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write(srv.job)
+	w.Write(srv.job_str)
 }
 
 func (srv *SAServices) handlerSetResult(w http.ResponseWriter, r *http.Request) {
@@ -124,8 +127,8 @@ func (srv *SAServices) handlerSetResult(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	srv.result = body
-	srv.resultWg.Done()
+	srv.job_result = body
+	srv.job_result_wg.Done()
 
 	w.Write([]byte("{}"))
 }
@@ -137,11 +140,51 @@ func (srv *SAServices) handlerWhisper(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var res []byte
-	res = body
-	//srv.GetWhisper() ...
+	//get base struct
+	type Whisper_cpp struct {
+		Node      string `json:"node"`
+		File_path string `json:"file_path"`
+		Data      []byte `json:"data"`
+	}
+	var wh Whisper_cpp
+	err = json.Unmarshal(body, &wh)
+	if err != nil {
+		http.Error(w, "Unmarshal() 1 failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	w.Write(res)
+	//find node
+	if srv.job_app == nil {
+		http.Error(w, "job_app is nil", http.StatusInternalServerError)
+		return
+	}
+	node := srv.job_app.root.FindNode(wh.Node) //...
+	if node == nil {
+		http.Error(w, "Node not found", http.StatusInternalServerError)
+		return
+	}
+
+	//build properties
+	propsJs, err := json.Marshal(node.Attrs)
+	if err != nil {
+		http.Error(w, "Marshal() failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	var props SAServiceWhisperCppProps
+	err = json.Unmarshal(propsJs, &props)
+	if err != nil {
+		http.Error(w, "Unmarshal() 2 failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	//translate
+	outJs, _, _, err := srv.GetWhisper().Translate(node.GetAttrString("model", ""), InitOsBlob(wh.Data), &props)
+	if err != nil {
+		http.Error(w, "Whisper() failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(outJs)
 }
 
 func (srv *SAServices) handlerLLama(w http.ResponseWriter, r *http.Request) {
