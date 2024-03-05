@@ -31,7 +31,7 @@ func (ui *Ui) Comp_dirPicker(x, y, w, h int, path *string, selectFile bool, dial
 		ui.Div_colMax(0, 100)
 		ui.Div_rowMax(0, 100)
 
-		exist := OsTrnBool(selectFile, OsFileExists(*path), OsFolderExists(*path)) || *path == ""
+		exist := OsTrnBool(selectFile, OsFileExists(*path), OsFolderExists(*path))
 
 		if ui.Comp_buttonError(0, 0, 1, 1, *path, "Select file/folder", !exist, enable) > 0 {
 			ui.Dialog_open(dialogName, 1)
