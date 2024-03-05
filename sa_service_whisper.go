@@ -98,7 +98,7 @@ type SAServiceWhisperCpp struct {
 	cmd  *exec.Cmd
 	addr string //http://127.0.0.1:8080/
 
-	cache      map[string]string //results
+	cache      map[string][]byte //results
 	cache_lock sync.Mutex        //for cache
 
 	last_setModel string
@@ -113,7 +113,7 @@ func NewSAServiceWhisperCpp(addr string, port string) *SAServiceWhisperCpp {
 
 	wh.addr = addr + ":" + port + "/"
 
-	wh.cache = make(map[string]string)
+	wh.cache = make(map[string][]byte)
 
 	//load cache
 	{
@@ -165,25 +165,25 @@ func (wh *SAServiceWhisperCpp) Destroy() {
 	}
 }
 
-func (wh *SAServiceWhisperCpp) FindCache(model string, blob OsBlob, propsHash OsHash) (string, bool) {
+func (wh *SAServiceWhisperCpp) FindCache(model string, blob OsBlob, propsHash OsHash) ([]byte, bool) {
 	wh.cache_lock.Lock()
 	defer wh.cache_lock.Unlock()
 
 	str, found := wh.cache[model+blob.hash.Hex()+propsHash.Hex()]
 	return str, found
 }
-func (wh *SAServiceWhisperCpp) addCache(model string, blob OsBlob, propsHash OsHash, value string) {
+func (wh *SAServiceWhisperCpp) addCache(model string, blob OsBlob, propsHash OsHash, value []byte) {
 	wh.cache_lock.Lock()
 	defer wh.cache_lock.Unlock()
 
 	wh.cache[model+blob.hash.Hex()+propsHash.Hex()] = value
 }
 
-func (wh *SAServiceWhisperCpp) Translate(model string, blob OsBlob, props *SAServiceWhisperCppProps) (string, float64, bool, error) {
+func (wh *SAServiceWhisperCpp) Translate(model string, blob OsBlob, props *SAServiceWhisperCppProps) ([]byte, float64, bool, error) {
 	//find
 	propsHash, err := props.Hash()
 	if err != nil {
-		return "", 0, false, fmt.Errorf("Hash() failed: %w", err)
+		return nil, 0, false, fmt.Errorf("Hash() failed: %w", err)
 	}
 	str, found := wh.FindCache(model, blob, propsHash)
 	if found {
@@ -194,18 +194,18 @@ func (wh *SAServiceWhisperCpp) Translate(model string, blob OsBlob, props *SASer
 	if model != wh.last_setModel {
 		err := wh.setModel(model)
 		if err != nil {
-			return "", 0, false, fmt.Errorf("setModel() failed: %w", err)
+			return nil, 0, false, fmt.Errorf("setModel() failed: %w", err)
 		}
 	}
 
 	//translate
-	str, err = wh.translate(blob, props)
+	out, err := wh.translate(blob, props)
 	if err != nil {
-		return "", 0, false, fmt.Errorf("translate() failed: %w", err)
+		return nil, 0, false, fmt.Errorf("translate() failed: %w", err)
 	}
 
-	wh.addCache(model, blob, propsHash, str)
-	return str, 1, true, nil
+	wh.addCache(model, blob, propsHash, out)
+	return out, 1, true, nil
 }
 
 func (wh *SAServiceWhisperCpp) setModel(model string) error {
@@ -239,7 +239,7 @@ func (wh *SAServiceWhisperCpp) setModel(model string) error {
 	return nil
 }
 
-func (wh *SAServiceWhisperCpp) translate(blob OsBlob, props *SAServiceWhisperCppProps) (string, error) {
+func (wh *SAServiceWhisperCpp) translate(blob OsBlob, props *SAServiceWhisperCppProps) ([]byte, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -247,7 +247,7 @@ func (wh *SAServiceWhisperCpp) translate(blob OsBlob, props *SAServiceWhisperCpp
 	{
 		part, err := writer.CreateFormFile("file", "audio.wav")
 		if err != nil {
-			return "", fmt.Errorf("CreateFormFile() failed: %w", err)
+			return nil, fmt.Errorf("CreateFormFile() failed: %w", err)
 		}
 		part.Write(blob.data)
 		props.Write(writer)
@@ -256,24 +256,24 @@ func (wh *SAServiceWhisperCpp) translate(blob OsBlob, props *SAServiceWhisperCpp
 
 	req, err := http.NewRequest(http.MethodPost, wh.addr+"inference", body)
 	if err != nil {
-		return "", fmt.Errorf("NewRequest() failed: %w", err)
+		return nil, fmt.Errorf("NewRequest() failed: %w", err)
 	}
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("Do() failed: %w", err)
+		return nil, fmt.Errorf("Do() failed: %w", err)
 	}
 
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		return "", fmt.Errorf("ReadAll() failed: %w", err)
+		return nil, fmt.Errorf("ReadAll() failed: %w", err)
 	}
 
 	if res.StatusCode != 200 {
-		return "", fmt.Errorf("statusCode != 200, response: %s", resBody)
+		return nil, fmt.Errorf("statusCode != 200, response: %s", resBody)
 	}
 
-	return string(resBody), nil
+	return resBody, nil
 }
