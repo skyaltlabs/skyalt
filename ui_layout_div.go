@@ -556,6 +556,18 @@ func (div *UiLayoutDiv) IsTouchEnd(ui *Ui) bool {
 	return div.enableInput && ui.win.io.touch.end && div.IsTouchActive(ui) //doesn't have to be inside!
 }
 
+func (div *UiLayoutDiv) IsOverSubs(ui *Ui) bool {
+	if div.IsOver(ui) {
+		return true
+	}
+	for _, it := range div.childs {
+		if it.IsOverSubs(ui) {
+			return true
+		}
+	}
+	return false
+}
+
 func (div *UiLayoutDiv) IsTouchEndSubs(ui *Ui) bool {
 	if div.IsTouchEnd(ui) {
 		return true
