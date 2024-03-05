@@ -17,8 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -49,9 +47,6 @@ type SAApp struct {
 	EnableExecution     bool
 
 	root *SANode
-
-	history     [][]byte //JSONs
-	history_pos int
 
 	graph  *SAGraph
 	canvas SACanvas
@@ -166,6 +161,10 @@ func (app *SAApp) Tick() {
 	for _, nd := range app.all_nodes {
 		nd.ResetTriggers()
 	}
+}
+
+func SAApp_getYellow() OsCd {
+	return OsCd{204, 204, 0, 255} //...
 }
 
 func (app *SAApp) RenderApp(ide bool) {
@@ -432,23 +431,8 @@ func (app *SAApp) renderIDE(ui *Ui) {
 	if changed {
 		//app.SetExecute()
 	}
-}
 
-func (app *SAApp) History(ui *Ui) {
-	if len(app.history) == 0 {
-		return
-	}
-
-	lv := ui.GetCall()
-	if !ui.edit.IsActive() {
-		if lv.call.IsOver(ui) && ui.win.io.keys.backward {
-			app.stepHistoryBack()
-
-		}
-		if lv.call.IsOver(ui) && ui.win.io.keys.forward {
-			app.stepHistoryForward()
-		}
-	}
+	app.graph.History(ui)
 }
 
 func (app *SAApp) ComboListOfNodes(x, y, w, h int, act string, ui *Ui) string {
@@ -617,7 +601,7 @@ func _SAApp_drawColsRowsDialog(name string, node *SANode, isCol bool, pos int, u
 	return changed
 }
 
-func (app *SAApp) RenderHeader(ui *Ui) {
+/*func (app *SAApp) RenderHeader(ui *Ui) {
 	ui.Div_colMax(1, 100)
 	ui.Div_colMax(2, 6)
 
@@ -630,67 +614,4 @@ func (app *SAApp) RenderHeader(ui *Ui) {
 	if ui.Comp_buttonLight(4, 0, 1, 1, "→", fmt.Sprintf("%s(%d)", ui.trns.FORWARD, len(app.history)-app.history_pos-1), app.canHistoryForward()) > 0 {
 		app.stepHistoryForward()
 	}
-}
-
-func (app *SAApp) addHistory() {
-
-	js, err := json.Marshal(app.root)
-	if err != nil {
-		return
-	}
-	if len(app.history) > 0 && bytes.Equal(js, app.history[app.history_pos]) {
-		return //same as current history
-	}
-
-	//cut newer history
-	if app.history_pos+1 < len(app.history) {
-		app.history = app.history[:app.history_pos+1]
-	}
-
-	app.history = append(app.history, js)
-	app.history_pos = len(app.history) - 1
-}
-
-func (app *SAApp) recoverHistory() {
-
-	dst := NewSANode(app, nil, "", "", OsV4{}, OsV2f{})
-	err := json.Unmarshal(app.history[app.history_pos], dst)
-	if err != nil {
-		return
-	}
-	dst.updateLinks(nil, app)
-	app.root = dst
-
-	//app.SetExecute()
-}
-
-func (app *SAApp) canHistoryBack() bool {
-	return app.history_pos > 0
-}
-func (app *SAApp) canHistoryForward() bool {
-	return app.history_pos+1 < len(app.history)
-}
-
-func (app *SAApp) stepHistoryBack() bool {
-	if !app.canHistoryBack() {
-		return false
-	}
-
-	app.history_pos--
-	app.recoverHistory()
-	return true
-}
-func (app *SAApp) stepHistoryForward() bool {
-
-	if !app.canHistoryForward() {
-		return false
-	}
-
-	app.history_pos++
-	app.recoverHistory()
-	return true
-}
-
-func SAApp_getYellow() OsCd {
-	return OsCd{204, 204, 0, 255} //...
-}
+}*/

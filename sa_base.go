@@ -267,16 +267,7 @@ func (base *SABase) Render() bool {
 		ui.Div_startName(1, 0, 1, 1, base.Apps[base.Selected].Name)
 		{
 			if app.IDE {
-				ui.Div_colMax(0, 100)
-				ui.Div_rowMax(1, 100)
-
-				ui.Div_start(0, 0, 1, 1)
-				app.RenderHeader(ui)
-				ui.Div_end()
-
-				ui.Div_start(0, 1, 1, 1)
 				app.renderIDE(ui)
-				ui.Div_end()
 			} else {
 				app.RenderApp(false)
 			}
@@ -289,71 +280,77 @@ func (base *SABase) Render() bool {
 	if app.IDE {
 		ui.Div_start(2, 0, 1, 1)
 		{
+			var graphCanvas OsV4
+
 			ui.Div_col(0, 4)
 			ui.Div_colMax(0, 100)
+			ui.Div_rowMax(0, 100)
 
-			ui.Div_row(0, 3)
-			ui.Div_rowResize(0, "attributes", 4, false)
-			ui.Div_rowMax(1, 100)
+			if app.graph.showNodeList {
+				ui.Div_col(1, 3) //min
+				ui.Div_colResize(1, "node_list", 5, false)
+			}
 
-			//attributes
 			ui.Div_start(0, 0, 1, 1)
 			{
-				selNode := app.root.FindSelected()
-				if selNode != nil {
-					selNode.RenderAttrs()
-				} else {
-					ui.Div_colMax(0, 100)
-					ui.Div_rowMax(0, 100)
-					ui.Comp_text(0, 0, 1, 1, "No node selected", 1)
-				}
-
-			}
-			ui.Div_end()
-
-			//graph layout
-			ui.Div_start(0, 1, 1, 1)
-			{
 				ui.Div_colMax(0, 100)
-				ui.Div_rowMax(0, 100)
 
-				if app.Cam_z <= 0 {
-					app.Cam_z = 1
-				}
+				ui.Div_row(0, 3)
+				ui.Div_rowResize(0, "attributes", 4, false)
+				ui.Div_rowMax(1, 100)
 
-				pn_x := 1
-				if app.graph.showNodeList {
-					ui.Div_col(1, 3) //min
-					ui.Div_colResize(1, "node_list", 5, false)
-					pn_x = 2
-				}
-
-				//graph
+				//attributes
 				ui.Div_start(0, 0, 1, 1)
-				graphCanvas, keyAllow := app.graph.drawGraph(app.root)
+				{
+					selNode := app.root.FindSelected()
+					if selNode != nil {
+						selNode.RenderAttrs()
+					} else {
+						ui.Div_colMax(0, 100)
+						ui.Div_rowMax(0, 100)
+						ui.Comp_text(0, 0, 1, 1, "No node selected", 1)
+					}
+
+				}
 				ui.Div_end()
 
-				//node list
-				if app.graph.showNodeList {
-					ui.Div_start(1, 0, 1, 1)
-					app.graph.drawNodeList(graphCanvas)
+				//graph layout
+				ui.Div_start(0, 1, 1, 1)
+				{
+					ui.Div_colMax(0, 100)
+					ui.Div_rowMax(1, 100)
+
+					if app.Cam_z <= 0 {
+						app.Cam_z = 1
+					}
+
+					//graph
+					ui.Div_start(0, 1, 1, 1)
+					var keyAllow bool
+					graphCanvas, keyAllow = app.graph.drawGraph(app.root)
+					ui.Div_end()
+
+					//panel
+					ui.Div_start(0, 0, 1, 1)
+					app.graph.drawPanel(graphCanvas, keyAllow)
 					ui.Div_end()
 				}
-
-				//panel
-				ui.Div_start(pn_x, 0, 1, 1)
-				app.graph.drawPanel(graphCanvas, keyAllow)
 				ui.Div_end()
-
 			}
 			ui.Div_end()
+
+			//node list
+			if app.graph.showNodeList {
+				ui.Div_start(1, 0, 1, 1)
+				app.graph.drawNodeList(graphCanvas)
+				ui.Div_end()
+			}
+
 		}
 		ui.Div_end()
 	}
 
 	//app.flamingo.Tick()
-
-	app.History(ui)
 
 	base.ui.renderEnd(true)
 

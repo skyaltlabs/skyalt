@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -36,6 +37,9 @@ type SAGraph struct {
 	showNodeList          bool
 	showNodeList_justOpen bool
 	node_search           string
+
+	history     [][]byte //JSONs
+	history_pos int
 }
 
 func NewSAGraph(app *SAApp) *SAGraph {
@@ -158,6 +162,8 @@ func _SAGraph_drawConnectionH(start OsV2, end OsV2, cellr float32, ui *Ui, dash 
 }
 
 func (gr *SAGraph) autoZoom(onlySelected bool, canvas OsV4) {
+	gr.app.rebuildLists()
+
 	//zoom to all
 	first := true
 	var mn OsV2f
@@ -609,11 +615,11 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 	ui.DivInfo_set(SA_DIV_SET_scrollVnarrow, 1, 0)
 	ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
 
-	ui.Div_rowMax(7, 100)
+	ui.Div_colMax(2, 100)
 
 	path := "file:apps/base/resources/"
 
-	y := 0
+	x := 0
 	//if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+OsTrnString(gr.app.EnableExecution, "pause.png", "play.png")), 0.25, "Enable/Disable nodes execution", uint8(OsTrn(gr.app.EnableExecution, int(CdPalette_B), int(CdPalette_E))), true, false) > 0 {
 	//	gr.app.EnableExecution = !gr.app.EnableExecution
 	//	if gr.app.EnableExecution {
@@ -627,15 +633,27 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 	//}
 	//y++
 
-	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"home.png"), 0.3, "Zoom all nodes(H)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
+	if ui.Comp_buttonLight(x, 0, 1, 1, "←", fmt.Sprintf("%s(%d)", ui.trns.BACKWARD, gr.history_pos), gr.canHistoryBack()) > 0 {
+		gr.stepHistoryBack()
+
+	}
+	x++
+	if ui.Comp_buttonLight(x, 0, 1, 1, "→", fmt.Sprintf("%s(%d)", ui.trns.FORWARD, len(gr.history)-gr.history_pos-1), gr.canHistoryForward()) > 0 {
+		gr.stepHistoryForward()
+	}
+	x++
+
+	x++ //space
+
+	if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url(path+"home.png"), 0.3, "Zoom all nodes(H)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
 		gr.autoZoom(false, graphCanvas) //zoom to all
 	}
-	y++
+	x++
 
-	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"home_select.png"), 0.2, "Zoom selected nodes(G)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "g")) {
+	if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url(path+"home_select.png"), 0.2, "Zoom selected nodes(G)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "g")) {
 		gr.autoZoom(true, graphCanvas) //zoom to selected
 	}
-	y++
+	x++
 
 	//if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy.png"), 0.25, "Reoder all nodes(L)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "l")) {
 	//	gr.reorder(false)               //reorder nodes
@@ -649,13 +667,88 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 	//}
 	//y++
 
-	if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"list.png"), 0.2, "Show/Hide list of all nodes(Ctrl+F)", CdPalette_P, true, gr.showNodeList) > 0 || strings.EqualFold(keys.ctrlChar, "f") {
+	if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url(path+"list.png"), 0.2, "Show/Hide list of all nodes(Ctrl+F)", CdPalette_P, true, gr.showNodeList) > 0 || strings.EqualFold(keys.ctrlChar, "f") {
 		gr.showNodeList = !gr.showNodeList
 		if gr.showNodeList {
 			gr.showNodeList_justOpen = true
 		}
 	}
-	y++
+	x++
 
-	y++ //space - adjust Div_rowMax()
+}
+
+func (gr *SAGraph) History(ui *Ui) {
+	if len(gr.history) == 0 {
+		return
+	}
+
+	lv := ui.GetCall()
+	if !ui.edit.IsActive() {
+		if lv.call.IsOver(ui) && ui.win.io.keys.backward {
+			gr.stepHistoryBack()
+
+		}
+		if lv.call.IsOver(ui) && ui.win.io.keys.forward {
+			gr.stepHistoryForward()
+		}
+	}
+}
+
+func (gr *SAGraph) addHistory() {
+
+	/*js, err := json.Marshal(app.root)
+	if err != nil {
+		return
+	}
+	if len(app.history) > 0 && bytes.Equal(js, app.history[app.history_pos]) {
+		return //same as current history
+	}
+
+	//cut newer history
+	if app.history_pos+1 < len(app.history) {
+		app.history = app.history[:app.history_pos+1]
+	}
+
+	app.history = append(app.history, js)
+	app.history_pos = len(app.history) - 1*/
+}
+
+func (gr *SAGraph) recoverHistory() {
+
+	/*dst := NewSANode(app, nil, "", "", OsV4{}, OsV2f{})
+	err := json.Unmarshal(app.history[app.history_pos], dst)
+	if err != nil {
+		return
+	}
+	dst.updateLinks(nil, app)
+	app.root = dst*/
+
+	//app.SetExecute()
+}
+
+func (gr *SAGraph) canHistoryBack() bool {
+	return gr.history_pos > 0
+}
+func (gr *SAGraph) canHistoryForward() bool {
+	return gr.history_pos+1 < len(gr.history)
+}
+
+func (gr *SAGraph) stepHistoryBack() bool {
+	if !gr.canHistoryBack() {
+		return false
+	}
+
+	gr.history_pos--
+	gr.recoverHistory()
+	return true
+}
+func (gr *SAGraph) stepHistoryForward() bool {
+
+	if !gr.canHistoryForward() {
+		return false
+	}
+
+	gr.history_pos++
+	gr.recoverHistory()
+	return true
 }
