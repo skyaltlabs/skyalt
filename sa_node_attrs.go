@@ -135,7 +135,7 @@ func (node *SANode) GetAttrString(name string, defValue string) string {
 	}
 }
 
-func (node *SANode) ShowAttrV4(grid *OsV4, namePrefix string, defValue OsV4) {
+func (node *SANode) ShowAttrV4(grid *OsV4, namePrefix string, defValue OsV4) OsV4 {
 	ui := node.app.base.ui
 
 	value := node.GetAttrV4(namePrefix, defValue)
@@ -159,9 +159,10 @@ func (node *SANode) ShowAttrV4(grid *OsV4, namePrefix string, defValue OsV4) {
 	ui.Div_end()
 
 	grid.Start.Y += grid.Size.Y
+	return value
 }
 
-func (node *SANode) ShowAttrBool(grid *OsV4, name string, defValue bool) {
+func (node *SANode) ShowAttrBool(grid *OsV4, name string, defValue bool) bool {
 	ui := node.app.base.ui
 
 	value := node.GetAttrBool(name, defValue)
@@ -173,9 +174,10 @@ func (node *SANode) ShowAttrBool(grid *OsV4, name string, defValue bool) {
 	}
 
 	grid.Start.Y += grid.Size.Y
+	return value
 }
 
-func (node *SANode) ShowAttrInt(grid *OsV4, name string, defValue int) {
+func (node *SANode) ShowAttrInt(grid *OsV4, name string, defValue int) int {
 	ui := node.app.base.ui
 
 	value := node.GetAttrInt(name, defValue)
@@ -188,8 +190,9 @@ func (node *SANode) ShowAttrInt(grid *OsV4, name string, defValue int) {
 	}
 
 	grid.Start.Y += grid.Size.Y
+	return value
 }
-func (node *SANode) ShowAttrFloat(grid *OsV4, name string, defValue float64, prec int) {
+func (node *SANode) ShowAttrFloat(grid *OsV4, name string, defValue float64, prec int) float64 {
 	ui := node.app.base.ui
 
 	value := node.GetAttrFloat(name, defValue)
@@ -202,9 +205,10 @@ func (node *SANode) ShowAttrFloat(grid *OsV4, name string, defValue float64, pre
 	}
 
 	grid.Start.Y += grid.Size.Y
+	return value
 }
 
-func (node *SANode) ShowAttrString(grid *OsV4, name string, defValue string, multiLine bool) {
+func (node *SANode) ShowAttrString(grid *OsV4, name string, defValue string, multiLine bool) string {
 	ui := node.app.base.ui
 
 	oldSizeY := grid.Size.Y
@@ -223,9 +227,10 @@ func (node *SANode) ShowAttrString(grid *OsV4, name string, defValue string, mul
 
 	grid.Start.Y += grid.Size.Y
 	grid.Size.Y = oldSizeY
+	return value
 }
 
-func (node *SANode) ShowAttrIntCombo(grid *OsV4, name string, defValue int, options_names []string, options_values []string) {
+func (node *SANode) ShowAttrIntCombo(grid *OsV4, name string, defValue int, options_names []string, options_values []string) int {
 	ui := node.app.base.ui
 
 	value := node.GetAttrInt(name, defValue)
@@ -238,8 +243,9 @@ func (node *SANode) ShowAttrIntCombo(grid *OsV4, name string, defValue int, opti
 	}
 
 	grid.Start.Y += grid.Size.Y
+	return value
 }
-func (node *SANode) ShowAttrStringCombo(grid *OsV4, name string, defValue string, options_names []string, options_values []string) {
+func (node *SANode) ShowAttrStringCombo(grid *OsV4, name string, defValue string, options_names []string, options_values []string) string {
 	ui := node.app.base.ui
 
 	value := node.GetAttrString(name, defValue)
@@ -251,9 +257,10 @@ func (node *SANode) ShowAttrStringCombo(grid *OsV4, name string, defValue string
 	}
 
 	grid.Start.Y += grid.Size.Y
+	return value
 }
 
-func (node *SANode) ShowAttrFilePicker(grid *OsV4, name string, defValue string, selectFile bool) {
+func (node *SANode) ShowAttrFilePicker(grid *OsV4, name string, defValue string, selectFile bool) string {
 	ui := node.app.base.ui
 
 	value := node.GetAttrString(name, defValue)
@@ -265,6 +272,7 @@ func (node *SANode) ShowAttrFilePicker(grid *OsV4, name string, defValue string,
 	}
 
 	grid.Start.Y += grid.Size.Y
+	return value
 }
 
 func (node *SANode) RenderAttrs() {
