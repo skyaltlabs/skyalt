@@ -72,7 +72,7 @@ type Switch struct {
 	Changed bool   `json:"changed"`
 }
 
-type DirPath struct {
+type Disk_dir struct {
 	Grid_x  int  `json:"grid_x"`
 	Grid_y  int  `json:"grid_y"`
 	Grid_w  int  `json:"grid_w"`
@@ -84,7 +84,7 @@ type DirPath struct {
 	Changed bool   `json:"changed"`
 }
 
-type FilePath struct {
+type Disk_file struct {
 	Grid_x  int  `json:"grid_x"`
 	Grid_y  int  `json:"grid_y"`
 	Grid_w  int  `json:"grid_w"`
@@ -96,7 +96,7 @@ type FilePath struct {
 	Changed bool   `json:"changed"`
 }
 
-type SQLite struct {
+type Sqlite struct {
 	Grid_x  int  `json:"grid_x"`
 	Grid_y  int  `json:"grid_y"`
 	Grid_w  int  `json:"grid_w"`
@@ -108,12 +108,12 @@ type SQLite struct {
 	Changed bool   `json:"changed"`
 }
 
-type LLama struct {
+type Llama_cpp struct {
 	Node	 string `json:"node"`
 	Prompt   string `json:"prompt"`
 }
 
-func (ll *LLama) Complete(prompt string) (string, error) {
+func (ll *Llama_cpp) Complete(prompt string) (string, error) {
 	ll.Prompt = prompt
 
 	js, err := json.Marshal(ll)
@@ -125,13 +125,13 @@ func (ll *LLama) Complete(prompt string) (string, error) {
 	return string(resBody), err
 }
 
-type Whisper struct {
+type Whisper_cpp struct {
 	Node	 string `json:"node"`
 	File_path string  `json:"file_path"`
 	Data     []byte	`json:"data"`
 }
 
-func (w *Whisper) Translate(filePath string) (string, error) {
+func (w *Whisper_cpp) Translate(filePath string) (string, error) {
 	w.File_path = filePath
 
 	//find
@@ -150,12 +150,12 @@ func (w *Whisper) Translate(filePath string) (string, error) {
 	return string(resBody), err
 }
 
-type G4F struct {
+type G4f struct {
 	Node	 string `json:"node"`
 	Prompt string `json:"prompt"`
 }
 
-func (gf *G4F) Complete(prompt string) (string, error) {
+func (gf *G4f) Complete(prompt string) (string, error) {
 	gf.Prompt = prompt
 
 	js, err := json.Marshal(gf)

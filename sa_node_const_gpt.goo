@@ -32,43 +32,43 @@ type Switch struct {
 	Changed bool
 }
 
-type DirPath struct {
+type Disk_dir struct {
 	Path  string
 	Write bool
 }
-type FilePath struct {
-	Path  string
-	Write bool
-}
-
-type SQLite struct {
+type Disk_file struct {
 	Path  string
 	Write bool
 }
 
-type LLama struct {
+type Sqlite struct {
+	Path  string
+	Write bool
+}
+
+type Llama_cpp struct {
 	Model string
 }
 
-func (ll *LLama) Complete(prompt string) (string, error) {
+func (ll *Llama_cpp) Complete(prompt string) (string, error) {
 	//TBD
 	return anwer
 }
 
-type Whisper struct {
+type Whisper_cpp struct {
 	Model string
 }
 
-func (w *Whisper) Translate(audioFilePath string) (string, error) {
+func (w *Whisper_cpp) Translate(filePath string) (string, error) {
 	//TBD
 	return text
 }
 
-type G4F struct {
+type G4f struct {
 	Model string
 }
 
-func (g4f *G4F) Complete(prompt string) (string, error) {
+func (g4f *G4f) Complete(prompt string) (string, error) {
 	//TBD
 	return anwer
 }
