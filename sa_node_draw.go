@@ -150,8 +150,8 @@ func (node *SANode) drawShadow(coord OsV4, roundc float64) {
 	rc := ui.CellWidth(roundc)
 	sh := coord
 	sh = sh.AddSpace((-rc * 1))
-	sh.Start = sh.Start.Add(OsV2{rc / 2, rc / 2})
-	ui.buff.AddRectRoundGrad(sh, rc*3, InitOsCdBlack().SetAlpha(130), 0) //smooth
+	sh.Start = sh.Start.Add(OsV2{rc / 3, rc / 3})
+	ui.buff.AddRectRoundGrad(sh, rc*3, InitOsCdBlack().SetAlpha(100), 0) //smooth
 }
 
 func (node *SANode) drawHeader() bool {
@@ -186,19 +186,16 @@ func (node *SANode) drawHeader() bool {
 		circleCd = CdPalette_P
 	}
 
-	connIn := node.app.graph.connect_in
-	connOut := node.app.graph.connect_out
-
 	//make connection - dialog attr list
 	{
 		if node.app.base.node_groups.IsCode(node.Exe) {
-			if ui.Comp_buttonCircle(0, 0, 1, 1, "", "", circleCd, circleCd, connIn == nil) > 0 {
+			if ui.Comp_buttonCircle(0, 0, 1, 1, "", "", CdPalette_B, circleCd, node.app.graph.connect_in == nil) > 0 {
 				node.app.graph.SetConnectIn(node)
 			}
 		}
 
 		if node.app.base.node_groups.IsTrigger(node.Exe) {
-			if ui.Comp_buttonCircle(2, 0, 1, 1, "", "", circleCd, circleCd, connOut == nil) > 0 {
+			if ui.Comp_buttonCircle(2, 0, 1, 1, "", "", CdPalette_B, circleCd, node.app.graph.connect_out == nil) > 0 {
 				node.app.graph.SetConnectOut(node)
 			}
 		}
