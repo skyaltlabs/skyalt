@@ -41,8 +41,9 @@ type FilePath struct {
 	Write  bool
 }
 
-type SQL struct {
-	Path string
+type SQLite struct {
+	Path   string
+	Write  bool
 }
 
 type LLama struct {

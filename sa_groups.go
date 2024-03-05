@@ -62,9 +62,6 @@ func InitSAGroups() SAGroups {
 			{name: "combo", render: SAExe_Render_Combo},
 			{name: "color_palette", render: SAExe_Render_ColorPalette},
 			{name: "color", render: SAExe_Render_ColorPicker},
-			{name: "file_drop", render: SAExe_Render_FileDrop},
-			{name: "file_picker", render: SAExe_Render_FilePicker},
-			{name: "folder_picker", render: SAExe_Render_FolderPicker},
 			{name: "calendar", render: SAExe_Render_Calendar},
 			{name: "date", render: SAExe_Render_Date},
 			{name: "map", render: SAExe_Render_Map},
@@ -79,9 +76,7 @@ func InitSAGroups() SAGroups {
 	grs.groups = append(grs.groups, &SAGroup{name: "Disk access", icon: InitWinMedia_url(path + "node_file.png"), nodes: []*SAGroupNode{
 		{name: "disk_dir", render: UiDiskDir_render, attrs: UiDiskDir_Attrs},
 		{name: "disk_file", render: UiDiskFile_render, attrs: UiDiskFile_Attrs},
-		/*{name: "sqlite", fn: SAExe_File_sqlite},
-		{name: "read_file", fn: SAExe_File_read},
-		{name: "write_file", fn: SAExe_File_write},*/
+		{name: "sqlite", render: UiSQLite_render, attrs: UiSQLite_Attrs},
 	}})
 
 	grs.groups = append(grs.groups, &SAGroup{name: "Neural networks", icon: InitWinMedia_url(path + "node_nn.png"), nodes: []*SAGroupNode{

@@ -17,6 +17,8 @@ limitations under the License.
 package main
 
 import (
+	"errors"
+	"fmt"
 	"path/filepath"
 	"strings"
 )
@@ -182,8 +184,6 @@ func UiDiskDir_Attrs(node *SANode) {
 	ui.Div_colMax(0, 3)
 	ui.Div_colMax(1, 100)
 
-	ui.Comp_text(0, 0, 1, 1, "path", 0)
-
 	grid := InitOsV4(0, 0, 1, 1)
 
 	node.ShowAttrFilePicker(&grid, "path", "", false)
@@ -208,8 +208,6 @@ func UiDiskFile_Attrs(node *SANode) {
 	ui.Div_colMax(0, 3)
 	ui.Div_colMax(1, 100)
 
-	ui.Comp_text(0, 0, 1, 1, "path", 0)
-
 	grid := InitOsV4(0, 0, 1, 1)
 
 	node.ShowAttrFilePicker(&grid, "path", "", true)
@@ -227,6 +225,81 @@ func UiDiskFile_render(node *SANode) {
 		node.Attrs["path"] = path
 		node.Attrs["changed"] = true
 	}
+}
+
+func UiSQLite_Attrs(node *SANode) {
+	ui := node.app.base.ui
+	ui.Div_colMax(0, 3)
+	ui.Div_colMax(1, 100)
+
+	grid := InitOsV4(0, 0, 1, 1)
+	path := node.ShowAttrFilePicker(&grid, "path", "", true)
+	node.ShowAttrBool(&grid, "write", false)
+	node.ShowAttrBool(&grid, "changed", false) //.......
+
+	if !OsFileExists(path) {
+		node.SetError(errors.New("file not exist"))
+		return
+	}
+
+	db, _, err := node.app.base.ui.win.disk.OpenDb(path)
+	if err != nil {
+		node.SetError(err)
+		return
+	}
+
+	if ui.Comp_button(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, "Vacuum", "Run database maintenance", true) > 0 {
+		db.Vacuum()
+	}
+	grid.Start.Y++
+
+	if ui.Comp_button(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, "Generate 'init_sql'", "Create SQL structure command from current database.", true) > 0 {
+		info, err := db.GetTableInfo()
+		if err != nil {
+			node.SetError(err)
+			return
+		}
+
+		ini := ""
+		for _, t := range info {
+			ini += fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (", t.Name)
+			for _, c := range t.Columns {
+				ini += fmt.Sprintf("%s %s, ", c.Name, c.Type)
+			}
+			ini, _ = strings.CutSuffix(ini, ", ")
+			ini += ");\n"
+		}
+
+		node.Attrs["init_sql"] = ini
+	}
+	grid.Start.Y++
+
+	init_sql := node.ShowAttrString(&grid, "init_sql", "", true)
+	if ui.Comp_button(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, "Re-initialize", "Create tables & columns structure. Data are kept.", init_sql != "") > 0 {
+		_, err := db.Write(init_sql)
+		if err != nil {
+			node.SetError(err)
+			return
+		}
+	}
+	grid.Start.Y++
+}
+
+func UiSQLite_render(node *SANode) {
+	/*grid := node.GetGrid()
+
+	path := node.GetAttrString("path", "")
+	enable := node.GetAttrBool("enable", true)
+	//changed := node.GetAttrBool("changed", false)
+
+	db, _, err := node.app.base.ui.win.disk.OpenDb(path)
+	if err != nil {
+		node.SetError(err)
+		return
+	}*/
+
+	//show/edit whole table ..........
+
 }
 
 func UiCodeGo_Attrs(node *SANode) {
