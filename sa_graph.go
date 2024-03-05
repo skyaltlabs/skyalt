@@ -17,6 +17,8 @@ limitations under the License.
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -77,7 +79,8 @@ func (gr *SAGraph) SetConnectOut(attr *SANode) {
 	gr.tryConnect()
 }
 
-func (gr *SAGraph) drawCreateNode(ui *Ui) {
+func (gr *SAGraph) drawCreateNode() {
+	ui := gr.app.base.ui
 	lvBaseDiv := ui.GetCall().call
 
 	if !ui.edit.IsActive() {
@@ -92,8 +95,8 @@ func (gr *SAGraph) drawCreateNode(ui *Ui) {
 	}
 }
 
-func _SAGraph_drawConnectionV(start OsV2, end OsV2, cellr float32, ui *Ui, dash float32, cd OsCd) {
-
+func (gr *SAGraph) drawConnectionV(start OsV2, end OsV2, cellr float32, dash float32, cd OsCd) {
+	ui := gr.app.base.ui
 	t := cellr * 0.3
 	end.Y -= int(t) //connect to top of arrow
 	mid := start.Aprox(end, 0.5)
@@ -127,7 +130,8 @@ func _SAGraph_drawConnectionV(start OsV2, end OsV2, cellr float32, ui *Ui, dash 
 	ui.buff.AddPoly(end.Add(OsV2{int(-t / 2), 0}), []OsV2f{{0, 0}, {-t / 2, -t}, {t / 2, -t}}, cd, 0)
 }
 
-func _SAGraph_drawConnectionH(start OsV2, end OsV2, cellr float32, ui *Ui, dash float32, cd OsCd) {
+func (gr *SAGraph) drawConnectionH(start OsV2, end OsV2, cellr float32, dash float32, cd OsCd) {
+	ui := gr.app.base.ui
 	t := cellr * 0.3
 	end.X -= int(t) //connect to left of arrow
 	mid := start.Aprox(end, 0.5)
@@ -244,7 +248,7 @@ func (gr *SAGraph) drawConnections() {
 				coordIn = selCoordIn
 			}
 
-			_SAGraph_drawConnectionV(OsV2{coordIn.Middle().X, coordIn.End().Y}, OsV2{coordOut.Middle().X, coordOut.Start.Y}, cellr, ui, 0, Node_connectionCd(in.Selected || out.Selected, ui))
+			gr.drawConnectionV(OsV2{coordIn.Middle().X, coordIn.End().Y}, OsV2{coordOut.Middle().X, coordOut.Start.Y}, cellr, 0, Node_connectionCd(in.Selected || out.Selected, ui))
 		}
 
 		for _, inName := range out.Code.Triggers {
@@ -260,7 +264,7 @@ func (gr *SAGraph) drawConnections() {
 			_, selCoordIn, _ := in.nodeToPixelsCoord(lv.call.canvas)
 			coordOut = selCoordOut //move by button_circle_rad
 
-			_SAGraph_drawConnectionH(OsV2{selCoordIn.End().X, selCoordIn.Middle().Y}, OsV2{coordOut.Start.X, coordOut.Middle().Y}, cellr, ui, cellr, Node_connectionCd(in.Selected || out.Selected, ui))
+			gr.drawConnectionH(OsV2{selCoordIn.End().X, selCoordIn.Middle().Y}, OsV2{coordOut.Start.X, coordOut.Middle().Y}, cellr, cellr, Node_connectionCd(in.Selected || out.Selected, ui))
 		}
 	}
 }
@@ -300,8 +304,6 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 
 	graphCanvas = ui.GetCall().call.canvas
 
-	changed := false
-
 	ui.Div_colMax(0, 100)
 	ui.Div_rowMax(0, 100)
 
@@ -333,7 +335,7 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 	ui._compDrawText(lv.call.canvas.AddSpace(ui.CellWidth(0.5)), "press tab", "", pl.GetGrey(1), InitWinFontPropsDef(ui.win), false, false, OsV2{1, 2}, false, false)
 
 	//+
-	gr.drawCreateNode(ui)
+	gr.drawCreateNode()
 
 	touchInsideNode := gr.drawNodes(true, false)
 
@@ -356,7 +358,7 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 			if gr.connect_out.Selected {
 				coordIn = selCoordIn
 			}
-			_SAGraph_drawConnectionH(OsV2{coordIn.End().X, coordIn.Middle().Y}, ui.win.io.touch.pos, cellr, ui, 0, cd)
+			gr.drawConnectionH(OsV2{coordIn.End().X, coordIn.Middle().Y}, ui.win.io.touch.pos, cellr, 0, cd)
 		}
 
 		if gr.connect_in != nil {
@@ -364,7 +366,7 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 			if gr.connect_in.Selected {
 				coordOut = selCoordOut
 			}
-			_SAGraph_drawConnectionH(ui.win.io.touch.pos, OsV2{coordOut.Start.X, coordOut.Middle().Y}, cellr, ui, 0, cd)
+			gr.drawConnectionH(ui.win.io.touch.pos, OsV2{coordOut.Start.X, coordOut.Middle().Y}, cellr, 0, cd)
 		}
 	}
 
@@ -386,7 +388,6 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 		//delete
 		if keys.delete {
 			gr.app.root.RemoveSelectedNodes()
-			changed = true
 		}
 
 		//copy
@@ -400,7 +401,6 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 			//add selected into list
 			gr.app.base.copiedNodes = gr.app.root.BuildListOfSelected()
 			gr.app.root.RemoveSelectedNodes()
-			changed = true
 		}
 		//paste
 		if keys.paste {
@@ -444,7 +444,6 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 				n.Selected = true
 			}
 			gr.autoZoom(true, graphCanvas)
-			changed = true
 		}
 
 		if keys.copy {
@@ -573,10 +572,6 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 	//	ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0.03)
 	//}
 
-	if changed {
-		//gr.app.SetExecute()
-	}
-
 	return graphCanvas, keyAllow
 }
 
@@ -677,8 +672,15 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 
 }
 
-func (gr *SAGraph) History(ui *Ui) {
+func (gr *SAGraph) History() {
+
+	ui := gr.app.base.ui
+	if ui.win.io.touch.end || ui.win.io.keys.hasChanged {
+		gr.checkAndAddHistory()
+	}
+
 	if len(gr.history) == 0 {
+		gr.checkAndAddHistory()
 		return
 	}
 
@@ -694,36 +696,33 @@ func (gr *SAGraph) History(ui *Ui) {
 	}
 }
 
-func (gr *SAGraph) addHistory() {
+func (gr *SAGraph) checkAndAddHistory() {
 
-	/*js, err := json.Marshal(app.root)
+	js, err := json.Marshal(gr.app.root)
 	if err != nil {
 		return
 	}
-	if len(app.history) > 0 && bytes.Equal(js, app.history[app.history_pos]) {
+	if len(gr.history) > 0 && bytes.Equal(js, gr.history[gr.history_pos]) {
 		return //same as current history
 	}
 
 	//cut newer history
-	if app.history_pos+1 < len(app.history) {
-		app.history = app.history[:app.history_pos+1]
+	if gr.history_pos+1 < len(gr.history) {
+		gr.history = gr.history[:gr.history_pos+1]
 	}
 
-	app.history = append(app.history, js)
-	app.history_pos = len(app.history) - 1*/
+	gr.history = append(gr.history, js)
+	gr.history_pos = len(gr.history) - 1
 }
 
 func (gr *SAGraph) recoverHistory() {
-
-	/*dst := NewSANode(app, nil, "", "", OsV4{}, OsV2f{})
-	err := json.Unmarshal(app.history[app.history_pos], dst)
+	dst, _ := NewSANodeRoot("", gr.app)
+	err := json.Unmarshal(gr.history[gr.history_pos], dst)
 	if err != nil {
 		return
 	}
-	dst.updateLinks(nil, app)
-	app.root = dst*/
-
-	//app.SetExecute()
+	dst.updateLinks(nil, gr.app)
+	gr.app.root = dst
 }
 
 func (gr *SAGraph) canHistoryBack() bool {
