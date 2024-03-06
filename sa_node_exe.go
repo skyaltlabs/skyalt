@@ -237,7 +237,7 @@ func UiSQLite_Attrs(node *SANode) {
 	grid := InitOsV4(0, 0, 1, 1)
 	path := node.ShowAttrFilePicker(&grid, "path", "", true)
 	node.ShowAttrBool(&grid, "write", false)
-	node.ShowAttrBool(&grid, "changed", false) //.......
+	node.ShowAttrBool(&grid, "changed", false) //...
 
 	if !OsFileExists(path) {
 		node.SetError(errors.New("file not exist"))
@@ -287,6 +287,8 @@ func UiSQLite_Attrs(node *SANode) {
 	grid.Start.Y++
 }
 
+var g_table_name string
+
 func UiSQLite_render(node *SANode) {
 	grid := node.GetGrid()
 
@@ -307,10 +309,10 @@ func UiSQLite_render(node *SANode) {
 		return
 	}
 
-	var tableList []string
+	/*var tableList []string
 	for _, t := range info {
 		tableList = append(tableList, t.Name)
-	}
+	}*/
 
 	var tinfo *DiskDbIndexTable
 	for _, t := range info {
@@ -346,36 +348,68 @@ func UiSQLite_render(node *SANode) {
 			node.Attrs["changed"] = true
 		}
 
+		//list of tables
 		ui.Div_start(0, 1, 1, 1)
 		{
-			ui.Div_colMax(0, 100)
-			ui.Div_colMax(1, 100)
-			ui.Div_colMax(2, 100)
+			ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
+			ui.DivInfo_set(SA_DIV_SET_scrollHnarrow, 1, 0)
 
-			//pick table
-			if ui.Comp_combo(0, 0, 1, 1, &selected_table, tableList, tableList, "Select table", true, true) {
-				node.Attrs["selected_table"] = selected_table
+			for i := range info {
+				ui.Div_col(1+i, 2)
+				ui.Div_colMax(1+i, 100)
 			}
 
-			//+
-			dnm_create_dialog := "create_column" + node.Name
-			if ui.Comp_button(1, 0, 1, 1, "New column", "", true) > 0 {
-				ui.Dialog_open(dnm_create_dialog, 1)
-			}
-			if ui.Dialog_start(dnm_create_dialog) {
-				//name + type ...
-				ui.Dialog_end()
+			//+table
+			{
+				dnm := "create_table_" + node.Name
+				if ui.Comp_button(0, 0, 1, 1, "+", "Create table", true) > 0 {
+					ui.Dialog_open(dnm, 1)
+					g_table_name = ""
+				}
+				if ui.Dialog_start(dnm) {
+					ui.Div_colMax(0, 7)
+					ui.Div_colMax(1, 4)
+					//name
+					ui.Comp_editbox(0, 0, 1, 1, &g_table_name, Comp_editboxProp().TempToValue(true))
+					//button
+					if ui.Comp_button(1, 0, 1, 1, "Create Table", "", g_table_name != "") > 0 {
+						db.Write_unsafe("CREATE TABLE " + g_table_name + "(firstColumn TEXT);")
+						ui.Dialog_close()
+					}
+					ui.Dialog_end()
+				}
 			}
 
-			if ui.Comp_button(2, 0, 1, 1, "Add row", "", true) > 0 {
-				db.Write_unsafe(fmt.Sprintf("INSERT INTO %s (%s) VALUES(%s);", tinfo.Name, tinfo.ListOfColumnNames(), tinfo.ListOfColumnValues()))
-			}
+			//list of tables
+			for i, t := range info {
 
+				dnm := "detail_table" + t.Name + node.Name
+				cl := ui.Comp_buttonMenu(1+i, 0, 1, 1, t.Name, "", true, t.Name == selected_table)
+				if cl == 1 {
+					node.Attrs["selected_table"] = t.Name
+				} else if cl == 2 {
+					ui.Dialog_open(dnm, 1)
+					g_table_name = t.Name
+				}
+
+				if ui.Dialog_start(dnm) {
+					ui.Div_colMax(0, 7)
+					//rename
+					_, _, _, fnshd, _ := ui.Comp_editbox_desc("Name", 0, 3, 0, 0, 1, 1, &g_table_name, Comp_editboxProp())
+					if fnshd {
+						db.Write_unsafe(fmt.Sprintf("ALTER TABLE %s RENAME TO %s", t.Name, g_table_name))
+					}
+					//delete
+					if ui.Comp_buttonError(0, 2, 1, 1, "Delete", "", true, true) > 0 {
+						db.Write_unsafe("DROP TABLE " + t.Name + ";")
+					}
+					ui.Dialog_end()
+				}
+			}
 		}
 		ui.Div_end()
 
 		if tinfo != nil {
-
 			//table(column+rows)
 			ui.Div_start(0, 2, 1, 1)
 			{
@@ -385,7 +419,16 @@ func UiSQLite_render(node *SANode) {
 				ui.Div_col(1+len(tinfo.Columns), 0.5) //extra empty
 				ui.Div_rowMax(1, 100)
 
-				ui.Comp_text(0, 0, 1, 1, "#", 1)
+				//+column
+				dnm := "create_column" + node.Name
+				if ui.Comp_button(0, 0, 1, 1, "+", "Create column", true) > 0 {
+					ui.Dialog_open(dnm, 1)
+				}
+				if ui.Dialog_start(dnm) {
+					//name + type ...
+					ui.Dialog_end()
+				}
+
 				for i, c := range tinfo.Columns {
 					dnm := "column_set" + c.Name + node.Name
 					if ui.Comp_button(1+i, 0, 1, 1, fmt.Sprintf("%s(%s)", c.Name, c.Type), "", true) > 0 {
@@ -400,7 +443,6 @@ func UiSQLite_render(node *SANode) {
 				parentId := ui.DivInfo_get(SA_DIV_GET_uid, 0)
 				ui.Div_start(0, 1, 1+len(tinfo.Columns)+1, 1)
 				{
-
 					//copy cols from parent
 					ui.DivInfo_set(SA_DIV_SET_copyCols, parentId, 0)
 					ui.DivInfo_set(SA_DIV_SET_scrollOnScreen, 1, 0)
@@ -442,8 +484,15 @@ func UiSQLite_render(node *SANode) {
 			}
 			ui.Div_end()
 
-			//show/edit structure & data .......... node.Attrs["changed"] = true
-
+			//+row
+			ui.Div_start(0, 3, 1, 1)
+			{
+				ui.Div_colMax(0, 3)
+				if ui.Comp_button(0, 0, 1, 1, "Add row", "", true) > 0 {
+					db.Write_unsafe(fmt.Sprintf("INSERT INTO %s (%s) VALUES(%s);", tinfo.Name, tinfo.ListOfColumnNames(), tinfo.ListOfColumnValues()))
+				}
+			}
+			ui.Div_end()
 		}
 	}
 	ui.Div_end()
