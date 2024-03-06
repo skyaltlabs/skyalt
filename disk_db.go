@@ -19,6 +19,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"sync"
 )
 
@@ -26,10 +27,31 @@ type DiskDbIndexColumn struct {
 	Name string
 	Type string
 }
-
 type DiskDbIndexTable struct {
 	Name    string
 	Columns []*DiskDbIndexColumn
+}
+
+func (tb *DiskDbIndexTable) ListOfColumnNames() string {
+	str := ""
+
+	for _, c := range tb.Columns {
+		str += c.Name + ", "
+	}
+	str, _ = strings.CutSuffix(str, ", ")
+
+	return str
+}
+
+func (tb *DiskDbIndexTable) ListOfColumnValues() string {
+	str := ""
+
+	for range tb.Columns {
+		str += `"", `
+	}
+	str, _ = strings.CutSuffix(str, ", ")
+
+	return str
 }
 
 type DiskDb struct {
@@ -50,6 +72,8 @@ type DiskDb struct {
 	file_time     int64
 	file_time_wal int64
 	file_time_shm int64
+
+	last_file_tick int64
 }
 
 func NewDiskDb(path string, inMemory bool, disk *Disk) (*DiskDb, error) {
@@ -91,7 +115,7 @@ func (db *DiskDb) Destroy() {
 	}
 }
 
-func (db *DiskDb) HasFileChanged() bool {
+func (db *DiskDb) hasFileChanged() bool {
 	tm := OsFileTime(db.path)
 	tm_wal := OsFileTime(db.path + "-wal")
 	tm_shm := OsFileTime(db.path + "-shm")
@@ -105,11 +129,33 @@ func (db *DiskDb) HasFileChanged() bool {
 
 	return changed
 }
-func (db *DiskDb) HasBeenWritten() bool {
+func (db *DiskDb) hasBeenWritten() bool {
 	written := db.written
 	db.written = false
 
 	return written
+}
+
+func (db *DiskDb) setWritten() {
+	db.written = true
+	db.hasFileChanged() //update
+}
+
+func (db *DiskDb) HasFileChanged() bool {
+
+	if !OsIsTicksIn(db.last_file_tick, 2000) {
+		db.last_file_tick = OsTicks()
+
+		if db.hasFileChanged() {
+			return true
+		}
+	}
+
+	if db.hasBeenWritten() {
+		return true
+	}
+
+	return false
 }
 
 func (db *DiskDb) GetTableInfo() ([]*DiskDbIndexTable, error) {
@@ -160,14 +206,11 @@ func (db *DiskDb) Vacuum() error {
 	defer db.lock.Unlock()
 
 	_, err := db.db.Exec("VACUUM;")
-	db.written = true
+	db.setWritten()
 	return err
 }
 
-func (db *DiskDb) Write(query string, params ...any) (sql.Result, error) {
-	db.lock.Lock()
-	defer db.lock.Unlock()
-
+func (db *DiskDb) Write_unsafe(query string, params ...any) (sql.Result, error) { //call Read_Lock() - Read_Unlock()
 	//tx, err := db.Begin()
 	//if err != nil {
 	//	return nil, err
@@ -181,14 +224,21 @@ func (db *DiskDb) Write(query string, params ...any) (sql.Result, error) {
 
 	db.lastWriteTicks = int64(OsTicks())
 
-	db.written = true
+	db.setWritten()
 	return res, nil
 }
 
-func (db *DiskDb) Read_Lock() {
+func (db *DiskDb) Write(query string, params ...any) (sql.Result, error) {
+	db.lock.Lock()
+	defer db.lock.Unlock()
+
+	return db.Write_unsafe(query, params...)
+}
+
+func (db *DiskDb) Lock() {
 	db.lock.Lock()
 }
-func (db *DiskDb) Read_Unlock() {
+func (db *DiskDb) Unlock() {
 	db.lock.Unlock()
 }
 
@@ -209,8 +259,8 @@ func (db *DiskDb) Print() error {
 		return err
 	}
 
-	db.Read_Lock()
-	defer db.Read_Unlock()
+	db.Lock()
+	defer db.Unlock()
 
 	for _, t := range tables {
 		//table name

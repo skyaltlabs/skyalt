@@ -91,31 +91,3 @@ func (disk *Disk) OpenDb(path string) (*DiskDb, bool, error) {
 
 	return db, found, nil
 }
-
-func (disk *Disk) HasDbFileChanged() bool {
-	disk.lock.Lock()
-	defer disk.lock.Unlock()
-
-	changed := false
-	for _, db := range disk.dbs {
-		if db.HasFileChanged() {
-			changed = true
-		}
-	}
-
-	return changed
-}
-
-func (disk *Disk) HasDbBeenWritten() bool {
-	disk.lock.Lock()
-	defer disk.lock.Unlock()
-
-	changed := false
-	for _, db := range disk.dbs {
-		if db.HasBeenWritten() {
-			changed = true
-		}
-	}
-
-	return changed
-}
