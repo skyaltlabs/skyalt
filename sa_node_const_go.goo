@@ -3,7 +3,7 @@ type Text struct {
 	Grid_y      int    `json:"grid_y"`
 	Grid_w      int    `json:"grid_w"`
 	Grid_h      int    `json:"grid_h"`
-	Grid_show   bool   `json:"grid_show"`
+	Show   bool   `json:"show"`
 	Label       string `json:"label"`
 	Align_h     int    `json:"align_h"`
 	Align_v     int    `json:"align_v"`
@@ -16,7 +16,7 @@ type Number struct {
 	Grid_y    int     `json:"grid_y"`
 	Grid_w    int     `json:"grid_w"`
 	Grid_h    int     `json:"grid_h"`
-	Grid_show bool    `json:"grid_show"`
+	Show bool    `json:"show"`
 	Value     float64 `json:"value"`
 }
 type Editbox struct {
@@ -24,7 +24,7 @@ type Editbox struct {
 	Grid_y                  int    `json:"grid_y"`
 	Grid_w                  int    `json:"grid_w"`
 	Grid_h                  int    `json:"grid_h"`
-	Grid_show               bool   `json:"grid_show"`
+	Show               bool   `json:"show"`
 	Value                   string `json:"value"`
 	Ghost                   string `json:"ghost"`
 	Align_h                 int    `json:"align_h"`
@@ -39,7 +39,7 @@ type Button struct {
 	Grid_y    int    `json:"grid_y"`
 	Grid_w    int    `json:"grid_w"`
 	Grid_h    int    `json:"grid_h"`
-	Grid_show bool   `json:"grid_show"`
+	Show bool   `json:"show"`
 	Label     string `json:"label"`
 	Tooltip   string `json:"tooltip"`
 	Enable    bool   `json:"enable"`
@@ -51,7 +51,7 @@ type Checkbox struct {
 	Grid_y    int    `json:"grid_y"`
 	Grid_w    int    `json:"grid_w"`
 	Grid_h    int    `json:"grid_h"`
-	Grid_show bool   `json:"grid_show"`
+	Show bool   `json:"show"`
 	Value     bool   `json:"value"`
 	Label     string `json:"label"`
 	Tooltip   string `json:"tooltip"`
@@ -64,7 +64,7 @@ type Switch struct {
 	Grid_y    int    `json:"grid_y"`
 	Grid_w    int    `json:"grid_w"`
 	Grid_h    int    `json:"grid_h"`
-	Grid_show bool   `json:"grid_show"`
+	Show bool   `json:"show"`
 	Value     bool   `json:"value"`
 	Label     string `json:"label"`
 	Tooltip   string `json:"tooltip"`
@@ -77,7 +77,7 @@ type Disk_dir struct {
 	Grid_y    int    `json:"grid_y"`
 	Grid_w    int    `json:"grid_w"`
 	Grid_h    int    `json:"grid_h"`
-	Grid_show bool   `json:"grid_show"`
+	Show bool   `json:"show"`
 	Path      string `json:"path"`
 	Write     bool   `json:"write"`
 	Enable    bool   `json:"enable"`
@@ -89,7 +89,7 @@ type Disk_file struct {
 	Grid_y    int    `json:"grid_y"`
 	Grid_w    int    `json:"grid_w"`
 	Grid_h    int    `json:"grid_h"`
-	Grid_show bool   `json:"grid_show"`
+	Show bool   `json:"show"`
 	Path      string `json:"path"`
 	Write     bool   `json:"write"`
 	Enable    bool   `json:"enable"`
@@ -101,7 +101,7 @@ type Sqlite struct {
 	Grid_y    int    `json:"grid_y"`
 	Grid_w    int    `json:"grid_w"`
 	Grid_h    int    `json:"grid_h"`
-	Grid_show bool   `json:"grid_show"`
+	Show bool   `json:"show"`
 	Path      string `json:"path"`
 	Write     bool   `json:"write"`
 	Enable    bool   `json:"enable"`

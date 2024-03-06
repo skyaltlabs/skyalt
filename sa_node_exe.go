@@ -33,7 +33,7 @@ func UiButton_Attrs(node *SANode) {
 	grid := InitOsV4(0, 0, 1, 1)
 
 	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
-	node.ShowAttrBool(&grid, "grid_show", true)
+	node.ShowAttrBool(&grid, "show", true)
 	node.ShowAttrString(&grid, "label", "", false)
 	node.ShowAttrString(&grid, "tooltip", "", false)
 	node.ShowAttrBool(&grid, "enable", true)
@@ -60,7 +60,7 @@ func UiText_Attrs(node *SANode) {
 	grid := InitOsV4(0, 0, 1, 1)
 
 	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
-	node.ShowAttrBool(&grid, "grid_show", true)
+	node.ShowAttrBool(&grid, "show", true)
 	node.ShowAttrString(&grid, "label", "", node.GetAttrBool("multi_line", false))
 	node.ShowAttrIntCombo(&grid, "align_h", 0, []string{"Left", "Center", "Right"}, []string{"0", "1", "2"})
 	node.ShowAttrIntCombo(&grid, "align_v", 0, []string{"Left", "Center", "Right"}, []string{"0", "1", "2"})
@@ -92,7 +92,7 @@ func UiEditbox_Attrs(node *SANode) {
 	grid := InitOsV4(0, 0, 1, 1)
 
 	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
-	node.ShowAttrBool(&grid, "grid_show", true)
+	node.ShowAttrBool(&grid, "show", true)
 	node.ShowAttrString(&grid, "value", "", node.GetAttrBool("multi_line", false))
 	node.ShowAttrString(&grid, "ghost", "", false)
 	node.ShowAttrIntCombo(&grid, "align_h", 0, []string{"Left", "Center", "Right"}, []string{"0", "1", "2"})
@@ -129,7 +129,7 @@ func UiCheckbox_Attrs(node *SANode) {
 	grid := InitOsV4(0, 0, 1, 1)
 
 	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
-	node.ShowAttrBool(&grid, "grid_show", true)
+	node.ShowAttrBool(&grid, "show", true)
 	node.ShowAttrBool(&grid, "value", false)
 	node.ShowAttrString(&grid, "label", "", false)
 	node.ShowAttrString(&grid, "tooltip", "", false)
@@ -159,7 +159,7 @@ func UiSwitch_Attrs(node *SANode) {
 	grid := InitOsV4(0, 0, 1, 1)
 
 	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
-	node.ShowAttrBool(&grid, "grid_show", true)
+	node.ShowAttrBool(&grid, "show", true)
 	node.ShowAttrBool(&grid, "value", false)
 	node.ShowAttrString(&grid, "label", "", false)
 	node.ShowAttrString(&grid, "tooltip", "", false)

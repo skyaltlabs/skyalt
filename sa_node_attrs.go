@@ -21,7 +21,7 @@ import (
 )
 
 func (node *SANode) GetGridShow() bool {
-	return node.GetAttrBool("grid_show", true)
+	return node.GetAttrBool("show", true)
 }
 
 func (node *SANode) SetGridStart(v OsV2) {
