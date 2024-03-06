@@ -236,14 +236,14 @@ func (srv *SAServices) handlerG4F(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// build messages
-	messagesJs, err := json.Marshal(node.Attrs)
+	messagesJs, err := json.Marshal(st.Messages)
 	if err != nil {
 		http.Error(w, "Marshal() failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	//complete
-	answer, err := srv.GetG4F().Complete(&SAServiceG4FProps{Model: "gpt-4-turbo", Messages: string(messagesJs)})
+	answer, err := srv.GetG4F().Complete(&SAServiceG4FProps{Model: node.GetAttrString("model", "gpt-4-turbo"), Messages: string(messagesJs)})
 	if err != nil {
 		http.Error(w, "G4F() failed: "+err.Error(), http.StatusInternalServerError)
 		return
