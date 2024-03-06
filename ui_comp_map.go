@@ -313,11 +313,11 @@ func (ui *Ui) comp_map(cam_lon, cam_lat, cam_zoom *float64, file, url, copyright
 			tileCoord_sy := (y - float64(bbStart.Y)) * tileH
 
 			name := strconv.Itoa(int(zoom)) + "-" + strconv.Itoa(int(x)) + "-" + strconv.Itoa(int(y)) + ".png"
-			db.Read_Lock()
+			db.Lock()
 			row := db.ReadRow_unsafe("SELECT rowid FROM tiles WHERE name=='" + name + "'")
 			rowid := int64(-1)
 			err = row.Scan(&rowid)
-			db.Read_Unlock() //because down, there is db.Write() + ui.Paint_file() also lock db
+			db.Unlock() //because down, there is db.Write() + ui.Paint_file() also lock db
 
 			if err != nil {
 
