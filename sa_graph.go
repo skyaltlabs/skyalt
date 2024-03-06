@@ -675,7 +675,8 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 func (gr *SAGraph) History() {
 
 	ui := gr.app.base.ui
-	if ui.win.io.touch.end || ui.win.io.keys.hasChanged {
+
+	if ui.win.io.touch.end || (!ui.edit.IsActive() && ui.win.io.keys.hasChanged) {
 		gr.checkAndAddHistory()
 	}
 

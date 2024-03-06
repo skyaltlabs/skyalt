@@ -335,6 +335,8 @@ func (base *SABase) Render() bool {
 
 		}
 		ui.Div_end()
+
+		app.graph.History()
 	}
 
 	//app.flamingo.Tick()

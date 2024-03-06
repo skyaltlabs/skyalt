@@ -422,7 +422,7 @@ func (app *SAApp) renderIDE() {
 	}
 
 	//shortcuts
-	if ui.edit.uid == nil && appDiv.IsOver(ui) {
+	if !ui.edit.IsActive() && appDiv.IsOver(ui) {
 		keys := &ui.win.io.keys
 
 		//delete
@@ -430,8 +430,6 @@ func (app *SAApp) renderIDE() {
 			app.root.RemoveSelectedNodes()
 		}
 	}
-
-	app.graph.History()
 }
 
 func (app *SAApp) ComboListOfNodes(x, y, w, h int, act string) string {
