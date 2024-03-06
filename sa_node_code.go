@@ -64,7 +64,7 @@ func InitSANodeCode(node *SANode) SANodeCode {
 func (ls *SANodeCode) updateLinks(node *SANode) error {
 	ls.node = node
 
-	if !node.IsCode() {
+	if !node.IsTypeCode() {
 		return nil
 	}
 
@@ -467,7 +467,7 @@ func (ls *SANodeCode) Execute() error {
 			vars[prmNode.Name] = prmNode.Attrs
 
 			attrs := prmNode.Attrs
-			if prmNode.HasNodeAttr() {
+			if prmNode.HasAttrNode() {
 				attrs = make(map[string]interface{})
 				attrs["node"] = prmNode.Name
 
@@ -507,7 +507,7 @@ func (ls *SANodeCode) Execute() error {
 		for key, node := range vars {
 			prmNode := ls.node.FindNode(key)
 			if prmNode != nil {
-				if !prmNode.HasNodeAttr() {
+				if !prmNode.HasAttrNode() {
 					switch vv := node.(type) {
 					case map[string]interface{}:
 						prmNode.Attrs = vv

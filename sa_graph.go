@@ -273,7 +273,7 @@ func (gr *SAGraph) drawNodes(rects bool, classic bool) *SANode {
 
 	var touchInsideNode *SANode
 	for _, n := range gr.app.all_nodes {
-		if SAGroups_HasNodeSub(n.Exe) {
+		if n.HasNodeSubs() {
 			if rects {
 				if n.drawRectNode(gr.node_select, gr.app) { //inside
 					touchInsideNode = n

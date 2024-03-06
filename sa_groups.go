@@ -93,21 +93,9 @@ func InitSAGroups() SAGroups {
 	return grs
 }
 
-func SAGroups_HasNodeSub(node string) bool {
-	return strings.EqualFold(node, "layout") || strings.EqualFold(node, "dialog") // || strings.EqualFold(node, "for") || strings.EqualFold(node, "if")
-}
-
 func (grs *SAGroups) IsUI(node string) bool {
 	gr := grs.FindNode(node)
 	return gr != nil && gr.render != nil
-}
-
-func (grs *SAGroups) IsTrigger(node string) bool {
-	return strings.EqualFold(node, "button") || strings.EqualFold(node, "editbox")
-}
-
-func (grs *SAGroups) IsCode(node string) bool {
-	return strings.EqualFold(node, "code_go") || strings.EqualFold(node, "code_python")
 }
 
 func (grs *SAGroups) FindNode(node string) *SAGroupNode {

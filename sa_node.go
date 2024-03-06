@@ -118,15 +118,30 @@ func (node *SANode) SetPosStart() {
 func (node *SANode) AddPos(r OsV2f) {
 	node.Pos = node.pos_start.Add(r)
 
-	if SAGroups_HasNodeSub(node.Exe) {
+	if node.HasNodeSubs() {
 		for _, nd := range node.Subs {
 			nd.AddPos(r)
 		}
 	}
 }
 
-func (node *SANode) HasNodeAttr() bool {
+func (node *SANode) HasAttrNode() bool {
 	return node.Exe == "whisper_cpp" || node.Exe == "llama_cpp" || node.Exe == "g4f"
+}
+
+func (node *SANode) HasNodeSubs() bool {
+	return strings.EqualFold(node.Exe, "layout") || strings.EqualFold(node.Exe, "dialog")
+}
+
+func (node *SANode) IsTypeCode() bool {
+	return strings.EqualFold(node.Exe, "code_go") || strings.EqualFold(node.Exe, "code_python")
+}
+
+func (node *SANode) IsTypeTrigger() bool {
+	return strings.EqualFold(node.Exe, "button") || strings.EqualFold(node.Exe, "editbox") ||
+		strings.EqualFold(node.Exe, "checkbox") || strings.EqualFold(node.Exe, "switch") ||
+		strings.EqualFold(node.Exe, "disk_dir") || strings.EqualFold(node.Exe, "disk_file") ||
+		strings.EqualFold(node.Exe, "sqlite")
 }
 
 func (node *SANode) IsTriggered() bool {
@@ -300,10 +315,6 @@ func (node *SANode) FindParent(parent *SANode) bool {
 		node = node.parent
 	}
 	return false
-}
-
-func (node *SANode) IsCode() bool {
-	return node.app.base.node_groups.IsCode(node.Exe)
 }
 
 func (node *SANode) updateLinks(parent *SANode, app *SAApp) {

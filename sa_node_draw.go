@@ -97,7 +97,7 @@ func (node *SANode) nodeToPixelsCoord(canvas OsV4) (OsV4, OsV4, OsV4) {
 	w := 6
 	h := 1 //+ node.NumVisibleAndCheck()
 
-	if SAGroups_HasNodeSub(node.Exe) {
+	if node.HasNodeSubs() {
 		//compute bound
 		bound := InitOsV4Mid(mid, OsV2{int(float32(w) * cellr), int(float32(h) * cellr)})
 		for i, nd := range node.Subs {
@@ -127,7 +127,7 @@ func (node *SANode) nodeToPixelsCoord(canvas OsV4) (OsV4, OsV4, OsV4) {
 func (node *SANode) FindInsideParent(touchPos OsV2, canvas OsV4) *SANode {
 	var found *SANode
 
-	if SAGroups_HasNodeSub(node.Exe) {
+	if node.HasNodeSubs() {
 		coord, _, _ := node.nodeToPixelsCoord(canvas)
 		if coord.Inside(touchPos) {
 			found = node
@@ -188,13 +188,13 @@ func (node *SANode) drawHeader() bool {
 
 	//make connection - dialog attr list
 	{
-		if node.app.base.node_groups.IsCode(node.Exe) {
+		if node.IsTypeCode() {
 			if ui.Comp_buttonCircle(0, 0, 1, 1, "", "", CdPalette_B, circleCd, node.app.graph.connect_in == nil) > 0 {
 				node.app.graph.SetConnectIn(node)
 			}
 		}
 
-		if node.app.base.node_groups.IsTrigger(node.Exe) {
+		if node.IsTypeTrigger() {
 			if ui.Comp_buttonCircle(2, 0, 1, 1, "", "", CdPalette_B, circleCd, node.app.graph.connect_out == nil) > 0 {
 				node.app.graph.SetConnectOut(node)
 			}
