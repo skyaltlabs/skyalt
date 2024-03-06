@@ -39,8 +39,6 @@ type SABase struct {
 	copiedNodes []*SANode
 
 	services *SAServices
-
-	last_tick int64
 }
 
 func NewSABase(ui *Ui) (*SABase, error) {
@@ -225,16 +223,6 @@ func (base *SABase) Tick() {
 	base.tickMick()
 
 	base.HasApp() //fix range
-
-	//check if some db changed
-	if (!OsIsTicksIn(base.last_tick, 5000) && base.ui.win.disk.HasDbFileChanged()) ||
-		base.ui.win.disk.HasDbBeenWritten() {
-
-		//for _, a := range base.Apps {
-		//a.SetExecute()
-		//}
-		base.last_tick = OsTicks()
-	}
 
 	app := base.GetApp()
 	app.Tick()
