@@ -168,6 +168,8 @@ func (db *DiskDb) GetTableInfo() ([]*DiskDbIndexTable, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Read() failed: %w", err)
 	}
+	defer tableRows.Close()
+
 	for tableRows.Next() {
 		var tname string
 		err = tableRows.Scan(&tname)
@@ -183,6 +185,8 @@ func (db *DiskDb) GetTableInfo() ([]*DiskDbIndexTable, error) {
 		if err != nil {
 			return nil, fmt.Errorf("Query(%s) failed: %w", query, err)
 		}
+		defer columnRows.Close()
+
 		for columnRows.Next() {
 			var cid int
 			var cname, ctype string
@@ -276,6 +280,7 @@ func (db *DiskDb) Print() error {
 		if err != nil {
 			return err
 		}
+		defer rows.Close()
 
 		// out fields
 		colTypes, err := rows.ColumnTypes()
