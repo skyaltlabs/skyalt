@@ -188,7 +188,7 @@ func UiDiskDir_Attrs(node *SANode) {
 
 	grid := InitOsV4(0, 0, 1, 1)
 
-	node.ShowAttrFilePicker(&grid, "path", "", false)
+	node.ShowAttrFilePicker(&grid, "path", "", false, "disk_dir_"+node.Name)
 	node.ShowAttrBool(&grid, "write", false)
 	node.ShowAttrBool(&grid, "changed", false)
 }
@@ -212,7 +212,7 @@ func UiDiskFile_Attrs(node *SANode) {
 
 	grid := InitOsV4(0, 0, 1, 1)
 
-	node.ShowAttrFilePicker(&grid, "path", "", true)
+	node.ShowAttrFilePicker(&grid, "path", "", true, "disk_file_"+node.Name)
 	node.ShowAttrBool(&grid, "write", false)
 	node.ShowAttrBool(&grid, "changed", false)
 }
@@ -235,7 +235,7 @@ func UiSQLite_Attrs(node *SANode) {
 	ui.Div_colMax(1, 100)
 
 	grid := InitOsV4(0, 0, 1, 1)
-	path := node.ShowAttrFilePicker(&grid, "path", "", true)
+	path := node.ShowAttrFilePicker(&grid, "path", "", true, "render_sqlite_"+node.Name)
 	node.ShowAttrBool(&grid, "write", false)
 	node.ShowAttrBool(&grid, "changed", false) //...
 
@@ -288,6 +288,8 @@ func UiSQLite_Attrs(node *SANode) {
 }
 
 var g_table_name string
+var g_column_name string
+var g_column_type string
 
 func UiSQLite_render(node *SANode) {
 	grid := node.GetGrid()
@@ -335,6 +337,7 @@ func UiSQLite_render(node *SANode) {
 			node.SetError(err)
 			return
 		}
+		defer rows.Close()
 	}
 
 	ui := node.app.base.ui
@@ -397,11 +400,14 @@ func UiSQLite_render(node *SANode) {
 					//rename
 					_, _, _, fnshd, _ := ui.Comp_editbox_desc("Name", 0, 3, 0, 0, 1, 1, &g_table_name, Comp_editboxProp())
 					if fnshd {
-						db.Write_unsafe(fmt.Sprintf("ALTER TABLE %s RENAME TO %s", t.Name, g_table_name))
+						db.Write_unsafe(fmt.Sprintf("ALTER TABLE %s RENAME TO %s;", t.Name, g_table_name))
+						if selected_table == t.Name {
+							node.Attrs["selected_table"] = g_table_name
+						}
 					}
 					//delete
 					if ui.Comp_buttonError(0, 2, 1, 1, "Delete", "", true, true) > 0 {
-						db.Write_unsafe("DROP TABLE " + t.Name + ";")
+						db.Write_unsafe(fmt.Sprintf("DROP TABLE %s;", t.Name))
 					}
 					ui.Dialog_end()
 				}
@@ -421,21 +427,44 @@ func UiSQLite_render(node *SANode) {
 
 				//+column
 				dnm := "create_column" + node.Name
-				if ui.Comp_button(0, 0, 1, 1, "+", "Create column", true) > 0 {
+				if ui.Comp_buttonLight(0, 0, 1, 1, "+", "Create column", true) > 0 {
 					ui.Dialog_open(dnm, 1)
+					g_column_name = ""
+					g_column_type = "TEXT"
 				}
 				if ui.Dialog_start(dnm) {
-					//name + type ...
+					ui.Div_colMax(0, 7)
+					ui.Div_colMax(1, 4)
+					ui.Div_colMax(2, 4)
+					//name
+					ui.Comp_editbox(0, 0, 1, 1, &g_column_name, Comp_editboxProp().TempToValue(true))
+					//type
+					ui.Comp_combo(1, 0, 1, 1, &g_column_type, []string{"INTEGER", "REAL", "TEXT", "BLOB"}, []string{"INTEGER", "REAL", "TEXT", "BLOB"}, "Type", true, false)
+					//button
+					if ui.Comp_button(2, 0, 1, 1, "Create Column", "", g_column_name != "") > 0 {
+						db.Write_unsafe(fmt.Sprintf("ALTER TABLE %s ADD %s %s;", tinfo.Name, g_column_name, g_column_type))
+						ui.Dialog_close()
+					}
 					ui.Dialog_end()
 				}
 
 				for i, c := range tinfo.Columns {
 					dnm := "column_set" + c.Name + node.Name
-					if ui.Comp_button(1+i, 0, 1, 1, fmt.Sprintf("%s(%s)", c.Name, c.Type), "", true) > 0 {
+					if ui.Comp_buttonLight(1+i, 0, 1, 1, fmt.Sprintf("%s(%s)", c.Name, c.Type), "", true) > 0 {
 						ui.Dialog_open(dnm, 1)
+						g_column_name = c.Name
 					}
 					if ui.Dialog_start(dnm) {
-						//rename/delete ...
+						ui.Div_colMax(0, 7)
+						//rename
+						_, _, _, fnshd, _ := ui.Comp_editbox_desc("Name", 0, 3, 0, 0, 1, 1, &g_column_name, Comp_editboxProp())
+						if fnshd {
+							db.Write_unsafe(fmt.Sprintf("ALTER TABLE %s RENAME COLUMN %s TO %s;", tinfo.Name, c.Name, g_column_name))
+						}
+						//delete
+						if ui.Comp_buttonError(0, 2, 1, 1, "Delete", "", true, true) > 0 {
+							db.Write_unsafe(fmt.Sprintf("ALTER TABLE %s DROP COLUMN %s;", tinfo.Name, c.Name))
+						}
 						ui.Dialog_end()
 					}
 				}
@@ -468,10 +497,21 @@ func UiSQLite_render(node *SANode) {
 							r++
 							continue
 						}
+
 						rows.Scan(valsPtrs...) //err ...
 
-						if ui.Comp_buttonLight(0, r, 1, 1, strconv.Itoa(r), "", true) > 0 {
-							//context menu with "Remove" ...
+						rowid := r //.........................
+
+						dnm := "row_detail_" + node.Name + selected_table + strconv.Itoa(rowid)
+						if ui.Comp_buttonLight(0, r, 1, 1, strconv.Itoa(rowid), "", true) > 0 {
+							ui.Dialog_open(dnm, 1)
+						}
+						if ui.Dialog_start(dnm) {
+							ui.Div_colMax(0, 7)
+							if ui.Comp_buttonError(0, 0, 1, 1, "Delete", "", true, true) > 0 {
+								db.Write_unsafe(fmt.Sprintf("DELETE FROM %s WHERE rowid=?", tinfo.Name), rowid)
+							}
+							ui.Dialog_end()
 						}
 
 						for c, v := range vals {
@@ -489,6 +529,9 @@ func UiSQLite_render(node *SANode) {
 			{
 				ui.Div_colMax(0, 3)
 				if ui.Comp_button(0, 0, 1, 1, "Add row", "", true) > 0 {
+
+					//ListOfColumnValues() must be right TYPE! ........
+
 					db.Write_unsafe(fmt.Sprintf("INSERT INTO %s (%s) VALUES(%s);", tinfo.Name, tinfo.ListOfColumnNames(), tinfo.ListOfColumnValues()))
 				}
 			}
