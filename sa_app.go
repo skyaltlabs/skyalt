@@ -150,6 +150,19 @@ func (app *SAApp) rebuildLists() {
 
 func (app *SAApp) Tick() {
 
+	//update "changed" for sqlite dbs
+	for _, nd := range app.all_nodes {
+		if nd.Exe == "sqlite" {
+
+			path := nd.GetAttrString("path", "")
+
+			db, _, err := app.base.ui.win.disk.OpenDb(path)
+			if err == nil && db.HasFileChanged() {
+				nd.Attrs["changed"] = true
+			}
+		}
+	}
+
 	for _, nd := range app.all_nodes {
 		if nd.Code.IsTriggered() {
 			err := nd.Code.Execute()
