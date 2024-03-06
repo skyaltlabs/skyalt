@@ -17,9 +17,11 @@ limitations under the License.
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -286,19 +288,165 @@ func UiSQLite_Attrs(node *SANode) {
 }
 
 func UiSQLite_render(node *SANode) {
-	/*grid := node.GetGrid()
+	grid := node.GetGrid()
 
 	path := node.GetAttrString("path", "")
 	enable := node.GetAttrBool("enable", true)
+	selected_table := node.GetAttrString("selected_table", "")
 	//changed := node.GetAttrBool("changed", false)
 
 	db, _, err := node.app.base.ui.win.disk.OpenDb(path)
 	if err != nil {
 		node.SetError(err)
 		return
-	}*/
+	}
 
-	//show/edit whole table ..........
+	info, err := db.GetTableInfo()
+	if err != nil {
+		node.SetError(err)
+		return
+	}
+
+	var tableList []string
+	for _, t := range info {
+		tableList = append(tableList, t.Name)
+	}
+
+	var tinfo *DiskDbIndexTable
+	for _, t := range info {
+		if t.Name == selected_table {
+			tinfo = t
+		}
+	}
+
+	var num_rows int
+	var rows *sql.Rows
+	if tinfo != nil {
+		db.Lock()
+		defer db.Unlock()
+
+		row := db.ReadRow_unsafe("SELECT COUNT(*) FROM " + selected_table)
+		row.Scan(&num_rows)
+
+		rows, err = db.Read_unsafe("SELECT " + tinfo.ListOfColumnNames() + " FROM " + selected_table)
+		if err != nil {
+			node.SetError(err)
+			return
+		}
+	}
+
+	ui := node.app.base.ui
+	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
+	{
+		ui.Div_colMax(0, 100)
+		ui.Div_rowMax(2, 100)
+
+		if ui.Comp_dirPicker(0, 0, 1, 1, &path, true, "dir_picker_"+node.Name, enable) {
+			node.Attrs["path"] = path
+			node.Attrs["changed"] = true
+		}
+
+		ui.Div_start(0, 1, 1, 1)
+		{
+			ui.Div_colMax(0, 100)
+			ui.Div_colMax(1, 100)
+			ui.Div_colMax(2, 100)
+
+			//pick table
+			if ui.Comp_combo(0, 0, 1, 1, &selected_table, tableList, tableList, "Select table", true, true) {
+				node.Attrs["selected_table"] = selected_table
+			}
+
+			//+
+			dnm_create_dialog := "create_column" + node.Name
+			if ui.Comp_button(1, 0, 1, 1, "New column", "", true) > 0 {
+				ui.Dialog_open(dnm_create_dialog, 1)
+			}
+			if ui.Dialog_start(dnm_create_dialog) {
+				//name + type ...
+				ui.Dialog_end()
+			}
+
+			if ui.Comp_button(2, 0, 1, 1, "Add row", "", true) > 0 {
+				db.Write_unsafe(fmt.Sprintf("INSERT INTO %s (%s) VALUES(%s);", tinfo.Name, tinfo.ListOfColumnNames(), tinfo.ListOfColumnValues()))
+			}
+
+		}
+		ui.Div_end()
+
+		if tinfo != nil {
+
+			//table(column+rows)
+			ui.Div_start(0, 2, 1, 1)
+			{
+				for i := range tinfo.Columns {
+					ui.Div_colMax(1+i, 10)
+				}
+				ui.Div_col(1+len(tinfo.Columns), 0.5) //extra empty
+				ui.Div_rowMax(1, 100)
+
+				ui.Comp_text(0, 0, 1, 1, "#", 1)
+				for i, c := range tinfo.Columns {
+					dnm := "column_set" + c.Name + node.Name
+					if ui.Comp_button(1+i, 0, 1, 1, fmt.Sprintf("%s(%s)", c.Name, c.Type), "", true) > 0 {
+						ui.Dialog_open(dnm, 1)
+					}
+					if ui.Dialog_start(dnm) {
+						//rename/delete ...
+						ui.Dialog_end()
+					}
+				}
+
+				parentId := ui.DivInfo_get(SA_DIV_GET_uid, 0)
+				ui.Div_start(0, 1, 1+len(tinfo.Columns)+1, 1)
+				{
+
+					//copy cols from parent
+					ui.DivInfo_set(SA_DIV_SET_copyCols, parentId, 0)
+					ui.DivInfo_set(SA_DIV_SET_scrollOnScreen, 1, 0)
+					ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
+
+					//visible rows
+					lv := ui.GetCall()
+					row_st := lv.call.data.scrollV.GetWheel() / ui.win.Cell()
+					row_en := row_st + OsRoundUp(float64(lv.call.crop.Size.Y)/float64(ui.win.Cell()))
+					if num_rows > 0 {
+						ui.Div_row(num_rows-1, 1) //set last
+					}
+
+					vals := make([]string, len(tinfo.Columns))
+					valsPtrs := make([]interface{}, len(tinfo.Columns))
+					for i := 0; i < len(tinfo.Columns); i++ {
+						valsPtrs[i] = &vals[i]
+					}
+
+					r := 0
+					for rows.Next() && r <= row_en {
+						if r < row_st {
+							r++
+							continue
+						}
+						rows.Scan(valsPtrs...) //err ...
+
+						if ui.Comp_buttonLight(0, r, 1, 1, strconv.Itoa(r), "", true) > 0 {
+							//context menu with "Remove" ...
+						}
+
+						for c, v := range vals {
+							ui.Comp_text(1+c, r, 1, 1, v, 1)
+						}
+						r++
+					}
+				}
+				ui.Div_end()
+			}
+			ui.Div_end()
+
+			//show/edit structure & data .......... node.Attrs["changed"] = true
+
+		}
+	}
+	ui.Div_end()
 
 }
 
