@@ -58,11 +58,11 @@ func InitSAGroups() SAGroups {
 		{name: "switch", render: UiSwitch_render, attrs: UiSwitch_Attrs},
 		{name: "slider", render: UiSlider_render, attrs: UiSlider_Attrs},
 		{name: "color", render: UiColor_render, attrs: UiColor_Attrs},
+		{name: "combo", render: UiCombo_render, attrs: UiCombo_Attrs},
 
 		//timer ...
 		/*
 			{name: "divider", render: SAExe_Render_Divider},
-			{name: "combo", render: SAExe_Render_Combo},
 			{name: "calendar", render: SAExe_Render_Calendar},
 			{name: "date", render: SAExe_Render_Date},
 			{name: "map", render: SAExe_Render_Map},

@@ -212,6 +212,43 @@ func UiSlider_render(node *SANode) {
 	}
 }
 
+func UiCombo_Attrs(node *SANode) {
+	ui := node.app.base.ui
+	ui.Div_colMax(0, 4)
+	ui.Div_colMax(1, 100)
+
+	grid := InitOsV4(0, 0, 1, 1)
+
+	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
+	node.ShowAttrBool(&grid, "show", true)
+	node.ShowAttrString(&grid, "value", "", false)
+	node.ShowAttrString(&grid, "options_names", "a;b;c", false)
+	node.ShowAttrString(&grid, "options_value", "0;1;2", false)
+	node.ShowAttrBool(&grid, "search", false)
+	node.ShowAttrBool(&grid, "enable", true)
+	node.ShowAttrBool(&grid, "changed", false)
+}
+
+func UiCombo_render(node *SANode) {
+	grid := node.GetGrid()
+
+	value := node.GetAttrString("value", "")
+	opts_names := node.GetAttrString("options_names", "a;b;c")
+	opts_values := node.GetAttrString("options_value", "0;1;2")
+	search := node.GetAttrBool("search", false)
+	tooltip := node.GetAttrString("tooltip", "")
+	enable := node.GetAttrBool("enable", true)
+	//changed := node.GetAttrBool("changed", false)
+
+	options_names := strings.Split(opts_names, ";")
+	options_values := strings.Split(opts_values, ";")
+
+	if node.app.base.ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, options_names, options_values, tooltip, enable, search) {
+		node.Attrs["value"] = value
+		node.Attrs["changed"] = true
+	}
+}
+
 func UiColor_Attrs(node *SANode) {
 	ui := node.app.base.ui
 	ui.Div_colMax(0, 4)
