@@ -320,7 +320,9 @@ func (ui *Ui) Comp_Calendar(value *int64, page *int64, maxColSize, maxRowSize fl
 	return old_value != *value || old_page != *page
 }
 
-func (ui *Ui) Comp_CalendarDataPicker(date_unix *int64, show_time bool, dialogName string, enable bool) bool {
+func (ui *Ui) Comp_CalendarDatePicker(x, y, w, h int, date_unix *int64, show_time bool, dialogName string, tooltip string, enable bool) bool {
+	ui.Div_start(x, y, w, h)
+
 	ui.Div_colMax(0, 100)
 	ui.Div_rowMax(0, 100)
 
@@ -340,7 +342,6 @@ func (ui *Ui) Comp_CalendarDataPicker(date_unix *int64, show_time bool, dialogNa
 	}
 
 	if ui.Dialog_start("DateTimePicker_" + dialogName) {
-
 		if ui.Comp_Calendar(date_unix, &ui.date_page, 9, 8) {
 			//keep old hour/minute
 			*date_unix = UiCalendar_GetStartDay(*date_unix) //date_unix % (24 * 3600)
@@ -375,6 +376,12 @@ func (ui *Ui) Comp_CalendarDataPicker(date_unix *int64, show_time bool, dialogNa
 			}
 		}
 	}
+
+	if len(tooltip) > 0 {
+		ui.Paint_tooltip(0, 0, 1, 1, tooltip)
+	}
+
+	ui.Div_end()
 
 	return orig_date != *date_unix
 }
