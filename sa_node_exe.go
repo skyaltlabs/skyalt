@@ -223,7 +223,7 @@ func UiCombo_Attrs(node *SANode) {
 	node.ShowAttrBool(&grid, "show", true)
 	node.ShowAttrString(&grid, "value", "", false)
 	node.ShowAttrString(&grid, "options_names", "a;b;c", false)
-	node.ShowAttrString(&grid, "options_value", "0;1;2", false)
+	node.ShowAttrString(&grid, "options_values", "0;1;2", false)
 	node.ShowAttrBool(&grid, "search", false)
 	node.ShowAttrBool(&grid, "enable", true)
 	node.ShowAttrBool(&grid, "changed", false)
@@ -234,7 +234,7 @@ func UiCombo_render(node *SANode) {
 
 	value := node.GetAttrString("value", "")
 	opts_names := node.GetAttrString("options_names", "a;b;c")
-	opts_values := node.GetAttrString("options_value", "0;1;2")
+	opts_values := node.GetAttrString("options_values", "0;1;2")
 	search := node.GetAttrBool("search", false)
 	tooltip := node.GetAttrString("tooltip", "")
 	enable := node.GetAttrBool("enable", true)
@@ -258,7 +258,7 @@ func UiColor_Attrs(node *SANode) {
 
 	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
 	node.ShowAttrBool(&grid, "show", true)
-	node.ShowAttrV4(&grid, "value", InitOsV4(127, 127, 127, 255))
+	node.ShowAttrCd(&grid, "value", OsCd{127, 127, 127, 255})
 	node.ShowAttrString(&grid, "tooltip", "", false)
 	node.ShowAttrBool(&grid, "enable", true)
 	node.ShowAttrBool(&grid, "changed", false)
@@ -267,14 +267,13 @@ func UiColor_Attrs(node *SANode) {
 func UiColor_render(node *SANode) {
 	grid := node.GetGrid()
 
-	value := node.GetAttrV4("value", InitOsV4(127, 127, 127, 255))
+	value := node.GetAttrCd("value", OsCd{127, 127, 127, 255})
 	tooltip := node.GetAttrString("tooltip", "")
 	enable := node.GetAttrBool("enable", true)
 	//changed := node.GetAttrBool("changed", false)
 
-	cd := OsCd{R: byte(value.Start.X), G: byte(value.Start.Y), B: byte(value.Size.X), A: 255}
-	if node.app.base.ui.comp_colorPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &cd, "color_picker_"+node.Name, tooltip, enable) {
-		node.SetAttrV4("value", InitOsV4(int(cd.R), int(cd.G), int(cd.B), value.Size.Y))
+	if node.app.base.ui.comp_colorPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, "color_picker_"+node.Name, tooltip, enable) {
+		node.SetAttrCd("value", value)
 		node.Attrs["changed"] = true
 	}
 }
