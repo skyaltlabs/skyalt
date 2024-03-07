@@ -21,9 +21,10 @@ import (
 )
 
 type SAGroupNode struct {
-	name   string
-	render func(node *SANode)
-	attrs  func(node *SANode)
+	name        string
+	render      func(node *SANode)
+	attrs       func(node *SANode)
+	changedAttr bool
 }
 
 type SAGroup struct {
@@ -54,11 +55,11 @@ func InitSAGroups() SAGroups {
 		{name: "button", render: UiButton_render, attrs: UiButton_Attrs},
 		{name: "text", render: UiText_render, attrs: UiText_Attrs},
 		{name: "editbox", render: UiEditbox_render, attrs: UiEditbox_Attrs},
-		{name: "checkbox", render: UiCheckbox_render, attrs: UiCheckbox_Attrs},
-		{name: "switch", render: UiSwitch_render, attrs: UiSwitch_Attrs},
-		{name: "slider", render: UiSlider_render, attrs: UiSlider_Attrs},
-		{name: "color", render: UiColor_render, attrs: UiColor_Attrs},
-		{name: "combo", render: UiCombo_render, attrs: UiCombo_Attrs},
+		{name: "checkbox", render: UiCheckbox_render, attrs: UiCheckbox_Attrs, changedAttr: true},
+		{name: "switch", render: UiSwitch_render, attrs: UiSwitch_Attrs, changedAttr: true},
+		{name: "slider", render: UiSlider_render, attrs: UiSlider_Attrs, changedAttr: true},
+		{name: "color", render: UiColor_render, attrs: UiColor_Attrs, changedAttr: true},
+		{name: "combo", render: UiCombo_render, attrs: UiCombo_Attrs, changedAttr: true},
 
 		//timer ...
 		/*
@@ -75,9 +76,9 @@ func InitSAGroups() SAGroups {
 	}})
 
 	grs.groups = append(grs.groups, &SAGroup{name: "Disk access", icon: InitWinMedia_url(path + "node_file.png"), nodes: []*SAGroupNode{
-		{name: "disk_dir", render: UiDiskDir_render, attrs: UiDiskDir_Attrs},
-		{name: "disk_file", render: UiDiskFile_render, attrs: UiDiskFile_Attrs},
-		{name: "sqlite", render: UiSQLite_render, attrs: UiSQLite_Attrs},
+		{name: "disk_dir", render: UiDiskDir_render, attrs: UiDiskDir_Attrs, changedAttr: true},
+		{name: "disk_file", render: UiDiskFile_render, attrs: UiDiskFile_Attrs, changedAttr: true},
+		{name: "sqlite", render: UiSQLite_render, attrs: UiSQLite_Attrs, changedAttr: true},
 	}})
 
 	grs.groups = append(grs.groups, &SAGroup{name: "Neural networks", icon: InitWinMedia_url(path + "node_nn.png"), nodes: []*SAGroupNode{

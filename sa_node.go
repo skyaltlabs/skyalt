@@ -137,27 +137,25 @@ func (node *SANode) IsTypeCode() bool {
 	return strings.EqualFold(node.Exe, "code_go") || strings.EqualFold(node.Exe, "code_python")
 }
 
+func (node *SANode) IsWithChangedAttr() bool {
+	//Button and Editbox NOT here, because the have 'clicked' and 'finished'
+
+	grnd := node.app.base.node_groups.FindNode(node.Exe)
+	return grnd != nil && grnd.changedAttr
+}
+
 func (node *SANode) IsTypeTrigger() bool {
-	return strings.EqualFold(node.Exe, "button") || strings.EqualFold(node.Exe, "editbox") ||
-		strings.EqualFold(node.Exe, "checkbox") || strings.EqualFold(node.Exe, "switch") ||
-		strings.EqualFold(node.Exe, "disk_dir") || strings.EqualFold(node.Exe, "disk_file") ||
-		strings.EqualFold(node.Exe, "sqlite")
+	return node.IsWithChangedAttr() || strings.EqualFold(node.Exe, "button") || strings.EqualFold(node.Exe, "editbox")
 }
 
 func (node *SANode) IsTriggered() bool {
-	if node.Exe == "button" {
+	if strings.EqualFold(node.Exe, "button") {
 		return node.GetAttrBool("clicked", false)
 	}
-
-	if node.Exe == "editbox" {
+	if strings.EqualFold(node.Exe, "editbox") {
 		return node.GetAttrBool("finished", false)
 	}
-
-	if node.Exe == "checkbox" ||
-		node.Exe == "switch" ||
-		node.Exe == "disk_dir" ||
-		node.Exe == "disk_file" ||
-		node.Exe == "sqlite" {
+	if node.IsWithChangedAttr() {
 		return node.GetAttrBool("changed", false)
 	}
 
@@ -165,19 +163,13 @@ func (node *SANode) IsTriggered() bool {
 }
 
 func (node *SANode) ResetTriggers() {
-	if node.Exe == "button" {
+	if strings.EqualFold(node.Exe, "button") {
 		node.Attrs["clicked"] = false
 	}
-
-	if node.Exe == "editbox" {
+	if strings.EqualFold(node.Exe, "editbox") {
 		node.Attrs["finished"] = false
 	}
-
-	if node.Exe == "checkbox" ||
-		node.Exe == "switch" ||
-		node.Exe == "disk_dir" ||
-		node.Exe == "disk_file" ||
-		node.Exe == "sqlite" {
+	if node.IsWithChangedAttr() {
 		node.Attrs["changed"] = false
 	}
 }
