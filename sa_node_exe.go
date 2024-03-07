@@ -366,6 +366,37 @@ func UiTimer_render(node *SANode) {
 	}
 }
 
+func UiDate_Attrs(node *SANode) {
+	ui := node.app.base.ui
+	ui.Div_colMax(0, 4)
+	ui.Div_colMax(1, 100)
+
+	grid := InitOsV4(0, 0, 1, 1)
+
+	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
+	node.ShowAttrBool(&grid, "show", true)
+	node.ShowAttrInt(&grid, "value", 0)
+	node.ShowAttrBool(&grid, "show_time", false)
+	node.ShowAttrString(&grid, "tooltip", "", false)
+	node.ShowAttrBool(&grid, "enable", true)
+	node.ShowAttrBool(&grid, "changed", false)
+}
+
+func UiDate_render(node *SANode) {
+	grid := node.GetGrid()
+	value := node.GetAttrInt("value", 0)
+	show_time := node.GetAttrBool("show_time", false)
+	tooltip := node.GetAttrString("tooltip", "")
+	enable := node.GetAttrBool("enable", true)
+	//changed := node.GetAttrBool("changed", false)
+
+	date := int64(value)
+	if node.app.base.ui.Comp_CalendarDatePicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &date, show_time, "date_"+node.Name, tooltip, enable) {
+		node.Attrs["value"] = int(date)
+		node.Attrs["changed"] = true
+	}
+}
+
 func UiDiskDir_Attrs(node *SANode) {
 	ui := node.app.base.ui
 	ui.Div_colMax(0, 3)

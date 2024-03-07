@@ -62,6 +62,7 @@ func InitSAGroups() SAGroups {
 		{name: "combo", render: UiCombo_render, attrs: UiCombo_Attrs, changedAttr: true},
 		{name: "divider", render: UiDivider_render, attrs: UiDivider_Attrs},
 		{name: "timer", render: UiTimer_render, attrs: UiTimer_Attrs},
+		{name: "date", render: UiDate_render, attrs: UiDate_Attrs, changedAttr: true},
 
 		/*
 			{name: "calendar", render: SAExe_Render_Calendar},
