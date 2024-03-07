@@ -108,25 +108,6 @@ func (grs *SAGroups) FindNode(node string) *SAGroupNode {
 	return nil
 }
 
-func (grs *SAGroups) FindNodeGroup(node string) *SAGroup {
-
-	for _, gr := range grs.groups {
-		if gr.Find(node) != nil {
-			return gr
-		}
-	}
-
-	return nil
-}
-func (grs *SAGroups) FindNodeGroupIcon(node string) WinMedia {
-
-	gr := grs.FindNodeGroup(node)
-	if gr != nil {
-		return gr.icon
-	}
-	return WinMedia{}
-}
-
 func (grs *SAGroups) getList() []string {
 
 	var fns []string
