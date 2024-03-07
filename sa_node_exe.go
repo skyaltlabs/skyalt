@@ -332,7 +332,7 @@ func UiSQLite_render(node *SANode) {
 		row := db.ReadRow_unsafe("SELECT COUNT(*) FROM " + selected_table)
 		row.Scan(&num_rows)
 
-		rows, err = db.Read_unsafe("SELECT " + tinfo.ListOfColumnNames() + " FROM " + selected_table)
+		rows, err = db.Read_unsafe("SELECT rowid, " + tinfo.ListOfColumnNames() + " FROM " + selected_table)
 		if err != nil {
 			node.SetError(err)
 			return
@@ -439,7 +439,7 @@ func UiSQLite_render(node *SANode) {
 					//name
 					ui.Comp_editbox(0, 0, 1, 1, &g_column_name, Comp_editboxProp().TempToValue(true))
 					//type
-					ui.Comp_combo(1, 0, 1, 1, &g_column_type, []string{"INTEGER", "REAL", "TEXT", "BLOB"}, []string{"INTEGER", "REAL", "TEXT", "BLOB"}, "Type", true, false)
+					ui.Comp_combo(1, 0, 1, 1, &g_column_type, []string{"INTEGER", "REAL", "TEXT", "BLOB", "NUMERIC"}, []string{"INTEGER", "REAL", "TEXT", "BLOB", "NUMERIC"}, "Type", true, false)
 					//button
 					if ui.Comp_button(2, 0, 1, 1, "Create Column", "", g_column_name != "") > 0 {
 						db.Write_unsafe(fmt.Sprintf("ALTER TABLE %s ADD %s %s;", tinfo.Name, g_column_name, g_column_type))
@@ -485,9 +485,9 @@ func UiSQLite_render(node *SANode) {
 						ui.Div_row(num_rows-1, 1) //set last
 					}
 
-					vals := make([]string, len(tinfo.Columns))
-					valsPtrs := make([]interface{}, len(tinfo.Columns))
-					for i := 0; i < len(tinfo.Columns); i++ {
+					vals := make([]string, 1+len(tinfo.Columns)) //1=rowid
+					valsPtrs := make([]interface{}, len(vals))
+					for i := range vals {
 						valsPtrs[i] = &vals[i]
 					}
 
@@ -498,24 +498,26 @@ func UiSQLite_render(node *SANode) {
 							continue
 						}
 
-						rows.Scan(valsPtrs...) //err ...
+						err := rows.Scan(valsPtrs...) //err ...
+						if err != nil {
+							continue
+						}
 
-						rowid := r //.........................
-
-						dnm := "row_detail_" + node.Name + selected_table + strconv.Itoa(rowid)
-						if ui.Comp_buttonLight(0, r, 1, 1, strconv.Itoa(rowid), "", true) > 0 {
+						dnm := "row_detail_" + node.Name + selected_table + vals[0]
+						if ui.Comp_buttonLight(0, r, 1, 1, vals[0], "", true) > 0 {
 							ui.Dialog_open(dnm, 1)
 						}
 						if ui.Dialog_start(dnm) {
 							ui.Div_colMax(0, 7)
 							if ui.Comp_buttonError(0, 0, 1, 1, "Delete", "", true, true) > 0 {
+								rowid, _ := strconv.Atoi(vals[0])
 								db.Write_unsafe(fmt.Sprintf("DELETE FROM %s WHERE rowid=?", tinfo.Name), rowid)
 							}
 							ui.Dialog_end()
 						}
 
-						for c, v := range vals {
-							ui.Comp_text(1+c, r, 1, 1, v, 1)
+						for i := 1; i < len(vals); i++ {
+							ui.Comp_text(i, r, 1, 1, vals[i], 1)
 						}
 						r++
 					}
@@ -529,9 +531,6 @@ func UiSQLite_render(node *SANode) {
 			{
 				ui.Div_colMax(0, 3)
 				if ui.Comp_button(0, 0, 1, 1, "Add row", "", true) > 0 {
-
-					//ListOfColumnValues() must be right TYPE! ........
-
 					db.Write_unsafe(fmt.Sprintf("INSERT INTO %s (%s) VALUES(%s);", tinfo.Name, tinfo.ListOfColumnNames(), tinfo.ListOfColumnValues()))
 				}
 			}
