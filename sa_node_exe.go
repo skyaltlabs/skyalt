@@ -303,6 +303,69 @@ func UiDivider_render(node *SANode) {
 	}
 }
 
+func UiTimer_Attrs(node *SANode) {
+	ui := node.app.base.ui
+	ui.Div_colMax(0, 4)
+	ui.Div_colMax(1, 100)
+
+	grid := InitOsV4(0, 0, 1, 1)
+
+	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
+	node.ShowAttrBool(&grid, "show", true)
+	node.ShowAttrFloat(&grid, "time_sec", 60, 2)
+	node.ShowAttrFloat(&grid, "start_sec", 0, 2)
+	node.ShowAttrBool(&grid, "repeat", false)
+	node.ShowAttrString(&grid, "tooltip", "", false)
+	node.ShowAttrBool(&grid, "enable", true)
+	node.ShowAttrBool(&grid, "done", false)
+
+	if ui.Comp_button(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, "Reset", "", true) > 0 {
+		node.Attrs["start_sec"] = OsTime()
+	}
+}
+
+func UiTimer_render(node *SANode) {
+	ui := node.app.base.ui
+	grid := node.GetGrid()
+
+	time_secs := node.GetAttrFloat("time_sec", 60)
+	start_sec := node.GetAttrFloat("start_sec", 0)
+	repeat := node.GetAttrBool("repeat", false)
+	tooltip := node.GetAttrString("tooltip", "")
+	enable := node.GetAttrBool("enable", true) //also STOP!
+	//done := node.GetAttrBool("done", false)
+
+	dt := OsTime() - start_sec
+	prc := OsTrnFloat(enable, dt/time_secs, 0)
+
+	//draw it
+	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
+	{
+		ui.Div_colMax(0, 100)
+		ui.Div_colMax(1, 2)
+		ui.Div_rowMax(0, 100)
+
+		node.app.base.ui.Comp_progress(0, 0, 1, 1, prc, 1, tooltip, enable)
+
+		if ui.Comp_buttonLight(1, 0, 1, 1, "Reset", "", true) > 0 {
+			node.Attrs["start_sec"] = OsTime()
+			prc = 0
+		}
+	}
+	ui.Div_end()
+
+	if enable && prc >= 1 {
+		if start_sec > 0 { //if repeat==false, set 'done' only once
+			node.Attrs["done"] = true
+		}
+		if repeat {
+			node.Attrs["start_sec"] = OsTime()
+		} else {
+			node.Attrs["start_sec"] = 0
+		}
+	}
+}
+
 func UiDiskDir_Attrs(node *SANode) {
 	ui := node.app.base.ui
 	ui.Div_colMax(0, 3)
