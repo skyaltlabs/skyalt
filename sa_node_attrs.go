@@ -56,6 +56,23 @@ func (node *SANode) GetAttrV4(namePrefix string, defValue OsV4) OsV4 {
 	return value
 }
 
+func (node *SANode) SetAttrCd(namePrefix string, value OsCd) {
+	node.Attrs[namePrefix+"_r"] = int(value.R)
+	node.Attrs[namePrefix+"_g"] = int(value.G)
+	node.Attrs[namePrefix+"_b"] = int(value.B)
+	node.Attrs[namePrefix+"_a"] = int(value.A)
+}
+func (node *SANode) GetAttrCd(namePrefix string, defValue OsCd) OsCd {
+	var value OsCd
+
+	value.R = byte(node.GetAttrInt(namePrefix+"_r", int(defValue.R)))
+	value.G = byte(node.GetAttrInt(namePrefix+"_g", int(defValue.G)))
+	value.B = byte(node.GetAttrInt(namePrefix+"_b", int(defValue.B)))
+	value.A = byte(node.GetAttrInt(namePrefix+"_a", int(defValue.A)))
+
+	return value
+}
+
 func (node *SANode) GetAttrBool(name string, defValue bool) bool {
 	value, found := node.Attrs[name]
 	if !found {
@@ -153,10 +170,25 @@ func (node *SANode) ShowAttrV4(grid *OsV4, namePrefix string, defValue OsV4) OsV
 		_, _, _, fnshd3, _ := ui.Comp_editbox(2, 0, 1, 1, &value.Size.X, Comp_editboxProp().Ghost("w").Precision(0))
 		_, _, _, fnshd4, _ := ui.Comp_editbox(3, 0, 1, 1, &value.Size.Y, Comp_editboxProp().Ghost("h").Precision(0))
 		if fnshd1 || fnshd2 || fnshd3 || fnshd4 {
-			node.SetAttrV4("grid", value)
+			node.SetAttrV4(namePrefix, value)
 		}
 	}
 	ui.Div_end()
+
+	grid.Start.Y += grid.Size.Y
+	return value
+}
+
+func (node *SANode) ShowAttrCd(grid *OsV4, namePrefix string, defValue OsCd) OsCd {
+	ui := node.app.base.ui
+
+	value := node.GetAttrCd(namePrefix, defValue)
+
+	ui.Comp_text(grid.Start.X+0, grid.Start.Y, grid.Size.X, grid.Size.Y, namePrefix, 0)
+
+	if ui.comp_colorPicker(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, "pick_cd_"+node.Name, "", true) {
+		node.SetAttrCd(namePrefix, value)
+	}
 
 	grid.Start.Y += grid.Size.Y
 	return value
