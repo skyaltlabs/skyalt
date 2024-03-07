@@ -765,6 +765,12 @@ func (node *SANode) IsBypassed() bool {
 	return node.IsTypeCode() && node.GetAttrBool("bypass", false)
 }
 
+func (node *SANode) SetBypass() {
+	if node.IsTypeCode() {
+		node.Attrs["bypass"] = !node.GetAttrBool("bypass", false)
+	}
+}
+
 func UiCodeGo_Attrs(node *SANode) {
 	ui := node.app.base.ui
 	ui.Div_colMax(0, 3)

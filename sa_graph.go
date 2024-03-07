@@ -390,6 +390,11 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 			gr.app.root.RemoveSelectedNodes()
 		}
 
+		//delete
+		if keys.text == "b" {
+			gr.app.root.BypassSelectedCodeNodes()
+		}
+
 		//copy
 		if keys.copy {
 			//add selected into list

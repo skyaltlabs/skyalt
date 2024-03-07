@@ -449,6 +449,17 @@ func (node *SANode) RemoveSelectedNodes() {
 	}
 }
 
+func (node *SANode) BypassSelectedCodeNodes() {
+
+	if node.IsTypeCode() {
+		node.SetBypass()
+	}
+
+	for _, n := range node.Subs {
+		n.BypassSelectedCodeNodes()
+	}
+}
+
 func (node *SANode) GetPath() string {
 
 	var path string
