@@ -57,14 +57,12 @@ func InitSAGroups() SAGroups {
 		{name: "checkbox", render: UiCheckbox_render, attrs: UiCheckbox_Attrs},
 		{name: "switch", render: UiSwitch_render, attrs: UiSwitch_Attrs},
 		{name: "slider", render: UiSlider_render, attrs: UiSlider_Attrs},
+		{name: "color", render: UiColor_render, attrs: UiColor_Attrs},
 
 		//timer ...
 		/*
-			{name: "slider", render: SAExe_Render_Slider},
 			{name: "divider", render: SAExe_Render_Divider},
 			{name: "combo", render: SAExe_Render_Combo},
-			{name: "color_palette", render: SAExe_Render_ColorPalette},
-			{name: "color", render: SAExe_Render_ColorPicker},
 			{name: "calendar", render: SAExe_Render_Calendar},
 			{name: "date", render: SAExe_Render_Date},
 			{name: "map", render: SAExe_Render_Map},

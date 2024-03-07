@@ -212,6 +212,36 @@ func UiSlider_render(node *SANode) {
 	}
 }
 
+func UiColor_Attrs(node *SANode) {
+	ui := node.app.base.ui
+	ui.Div_colMax(0, 4)
+	ui.Div_colMax(1, 100)
+
+	grid := InitOsV4(0, 0, 1, 1)
+
+	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
+	node.ShowAttrBool(&grid, "show", true)
+	node.ShowAttrV4(&grid, "value", InitOsV4(127, 127, 127, 255))
+	node.ShowAttrString(&grid, "tooltip", "", false)
+	node.ShowAttrBool(&grid, "enable", true)
+	node.ShowAttrBool(&grid, "changed", false)
+}
+
+func UiColor_render(node *SANode) {
+	grid := node.GetGrid()
+
+	value := node.GetAttrV4("value", InitOsV4(127, 127, 127, 255))
+	tooltip := node.GetAttrString("tooltip", "")
+	enable := node.GetAttrBool("enable", true)
+	//changed := node.GetAttrBool("changed", false)
+
+	cd := OsCd{R: byte(value.Start.X), G: byte(value.Start.Y), B: byte(value.Size.X), A: 255}
+	if node.app.base.ui.comp_colorPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &cd, "color_picker_"+node.Name, tooltip, enable) {
+		node.SetAttrV4("value", InitOsV4(int(cd.R), int(cd.G), int(cd.B), value.Size.Y))
+		node.Attrs["changed"] = true
+	}
+}
+
 func UiDiskDir_Attrs(node *SANode) {
 	ui := node.app.base.ui
 	ui.Div_colMax(0, 3)
