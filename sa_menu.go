@@ -219,19 +219,19 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 					}
 
 					ui.Comp_text(1, 0, 1, 1, "Primary", 1)
-					ui.comp_colorPicker(1, 1, 1, 1, &pl.P, "p", true)
+					ui.comp_colorPicker(1, 1, 1, 1, &pl.P, "p", "", true)
 
 					ui.Comp_text(2, 0, 1, 1, "Secondary", 1)
-					ui.comp_colorPicker(2, 1, 1, 1, &pl.S, "s", true)
+					ui.comp_colorPicker(2, 1, 1, 1, &pl.S, "s", "", true)
 
 					ui.Comp_text(3, 0, 1, 1, "Tertiary", 1)
-					ui.comp_colorPicker(3, 1, 1, 1, &pl.T, "t", true)
+					ui.comp_colorPicker(3, 1, 1, 1, &pl.T, "t", "", true)
 
 					ui.Comp_text(4, 0, 1, 1, "Background", 1)
-					ui.comp_colorPicker(4, 1, 1, 1, &pl.B, "b", true)
+					ui.comp_colorPicker(4, 1, 1, 1, &pl.B, "b", "", true)
 
 					ui.Comp_text(5, 0, 1, 1, "Error", 1)
-					ui.comp_colorPicker(5, 1, 1, 1, &pl.E, "e", true)
+					ui.comp_colorPicker(5, 1, 1, 1, &pl.E, "e", "", true)
 
 				}
 				ui.Div_end()
