@@ -204,12 +204,11 @@ func (node *SANode) drawHeader() bool {
 	//inside & double-click
 	if ui.GetCall().call.enableInput {
 		inside = ui.GetCall().call.crop.Inside(ui.win.io.touch.pos)
-
-		if inside && ui.win.io.touch.end && ui.win.io.touch.numClicks >= 2 && !node.app.graph.isConnecting() {
+		/*if inside && ui.win.io.touch.end && ui.win.io.touch.numClicks >= 2 && !node.app.graph.isConnecting() {
 			node.SelectOnlyThis()
 			ui.Dialog_open("attributes", 0)
 			inside = false
-		}
+		}*/
 	}
 
 	return inside
@@ -289,6 +288,11 @@ func (node *SANode) drawNode(someNodeIsDraged bool) bool {
 	ui.Div_startCoord(0, 0, 1, 1, coord.AddSpaceX(-ui.CellWidth(0.25)), node.Name)
 	inside := node.drawHeader()
 	ui.Div_end()
+
+	//show bypass
+	if node.IsBypassed() {
+		ui.buff.AddRectRound(coord, ui.CellWidth(roundc), InitOsCdWhite().SetAlpha(150), 0)
+	}
 
 	//draw progress text
 	isJobActive := node.progress > 0

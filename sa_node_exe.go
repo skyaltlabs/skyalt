@@ -761,6 +761,10 @@ func UiSQLite_render(node *SANode) {
 
 }
 
+func (node *SANode) IsBypassed() bool {
+	return node.IsTypeCode() && node.GetAttrBool("bypass", false)
+}
+
 func UiCodeGo_Attrs(node *SANode) {
 	ui := node.app.base.ui
 	ui.Div_colMax(0, 3)
@@ -800,9 +804,13 @@ func UiCodeGo_Attrs(node *SANode) {
 		}
 	}
 
+	//bypass
+	gr := InitOsV4(0, 4, 1, 1)
+	node.ShowAttrBool(&gr, "bypass", false)
+
 	//triggers
-	ui.Comp_text(0, 4, 1, 1, "Triggers", 0)
-	ui.Div_start(1, 4, 2, len(node.Code.Triggers))
+	ui.Comp_text(0, 5, 1, 1, "Triggers", 0)
+	ui.Div_start(1, 5, 2, len(node.Code.Triggers))
 	{
 		ui.Div_colMax(1, 100)
 		for i, tr := range node.Code.Triggers {
