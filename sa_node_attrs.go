@@ -48,10 +48,10 @@ func (node *SANode) SetAttrV4(namePrefix string, value OsV4) {
 func (node *SANode) GetAttrV4(namePrefix string, defValue OsV4) OsV4 {
 	var value OsV4
 
-	value.Start.X = node.GetAttrInt(namePrefix+"_x", 0)
-	value.Start.Y = node.GetAttrInt(namePrefix+"_y", 0)
-	value.Size.X = node.GetAttrInt(namePrefix+"_w", 1)
-	value.Size.Y = node.GetAttrInt(namePrefix+"_h", 1)
+	value.Start.X = node.GetAttrInt(namePrefix+"_x", defValue.Start.X)
+	value.Start.Y = node.GetAttrInt(namePrefix+"_y", defValue.Start.Y)
+	value.Size.X = node.GetAttrInt(namePrefix+"_w", defValue.Size.X)
+	value.Size.Y = node.GetAttrInt(namePrefix+"_h", defValue.Size.Y)
 
 	return value
 }
