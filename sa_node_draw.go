@@ -85,6 +85,10 @@ func (node *SANode) nodeToPixels(p OsV2f, canvas OsV4) OsV2 {
 	return r.Add(canvas.Start).Add(canvas.Size.MulV(0.5))
 }
 
+func (node *SANode) GetNodeLabel() string {
+	return node.Name + "(" + node.Exe + ")"
+}
+
 func (node *SANode) nodeToPixelsCoord(canvas OsV4) (OsV4, OsV4, OsV4) {
 	ui := node.app.base.ui
 
@@ -94,12 +98,13 @@ func (node *SANode) nodeToPixelsCoord(canvas OsV4) (OsV4, OsV4, OsV4) {
 
 	mid := node.nodeToPixels(node.Pos, canvas) //.parent, because it has Cam
 
-	w := 6
-	h := 1 //+ node.NumVisibleAndCheck()
+	w := float32(ui.win.GetTextSize(-1, node.GetNodeLabel(), InitWinFontPropsDef(ui.win)).X) / float32(ui.win.Cell())
+	w = OsMaxFloat32(w+1, 4) //1=extra space, minimum 4
+	h := float32(1)          //+ node.NumVisibleAndCheck()
 
 	if node.HasNodeSubs() {
 		//compute bound
-		bound := InitOsV4Mid(mid, OsV2{int(float32(w) * cellr), int(float32(h) * cellr)})
+		bound := InitOsV4Mid(mid, OsV2{int(w * cellr), int(h * cellr)})
 		for i, nd := range node.Subs {
 			coord, _, _ := nd.nodeToPixelsCoord(canvas)
 			if i == 0 {
@@ -171,7 +176,7 @@ func (node *SANode) drawHeader() bool {
 		ui.Div_colMax(0, 100)
 
 		//name
-		div := ui.Comp_textSelect(0, 0, 1, 1, node.Name+"("+node.Exe+")", OsV2{1, 1}, false, false)
+		div := ui.Comp_textSelect(0, 0, 1, 1, node.GetNodeLabel(), OsV2{1, 1}, false, false)
 		if div.IsTouchEndSubs(ui) && ui.win.io.touch.rm {
 			ui.win.io.keys.clipboard = "'" + node.Name + "'"
 		}
