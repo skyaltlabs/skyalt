@@ -60,6 +60,7 @@ func InitSAGroups() SAGroups {
 		{name: "slider", render: UiSlider_render, attrs: UiSlider_Attrs, changedAttr: true},
 		{name: "color", render: UiColor_render, attrs: UiColor_Attrs, changedAttr: true},
 		{name: "combo", render: UiCombo_render, attrs: UiCombo_Attrs, changedAttr: true},
+		{name: "divider", render: UiDivider_render, attrs: UiDivider_Attrs},
 
 		//timer ...
 		/*

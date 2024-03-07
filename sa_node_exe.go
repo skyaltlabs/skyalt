@@ -279,6 +279,30 @@ func UiColor_render(node *SANode) {
 	}
 }
 
+func UiDivider_Attrs(node *SANode) {
+	ui := node.app.base.ui
+	ui.Div_colMax(0, 4)
+	ui.Div_colMax(1, 100)
+
+	grid := InitOsV4(0, 0, 1, 1)
+
+	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
+	node.ShowAttrBool(&grid, "show", true)
+	node.ShowAttrIntCombo(&grid, "type", 0, []string{"Horizontal", "Vertical"}, []string{"0", "1"})
+}
+
+func UiDivider_render(node *SANode) {
+	grid := node.GetGrid()
+
+	tp := node.GetAttrInt("type", 0)
+
+	if tp == 0 {
+		node.app.base.ui.Div_SpacerRow(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
+	} else {
+		node.app.base.ui.Div_SpacerCol(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
+	}
+}
+
 func UiDiskDir_Attrs(node *SANode) {
 	ui := node.app.base.ui
 	ui.Div_colMax(0, 3)
