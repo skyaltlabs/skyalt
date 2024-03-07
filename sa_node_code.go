@@ -78,32 +78,33 @@ func (ls *SANodeCode) updateLinks(node *SANode) error {
 		return err
 	}
 
-	filePath := "temp/go/" + ls.node.Name + ".go"
+	fileName := ls.GetFileName()
+	filePath := "temp/go/" + fileName + ".go"
 
 	fl, err := os.ReadFile(filePath)
+
+	//write code
+	recompile := false
 	if err != nil || !bytes.Equal(fl, []byte(ls.code)) {
-
-		//write
-		{
-			OsFolderCreate("temp/go/")
-			err = os.WriteFile(filePath, []byte(ls.code), 0644)
-			if err != nil {
-				return err
-			}
+		OsFolderCreate("temp/go/")
+		err = os.WriteFile(filePath, []byte(ls.code), 0644)
+		if err != nil {
+			return err
 		}
-		//compile
-		{
-			cmd := exec.Command("go", "build", ls.node.Name+".go")
-			cmd.Dir = "temp/go/"
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			err = cmd.Start()
-			if err != nil {
-				return err
-			}
-			cmd.Wait()
-		}
+		recompile = true
+	}
 
+	//compile
+	if recompile || !OsFileExists("temp/go/"+fileName) {
+		cmd := exec.Command("go", "build", fileName+".go")
+		cmd.Dir = "temp/go/"
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err = cmd.Start()
+		if err != nil {
+			return err
+		}
+		cmd.Wait()
 	}
 
 	return nil
@@ -455,10 +456,16 @@ func (ls *SANodeCode) IsTriggered() bool {
 	return false
 }
 
+func (ls *SANodeCode) GetFileName() string {
+	return ls.node.app.Name + "_" + ls.node.Name
+}
+
 func (ls *SANodeCode) Execute() error {
 	st := OsTime()
 
 	ls.node.errExe = nil //reset
+
+	ls.updateLinks(ls.node)
 
 	//input
 	{
@@ -484,7 +491,7 @@ func (ls *SANodeCode) Execute() error {
 
 	//process
 	{
-		cmd := exec.Command("./temp/go/"+ls.node.Name, strconv.Itoa(ls.node.app.base.services.port))
+		cmd := exec.Command("./temp/go/"+ls.GetFileName(), strconv.Itoa(ls.node.app.base.services.port))
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err := cmd.Start()
