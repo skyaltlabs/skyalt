@@ -208,7 +208,7 @@ type G4f struct {
 	Messages []G4fMessage `json:"messages"`
 }
 
-func (gf *G4f) Complete(messages []G4fMessage) (string, error) {
+func (gf *G4f) GetAnswer(messages []G4fMessage) (string, error) {
 	gf.Messages = messages
 
 	js, err := json.Marshal(gf)
