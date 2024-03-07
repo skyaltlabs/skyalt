@@ -56,6 +56,9 @@ func InitSAGroups() SAGroups {
 		{name: "editbox", render: UiEditbox_render, attrs: UiEditbox_Attrs},
 		{name: "checkbox", render: UiCheckbox_render, attrs: UiCheckbox_Attrs},
 		{name: "switch", render: UiSwitch_render, attrs: UiSwitch_Attrs},
+		{name: "slider", render: UiSlider_render, attrs: UiSlider_Attrs},
+
+		//timer ...
 		/*
 			{name: "slider", render: SAExe_Render_Slider},
 			{name: "divider", render: SAExe_Render_Divider},

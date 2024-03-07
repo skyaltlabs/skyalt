@@ -180,6 +180,38 @@ func UiSwitch_render(node *SANode) {
 	}
 }
 
+func UiSlider_Attrs(node *SANode) {
+	ui := node.app.base.ui
+	ui.Div_colMax(0, 4)
+	ui.Div_colMax(1, 100)
+
+	grid := InitOsV4(0, 0, 1, 1)
+
+	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
+	node.ShowAttrBool(&grid, "show", true)
+	node.ShowAttrFloat(&grid, "value", 0, 3)
+	node.ShowAttrFloat(&grid, "min", 0, 3)
+	node.ShowAttrFloat(&grid, "max", 10, 3)
+	node.ShowAttrFloat(&grid, "step", 0, 3)
+	node.ShowAttrBool(&grid, "enable", true)
+	node.ShowAttrBool(&grid, "changed", false)
+}
+
+func UiSlider_render(node *SANode) {
+	grid := node.GetGrid()
+	value := node.GetAttrFloat("value", 0)
+	min := node.GetAttrFloat("min", 0)
+	max := node.GetAttrFloat("max", 10)
+	step := node.GetAttrFloat("step", 0)
+	enable := node.GetAttrBool("enable", true)
+	//changed := node.GetAttrBool("changed", false)
+
+	if node.app.base.ui.Comp_slider(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, min, max, step, enable) {
+		node.Attrs["value"] = value
+		node.Attrs["changed"] = true
+	}
+}
+
 func UiDiskDir_Attrs(node *SANode) {
 	ui := node.app.base.ui
 	ui.Div_colMax(0, 3)
