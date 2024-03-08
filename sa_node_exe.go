@@ -405,6 +405,7 @@ func UiDiskDir_Attrs(node *SANode) {
 
 	node.ShowAttrFilePicker(&grid, "path", "", false, "disk_dir_"+node.Name)
 	node.ShowAttrBool(&grid, "write", false)
+	node.ShowAttrBool(&grid, "enable", true)
 	node.ShowAttrBool(&grid, "changed", false)
 }
 
@@ -429,6 +430,7 @@ func UiDiskFile_Attrs(node *SANode) {
 
 	node.ShowAttrFilePicker(&grid, "path", "", true, "disk_file_"+node.Name)
 	node.ShowAttrBool(&grid, "write", false)
+	node.ShowAttrBool(&grid, "enable", true)
 	node.ShowAttrBool(&grid, "changed", false)
 }
 
@@ -450,10 +452,13 @@ func UiSQLite_Attrs(node *SANode) {
 	ui.Div_colMax(1, 100)
 
 	grid := InitOsV4(0, 0, 1, 1)
-	path := node.ShowAttrFilePicker(&grid, "path", "", true, "render_sqlite_"+node.Name)
+	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
+	node.ShowAttrBool(&grid, "show", true)
 	node.ShowAttrBool(&grid, "write", false)
+	node.ShowAttrBool(&grid, "enable", true)
 	node.ShowAttrBool(&grid, "changed", false) //...
 
+	path := node.ShowAttrFilePicker(&grid, "path", "", true, "render_sqlite_"+node.Name)
 	if !OsFileExists(path) {
 		node.SetError(errors.New("file not exist"))
 		return
@@ -577,6 +582,7 @@ func UiSQLite_render(node *SANode) {
 				dnm := "create_table_" + node.Name
 				if ui.Comp_button(0, 0, 1, 1, "+", "Create table", true) > 0 {
 					ui.Dialog_open(dnm, 1)
+					node.Attrs["selected_table"] = g_table_name
 					g_table_name = ""
 				}
 				if ui.Dialog_start(dnm) {
@@ -756,6 +762,10 @@ func UiSQLite_render(node *SANode) {
 			}
 			ui.Div_end()
 		}
+
+		//rect around
+		pl := ui.win.io.GetPalette()
+		ui.Paint_rect(0, 0, 1, 1, 0, pl.OnB, 0.03)
 	}
 	ui.Div_end()
 
@@ -924,7 +934,7 @@ func UiLLamaCpp_Attrs(node *SANode) {
 	node.ShowAttrFloat(&grid, "typical_p", 1.0, 3)
 	node.ShowAttrFloat(&grid, "presence_penalty", 0.0, 3)
 	node.ShowAttrFloat(&grid, "frequency_penalty", 0.0, 3)
-	node.ShowAttrInt(&grid, "mirostat", 0)
+	node.ShowAttrBool(&grid, "mirostat", false)
 	node.ShowAttrFloat(&grid, "mirostat_tau", 5, 3)
 	node.ShowAttrFloat(&grid, "mirostat_eta", 0.1, 3)
 	//Grammar
