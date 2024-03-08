@@ -273,10 +273,12 @@ func (node *SANode) drawNode(someNodeIsDraged bool) bool {
 
 	//back
 	{
-		backCd := pl.GetGrey(1)
+		backCd := pl.GetGrey(1) //code
 
 		if node.CanBeRenderOnCanvas() {
 			backCd = pl.P.Aprox(InitOsCdWhite(), 0.3)
+		} else if !node.IsTypeCode() {
+			backCd = pl.S.Aprox(InitOsCdWhite(), 0.3)
 		}
 
 		if node.HasError() {
