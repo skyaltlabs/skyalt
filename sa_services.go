@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -30,7 +31,7 @@ type SAServices struct {
 	server *http.Server
 
 	whisper_cpp *SAServiceWhisperCpp
-	llama_cpp   *SAServiceLLamaCpp
+	llamaCpp    *SAServiceLLamaCpp
 	g4f         *SAServiceG4F
 
 	job_str       []byte
@@ -51,8 +52,8 @@ func (srv *SAServices) Destroy() {
 	if srv.whisper_cpp != nil {
 		srv.whisper_cpp.Destroy()
 	}
-	if srv.llama_cpp != nil {
-		srv.llama_cpp.Destroy()
+	if srv.llamaCpp != nil {
+		srv.llamaCpp.Destroy()
 	}
 	if srv.g4f != nil {
 		srv.g4f.Destroy()
@@ -80,10 +81,10 @@ func (srv *SAServices) GetWhisper() *SAServiceWhisperCpp {
 }
 
 func (srv *SAServices) GetLLama() *SAServiceLLamaCpp {
-	if srv.llama_cpp == nil {
-		srv.llama_cpp = NewSAServiceLLamaCpp("http://127.0.0.1", "8091")
+	if srv.llamaCpp == nil {
+		srv.llamaCpp = NewSAServiceLLamaCpp("http://127.0.0.1", "8091")
 	}
-	return srv.llama_cpp
+	return srv.llamaCpp
 }
 
 func (srv *SAServices) GetG4F() *SAServiceG4F {
@@ -105,7 +106,7 @@ func (srv *SAServices) Tick() {
 	/*if srv.whisper_cpp != nil {
 		//...
 	}
-	if srv.llama_cpp != nil {
+	if srv.llamaCpp != nil {
 		//...
 	}*/
 }
@@ -187,6 +188,31 @@ func (srv *SAServices) handlerWhisper(w http.ResponseWriter, r *http.Request) {
 	w.Write(outJs)
 }
 
+func (srv *SAServices) _getOpenAImessages(body []byte) ([]SAServiceG4FMsg, *SANode, error) {
+
+	//get base struct
+	type St struct {
+		Node     string            `json:"node"`
+		Messages []SAServiceG4FMsg `json:"messages"`
+	}
+	var st St
+	err := json.Unmarshal(body, &st)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Unmarshal() failed: %w", err)
+	}
+
+	//find node
+	if srv.job_app == nil {
+		return nil, nil, fmt.Errorf("job_app failed: %w", err)
+	}
+	node := srv.job_app.root.FindNode(st.Node)
+	if node == nil {
+		return nil, nil, fmt.Errorf("node '%s' not found", st.Node)
+	}
+
+	return st.Messages, node, nil
+}
+
 func (srv *SAServices) handlerLLama(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -194,11 +220,37 @@ func (srv *SAServices) handlerLLama(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var res []byte
-	res = body
-	//...
+	//extract
+	msgs, node, err := srv._getOpenAImessages(body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	w.Write(res)
+	// get llama properties from Node
+	js, err := json.Marshal(node.Attrs)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	var props SAServiceLLamaCppProps
+	err = json.Unmarshal(js, &props)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	//add Model and Messages into properties
+	props.Model = node.GetAttrString("model", "")
+	props.Messages = msgs
+
+	//complete
+	answer, err := srv.GetLLama().Complete(&props)
+	if err != nil {
+		http.Error(w, "LLama() failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(answer)
 }
 
 func (srv *SAServices) handlerG4F(w http.ResponseWriter, r *http.Request) {
@@ -208,42 +260,15 @@ func (srv *SAServices) handlerG4F(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//get base struct
-	type G4fMessage struct {
-		Role    string `json:"role"`
-		Content string `json:"content"`
-	}
-	type G4f struct {
-		Node     string       `json:"node"`
-		Messages []G4fMessage `json:"messages"`
-	}
-	var st G4f
-	err = json.Unmarshal(body, &st)
+	//extract
+	msgs, node, err := srv._getOpenAImessages(body)
 	if err != nil {
-		http.Error(w, "Unmarshal() 1 failed: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	//find node
-	if srv.job_app == nil {
-		http.Error(w, "job_app is nil", http.StatusInternalServerError)
-		return
-	}
-	node := srv.job_app.root.FindNode(st.Node)
-	if node == nil {
-		http.Error(w, "Node not found", http.StatusInternalServerError)
-		return
-	}
-
-	// build messages
-	messagesJs, err := json.Marshal(st.Messages)
-	if err != nil {
-		http.Error(w, "Marshal() failed: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	//complete
-	answer, err := srv.GetG4F().Complete(&SAServiceG4FProps{Model: node.GetAttrString("model", "gpt-4-turbo"), Messages: string(messagesJs)})
+	answer, err := srv.GetG4F().Complete(&SAServiceG4FProps{Model: node.GetAttrString("model", "gpt-4-turbo"), Messages: msgs})
 	if err != nil {
 		http.Error(w, "G4F() failed: "+err.Error(), http.StatusInternalServerError)
 		return

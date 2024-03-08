@@ -30,9 +30,13 @@ import (
 )
 
 // Doc: https://help.openai.com/en/articles/7042661-moving-from-completions-to-chat-completions-in-the-openai-api
+type SAServiceG4FMsg struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
 type SAServiceG4FProps struct {
-	Model    string `json:"model"`
-	Messages string `json:"messages"`
+	Model    string            `json:"model"`
+	Messages []SAServiceG4FMsg `json:"messages"`
 }
 
 func (p *SAServiceG4FProps) Hash() (OsHash, error) {

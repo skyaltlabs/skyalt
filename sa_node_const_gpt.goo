@@ -5,27 +5,23 @@ type Text struct {
 type Editbox struct {
 	Value    string
 	Enable   bool
-	Finished bool
 }
 
 type Button struct {
 	Label   string
 	Enable  bool
-	Clicked bool
 }
 
 type Checkbox struct {
 	Value   bool
 	Label   string
 	Enable  bool
-	Changed bool
 }
 
 type Switch struct {
 	Value   bool
 	Label   string
 	Enable  bool
-	Changed bool
 }
 
 type Slider struct {
@@ -34,7 +30,6 @@ type Slider struct {
 	Max     float64
 	Step    float64
 	Enable  bool
-	Changed bool
 }
 
 type Combo struct {
@@ -42,13 +37,11 @@ type Combo struct {
 	Options_names  string //separated by ';'
 	Options_values string //separated by ';'
 	Enable         bool
-	Changed        bool
 }
 
 type Date struct {
 	Value   int //Unix time
 	Enable  bool
-	Changed bool
 }
 
 type Color struct {
@@ -57,7 +50,6 @@ type Color struct {
 	Value_b int //<0-255>
 	Value_a int //<0-255>
 	Enable  bool
-	Changed bool
 }
 
 type Disk_dir struct {
@@ -74,33 +66,34 @@ type Sqlite struct {
 	Write bool
 }
 
-type Llama_cpp struct {
-	Model string
-}
-
-func (ll *Llama_cpp) Complete(prompt string) (string, error) {
-	//TBD
-	return answer
-}
-
 type Whisper_cpp struct {
 	Model string
 }
-
 func (w *Whisper_cpp) Translate(filePath string) (string, error) {
 	//TBD
 	return text
 }
 
+type LlamaMessage struct {
+	Role    string	//"system", "user", "assistant"
+	Content string
+}
+type LlamaCpp struct {
+	Model string
+}
+func (ll *LlamaCpp) GetAnswer(messages []LlamaMessage) (string, error) {
+	//TBD
+	return answer
+}
+
 type G4fMessage struct {
-	Role    string
+	Role    string	//"system", "user", "assistant"
 	Content string
 }
 type G4f struct {
 	Model string
 }
-
-func (g4f *G4f) Complete(messages []G4fMessage) (string, error) {
+func (g4f *G4f) GetAnswer(messages []G4fMessage) (string, error) {
 	//TBD
 	return answer
 }

@@ -27,7 +27,10 @@ import (
 )
 
 type SAServiceLLamaCppProps struct {
-	Prompt            string   `json:"prompt"`
+	Model    string            `json:"model"`
+	Messages []SAServiceG4FMsg `json:"messages"`
+
+	//Prompt            string   `json:"prompt"`
 	Seed              int      `json:"seed"`
 	N_predict         int      `json:"n_predict"`
 	Temperature       float64  `json:"temperature"`
@@ -43,7 +46,7 @@ type SAServiceLLamaCppProps struct {
 	Typical_p         float64  `json:"typical_p"`
 	Presence_penalty  float64  `json:"presence_penalty"`
 	Frequency_penalty float64  `json:"frequency_penalty"`
-	Mirostat          int      `json:"mirostat"`
+	Mirostat          bool     `json:"mirostat"` //not int?
 	Mirostat_tau      float64  `json:"mirostat_tau"`
 	Mirostat_eta      float64  `json:"mirostat_eta"`
 	//Grammar           string   `json:"grammar"` //[]string?
@@ -66,7 +69,7 @@ func (p *SAServiceLLamaCppProps) Hash() (OsHash, error) {
 type SAServiceLLamaCpp struct {
 	addr string //http://127.0.0.1:8080/
 
-	cache      map[string]string //results
+	cache      map[string][]byte //results
 	cache_lock sync.Mutex        //for cache
 }
 
@@ -79,7 +82,7 @@ func NewSAServiceLLamaCpp(addr string, port string) *SAServiceLLamaCpp {
 
 	wh.addr = addr + ":" + port + "/"
 
-	wh.cache = make(map[string]string)
+	wh.cache = make(map[string][]byte)
 
 	//load cache
 	{
@@ -102,68 +105,87 @@ func (wh *SAServiceLLamaCpp) Destroy() {
 	}
 }
 
-func (wh *SAServiceLLamaCpp) FindCache(model string, propsHash OsHash) (string, bool) {
+func (wh *SAServiceLLamaCpp) FindCache(propsHash OsHash) ([]byte, bool) {
 	wh.cache_lock.Lock()
 	defer wh.cache_lock.Unlock()
 
-	str, found := wh.cache[model+propsHash.Hex()]
+	str, found := wh.cache[propsHash.Hex()]
 	return str, found
 }
-func (wh *SAServiceLLamaCpp) addCache(model string, propsHash OsHash, value string) {
+func (wh *SAServiceLLamaCpp) addCache(propsHash OsHash, value []byte) {
 	wh.cache_lock.Lock()
 	defer wh.cache_lock.Unlock()
 
-	wh.cache[model+propsHash.Hex()] = value
+	wh.cache[propsHash.Hex()] = value
 }
 
-func (wh *SAServiceLLamaCpp) Complete(model string, props *SAServiceLLamaCppProps) (string, float64, bool, error) {
+func (wh *SAServiceLLamaCpp) Complete(props *SAServiceLLamaCppProps) ([]byte, error) {
 	//find
 	propsHash, err := props.Hash()
 	if err != nil {
-		return "", 0, false, fmt.Errorf("Hash() failed: %w", err)
+		return nil, fmt.Errorf("Hash() failed: %w", err)
 	}
-	str, found := wh.FindCache(model, propsHash)
+	str, found := wh.FindCache(propsHash)
 	if found {
-		return str, 1, true, nil
+		return str, nil
 	}
 
-	str, err = wh.complete(props)
+	out, err := wh.complete(props)
 	if err != nil {
-		return "", 0, false, fmt.Errorf("complete() failed: %w", err)
+		return nil, fmt.Errorf("complete() failed: %w", err)
 	}
 
-	wh.addCache(model, propsHash, str)
-	return str, 1, true, nil
+	wh.addCache(propsHash, out)
+	return out, nil
 }
 
-func (wh *SAServiceLLamaCpp) complete(props *SAServiceLLamaCppProps) (string, error) {
+func (wh *SAServiceLLamaCpp) complete(props *SAServiceLLamaCppProps) ([]byte, error) {
 	js, err := json.Marshal(props)
 	if err != nil {
-		return "", fmt.Errorf("Marshal() failed: %w", err)
+		return nil, fmt.Errorf("Marshal() failed: %w", err)
 	}
 
 	body := bytes.NewReader([]byte(js))
 
-	req, err := http.NewRequest(http.MethodPost, wh.addr+"completion", body)
+	req, err := http.NewRequest(http.MethodPost, wh.addr+"v1/chat/completions", body)
 	if err != nil {
-		return "", fmt.Errorf("NewRequest() failed: %w", err)
+		return nil, fmt.Errorf("NewRequest() failed: %w", err)
 	}
 	req.Header.Add("Content-Type", "application/json")
 
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("Do() failed: %w", err)
+		return nil, fmt.Errorf("Do() failed: %w", err)
 	}
 
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		return "", fmt.Errorf("ReadAll() failed: %w", err)
+		return nil, fmt.Errorf("ReadAll() failed: %w", err)
 	}
 
 	if res.StatusCode != 200 {
-		return "", fmt.Errorf("statusCode != 200, response: %s", resBody)
+		return nil, fmt.Errorf("statusCode != 200, response: %s", resBody)
 	}
 
-	return string(resBody), nil
+	type STMsg struct {
+		Content string
+	}
+	type STChoice struct {
+		Message STMsg
+	}
+	type ST struct {
+		Choices []STChoice
+	}
+	var answer ST
+	err = json.Unmarshal(resBody, &answer)
+	if err != nil {
+		return nil, fmt.Errorf("Unmarshal() failed: %w", err)
+	}
+
+	if len(answer.Choices) == 0 {
+		return nil, fmt.Errorf("answer is empty")
+	}
+
+	return []byte(answer.Choices[0].Message.Content), nil
 }

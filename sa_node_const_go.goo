@@ -11,14 +11,6 @@ type Text struct {
 	Selection   bool   `json:"selection"`
 	Show_border bool   `json:"show_border"`
 }
-type Number struct {
-	Grid_x    int     `json:"grid_x"`
-	Grid_y    int     `json:"grid_y"`
-	Grid_w    int     `json:"grid_w"`
-	Grid_h    int     `json:"grid_h"`
-	Show bool    `json:"show"`
-	Value     float64 `json:"value"`
-}
 type Editbox struct {
 	Grid_x                  int    `json:"grid_x"`
 	Grid_y                  int    `json:"grid_y"`
@@ -152,26 +144,10 @@ type Sqlite struct {
 	Grid_h    int    `json:"grid_h"`
 	Show      bool   `json:"show"`
 	Path      string `json:"path"`
+	Selected_table string `json:"selected_table"`
 	Write     bool   `json:"write"`
 	Enable    bool   `json:"enable"`
 	Changed   bool   `json:"changed"`
-}
-
-type Llama_cpp struct {
-	Node   string `json:"node"`
-	Prompt string `json:"prompt"`
-}
-
-func (ll *Llama_cpp) Complete(prompt string) (string, error) {
-	ll.Prompt = prompt
-
-	js, err := json.Marshal(ll)
-	if err != nil {
-		return "", fmt.Errorf("Marshal() failed: %w", err)
-	}
-
-	resBody, err := _send("llama", js)
-	return string(resBody), err
 }
 
 type Whisper_cpp struct {
@@ -196,6 +172,27 @@ func (w *Whisper_cpp) Translate(filePath string) (string, error) {
 	}
 
 	resBody, err := _send("whisper", js)
+	return string(resBody), err
+}
+
+type LlamaMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+type LlamaCpp struct {
+	Node   string `json:"node"`
+	Messages []LlamaMessage `json:"messages"`
+}
+
+func (ll *LlamaCpp) GetAnswer(messages []LlamaMessage) (string, error) {
+	ll.Messages = messages
+
+	js, err := json.Marshal(ll)
+	if err != nil {
+		return "", fmt.Errorf("Marshal() failed: %w", err)
+	}
+
+	resBody, err := _send("llama", js)
 	return string(resBody), err
 }
 

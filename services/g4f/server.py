@@ -14,7 +14,7 @@ class MyHandler(BaseHTTPRequestHandler):
         #print(f"Received JSON: {received_json}")
 
         model = received_json['model']
-        messages = json.loads(received_json['messages'])
+        messages = received_json['messages']
         if model == "":
             model = "gpt-4-turbo"
 
