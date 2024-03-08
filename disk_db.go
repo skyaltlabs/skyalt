@@ -26,6 +26,10 @@ import (
 type DiskDbIndexColumn struct {
 	Name string
 	Type string
+
+	Pk       bool
+	NotNull  bool
+	DefValue interface{}
 }
 type DiskDbIndexTable struct {
 	Name    string
@@ -46,8 +50,8 @@ func (tb *DiskDbIndexTable) ListOfColumnNames() string {
 func (tb *DiskDbIndexTable) ListOfColumnValues() string {
 	str := ""
 
-	for range tb.Columns {
-		str += `"", `
+	for _, c := range tb.Columns {
+		str += fmt.Sprintf("%v, ", c.DefValue)
 	}
 	str, _ = strings.CutSuffix(str, ", ")
 
@@ -191,13 +195,30 @@ func (db *DiskDb) GetTableInfo() ([]*DiskDbIndexTable, error) {
 			var cid int
 			var cname, ctype string
 			var pk int
-			var notnull, dflt_value interface{}
+			var notnull int
+			var dflt_value interface{}
 			err = columnRows.Scan(&cid, &cname, &ctype, &notnull, &dflt_value, &pk)
 			if err != nil {
 				return nil, fmt.Errorf("Scan(%s) failed: %w", db.path, err)
 			}
 
-			c := &DiskDbIndexColumn{Name: cname, Type: ctype}
+			switch dflt_value.(type) {
+			case nil:
+				switch strings.ToUpper(ctype) {
+				case "INTEGER":
+					dflt_value = 0
+				case "REAL":
+					dflt_value = 0.0
+				case "TEXT":
+					dflt_value = `""`
+				case "BLOB":
+					dflt_value = `null`
+				case "NUMERIC":
+					dflt_value = 0
+				}
+			}
+
+			c := &DiskDbIndexColumn{Name: cname, Type: ctype, Pk: pk != 0, NotNull: notnull != 0, DefValue: dflt_value}
 			indt.Columns = append(indt.Columns, c)
 		}
 	}
