@@ -234,19 +234,26 @@ func (ls *SANodeCode) extractCode() (string, error) {
 	return code, nil
 }
 
-func (ls *SANodeCode) extractImports(code string) ([]string, error) {
-	var imports []string
+func (ls *SANodeCode) extractImports(code string) ([]string, []string, error) {
+	var importNames []string
+	var importPaths []string
 
 	fset := token.NewFileSet()
 	node, err := parser.ParseFile(fset, "test.go", "package main\n\n"+code, parser.ParseComments)
 	if err != nil {
-		return nil, fmt.Errorf("ParseFile() failed: %w", err)
+		return nil, nil, fmt.Errorf("ParseFile() failed: %w", err)
 	}
 
 	for _, im := range node.Imports {
-		imports = append(imports, im.Path.Value)
+		nm := ""
+		if im.Name != nil {
+			nm = im.Name.Name
+		}
+
+		importNames = append(importNames, nm)
+		importPaths = append(importPaths, im.Path.Value)
 	}
-	return imports, nil
+	return importNames, importPaths, nil
 }
 
 func (ls *SANodeCode) extractFunc(code string) (string, error) {
@@ -336,7 +343,7 @@ func (ls *SANodeCode) buildCode() error {
 	if err != nil {
 		return err
 	}
-	imports, err := ls.extractImports(code)
+	importNames, importPaths, err := ls.extractImports(code)
 	if err != nil {
 		return err
 	}
@@ -351,7 +358,7 @@ func (ls *SANodeCode) buildCode() error {
 	for _, imp := range g_str_imports {
 		str += fmt.Sprintf("import %s\n", imp)
 	}
-	for _, imp := range imports {
+	for i, imp := range importPaths {
 		found := false
 		for _, imp2 := range g_str_imports {
 			if imp == imp2 {
@@ -360,7 +367,7 @@ func (ls *SANodeCode) buildCode() error {
 			}
 		}
 		if !found {
-			str += fmt.Sprintf("import %s\n", imp)
+			str += fmt.Sprintf("import %s %s\n", importNames[i], imp)
 		}
 	}
 	str += "\n"
@@ -422,7 +429,10 @@ func (ls *SANodeCode) GetAnswer() error {
 		return err
 	}
 
-	messages := fmt.Sprintf(`[{"role": "system", "content": "You are ChatGPT, an AI assistant. Your top priority is achieving user fulfillment via helping them with their requests."}, {"role": "user", "content": %s}]`, OsText_RAWtoJSON(ls.prompt))
+	messages := []SAServiceG4FMsg{
+		{Role: "system", Content: "You are ChatGPT, an AI assistant. Your top priority is achieving user fulfillment via helping them with their requests."},
+		{Role: "user", Content: ls.prompt},
+	}
 	g4f := ls.node.app.base.services.GetG4F()
 	answer, err := g4f.Complete(&SAServiceG4FProps{Model: "gpt-4-turbo", Messages: messages})
 	if err != nil {
