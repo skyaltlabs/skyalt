@@ -65,8 +65,6 @@ func InitSAGroups() SAGroups {
 		{name: "date", render: UiDate_render, attrs: UiDate_Attrs, changedAttr: true},
 
 		/*
-			{name: "calendar", render: SAExe_Render_Calendar},
-			{name: "date", render: SAExe_Render_Date},
 			{name: "map", render: SAExe_Render_Map},
 			{name: "image", render: SAExe_Render_Image},
 			{name: "list", render: SAExe_Render_List},
@@ -84,7 +82,7 @@ func InitSAGroups() SAGroups {
 
 	grs.groups = append(grs.groups, &SAGroup{name: "Neural networks", icon: InitWinMedia_url(path + "node_nn.png"), nodes: []*SAGroupNode{
 		{name: "whisper_cpp", attrs: UiWhisperCpp_Attrs},
-		{name: "llama_cpp", attrs: UiLLamaCpp_Attrs},
+		{name: "llamaCpp", attrs: UiLLamaCpp_Attrs},
 		{name: "g4f", attrs: UiG4F_Attrs},
 	}})
 

@@ -126,7 +126,7 @@ func (node *SANode) AddPos(r OsV2f) {
 }
 
 func (node *SANode) HasAttrNode() bool {
-	return node.Exe == "whisper_cpp" || node.Exe == "llama_cpp" || node.Exe == "g4f"
+	return node.Exe == "whisper_cpp" || node.Exe == "llamaCpp" || node.Exe == "g4f"
 }
 
 func (node *SANode) HasNodeSubs() bool {
