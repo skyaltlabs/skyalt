@@ -267,6 +267,10 @@ func (v OsV2) Len() float32 {
 	return float32(math.Sqrt(float64(v.X*v.X + v.Y*v.Y)))
 }
 
+func (v OsV2) Angle() float32 {
+	return float32(math.Atan2(float64(v.Y), float64(v.X))) //<-PI, PI>
+}
+
 func (a OsV2) Distance(b OsV2) float32 {
 	return a.Sub(b).Len()
 }
