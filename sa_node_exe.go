@@ -26,7 +26,7 @@ import (
 
 func UiButton_Attrs(node *SANode) {
 	ui := node.app.base.ui
-	ui.Div_colMax(0, 4)
+	ui.Div_colMax(0, 3)
 	ui.Div_colMax(1, 100)
 
 	grid := InitOsV4(0, 0, 1, 1)
@@ -53,7 +53,7 @@ func UiButton_render(node *SANode) {
 
 func UiText_Attrs(node *SANode) {
 	ui := node.app.base.ui
-	ui.Div_colMax(0, 4)
+	ui.Div_colMax(0, 3)
 	ui.Div_colMax(1, 100)
 
 	grid := InitOsV4(0, 0, 1, 1)
@@ -85,7 +85,7 @@ func UiText_render(node *SANode) {
 
 func UiEditbox_Attrs(node *SANode) {
 	ui := node.app.base.ui
-	ui.Div_colMax(0, 4)
+	ui.Div_colMax(0, 3)
 	ui.Div_colMax(1, 100)
 
 	grid := InitOsV4(0, 0, 1, 1)
@@ -122,7 +122,7 @@ func UiEditbox_render(node *SANode) {
 
 func UiCheckbox_Attrs(node *SANode) {
 	ui := node.app.base.ui
-	ui.Div_colMax(0, 4)
+	ui.Div_colMax(0, 3)
 	ui.Div_colMax(1, 100)
 
 	grid := InitOsV4(0, 0, 1, 1)
@@ -152,7 +152,7 @@ func UiCheckbox_render(node *SANode) {
 
 func UiSwitch_Attrs(node *SANode) {
 	ui := node.app.base.ui
-	ui.Div_colMax(0, 4)
+	ui.Div_colMax(0, 3)
 	ui.Div_colMax(1, 100)
 
 	grid := InitOsV4(0, 0, 1, 1)
@@ -182,7 +182,7 @@ func UiSwitch_render(node *SANode) {
 
 func UiSlider_Attrs(node *SANode) {
 	ui := node.app.base.ui
-	ui.Div_colMax(0, 4)
+	ui.Div_colMax(0, 3)
 	ui.Div_colMax(1, 100)
 
 	grid := InitOsV4(0, 0, 1, 1)
@@ -214,7 +214,7 @@ func UiSlider_render(node *SANode) {
 
 func UiCombo_Attrs(node *SANode) {
 	ui := node.app.base.ui
-	ui.Div_colMax(0, 4)
+	ui.Div_colMax(0, 3)
 	ui.Div_colMax(1, 100)
 
 	grid := InitOsV4(0, 0, 1, 1)
@@ -251,7 +251,7 @@ func UiCombo_render(node *SANode) {
 
 func UiColor_Attrs(node *SANode) {
 	ui := node.app.base.ui
-	ui.Div_colMax(0, 4)
+	ui.Div_colMax(0, 3)
 	ui.Div_colMax(1, 100)
 
 	grid := InitOsV4(0, 0, 1, 1)
@@ -280,7 +280,7 @@ func UiColor_render(node *SANode) {
 
 func UiDivider_Attrs(node *SANode) {
 	ui := node.app.base.ui
-	ui.Div_colMax(0, 4)
+	ui.Div_colMax(0, 3)
 	ui.Div_colMax(1, 100)
 
 	grid := InitOsV4(0, 0, 1, 1)
@@ -304,7 +304,7 @@ func UiDivider_render(node *SANode) {
 
 func UiTimer_Attrs(node *SANode) {
 	ui := node.app.base.ui
-	ui.Div_colMax(0, 4)
+	ui.Div_colMax(0, 3)
 	ui.Div_colMax(1, 100)
 
 	grid := InitOsV4(0, 0, 1, 1)
@@ -367,7 +367,7 @@ func UiTimer_render(node *SANode) {
 
 func UiDate_Attrs(node *SANode) {
 	ui := node.app.base.ui
-	ui.Div_colMax(0, 4)
+	ui.Div_colMax(0, 3)
 	ui.Div_colMax(1, 100)
 
 	grid := InitOsV4(0, 0, 1, 1)
