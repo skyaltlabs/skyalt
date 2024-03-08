@@ -128,8 +128,8 @@ func (b *WinPaintBuff) AddLine(start OsV2, end OsV2, cd OsCd, thick int) {
 	}
 }
 
-func (buf *WinPaintBuff) AddBezier(a OsV2, b OsV2, c OsV2, d OsV2, cd OsCd, thick int, dash_len float32) {
-	buf.win.DrawBezier(a, b, c, d, buf.depth, thick, cd, dash_len)
+func (buf *WinPaintBuff) AddBezier(a OsV2, b OsV2, c OsV2, d OsV2, cd OsCd, thick int, dash_len float32, move float32) {
+	buf.win.DrawBezier(a, b, c, d, buf.depth, thick, cd, dash_len, move)
 }
 
 func (buf *WinPaintBuff) AddPoly(start OsV2, points []OsV2f, cd OsCd, width float64) {

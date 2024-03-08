@@ -953,7 +953,7 @@ func _Win_getBezierPoint(t float64, a, b, c, d OsV2f) OsV2f {
 	return af.Add(bf).Add(cf).Add(df)
 }
 
-func (win *Win) DrawBezier(a OsV2, b OsV2, c OsV2, d OsV2, depth int, thick int, cd OsCd, dash_px float32) {
+func (win *Win) DrawBezier(a OsV2, b OsV2, c OsV2, d OsV2, depth int, thick int, cd OsCd, dash_px float32, move float32) {
 
 	gl.Color4ub(cd.R, cd.G, cd.B, cd.A)
 
@@ -968,6 +968,7 @@ func (win *Win) DrawBezier(a OsV2, b OsV2, c OsV2, d OsV2, depth int, thick int,
 	} else {
 		gl.Begin(gl.LINE_STRIP)
 	}
+
 	{
 		//compute length
 		len := float32(0)
@@ -980,9 +981,22 @@ func (win *Win) DrawBezier(a OsV2, b OsV2, c OsV2, d OsV2, depth int, thick int,
 
 		N = OsTrn(dash_px > 0, int(len/dash_px), int(len/5)) // 5 = 5px jump
 		div = 1 / float64(N)
+
+		pre_p := _Win_getBezierPoint(0-div, aa, bb, cc, dd)
 		for t := float64(0); t <= 1.001; t += div {
-			r := _Win_getBezierPoint(t, aa, bb, cc, dd)
-			gl.Vertex3f(r.X, r.Y, float32(depth))
+			p := _Win_getBezierPoint(t, aa, bb, cc, dd)
+
+			if move != 0 {
+				old_p := p
+				v := p.Sub(pre_p)
+				v.X, v.Y = -v.Y, v.X
+				v = v.MulV(move / v.Len())
+				p = p.Add(v)
+				pre_p = old_p
+			}
+
+			gl.Vertex3f(p.X, p.Y, float32(depth))
+
 		}
 	}
 	gl.End()
