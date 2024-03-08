@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 )
 
@@ -95,7 +96,7 @@ func (gr *SAGraph) drawCreateNode() {
 	}
 }
 
-func (gr *SAGraph) drawConnectionV(start OsV2, end OsV2, cellr float32, dash float32, cd OsCd) {
+/*func (gr *SAGraph) drawConnectionV(start OsV2, end OsV2, cellr float32, dash float32, cd OsCd) {
 	ui := gr.app.base.ui
 	t := cellr * 0.3
 	end.Y -= int(t) //connect to top of arrow
@@ -128,9 +129,63 @@ func (gr *SAGraph) drawConnectionV(start OsV2, end OsV2, cellr float32, dash flo
 
 	//arrow
 	ui.buff.AddPoly(end.Add(OsV2{int(-t / 2), 0}), []OsV2f{{0, 0}, {-t / 2, -t}, {t / 2, -t}}, cd, 0)
+}*/
+
+func (gr *SAGraph) drawConnectionDirect(startRect OsV4, endRect OsV4, dash float32, cd OsCd, move float32) {
+
+	//H-H nebo V-V
+
+	stMid := startRect.Middle()
+	stStart := startRect.Start
+	stEnd := startRect.End()
+
+	enMid := endRect.Middle()
+	enStart := endRect.Start
+	enEnd := endRect.End()
+
+	var start, end OsV2
+	isV := false
+
+	v := endRect.Middle().Sub(startRect.Middle()) //opačně? ...
+	rad := v.Angle()
+
+	if rad <= math.Pi/4 && rad >= -math.Pi/4 {
+		//right
+		start = OsV2{stEnd.X, stMid.Y}
+		end = OsV2{enStart.X, enMid.Y}
+	}
+	if rad > math.Pi/4 && rad < math.Pi*3/4 {
+		//down
+		isV = true
+		start = OsV2{stMid.X, stEnd.Y}
+		end = OsV2{enMid.X, enStart.Y}
+	}
+	if rad < -math.Pi/4 && rad >= -math.Pi*3/4 {
+		//up
+		isV = true
+		start = OsV2{stMid.X, stStart.Y}
+		end = OsV2{enMid.X, enEnd.Y}
+	}
+	if rad > math.Pi*3/4 || rad < -math.Pi*3/4 {
+		//left
+		start = OsV2{stStart.X, stMid.Y}
+		end = OsV2{enEnd.X, enMid.Y}
+	}
+
+	ui := gr.app.base.ui
+	wi := ui.CellWidth(0.03)
+
+	mid := start.Aprox(end, 0.5)
+	if isV {
+		ui.buff.AddBezier(start, OsV2{start.X, mid.Y}, OsV2{end.X, mid.Y}, end, cd, wi, dash, move)
+	} else {
+		ui.buff.AddBezier(start, OsV2{mid.X, start.Y}, OsV2{mid.X, end.Y}, end, cd, wi, dash, move)
+
+	}
+
 }
 
-func (gr *SAGraph) drawConnectionH(start OsV2, end OsV2, cellr float32, dash float32, cd OsCd) {
+func (gr *SAGraph) drawConnectionTrigger(start OsV2, end OsV2, cellr float32, dash float32, cd OsCd) {
 	ui := gr.app.base.ui
 	t := cellr * 0.3
 	end.X -= int(t) //connect to left of arrow
@@ -138,7 +193,7 @@ func (gr *SAGraph) drawConnectionH(start OsV2, end OsV2, cellr float32, dash flo
 	wi := ui.CellWidth(0.03)
 
 	if start.X < end.X {
-		ui.buff.AddBezier(start, OsV2{mid.X, start.Y}, OsV2{mid.X, end.Y}, end, cd, wi, dash)
+		ui.buff.AddBezier(start, OsV2{mid.X, start.Y}, OsV2{mid.X, end.Y}, end, cd, wi, dash, 0)
 	} else {
 		mv := int(cellr * 2)
 
@@ -148,7 +203,7 @@ func (gr *SAGraph) drawConnectionH(start OsV2, end OsV2, cellr float32, dash flo
 			OsV2{start.X + mv, start.Y},
 			OsV2{end2.X + mv, end2.Y},
 			end2, //mid
-			cd, wi, dash)
+			cd, wi, dash, 0)
 
 		end3 := mid
 		end3.X = end.X
@@ -156,7 +211,7 @@ func (gr *SAGraph) drawConnectionH(start OsV2, end OsV2, cellr float32, dash flo
 			OsV2{end.X - mv, end.Y},
 			OsV2{end3.X - mv, end3.Y},
 			end3, //mid
-			cd, wi, dash)
+			cd, wi, dash, 0)
 
 		ui.buff.AddLine(end2, end3, cd, wi)
 	}
@@ -248,7 +303,8 @@ func (gr *SAGraph) drawConnections() {
 				coordIn = selCoordIn
 			}
 
-			gr.drawConnectionV(OsV2{coordIn.Middle().X, coordIn.End().Y}, OsV2{coordOut.Middle().X, coordOut.Start.Y}, cellr, 0, Node_connectionCd(in.Selected || out.Selected, ui))
+			//gr.drawConnectionDirect(OsV2{coordIn.Middle().X, coordIn.End().Y}, OsV2{coordOut.Middle().X, coordOut.Start.Y}, cellr, 0, Node_connectionCd(in.Selected || out.Selected, ui))
+			gr.drawConnectionDirect(coordOut, coordIn, 0, Node_connectionCd(in.Selected || out.Selected, ui), 0)
 		}
 
 		for _, inName := range out.Code.Triggers {
@@ -261,10 +317,14 @@ func (gr *SAGraph) drawConnections() {
 				continue
 			}
 
-			_, selCoordIn, _ := in.nodeToPixelsCoord(lv.call.canvas)
-			coordOut = selCoordOut //move by button_circle_rad
+			coordIn, selCoordIn, _ := in.nodeToPixelsCoord(lv.call.canvas)
+			if in.Selected {
+				coordIn = selCoordIn
+			}
 
-			gr.drawConnectionH(OsV2{selCoordIn.End().X, selCoordIn.Middle().Y}, OsV2{coordOut.Start.X, coordOut.Middle().Y}, cellr, cellr, Node_connectionCd(in.Selected || out.Selected, ui))
+			//coordOut = selCoordOut //move by button_circle_rad
+			//gr.drawConnectionTrigger(OsV2{selCoordIn.End().X, selCoordIn.Middle().Y}, OsV2{coordOut.Start.X, coordOut.Middle().Y}, cellr, cellr, Node_connectionCd(in.Selected || out.Selected, ui))
+			gr.drawConnectionDirect(coordOut, coordIn, cellr, Node_connectionCd(in.Selected || out.Selected, ui), cellr/10)
 		}
 	}
 }
@@ -358,7 +418,7 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 			if gr.connect_out.Selected {
 				coordIn = selCoordIn
 			}
-			gr.drawConnectionH(OsV2{coordIn.End().X, coordIn.Middle().Y}, ui.win.io.touch.pos, cellr, 0, cd)
+			gr.drawConnectionTrigger(OsV2{coordIn.End().X, coordIn.Middle().Y}, ui.win.io.touch.pos, cellr, 0, cd)
 		}
 
 		if gr.connect_in != nil {
@@ -366,7 +426,7 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 			if gr.connect_in.Selected {
 				coordOut = selCoordOut
 			}
-			gr.drawConnectionH(ui.win.io.touch.pos, OsV2{coordOut.Start.X, coordOut.Middle().Y}, cellr, 0, cd)
+			gr.drawConnectionTrigger(ui.win.io.touch.pos, OsV2{coordOut.Start.X, coordOut.Middle().Y}, cellr, 0, cd)
 		}
 	}
 
