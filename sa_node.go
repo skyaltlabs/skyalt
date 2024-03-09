@@ -573,7 +573,7 @@ func (node *SANode) RenderCanvas() {
 		//draw Select rectangle
 		if node.HasError() { //|| w.HasExpError() {
 			pl := ui.win.io.GetPalette()
-			cd := pl.E
+			cd := pl.OnE
 			cd.A = 150
 
 			//rect
