@@ -58,6 +58,9 @@ type SAApp struct {
 
 	all_nodes      []*SANode
 	selected_nodes []*SANode
+
+	all_triggers     []*SANode
+	all_triggers_str []string
 }
 
 func (a *SAApp) init(base *SABase) {
@@ -143,9 +146,38 @@ func (app *SAApp) buildNodes(node *SANode, onlySelected bool) []*SANode {
 	return list
 }
 
+func (app *SAApp) buildTriggers(node *SANode) []*SANode {
+	var list []*SANode
+
+	for _, nd := range node.Subs {
+
+		if nd.IsTypeTrigger() {
+			list = append(list, nd)
+		}
+
+		list = append(list, app.buildTriggers(nd)...)
+	}
+	return list
+}
+func (app *SAApp) buildTriggersStr(node *SANode) []string {
+	var list []string
+
+	for _, nd := range node.Subs {
+
+		if nd.IsTypeTrigger() {
+			list = append(list, nd.Name)
+		}
+
+		list = append(list, app.buildTriggersStr(nd)...)
+	}
+	return list
+}
+
 func (app *SAApp) rebuildLists() {
 	app.all_nodes = app.buildNodes(app.root, false)
 	app.selected_nodes = app.buildNodes(app.root, true)
+	app.all_triggers = app.buildTriggers(app.root)
+	app.all_triggers_str = app.buildTriggersStr(app.root)
 }
 
 func (app *SAApp) Tick() {
