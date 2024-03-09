@@ -184,9 +184,10 @@ func (ls *SANodeCode) addDepend(node *SANode) {
 	ls.depends = append(ls.depends, node)
 }
 
-func (ls *SANodeCode) extractDepends() error {
+func (ls *SANodeCode) updateDepends(fromTemp bool) error {
 
-	cmd := ls.Command
+	cmd := OsTrnString(fromTemp, ls.TempCommand, ls.Command)
+
 	ls.depends = nil
 
 	for {
@@ -201,9 +202,15 @@ func (ls *SANodeCode) extractDepends() error {
 			nm := cmd[:d2]
 			node := ls.node.FindNode(nm)
 			if node != nil {
+				if node == ls.node {
+					return fmt.Errorf("can't connect to it self")
+				}
+				if node.IsTypeCode() {
+					return fmt.Errorf("can't connect to node(%s) which is type code", node.Name)
+				}
 				ls.addDepend(node)
 			} else {
-				fmt.Printf("Warning: Node(%s) not found\n", nm)
+				return fmt.Errorf("node '%s' not found", nm)
 			}
 			cmd = cmd[d2+1:]
 		} else {
@@ -309,7 +316,7 @@ func (ls *SANodeCode) buildPrompt() error {
 
 	ls.prompt = ""
 
-	ls.extractDepends()
+	ls.updateDepends(false)
 
 	str := "I have this golang code:\n\n"
 	str += g_code_const_gpt + "\n"
