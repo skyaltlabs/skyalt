@@ -796,6 +796,10 @@ func UiCodeGo_Attrs(node *SANode) {
 	ui.Comp_text(0, 2, 1, 1, "Answer", 0)
 
 	ui.Comp_editbox(1, 0, 2, 1, &node.Code.TempCommand, Comp_editboxProp().Align(0, 0).MultiLine(true).TempToValue(true))
+	err := node.Code.updateDepends(true)
+	if err != nil {
+		node.SetError(err)
+	}
 
 	if node.Code.TempCommand != node.Code.Command {
 		ui.Comp_textCd(1, 1, 1, 1, "Warning: Re-generage answer", 0, CdPalette_E)
