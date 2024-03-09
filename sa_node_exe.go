@@ -830,7 +830,8 @@ func UiCodeGo_Attrs(node *SANode) {
 
 	//triggers
 	ui.Comp_text(0, 5, 1, 1, "Triggers", 0)
-	ui.Div_start(1, 5, 2, len(node.Code.Triggers))
+	nTrigs := len(node.Code.Triggers)
+	ui.Div_start(1, 5, 2, nTrigs+1)
 	{
 		ui.Div_colMax(1, 100)
 		for i, tr := range node.Code.Triggers {
@@ -839,6 +840,18 @@ func UiCodeGo_Attrs(node *SANode) {
 			}
 			ui.Comp_text(1, i, 1, 1, tr, 0)
 		}
+
+		ui.Div_start(0, nTrigs, 2, 1)
+		{
+			ui.Div_colMax(1, 5)
+			ui.Comp_text(0, 0, 1, 1, "+", 1)
+			var pick_node string
+			if ui.Comp_combo(1, 0, 1, 1, &pick_node, node.app.all_triggers_str, node.app.all_triggers_str, "", true, true) {
+				node.Code.addTrigger(pick_node)
+			}
+		}
+		ui.Div_end()
+
 	}
 	ui.Div_end()
 }

@@ -186,7 +186,7 @@ func (node *SANode) drawHeader() bool {
 	ui.Div_end()
 
 	//attributes
-	circleCd := CdPalette_S
+	/*circleCd := CdPalette_S
 	if node.app.base.node_groups.IsUI(node.Exe) {
 		circleCd = CdPalette_P
 	}
@@ -204,7 +204,7 @@ func (node *SANode) drawHeader() bool {
 				node.app.graph.SetConnectOut(node)
 			}
 		}
-	}
+	}*/
 
 	//inside & double-click
 	if ui.GetCall().call.enableInput {
