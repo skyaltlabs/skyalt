@@ -373,6 +373,8 @@ func (node *SANode) RenderAttrs() {
 
 		ui.Div_start(0, attr_start, 1, 1)
 		ui.Div_colMax(0, 100)
+
+		node.errExe = nil //reset
 		gnd.attrs(node)
 		ui.Div_end()
 	}

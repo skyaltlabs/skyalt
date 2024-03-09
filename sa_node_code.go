@@ -484,8 +484,6 @@ func (ls *SANodeCode) GetFileName() string {
 func (ls *SANodeCode) Execute() error {
 	st := OsTime()
 
-	ls.node.errExe = nil //reset
-
 	ls.updateLinks(ls.node)
 
 	//input
