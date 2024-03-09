@@ -77,7 +77,8 @@ func main() {
 	//Main loop
 	run := true
 	for run {
-		disk.net.online = !win.io.ini.Offline //update
+		disk.net.online = !win.io.ini.Offline      //update
+		base.services.online = !win.io.ini.Offline //update
 
 		var redraw bool
 		run, redraw, err = win.UpdateIO()

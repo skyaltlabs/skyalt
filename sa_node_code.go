@@ -436,11 +436,15 @@ func (ls *SANodeCode) GetAnswer() error {
 		return err
 	}
 
+	g4f, err := ls.node.app.base.services.GetG4F()
+	if err != nil {
+		return err
+	}
+
 	messages := []SAServiceG4FMsg{
 		{Role: "system", Content: "You are ChatGPT, an AI assistant. Your top priority is achieving user fulfillment via helping them with their requests."},
 		{Role: "user", Content: ls.prompt},
 	}
-	g4f := ls.node.app.base.services.GetG4F()
 	answer, err := g4f.Complete(&SAServiceG4FProps{Model: "gpt-4-turbo", Messages: messages})
 	if err != nil {
 		ls.Command = oldCommand

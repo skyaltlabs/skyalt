@@ -30,6 +30,8 @@ type SAServices struct {
 	port   int
 	server *http.Server
 
+	online bool
+
 	whisper_cpp *SAServiceWhisperCpp
 	llamaCpp    *SAServiceLLamaCpp
 	g4f         *SAServiceG4F
@@ -87,11 +89,15 @@ func (srv *SAServices) GetLLama() *SAServiceLLamaCpp {
 	return srv.llamaCpp
 }
 
-func (srv *SAServices) GetG4F() *SAServiceG4F {
+func (srv *SAServices) GetG4F() (*SAServiceG4F, error) {
+	if !srv.online {
+		return nil, fmt.Errorf("internet is disabled(Menu:Settings:Internet Connection)")
+	}
+
 	if srv.g4f == nil {
 		srv.g4f = NewSAServiceG4F("http://127.0.0.1", "8093")
 	}
-	return srv.g4f
+	return srv.g4f, nil
 }
 
 func (srv *SAServices) Render() {
@@ -268,7 +274,13 @@ func (srv *SAServices) handlerG4F(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//complete
-	answer, err := srv.GetG4F().Complete(&SAServiceG4FProps{Model: node.GetAttrString("model", "gpt-4-turbo"), Messages: msgs})
+	g4f, err := srv.GetG4F()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	answer, err := g4f.Complete(&SAServiceG4FProps{Model: node.GetAttrString("model", "gpt-4-turbo"), Messages: msgs})
 	if err != nil {
 		http.Error(w, "G4F() failed: "+err.Error(), http.StatusInternalServerError)
 		return
