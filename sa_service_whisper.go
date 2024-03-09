@@ -211,7 +211,7 @@ func (wh *SAServiceWhisperCpp) Translate(model string, blob OsBlob, props *SASer
 func (wh *SAServiceWhisperCpp) setModel(model string) error {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	writer.WriteField("model", model)
+	writer.WriteField("model", "models/"+model+".bin")
 	writer.Close()
 
 	req, err := http.NewRequest(http.MethodPost, wh.addr+"load", body)
