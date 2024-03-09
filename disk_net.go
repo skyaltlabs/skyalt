@@ -165,6 +165,6 @@ func (net *DiskNet) GetFile(url string, agent string) ([]byte, bool, float64, er
 		jb := net.add(url, agent)
 		return jb.data, jb.done, jb.progress, jb.err
 	} else {
-		return nil, true, 0, fmt.Errorf("internet is off(enable Main Menu:Settings:Internet Connection)")
+		return nil, true, 0, fmt.Errorf("internet is disabled(Menu:Settings:Internet Connection)")
 	}
 }
