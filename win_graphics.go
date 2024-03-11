@@ -67,6 +67,10 @@ func InitWinFontPropsDef(win *Win) WinFontProps {
 	return InitWinFontProps(0, 0, 0, false, true, win)
 }
 
+func WinFontProps_NumRows(str string) int {
+	return OsRoundUp(float64(OsText_NumLines(str)) * 0.7)
+}
+
 func (a *WinFontProps) Cmp(b *WinFontProps) bool {
 	return a.weight == b.weight &&
 		a.textH == b.textH &&
