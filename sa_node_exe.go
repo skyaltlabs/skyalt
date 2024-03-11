@@ -771,89 +771,194 @@ func UiSQLite_render(node *SANode) {
 
 }
 
-func (node *SANode) IsBypassed() bool {
-	return node.IsTypeCode() && node.GetAttrBool("bypass", false)
-}
+func UiCodeGo_AttrChat(node *SANode) {
+	ui := node.app.base.ui
 
-func (node *SANode) SetBypass() {
-	if node.IsTypeCode() {
-		node.Attrs["bypass"] = !node.GetAttrBool("bypass", false)
+	ui.Div_colMax(0, 4)
+	ui.Div_colMax(1, 100)
+	ui.Div_rowMax(1, 100)
+
+	if ui.Comp_buttonLight(0, 0, 1, 1, "Close", "", true) > 0 {
+		node.ShowCodeChat = false
 	}
+	ui.Comp_text(1, 0, 1, 1, "Code Chat", 1)
+
+	ui.Div_start(0, 1, 2, 1)
+	{
+
+		ui.Div_colMax(0, 2)
+		ui.Div_colMax(1, 100)
+		ui.Div_colMax(2, 100)
+
+		node.Code.CheckLastChatEmpty()
+
+		y := 0
+		for i, str := range node.Code.Messages {
+			if i+1 < len(node.Code.Messages) {
+				nlines := WinFontProps_NumRows(str.User)
+				ui.Comp_text(0, y, 1, 1, "User", 0)
+				ui.Comp_textSelectMulti(1, y, nlines, 2, str.User, OsV2{0, 0}, true, false)
+				y += nlines
+
+				nlines = WinFontProps_NumRows(str.Assistent)
+				ui.Comp_text(0, y, 1, 1, "Assistent", 0)
+				ui.Comp_textSelectMulti(1, y, 2, nlines, str.Assistent, OsV2{0, 0}, true, false)
+				y += nlines
+
+				if ui.Comp_buttonLight(2, y, 1, 1, "Use this code", "", true) > 0 {
+					err := node.Code.UseAnswer(str.Assistent)
+					if err != nil {
+						node.SetError(err)
+					}
+				}
+				y++
+
+				y++ //space
+			} else {
+				//last one is only user editbox
+
+				nlines := WinFontProps_NumRows(str.User) + 2
+				ui.Comp_editbox(0, y, 3, nlines, &node.Code.Messages[i].User, Comp_editboxProp().MultiLine(true).Align(0, 0))
+				y += nlines
+
+				//or ctrl+enter ..........
+				if ui.Comp_buttonLight(2, y, 1, 1, "Send", "", true) > 0 {
+					err := node.Code.GetAnswer()
+					if err != nil {
+						node.SetError(err)
+					}
+				}
+
+			}
+		}
+
+		//delete last one ...
+		//clear all ...
+	}
+	ui.Div_end()
 }
 
 func UiCodeGo_Attrs(node *SANode) {
 	ui := node.app.base.ui
 	ui.Div_colMax(0, 3)
 	ui.Div_colMax(1, 100)
-	ui.Div_colMax(2, 100)
 
-	ui.Div_row(0, 1)
-	ui.Div_row(2, 3)
-	ui.Div_rowMax(0, 2)
-	ui.Div_rowMax(2, 6)
-
-	ui.Comp_text(0, 0, 1, 1, "Request", 0)
-	ui.Comp_text(0, 2, 1, 1, "Answer", 0)
-
-	ui.Comp_editbox(1, 0, 2, 1, &node.Code.TempCommand, Comp_editboxProp().Align(0, 0).MultiLine(true).TempToValue(true))
-	err := node.Code.updateDepends(true)
-	if err != nil {
-		node.SetError(err)
-	}
-
-	if node.Code.TempCommand != node.Code.Command {
-		ui.Comp_textCd(1, 1, 1, 1, "Warning: Re-generage answer", 0, CdPalette_E)
-	}
-
-	//generate button
-	if ui.Comp_button(2, 1, 1, 1, "Generate", "", node.Code.TempCommand != node.Code.Command) > 0 {
-		err := node.Code.GetAnswer()
-		if err != nil {
-			node.SetError(err)
-		}
-	}
-
-	//answer
-	ui.Comp_editbox(1, 2, 2, 1, &node.Code.Answer, Comp_editboxProp().Align(0, 0).MultiLine(true))
-
-	//run button
-	if ui.Comp_button(2, 3, 1, 1, "Run", "", true) > 0 {
-		err := node.Code.Execute()
-		if err != nil {
-			node.SetError(err)
-		}
-	}
+	y := 0
 
 	//bypass
-	gr := InitOsV4(0, 4, 1, 1)
-	node.ShowAttrBool(&gr, "bypass", false)
+	{
+		gr := InitOsV4(0, y, 1, 1)
+		node.ShowAttrBool(&gr, "bypass", false)
+		y += 1
+	}
 
 	//triggers
-	ui.Comp_text(0, 5, 1, 1, "Triggers", 0)
-	nTrigs := len(node.Code.Triggers)
-	ui.Div_start(1, 5, 2, nTrigs+1)
 	{
-		ui.Div_colMax(1, 100)
-		for i, tr := range node.Code.Triggers {
-			if ui.Comp_button(0, i, 1, 1, "X", "Un-link", true) > 0 {
-				node.Code.Triggers = append(node.Code.Triggers[:i], node.Code.Triggers[i+1:]...) //remove
+		ui.Comp_text(0, y, 1, 1, "Triggers", 0)
+		nTrigs := len(node.Code.Triggers)
+		ui.Div_start(1, y, 1, nTrigs+1)
+		{
+			ui.Div_colMax(1, 100)
+			for i, tr := range node.Code.Triggers {
+				if ui.Comp_buttonLight(0, i, 1, 1, "X", "Un-link", true) > 0 {
+					node.Code.Triggers = append(node.Code.Triggers[:i], node.Code.Triggers[i+1:]...) //remove
+				}
+				ui.Comp_text(1, i, 1, 1, tr, 0)
 			}
-			ui.Comp_text(1, i, 1, 1, tr, 0)
+
+			ui.Div_start(0, nTrigs, 2, 1)
+			{
+				ui.Div_colMax(1, 5)
+				ui.Comp_text(0, 0, 1, 1, "+", 1)
+				var pick_node string
+				if ui.Comp_combo(1, 0, 1, 1, &pick_node, node.app.all_triggers_str, node.app.all_triggers_str, "", true, true) {
+					node.Code.addTrigger(pick_node)
+				}
+			}
+			ui.Div_end()
+
+		}
+		ui.Div_end()
+		y += nTrigs + 1
+	}
+
+	ui.Div_SpacerRow(0, y, 2, 1)
+	y++
+
+	//Features
+	{
+		ui.Comp_text(0, y, 1, 1, "Features", 0)
+		for _, str := range node.Code.Messages {
+			if str.User != "" {
+				nlines := WinFontProps_NumRows(str.User)
+				ui.Comp_textSelectMulti(1, y, 1, nlines, str.User, OsV2{0, 0}, true, false)
+				y += nlines
+			}
 		}
 
-		ui.Div_start(0, nTrigs, 2, 1)
+		str := OsTrnString(node.ShowCodeChat, "Close Assistent", "Open Assistent")
+		if ui.Comp_buttonLight(1, y, 1, 1, str, "", true) > 0 {
+			node.ShowCodeChat = !node.ShowCodeChat
+		}
+		y++
+	}
+
+	ui.Div_SpacerRow(0, y, 2, 1)
+	y++
+
+	//Imports
+	{
+		ui.Comp_text(0, y, 1, 1, "Imports", 0)
+		n := len(node.Code.Imports)
+		ui.Div_start(1, y, 1, n+1)
 		{
-			ui.Div_colMax(1, 5)
-			ui.Comp_text(0, 0, 1, 1, "+", 1)
-			var pick_node string
-			if ui.Comp_combo(1, 0, 1, 1, &pick_node, node.app.all_triggers_str, node.app.all_triggers_str, "", true, true) {
-				node.Code.addTrigger(pick_node)
+			ui.Div_colMax(1, 3)
+			ui.Div_colMax(2, 100)
+			//ui.Div_colMax(1, 100)
+			for i, im := range node.Code.Imports {
+				if ui.Comp_buttonLight(0, i, 1, 1, "X", "Remove", true) > 0 {
+					node.Code.Imports = append(node.Code.Imports[:i], node.Code.Imports[i+1:]...) //remove
+				}
+				ui.Comp_text(1, i, 1, 1, im.Name, 0)
+				ui.Comp_text(2, i, 1, 1, im.Path, 0)
 			}
 		}
 		ui.Div_end()
-
+		y += OsMax(1, n)
 	}
-	ui.Div_end()
+
+	//Code
+	{
+		ui.Comp_text(0, y, 1, 1, "Code", 0)
+
+		nlines := WinFontProps_NumRows(node.Code.Func)
+		_, _, _, fnshd, _ := ui.Comp_editbox(1, y, 1, nlines, &node.Code.Func, Comp_editboxProp().Align(0, 0).MultiLine(true))
+		if fnshd {
+			node.Code.updateFile()
+		}
+		y += nlines
+
+		//run button
+		if ui.Comp_button(1, y, 1, 1, "Run", "", true) > 0 {
+			err := node.Code.Execute()
+			if err != nil {
+				node.SetError(err)
+			}
+		}
+		y++
+	}
+
+	ui.Div_SpacerRow(0, y, 2, 1)
+	y++
+
+	//output
+	{
+		ui.Comp_text(0, y, 1, 1, "Output", 0)
+		nlines := OsClamp(WinFontProps_NumRows(node.Code.output), 2, 5)
+		ui.Comp_textSelectMulti(1, y, 1, nlines, node.Code.output, OsV2{0, 0}, true, true)
+		y += nlines
+	}
+
 }
 
 var g_whisper_formats = []string{"verbose_json", "json", "text", "srt", "vtt"}

@@ -86,8 +86,8 @@ func InitSAGroups() SAGroups {
 		{name: "g4f", attrs: UiG4F_Attrs},
 	}})
 
-	grs.groups = append(grs.groups, &SAGroup{name: "Coding", icon: InitWinMedia_url(path + "node_code.png"), nodes: []*SAGroupNode{
-		{name: "code_go", attrs: UiCodeGo_Attrs},
+	grs.groups = append(grs.groups, &SAGroup{name: "Functions", icon: InitWinMedia_url(path + "node_code.png"), nodes: []*SAGroupNode{
+		{name: "func_go", attrs: UiCodeGo_Attrs},
 		//{name: "code_python", fn: SAExe_Code_python},
 	}})
 

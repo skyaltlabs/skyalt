@@ -56,6 +56,8 @@ type SANode struct {
 	Rows []*SANodeColRow `json:",omitempty"`
 	Subs []*SANode       `json:",omitempty"`
 
+	ShowCodeChat bool
+
 	//state         int //0=SANode_STATE_WAITING, 1=SANode_STATE_RUNNING, 2=SANode_STATE_DONE
 	errExe        error
 	progress      float64
@@ -134,7 +136,7 @@ func (node *SANode) HasNodeSubs() bool {
 }
 
 func (node *SANode) IsTypeCode() bool {
-	return strings.EqualFold(node.Exe, "code_go") || strings.EqualFold(node.Exe, "code_python")
+	return strings.EqualFold(node.Exe, "func_go") || strings.EqualFold(node.Exe, "code_python")
 }
 
 func (node *SANode) IsWithChangedAttr() bool {
@@ -177,6 +179,16 @@ func (node *SANode) ResetTriggers() {
 	}
 	if node.IsWithChangedAttr() {
 		node.Attrs["changed"] = false
+	}
+}
+
+func (node *SANode) IsBypassed() bool {
+	return node.IsTypeCode() && node.GetAttrBool("bypass", false)
+}
+
+func (node *SANode) SetBypass() {
+	if node.IsTypeCode() {
+		node.Attrs["bypass"] = !node.GetAttrBool("bypass", false)
 	}
 }
 
@@ -323,7 +335,7 @@ func (node *SANode) updateLinks(parent *SANode, app *SAApp) {
 		node.Attrs = make(map[string]interface{})
 	}
 
-	err := node.Code.updateLinks(node)
+	err := node.Code.UpdateLinks(node)
 	if err != nil {
 		fmt.Printf("updateLinks() for node '%s' failed: %v\n", node.Name, err)
 	}
@@ -660,7 +672,10 @@ func (node *SANode) renderLayout() {
 }
 
 func (node *SANode) RenameDepends(oldName string, newName string) {
-	node.Code.renameNode(oldName, newName)
+	err := node.Code.RenameNode(oldName, newName)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 // use node.GetAbsoluteRoot().RenameSubDepends()

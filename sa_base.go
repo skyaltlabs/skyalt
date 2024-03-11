@@ -263,8 +263,8 @@ func (base *SABase) Render() bool {
 		ui.Div_end()
 	}
 
-	//graph
 	if app.IDE {
+		//graph
 		ui.Div_start(2, 0, 1, 1)
 		{
 			var graphCanvas OsV4
@@ -273,9 +273,10 @@ func (base *SABase) Render() bool {
 			ui.Div_colMax(0, 100)
 			ui.Div_rowMax(0, 100)
 
-			if app.graph.showNodeList {
+			sel_node := app.root.FindSelected()
+			if app.graph.showNodeList || (sel_node != nil && sel_node.ShowCodeChat) {
 				ui.Div_col(1, 3) //min
-				ui.Div_colResize(1, "node_list", 5, false)
+				ui.Div_colResize(1, "right_panel", 7, false)
 			}
 
 			ui.Div_start(0, 0, 1, 1)
@@ -330,6 +331,10 @@ func (base *SABase) Render() bool {
 			if app.graph.showNodeList {
 				ui.Div_start(1, 0, 1, 1)
 				app.graph.drawNodeList(graphCanvas)
+				ui.Div_end()
+			} else if sel_node != nil && sel_node.ShowCodeChat {
+				ui.Div_start(1, 0, 1, 1)
+				UiCodeGo_AttrChat(sel_node)
 				ui.Div_end()
 			}
 
