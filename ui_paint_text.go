@@ -57,7 +57,7 @@ func (ui *Ui) Paint_textGrid(
 			for _, ln := range lines {
 				mx = OsMax(mx, ui.win.GetTextSize(-1, ln, prop).X)
 			}
-			my = OsMax(1, strings.Count(value, "\n")+1)
+			my = OsMax(1, len(lines))
 		} else {
 			mx = ui.win.GetTextSize(-1, value, prop).X
 			my = 1
