@@ -100,7 +100,10 @@ func (node *SANode) nodeToPixelsCoord(canvas OsV4) (OsV4, OsV4, OsV4) {
 
 	w := float32(ui.win.GetTextSize(-1, node.GetNodeLabel(), InitWinFontPropsDef(ui.win)).X) / float32(ui.win.Cell())
 	w = OsMaxFloat32(w+1, 4) //1=extra space, minimum 4
-	h := float32(1)          //+ node.NumVisibleAndCheck()
+	if node.IsTypeCode() {
+		w += 1 //chat icon
+	}
+	h := float32(1) //+ node.NumVisibleAndCheck()
 
 	if node.HasNodeSubs() {
 		//compute bound
@@ -168,6 +171,14 @@ func (node *SANode) drawHeader() bool {
 	ui.Div_col(0, 0.5)
 	ui.Div_colMax(1, 100)
 	ui.Div_col(2, 0.5)
+	if node.IsTypeCode() {
+		//chat icon
+		ui.Div_col(2, 1)
+		ui.Div_col(3, 0.5)
+
+	} else {
+		ui.Div_col(2, 0.5)
+	}
 
 	inside := false
 
@@ -184,6 +195,17 @@ func (node *SANode) drawHeader() bool {
 		//ui.Paint_tooltip(0, 0, 1, 1, "Type: "+node.Exe)
 	}
 	ui.Div_end()
+
+	//chat icon
+	if node.IsTypeCode() {
+		cd := CdPalette_B
+		if node.ShowCodeChat {
+			cd = CdPalette_P
+		}
+		if ui.Comp_buttonIcon(2, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/chat.png"), 0.2, "Open Code Chat", cd, true, false) > 0 {
+			node.ShowCodeChat = !node.ShowCodeChat
+		}
+	}
 
 	//attributes
 	/*circleCd := CdPalette_S
