@@ -958,6 +958,10 @@ func (fl *OsFileList) FindInSubs(name string, isDir bool) int {
 	return -1
 }
 
+func OsText_NumLines(str string) int {
+	return strings.Count(str, "\n") + 1
+}
+
 func OsText_JSONtoRAW(str string) (string, error) {
 	if str != "" && str[0] != '"' {
 		fmt.Printf("Error: String(%s) doesn't start with quotes\n", str)
