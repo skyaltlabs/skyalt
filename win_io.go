@@ -119,6 +119,8 @@ type WinIni struct {
 
 	Offline bool
 	MicOff  bool
+
+	OpenAI_key string
 }
 
 type WinIO struct {

@@ -19,6 +19,7 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 func (base *SABase) drawMenu(ui *Ui) {
@@ -245,11 +246,11 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 		{
 			ui.Div_colMax(0, 4) //empty space
 			ui.Div_colMax(1, 100)
-			ui.Div_colMax(2, 2)
+			ui.Div_colMax(2, 2.1)
 			ui.Div_colMax(3, 2)
 			ui.Div_colMax(4, 1)
 			ui.Comp_checkbox(1, 0, 1, 1, &ini.UseDarkTheme, false, ui.trns.USE_DARK_THEME, "", true)
-			ui.Comp_editbox_desc(ui.trns.FROM, 2, 1, 2, 0, 1, 1, &ini.UseDarkThemeStart, Comp_editboxProp().Precision(0).Enable(ini.UseDarkTheme))
+			ui.Comp_editbox_desc(ui.trns.FROM, 2, 1.1, 2, 0, 1, 1, &ini.UseDarkThemeStart, Comp_editboxProp().Precision(0).Enable(ini.UseDarkTheme))
 			ui.Comp_editbox_desc(ui.trns.TO, 2, 1, 3, 0, 1, 1, &ini.UseDarkThemeEnd, Comp_editboxProp().Precision(0).Enable(ini.UseDarkTheme))
 			ui.Comp_text(4, 0, 1, 1, ui.trns.HOUR, 0)
 		}
@@ -273,6 +274,29 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 
 		ui.Comp_switch(1, y, 1, 1, &ini.MicOff, true, ui.trns.MICROPHONE, "", true) //true = reverseValue
 		y++
+
+		y++ //space
+
+		//OpenAI key
+		{
+			key := ""
+			//encode
+			if len(ini.OpenAI_key) > 6 {
+				key = ini.OpenAI_key[:3] //first 3
+				for i := 3; i < len(ini.OpenAI_key)-3; i++ {
+					key += "*"
+				}
+				key += ini.OpenAI_key[len(ini.OpenAI_key)-3:] //last 3
+			}
+			_, _, _, fnshd, _ := ui.Comp_editbox_desc("OpenAI API key", 0, 4, 1, y, 1, 2, &key, Comp_editboxProp().Formating(false))
+			if fnshd {
+				if strings.IndexByte(key, '*') < 0 {
+					//decode
+					ini.OpenAI_key = key
+				}
+			}
+			y++
+		}
 
 		ui.Dialog_end()
 	}
