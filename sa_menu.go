@@ -478,6 +478,7 @@ func (base *SABase) drawLauncher(app *SAApp, icon_rad float64) {
 					OsFolderCreate("apps/" + base.NewAppName)
 					base.Refresh()
 					ui.Dialog_close()
+					base.NewAppName = "" //reset
 				}
 
 				ui.Dialog_end()
