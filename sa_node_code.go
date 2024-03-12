@@ -364,6 +364,8 @@ func (ls *SANodeCode) UseAnswer(answer string) error {
 		return err
 	}
 
+	ls.Code = strings.ReplaceAll(ls.Code, "package main", "")
+
 	err = ls.updateFile()
 	if err != nil {
 		return err
