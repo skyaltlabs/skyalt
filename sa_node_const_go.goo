@@ -150,13 +150,13 @@ type Sqlite struct {
 	Changed   bool   `json:"changed"`
 }
 
-type Whisper_cpp struct {
+type Whispercpp struct {
 	Node      string `json:"node"`
 	File_path string `json:"file_path"`
 	Data      []byte `json:"data"`
 }
 
-func (w *Whisper_cpp) Translate(filePath string) (string, error) {
+func (w *Whispercpp) Translate(filePath string) (string, error) {
 	w.File_path = filePath
 
 	//find
@@ -171,7 +171,7 @@ func (w *Whisper_cpp) Translate(filePath string) (string, error) {
 		return "", fmt.Errorf("Marshal() failed: %w", err)
 	}
 
-	resBody, err := _send("whisper", js)
+	resBody, err := _send("whispercpp", js)
 	return string(resBody), err
 }
 
@@ -179,12 +179,12 @@ type LlamaMessage struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
 }
-type LlamaCpp struct {
+type Llamacpp struct {
 	Node   string `json:"node"`
 	Messages []LlamaMessage `json:"messages"`
 }
 
-func (ll *LlamaCpp) GetAnswer(messages []LlamaMessage) (string, error) {
+func (ll *Llamacpp) GetAnswer(messages []LlamaMessage) (string, error) {
 	ll.Messages = messages
 
 	js, err := json.Marshal(ll)
@@ -192,7 +192,7 @@ func (ll *LlamaCpp) GetAnswer(messages []LlamaMessage) (string, error) {
 		return "", fmt.Errorf("Marshal() failed: %w", err)
 	}
 
-	resBody, err := _send("llama", js)
+	resBody, err := _send("llamacpp", js)
 	return string(resBody), err
 }
 

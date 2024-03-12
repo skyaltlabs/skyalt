@@ -67,10 +67,10 @@ type Sqlite struct {
 	Write bool
 }
 
-type Whisper_cpp struct {
+type Whispercpp struct {
 	Model string
 }
-func (w *Whisper_cpp) Translate(filePath string) (string, error) {
+func (w *Whispercpp) Translate(filePath string) (string, error) {
 	//TBD
 	return text
 }
@@ -79,10 +79,10 @@ type LlamaMessage struct {
 	Role    string	//"system", "user", "assistant"
 	Content string
 }
-type LlamaCpp struct {
+type Llamacpp struct {
 	Model string
 }
-func (ll *LlamaCpp) GetAnswer(messages []LlamaMessage) (string, error) {
+func (ll *Llamacpp) GetAnswer(messages []LlamaMessage) (string, error) {
 	//TBD
 	return answer
 }

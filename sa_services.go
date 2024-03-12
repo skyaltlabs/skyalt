@@ -294,8 +294,8 @@ func (srv *SAServices) Run(port int) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/getjob", srv.handlerGetJob)
 	mux.HandleFunc("/setresult", srv.handlerSetResult)
-	mux.HandleFunc("/whisper", srv.handlerWhisper)
-	mux.HandleFunc("/llama", srv.handlerLLama)
+	mux.HandleFunc("/whispercpp", srv.handlerWhisper)
+	mux.HandleFunc("/llamacpp", srv.handlerLLama)
 	mux.HandleFunc("/openai", srv.handlerOpenAI)
 	srv.server = &http.Server{Addr: ":" + strconv.Itoa(port), Handler: mux}
 
