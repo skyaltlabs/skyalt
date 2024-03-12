@@ -261,25 +261,25 @@ func main() {
 
 	G_SERVER_ADDR = fmt.Sprintf("http://127.0.0.1:%d/", G_PORT)
 
-	fmt.Println("Asking for job . . .")
+	//fmt.Println("Asking for job . . .")
 	job, err := _send("getjob", []byte("{}"))
 	if err != nil {
 		fmt.Println("_send() failed:", err)
 		return
 	}
 
-	fmt.Println("Running for job . . .")
+	//fmt.Println("Running for job . . .")
 	jobBack, err := _callIt(job)
 	if err != nil {
 		jobBack = []byte(err.Error()) //only string, no {}
 	}
 
-	fmt.Println("Sending job . . .")
+	//fmt.Println("Sending job . . .")
 	_, err = _send("setresult", jobBack)
 	if err != nil {
 		fmt.Println("_send() failed:", err)
 		return
 	}
 
-	fmt.Println("Done")
+	//fmt.Println("Done")
 }
