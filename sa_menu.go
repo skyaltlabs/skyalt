@@ -443,6 +443,7 @@ func (base *SABase) drawLauncher(app *SAApp, icon_rad float64) {
 					if OsFileRename(app.GetFolderPath(), SAApp_GetNewFolderPath(base.NewAppName)) == nil {
 						app.Name = base.NewAppName
 						ui.Dialog_close()
+						base.NewAppName = "" //reset
 					}
 				}
 				ui.Dialog_end()
