@@ -68,7 +68,7 @@ func InitWinFontPropsDef(win *Win) WinFontProps {
 }
 
 func WinFontProps_NumRows(str string) int {
-	return OsRoundUp(float64(OsText_NumLines(str)) * 0.7)
+	return OsRoundUp(float64(OsText_NumLines(str))*0.7 + 0.1)
 }
 
 func (a *WinFontProps) Cmp(b *WinFontProps) bool {
