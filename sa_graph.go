@@ -293,7 +293,7 @@ func (gr *SAGraph) drawConnections() {
 		}
 
 		//attributtes connection
-		for _, in := range out.Code.depends {
+		for _, in := range out.Code.func_depends {
 			if in == out {
 				continue
 			}

@@ -57,7 +57,8 @@ type SANodeCode struct {
 	Imports []SANodeCodeImport
 	Func    string
 
-	depends []*SANode
+	func_depends []*SANode
+	msgs_depends []*SANode
 
 	output string //terminal
 
@@ -79,16 +80,56 @@ func (ls *SANodeCode) addTrigger(name string) {
 	ls.Triggers = append(ls.Triggers, name)
 }
 
-func (ls *SANodeCode) addDepend(node *SANode) {
+func (ls *SANodeCode) findNodeName(nm string) (*SANode, error) {
+	node := ls.node.FindNode(nm)
+	if node == nil {
+		return nil, fmt.Errorf("node '%s' not found", nm)
+	}
+	if node == ls.node {
+		return nil, fmt.Errorf("can't connect to it self")
+	}
+	if node.IsTypeCode() {
+		return nil, fmt.Errorf("can't connect to node(%s) which is type code", node.Name)
+	}
+	return node, nil
+}
+
+func (ls *SANodeCode) addFuncDepend(nm string) error {
+	node, err := ls.findNodeName(nm)
+	if err != nil {
+		return err
+	}
+
 	//find
-	for _, dp := range ls.depends {
+	for _, dp := range ls.func_depends {
 		if dp.Name == node.Name {
-			return //already in
+			return nil //already added
 		}
 	}
 
 	//add
-	ls.depends = append(ls.depends, node)
+	ls.func_depends = append(ls.func_depends, node)
+
+	return nil
+}
+
+func (ls *SANodeCode) addMsgDepend(nm string) error {
+	node, err := ls.findNodeName(nm)
+	if err != nil {
+		return err
+	}
+
+	//find
+	for _, dp := range ls.msgs_depends {
+		if dp.Name == node.Name {
+			return nil //already added
+		}
+	}
+
+	//add
+	ls.msgs_depends = append(ls.msgs_depends, node)
+
+	return nil
 }
 
 func (ls *SANodeCode) UpdateLinks(node *SANode) error {
@@ -109,7 +150,7 @@ func (ls *SANodeCode) UpdateLinks(node *SANode) error {
 func (ls *SANodeCode) buildSqlInfos() (string, error) {
 	str := ""
 
-	for _, prmNode := range ls.depends {
+	for _, prmNode := range ls.msgs_depends {
 		if prmNode.Exe == "sqlite" {
 			str += fmt.Sprintf("'%s' is SQLite database which includes these tables(columns): ", prmNode.Name)
 
@@ -145,7 +186,7 @@ func (ls *SANodeCode) buildSqlInfos() (string, error) {
 
 func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 
-	err := ls.updateDepends()
+	err := ls.updateMsgsDepends()
 	if err != nil {
 		return "", err
 	}
@@ -154,7 +195,7 @@ func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 	str += g_code_const_gpt + "\n"
 
 	params := ""
-	for _, prmNode := range ls.depends {
+	for _, prmNode := range ls.msgs_depends {
 
 		StructName := strings.ToUpper(prmNode.Exe[0:1]) + prmNode.Exe[1:] //1st letter must be upper
 		params += fmt.Sprintf("%s *%s, ", prmNode.Name, StructName)
@@ -186,7 +227,7 @@ func (ls *SANodeCode) GetAnswer() error {
 
 	ls.CheckLastChatEmpty()
 	if ls.Messages[0].User == "" {
-		return errors.New("No message")
+		return errors.New("no message")
 	}
 
 	messages := []SAServiceG4FMsg{
@@ -254,7 +295,7 @@ func (ls *SANodeCode) Execute() error {
 	//input
 	{
 		vars := make(map[string]interface{})
-		for _, prmNode := range ls.depends {
+		for _, prmNode := range ls.func_depends {
 			vars[prmNode.Name] = prmNode.Attrs
 
 			attrs := prmNode.Attrs
@@ -436,7 +477,7 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 		ls.Func = fmt.Sprintf("func %s() error {\n\treturn nil\n}", ls.node.Name)
 	}
 
-	err := ls.updateDepends()
+	err := ls.updateFuncDepends()
 	if err != nil {
 		return nil, err
 	}
@@ -463,7 +504,7 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 
 	//struct
 	str += "type MainStruct struct {\n"
-	for _, prmNode := range ls.depends {
+	for _, prmNode := range ls.func_depends {
 		VvarName := strings.ToUpper(prmNode.Name[0:1]) + prmNode.Name[1:] //1st letter must be upper
 		StructName := strings.ToUpper(prmNode.Exe[0:1]) + prmNode.Exe[1:] //1st letter must be upper
 		str += fmt.Sprintf("\t%s %s `json:\"%s\"`\n", VvarName, StructName, prmNode.Name)
@@ -482,7 +523,7 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 		}
 		`
 	params := ""
-	for _, prmNode := range ls.depends {
+	for _, prmNode := range ls.func_depends {
 		VvarName := strings.ToUpper(prmNode.Name[0:1]) + prmNode.Name[1:] //1st letter must be upper
 		params += fmt.Sprintf("&st.%s, ", VvarName)
 
@@ -507,9 +548,9 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 	return []byte(str), nil
 }
 
-func (ls *SANodeCode) updateDepends() error {
+func (ls *SANodeCode) updateFuncDepends() error {
 	//reset
-	ls.depends = nil
+	ls.func_depends = nil
 
 	//get AST
 	fset := token.NewFileSet()
@@ -524,22 +565,42 @@ func (ls *SANodeCode) updateDepends() error {
 		if fn, ok := decl.(*ast.FuncDecl); ok {
 			if fn.Name.Name == ls.node.Name {
 				for _, prm := range fn.Type.Params.List {
-					nm := prm.Names[0].Name
-
-					node := ls.node.FindNode(nm)
-					if node != nil {
-						if node == ls.node {
-							return fmt.Errorf("can't connect to it self")
-						}
-						if node.IsTypeCode() {
-							return fmt.Errorf("can't connect to node(%s) which is type code", node.Name)
-						}
-						ls.addDepend(node)
-					} else {
-						return fmt.Errorf("node '%s' not found", nm)
+					err := ls.addFuncDepend(prm.Names[0].Name)
+					if err != nil {
+						return err
 					}
 				}
 			}
+		}
+	}
+
+	return nil
+}
+
+func (ls *SANodeCode) updateMsgsDepends() error {
+
+	//reset
+	ls.msgs_depends = nil
+
+	for _, msg := range ls.Messages {
+		ln := msg.User
+		for {
+			d1 := strings.IndexByte(ln, '\'')
+			if d1 >= 0 {
+				ln = ln[d1+1:]
+			} else {
+				break
+			}
+			d2 := strings.IndexByte(ln, '\'')
+			if d2 >= 0 {
+				nm := ln[:d2]
+
+				err := ls.addMsgDepend(nm)
+				if err != nil {
+					return err
+				}
+			}
+			ln = ln[d2+1:]
 		}
 	}
 
