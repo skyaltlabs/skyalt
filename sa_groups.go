@@ -81,9 +81,9 @@ func InitSAGroups() SAGroups {
 	}})
 
 	grs.groups = append(grs.groups, &SAGroup{name: "Neural networks", icon: InitWinMedia_url(path + "node_nn.png"), nodes: []*SAGroupNode{
-		{name: "whisper_cpp", attrs: UiWhisperCpp_Attrs},
-		{name: "llamaCpp", attrs: UiLLamaCpp_Attrs},
-		{name: "g4f", attrs: UiG4F_Attrs},
+		{name: "whispercpp", attrs: UiWhisperCpp_Attrs},
+		{name: "llamacpp", attrs: UiLLamaCpp_Attrs},
+		{name: "openai", attrs: UiOpenAI_Attrs},
 	}})
 
 	grs.groups = append(grs.groups, &SAGroup{name: "Functions", icon: InitWinMedia_url(path + "node_code.png"), nodes: []*SAGroupNode{

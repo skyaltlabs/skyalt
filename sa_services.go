@@ -27,6 +27,7 @@ import (
 )
 
 type SAServices struct {
+	ui     *Ui
 	port   int
 	server *http.Server
 
@@ -34,7 +35,7 @@ type SAServices struct {
 
 	whisper_cpp *SAServiceWhisperCpp
 	llamaCpp    *SAServiceLLamaCpp
-	g4f         *SAServiceG4F
+	openai      *SAServiceOpenAI
 
 	job_str       []byte
 	job_app       *SAApp
@@ -42,8 +43,8 @@ type SAServices struct {
 	job_result_wg sync.WaitGroup
 }
 
-func NewSAServices() *SAServices {
-	srv := &SAServices{}
+func NewSAServices(ui *Ui) *SAServices {
+	srv := &SAServices{ui: ui}
 	srv.port = 8080
 
 	srv.Run(srv.port)
@@ -57,8 +58,8 @@ func (srv *SAServices) Destroy() {
 	if srv.llamaCpp != nil {
 		srv.llamaCpp.Destroy()
 	}
-	if srv.g4f != nil {
-		srv.g4f.Destroy()
+	if srv.openai != nil {
+		srv.openai.Destroy()
 	}
 
 	srv.server.Shutdown(context.Background())
@@ -77,27 +78,27 @@ func (srv *SAServices) GetResult() []byte {
 
 func (srv *SAServices) GetWhisper() *SAServiceWhisperCpp {
 	if srv.whisper_cpp == nil {
-		srv.whisper_cpp = NewSAServiceWhisperCpp("http://127.0.0.1", "8090")
+		srv.whisper_cpp = NewSAServiceWhisperCpp(srv, "http://127.0.0.1", "8090")
 	}
 	return srv.whisper_cpp
 }
 
 func (srv *SAServices) GetLLama() *SAServiceLLamaCpp {
 	if srv.llamaCpp == nil {
-		srv.llamaCpp = NewSAServiceLLamaCpp("http://127.0.0.1", "8091")
+		srv.llamaCpp = NewSAServiceLLamaCpp(srv, "http://127.0.0.1", "8091")
 	}
 	return srv.llamaCpp
 }
 
-func (srv *SAServices) GetG4F() (*SAServiceG4F, error) {
+func (srv *SAServices) GetOpenAI() (*SAServiceOpenAI, error) {
 	if !srv.online {
 		return nil, fmt.Errorf("internet is disabled(Menu:Settings:Internet Connection)")
 	}
 
-	if srv.g4f == nil {
-		srv.g4f = NewSAServiceG4F("http://127.0.0.1", "8093")
+	if srv.openai == nil {
+		srv.openai = NewSAServiceOpenAI(srv)
 	}
-	return srv.g4f, nil
+	return srv.openai, nil
 }
 
 func (srv *SAServices) Render() {
@@ -194,12 +195,12 @@ func (srv *SAServices) handlerWhisper(w http.ResponseWriter, r *http.Request) {
 	w.Write(outJs)
 }
 
-func (srv *SAServices) _getOpenAImessages(body []byte) ([]SAServiceG4FMsg, *SANode, error) {
+func (srv *SAServices) _extractMessages(body []byte) ([]SAServiceMsg, *SANode, error) {
 
 	//get base struct
 	type St struct {
-		Node     string            `json:"node"`
-		Messages []SAServiceG4FMsg `json:"messages"`
+		Node     string         `json:"node"`
+		Messages []SAServiceMsg `json:"messages"`
 	}
 	var st St
 	err := json.Unmarshal(body, &st)
@@ -227,7 +228,7 @@ func (srv *SAServices) handlerLLama(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//extract
-	msgs, node, err := srv._getOpenAImessages(body)
+	msgs, node, err := srv._extractMessages(body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -259,7 +260,7 @@ func (srv *SAServices) handlerLLama(w http.ResponseWriter, r *http.Request) {
 	w.Write(answer)
 }
 
-func (srv *SAServices) handlerG4F(w http.ResponseWriter, r *http.Request) {
+func (srv *SAServices) handlerOpenAI(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
@@ -267,34 +268,35 @@ func (srv *SAServices) handlerG4F(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//extract
-	msgs, node, err := srv._getOpenAImessages(body)
+	msgs, node, err := srv._extractMessages(body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	//complete
-	g4f, err := srv.GetG4F()
+	g4f, err := srv.GetOpenAI()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	answer, err := g4f.Complete(&SAServiceG4FProps{Model: node.GetAttrString("model", "gpt-4-turbo"), Messages: msgs})
+	answer, err := g4f.Complete(&SAServiceOpenAIProps{Model: node.GetAttrString("model", "gpt-4-turbo-preview"), Messages: msgs}) //more properties ..........
 	if err != nil {
-		http.Error(w, "G4F() failed: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "OpenAI() failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Write(answer)
 }
+
 func (srv *SAServices) Run(port int) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/getjob", srv.handlerGetJob)
 	mux.HandleFunc("/setresult", srv.handlerSetResult)
 	mux.HandleFunc("/whisper", srv.handlerWhisper)
 	mux.HandleFunc("/llama", srv.handlerLLama)
-	mux.HandleFunc("/g4f", srv.handlerG4F)
+	mux.HandleFunc("/openai", srv.handlerOpenAI)
 	srv.server = &http.Server{Addr: ":" + strconv.Itoa(port), Handler: mux}
 
 	go func() {
