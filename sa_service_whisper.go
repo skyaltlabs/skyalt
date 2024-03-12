@@ -95,8 +95,9 @@ func (p *SAServiceWhisperCppProps) Write(w *multipart.Writer) {
 }
 
 type SAServiceWhisperCpp struct {
-	cmd  *exec.Cmd
-	addr string //http://127.0.0.1:8080/
+	services *SAServices
+	cmd      *exec.Cmd
+	addr     string //http://127.0.0.1:8080/
 
 	cache      map[string][]byte //results
 	cache_lock sync.Mutex        //for cache
@@ -108,8 +109,8 @@ func SAServiceWhisperCpp_cachePath() string {
 	return "services/whisper.cpp.json"
 }
 
-func NewSAServiceWhisperCpp(addr string, port string) *SAServiceWhisperCpp {
-	wh := &SAServiceWhisperCpp{}
+func NewSAServiceWhisperCpp(services *SAServices, addr string, port string) *SAServiceWhisperCpp {
+	wh := &SAServiceWhisperCpp{services: services}
 
 	wh.addr = addr + ":" + port + "/"
 

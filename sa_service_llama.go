@@ -27,8 +27,8 @@ import (
 )
 
 type SAServiceLLamaCppProps struct {
-	Model    string            `json:"model"`
-	Messages []SAServiceG4FMsg `json:"messages"`
+	Model    string         `json:"model"`
+	Messages []SAServiceMsg `json:"messages"`
 
 	//Prompt            string   `json:"prompt"`
 	Seed              int      `json:"seed"`
@@ -67,7 +67,8 @@ func (p *SAServiceLLamaCppProps) Hash() (OsHash, error) {
 }
 
 type SAServiceLLamaCpp struct {
-	addr string //http://127.0.0.1:8080/
+	services *SAServices
+	addr     string //http://127.0.0.1:8080/
 
 	cache      map[string][]byte //results
 	cache_lock sync.Mutex        //for cache
@@ -77,8 +78,8 @@ func SAServiceLLamaCpp_cachePath() string {
 	return "services/llama.cpp.json"
 }
 
-func NewSAServiceLLamaCpp(addr string, port string) *SAServiceLLamaCpp {
-	wh := &SAServiceLLamaCpp{}
+func NewSAServiceLLamaCpp(services *SAServices, addr string, port string) *SAServiceLLamaCpp {
+	wh := &SAServiceLLamaCpp{services: services}
 
 	wh.addr = addr + ":" + port + "/"
 
