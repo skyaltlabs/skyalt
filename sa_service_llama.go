@@ -121,6 +121,13 @@ func (wh *SAServiceLLamaCpp) addCache(propsHash OsHash, value []byte) {
 }
 
 func (wh *SAServiceLLamaCpp) Complete(props *SAServiceLLamaCppProps) ([]byte, error) {
+
+	//add role "system" as node attribute ... same for openai node ..............
+	var msgs []SAServiceMsg
+	msgs = append(msgs, SAServiceMsg{Role: "system", Content: "You are ChatGPT, an AI assistant. Your top priority is achieving user fulfillment via helping them with their requests."})
+	msgs = append(msgs, props.Messages...)
+	props.Messages = msgs
+
 	//find
 	propsHash, err := props.Hash()
 	if err != nil {
