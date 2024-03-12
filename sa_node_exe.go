@@ -820,7 +820,7 @@ func UiCodeGo_AttrChat(node *SANode) {
 			if i+1 < len(node.Code.Messages) {
 				nlines := WinFontProps_NumRows(str.User)
 				ui.Comp_text(0, y, 1, 1, "User", 0)
-				ui.Comp_textSelectMulti(1, y, nlines, 2, str.User, OsV2{0, 0}, true, false)
+				ui.Comp_textSelectMulti(1, y, 2, nlines, str.User, OsV2{0, 0}, true, false)
 				y += nlines
 
 				nlines = WinFontProps_NumRows(str.Assistent)
