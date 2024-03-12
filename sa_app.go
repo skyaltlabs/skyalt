@@ -282,12 +282,16 @@ func (app *SAApp) renderIDE() {
 			}
 			ui.Div_end()
 
+			click := false
 			if item != nil {
-				if ui.Comp_buttonLight(i, 0, 1, 1, fmt.Sprintf("%d", i), "", true) > 0 {
-					ui.Dialog_open(dnm, 1)
-				}
+				click = ui.Comp_buttonLight(i, 0, 1, 1, fmt.Sprintf("%d", i), "", true) > 0
 			} else {
-				if ui.Comp_buttonTextFade(i, 0, 1, 1, fmt.Sprintf("%d", i), "", "", true, false, true) > 0 {
+				click = ui.Comp_buttonTextFade(i, 0, 1, 1, fmt.Sprintf("%d", i), "", "", true, false, true) > 0
+			}
+			if click {
+				if ui.win.io.keys.ctrl {
+					node.Cols[i].Max = 100
+				} else {
 					ui.Dialog_open(dnm, 1)
 				}
 			}
@@ -326,12 +330,16 @@ func (app *SAApp) renderIDE() {
 			}
 			ui.Div_end()
 
+			click := false
 			if item != nil {
-				if ui.Comp_buttonLight(0, i, 1, 1, fmt.Sprintf("%d", i), "", true) > 0 {
-					ui.Dialog_open(dnm, 1)
-				}
+				click = ui.Comp_buttonLight(0, i, 1, 1, fmt.Sprintf("%d", i), "", true) > 0
 			} else {
-				if ui.Comp_buttonTextFade(0, i, 1, 1, fmt.Sprintf("%d", i), "", "", true, false, true) > 0 {
+				click = ui.Comp_buttonTextFade(0, i, 1, 1, fmt.Sprintf("%d", i), "", "", true, false, true) > 0
+			}
+			if click {
+				if ui.win.io.keys.ctrl {
+					node.Rows[i].Max = 100
+				} else {
 					ui.Dialog_open(dnm, 1)
 				}
 			}
