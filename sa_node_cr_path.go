@@ -105,6 +105,20 @@ func SANodeColRow_GetMaxPos(items *[]*SANodeColRow) int {
 	return mx
 }
 
+func SANodeColRow_GetOrCreate(items *[]*SANodeColRow, pos int) *SANodeColRow {
+
+	item := SANodeColRow_Find(items, pos)
+	if item == nil {
+		//add
+		item = &SANodeColRow{Pos: pos, Min: 1, Max: 1, Resize: 1}
+		SANodeColRow_Insert(items, item, pos, false)
+
+		SANodeColRow_Check(items)
+	}
+
+	return item
+}
+
 type SANodePath struct {
 	names []string
 }
