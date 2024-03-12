@@ -54,8 +54,7 @@ type SANodeCode struct {
 	Triggers []string //nodes
 	Messages []SANodeCodeChat
 
-	Imports []SANodeCodeImport
-	Func    string
+	Code string
 
 	func_depends []*SANode
 	msgs_depends []*SANode
@@ -359,17 +358,8 @@ func (ls *SANodeCode) Execute() error {
 
 func (ls *SANodeCode) UseAnswer(answer string) error {
 
-	answerCode, err := ls.extractCode(answer)
-	if err != nil {
-		return err
-	}
-
-	ls.Imports, err = ls.extractImports(answerCode)
-	if err != nil {
-		return err
-	}
-
-	ls.Func, err = ls.extractFunc(answerCode)
+	var err error
+	ls.Code, err = ls.extractCode(answer)
 	if err != nil {
 		return err
 	}
@@ -473,11 +463,21 @@ func (ls *SANodeCode) updateFile() error {
 
 func (ls *SANodeCode) buildCode() ([]byte, error) {
 
-	if ls.Func == "" {
-		ls.Func = fmt.Sprintf("func %s() error {\n\treturn nil\n}", ls.node.Name)
+	imports, err := ls.extractImports(ls.Code)
+	if err != nil {
+		return nil, err
 	}
 
-	err := ls.updateFuncDepends()
+	fn, err := ls.extractFunc(ls.Code)
+	if err != nil {
+		return nil, err
+	}
+
+	if fn == "" {
+		fn = fmt.Sprintf("func %s() error {\n\treturn nil\n}", ls.node.Name)
+	}
+
+	err = ls.updateFuncDepends()
 	if err != nil {
 		return nil, err
 	}
@@ -488,7 +488,7 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 	for _, imp := range g_str_imports {
 		str += fmt.Sprintf("import %s\n", imp)
 	}
-	for _, imp := range ls.Imports {
+	for _, imp := range imports {
 		found := false
 		for _, pth := range g_str_imports {
 			if imp.Path == pth {
@@ -512,7 +512,7 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 	str += "}\n\n"
 
 	//main func(with body)
-	str += ls.Func + "\n\n"
+	str += fn + "\n\n"
 
 	//_callIt()
 	str += `func _callIt(body []byte) ([]byte, error) {
@@ -554,7 +554,7 @@ func (ls *SANodeCode) updateFuncDepends() error {
 
 	//get AST
 	fset := token.NewFileSet()
-	node, err := parser.ParseFile(fset, "test.go", "package main\n\n"+ls.Func, parser.ParseComments)
+	node, err := parser.ParseFile(fset, "test.go", "package main\n\n"+ls.Code, parser.ParseComments)
 	if err != nil {
 		return fmt.Errorf("ParseFile() failed: %w", err)
 	}
@@ -657,7 +657,7 @@ func (ls *SANodeCode) RenameNode(old_name string, new_name string) error {
 	}
 
 	//func
-	ls.Func = ReplaceWord(ls.Func, old_name, new_name)
+	ls.Code = ReplaceWord(ls.Code, old_name, new_name)
 
 	//refresh
 	err := ls.UpdateLinks(ls.node)

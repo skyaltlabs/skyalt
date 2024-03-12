@@ -941,7 +941,7 @@ func UiCodeGo_Attrs(node *SANode) {
 
 	// Open chat
 	{
-		str := OsTrnString(node.ShowCodeChat, "Close Assistent", "Open Assistent")
+		str := OsTrnString(node.ShowCodeChat, "Close Code chat", "Open Code chat")
 		if ui.Comp_buttonLight(1, y, 1, 1, str, "", true) > 0 {
 			node.ShowCodeChat = !node.ShowCodeChat
 		}
@@ -949,7 +949,7 @@ func UiCodeGo_Attrs(node *SANode) {
 	}
 
 	//Imports
-	{
+	/*{
 		ui.Comp_text(0, y, 1, 1, "Imports", 0)
 		n := len(node.Code.Imports)
 		ui.Div_start(1, y, 1, n+1)
@@ -967,14 +967,14 @@ func UiCodeGo_Attrs(node *SANode) {
 		}
 		ui.Div_end()
 		y += OsMax(1, n)
-	}
+	}*/
 
 	//Code
 	{
 		ui.Comp_text(0, y, 1, 1, "Code", 0)
 
-		nlines := WinFontProps_NumRows(node.Code.Func)
-		_, _, _, fnshd, _ := ui.Comp_editbox(1, y, 1, nlines, &node.Code.Func, Comp_editboxProp().Align(0, 0).MultiLine(true))
+		nlines := WinFontProps_NumRows(node.Code.Code)
+		_, _, _, fnshd, _ := ui.Comp_editbox(1, y, 1, nlines, &node.Code.Code, Comp_editboxProp().Align(0, 0).MultiLine(true))
 		if fnshd {
 			node.Code.updateFile()
 		}
