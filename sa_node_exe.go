@@ -774,19 +774,42 @@ func UiSQLite_render(node *SANode) {
 func UiCodeGo_AttrChat(node *SANode) {
 	ui := node.app.base.ui
 
-	ui.Div_colMax(0, 4)
-	ui.Div_colMax(1, 100)
+	ui.Div_colMax(0, 100)
 	ui.Div_rowMax(1, 100)
 
-	if ui.Comp_buttonLight(0, 0, 1, 1, "Close", "", true) > 0 {
-		node.ShowCodeChat = false
-	}
-	ui.Comp_text(1, 0, 1, 1, "Code Chat", 1)
-
-	ui.Div_start(0, 1, 2, 1)
+	//header
+	ui.Div_start(0, 0, 1, 1)
 	{
+		ui.Div_colMax(1, 100)
 
-		ui.Div_colMax(0, 2)
+		if ui.Comp_buttonLight(0, 0, 1, 1, "X", "", true) > 0 {
+			node.ShowCodeChat = false
+		}
+		ui.Comp_text(1, 0, 1, 1, "Code Chat", 1)
+
+		dnm := "chat_" + node.Name
+		if ui.Comp_buttonIcon(2, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/context.png"), 0.3, "", CdPalette_B, true, false) > 0 {
+			ui.Dialog_open(dnm, 1)
+		}
+		if ui.Dialog_start(dnm) {
+			ui.Div_colMax(0, 5)
+			y := 0
+
+			if ui.Comp_buttonMenu(0, y, 1, 1, "Clear all", "", true, false) > 0 {
+				node.Code.Messages = nil
+				node.Code.CheckLastChatEmpty()
+				ui.Dialog_close()
+			}
+			y++
+
+			ui.Dialog_end()
+		}
+	}
+	ui.Div_end()
+
+	ui.Div_start(0, 1, 1, 1)
+	{
+		ui.Div_colMax(0, 1.5)
 		ui.Div_colMax(1, 100)
 		ui.Div_colMax(2, 100)
 
@@ -801,19 +824,30 @@ func UiCodeGo_AttrChat(node *SANode) {
 				y += nlines
 
 				nlines = WinFontProps_NumRows(str.Assistent)
-				ui.Comp_text(0, y, 1, 1, "Assistent", 0)
-				ui.Comp_textSelectMulti(1, y, 2, nlines, str.Assistent, OsV2{0, 0}, true, false)
-				y += nlines
+				ui.Div_start(0, y, 3, nlines+1)
+				{
+					ui.Div_colMax(0, 1.5)
+					ui.Div_colMax(1, 100)
+					ui.Div_colMax(2, 100)
 
-				if ui.Comp_buttonLight(2, y, 1, 1, "Use this code", "", true) > 0 {
-					err := node.Code.UseAnswer(str.Assistent)
-					if err != nil {
-						node.SetError(err)
+					pl := ui.win.io.GetPalette()
+					ui.Paint_rect(0, 0, 1, 1, 0, pl.GetGrey(0.85), 0)
+
+					ui.Comp_text(0, 0, 1, 1, "Bot", 0)
+					ui.Comp_textSelectMulti(1, 0, 2, nlines, str.Assistent, OsV2{0, 0}, true, false)
+
+					if ui.Comp_buttonLight(2, nlines, 1, 1, "Use this code", "", true) > 0 {
+						err := node.Code.UseAnswer(str.Assistent)
+						if err != nil {
+							node.SetError(err)
+						}
 					}
 				}
-				y++
+				ui.Div_end()
+				y += nlines + 1
 
-				y++ //space
+				//ui.Div_SpacerRow(0, y, 3, 1)
+				y += 2 //space
 			} else {
 				//last one is only user editbox
 
@@ -833,7 +867,6 @@ func UiCodeGo_AttrChat(node *SANode) {
 		}
 
 		//delete last one ...
-		//clear all ...
 	}
 	ui.Div_end()
 }
@@ -886,10 +919,10 @@ func UiCodeGo_Attrs(node *SANode) {
 	y++
 
 	//Features
-	{
+	/*{
 		ui.Comp_text(0, y, 1, 1, "Features", 0)
-		for _, str := range node.Code.Messages {
-			if str.User != "" {
+		for i, str := range node.Code.Messages {
+			if str.User != "" && i+1 < len(node.Code.Messages) { //must exist, not last one(because it's without answer yet)
 				nlines := WinFontProps_NumRows(str.User)
 				ui.Comp_textSelectMulti(1, y, 1, nlines, str.User, OsV2{0, 0}, true, false)
 				y += nlines
@@ -904,7 +937,16 @@ func UiCodeGo_Attrs(node *SANode) {
 	}
 
 	ui.Div_SpacerRow(0, y, 2, 1)
-	y++
+	y++*/
+
+	// Open chat
+	{
+		str := OsTrnString(node.ShowCodeChat, "Close Assistent", "Open Assistent")
+		if ui.Comp_buttonLight(1, y, 1, 1, str, "", true) > 0 {
+			node.ShowCodeChat = !node.ShowCodeChat
+		}
+		y++
+	}
 
 	//Imports
 	{
