@@ -47,7 +47,7 @@ func NewSABase(ui *Ui) (*SABase, error) {
 
 	base.node_groups = InitSAGroups()
 
-	base.services = NewSAServices()
+	base.services = NewSAServices(ui)
 
 	//open
 	{
