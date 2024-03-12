@@ -290,7 +290,7 @@ func (app *SAApp) renderIDE() {
 			}
 			if click {
 				if ui.win.io.keys.ctrl {
-					node.Cols[i].Max = 100
+					SANodeColRow_GetOrCreate(&node.Cols, i).Max = 100
 				} else {
 					ui.Dialog_open(dnm, 1)
 				}
@@ -338,7 +338,7 @@ func (app *SAApp) renderIDE() {
 			}
 			if click {
 				if ui.win.io.keys.ctrl {
-					node.Rows[i].Max = 100
+					SANodeColRow_GetOrCreate(&node.Rows, i).Max = 100
 				} else {
 					ui.Dialog_open(dnm, 1)
 				}
