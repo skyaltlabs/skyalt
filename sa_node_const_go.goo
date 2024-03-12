@@ -196,16 +196,16 @@ func (ll *LlamaCpp) GetAnswer(messages []LlamaMessage) (string, error) {
 	return string(resBody), err
 }
 
-type G4fMessage struct {
+type OpenaiMessage struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
 }
-type G4f struct {
+type Openai struct {
 	Node     string       `json:"node"`
-	Messages []G4fMessage `json:"messages"`
+	Messages []OpenaiMessage `json:"messages"`
 }
 
-func (gf *G4f) GetAnswer(messages []G4fMessage) (string, error) {
+func (gf *Openai) GetAnswer(messages []OpenaiMessage) (string, error) {
 	gf.Messages = messages
 
 	js, err := json.Marshal(gf)
@@ -213,7 +213,7 @@ func (gf *G4f) GetAnswer(messages []G4fMessage) (string, error) {
 		return "", fmt.Errorf("Marshal() failed: %w", err)
 	}
 
-	resBody, err := _send("g4f", js)
+	resBody, err := _send("openai", js)
 	return string(resBody), err
 }
 

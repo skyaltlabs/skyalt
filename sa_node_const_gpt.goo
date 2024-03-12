@@ -87,14 +87,14 @@ func (ll *LlamaCpp) GetAnswer(messages []LlamaMessage) (string, error) {
 	return answer
 }
 
-type G4fMessage struct {
+type OpenaiMessage struct {
 	Role    string	//"system", "user", "assistant"
 	Content string
 }
-type G4f struct {
+type Openai struct {
 	Model string
 }
-func (g4f *G4f) GetAnswer(messages []G4fMessage) (string, error) {
+func (oai *Openai) GetAnswer(messages []OpenaiMessage) (string, error) {
 	//TBD
 	return answer
 }
