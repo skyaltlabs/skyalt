@@ -19,7 +19,7 @@ class MyHandler(BaseHTTPRequestHandler):
             model = "gpt-4-turbo"
 
         answer = ""
-        if model != "" and len(messages) > 0:
+        if model != "" and hasattr(messages, "__len__") and len(messages) > 0:
             client = Client()
             stream = client.chat.completions.create(
                 model=model,
