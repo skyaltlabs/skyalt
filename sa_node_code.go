@@ -229,7 +229,7 @@ func (ls *SANodeCode) GetAnswer() error {
 		return errors.New("no message")
 	}
 
-	messages := []SAServiceG4FMsg{
+	messages := []SAServiceMsg{
 		{Role: "system", Content: "You are ChatGPT, an AI assistant. Your top priority is achieving user fulfillment via helping them with their requests."},
 	}
 
@@ -244,20 +244,20 @@ func (ls *SANodeCode) GetAnswer() error {
 				return err
 			}
 		}
-		messages = append(messages, SAServiceG4FMsg{Role: "user", Content: user})
+		messages = append(messages, SAServiceMsg{Role: "user", Content: user})
 
 		//assistant
 		if msg.Assistent != "" { //avoid empty(last one) assistents
-			messages = append(messages, SAServiceG4FMsg{Role: "assistant", Content: msg.Assistent})
+			messages = append(messages, SAServiceMsg{Role: "assistant", Content: msg.Assistent})
 		}
 	}
 
-	g4f, err := ls.node.app.base.services.GetG4F()
+	oai, err := ls.node.app.base.services.GetOpenAI()
 	if err != nil {
 		return err
 	}
 
-	answer, err := g4f.Complete(&SAServiceG4FProps{Model: "gpt-4-turbo", Messages: messages})
+	answer, err := oai.Complete(&SAServiceOpenAIProps{Model: "gpt-4-turbo-preview", Messages: messages})
 	if err != nil {
 		//ls.Command = oldCommand
 		return fmt.Errorf("Complete() failed: %w", err)
@@ -468,13 +468,13 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 		return nil, err
 	}
 
+	if ls.Code == "" {
+		ls.Code = fmt.Sprintf("func %s() error {\n\treturn nil\n}", ls.node.Name)
+	}
+
 	fn, err := ls.extractFunc(ls.Code)
 	if err != nil {
 		return nil, err
-	}
-
-	if fn == "" {
-		fn = fmt.Sprintf("func %s() error {\n\treturn nil\n}", ls.node.Name)
 	}
 
 	err = ls.updateFuncDepends()

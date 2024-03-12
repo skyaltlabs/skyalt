@@ -1110,14 +1110,15 @@ func UiLLamaCpp_Attrs(node *SANode) {
 	//downloader ...
 }
 
-var g_g4f_modelList = []string{"gpt-3.5-turbo", "gpt-4", "gpt-4-turbo"}
+var g_oia_modelList = []string{"gpt-3.5-turbo", "gpt-4", "gpt-4-turbo-preview"}
 
-func UiG4F_Attrs(node *SANode) {
+func UiOpenAI_Attrs(node *SANode) {
 	ui := node.app.base.ui
 	ui.Div_colMax(0, 3)
 	ui.Div_colMax(1, 100)
 
 	grid := InitOsV4(0, 0, 1, 1)
 
-	node.ShowAttrStringCombo(&grid, "model", g_g4f_modelList[0], g_g4f_modelList, g_g4f_modelList)
+	node.ShowAttrStringCombo(&grid, "model", g_oia_modelList[0], g_oia_modelList, g_oia_modelList)
+	//more ...............
 }
