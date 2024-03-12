@@ -202,7 +202,7 @@ func (node *SANode) drawHeader() bool {
 		if node.ShowCodeChat {
 			cd = CdPalette_P
 		}
-		if ui.Comp_buttonIcon(2, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/chat.png"), 0.2, "Open Code Chat", cd, true, false) > 0 {
+		if ui.Comp_buttonIcon(2, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/chat.png"), 0.2, "Code Chat", cd, true, false) > 0 {
 			node.ShowCodeChat = !node.ShowCodeChat
 		}
 	}
