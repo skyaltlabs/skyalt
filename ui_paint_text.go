@@ -38,10 +38,12 @@ func (ui *Ui) Paint_textGrid(
 		lv.call.touch_enabled = false
 	}
 
-	if !multi_line {
+	if lv.call.canvas.Size.Y == ui.win.Cell() {
+		//single-line
 		lv.call.data.scrollH.narrow = true
 		lv.call.data.scrollV.show = false
 	} else {
+		//multi-line
 		lv.call.data.scrollH.narrow = false
 		lv.call.data.scrollV.show = true
 	}
