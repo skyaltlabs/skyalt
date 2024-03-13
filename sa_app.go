@@ -229,11 +229,18 @@ func (app *SAApp) renderIDE() {
 
 	node := app.root
 
-	//size
+	//app
+	var appID float64
 	appDiv := ui.Div_start(1, 1, 1, 1)
-	gridMax := appDiv.GetGridMax(OsV2{1, 1}) //app size
+	{
+		appID = ui.DivInfo_get(SA_DIV_GET_uid, 0)
+
+		app.RenderApp(true)
+	}
 	ui.Div_end()
 
+	//size
+	gridMax := appDiv.GetGridMax(OsV2{1, 1}) //app size
 	gridMax.X = OsMax(gridMax.X, SANodeColRow_GetMaxPos(&node.Cols)+1)
 	gridMax.Y = OsMax(gridMax.Y, SANodeColRow_GetMaxPos(&node.Rows)+1)
 
@@ -260,7 +267,7 @@ func (app *SAApp) renderIDE() {
 		ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
 		ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
 
-		node.renderLayoutCols()
+		ui.DivInfo_set(SA_DIV_SET_copyCols, appID, 0)
 
 		for i := 0; i < gridMax.X; i++ {
 			dnm := fmt.Sprintf("col_details_%d", i)
@@ -308,7 +315,7 @@ func (app *SAApp) renderIDE() {
 		ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
 		ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
 
-		node.renderLayoutRows()
+		ui.DivInfo_set(SA_DIV_SET_copyRows, appID, 0)
 
 		for i := 0; i < gridMax.Y; i++ {
 			dnm := fmt.Sprintf("row_details_%d", i)
@@ -350,19 +357,12 @@ func (app *SAApp) renderIDE() {
 	}
 	ui.Div_end()
 
-	//app
-	appDiv = ui.Div_start(1, 1, 1, 1)
-	{
-		if colDiv != nil {
-			ui.GetCall().call.data.scrollH.attach = &colDiv.data.scrollH
-		}
-		if rowDiv != nil {
-			ui.GetCall().call.data.scrollV.attach = &rowDiv.data.scrollV
-		}
-
-		app.RenderApp(true)
+	if colDiv != nil {
+		appDiv.data.scrollH.attach = &colDiv.data.scrollH
 	}
-	ui.Div_end()
+	if rowDiv != nil {
+		appDiv.data.scrollV.attach = &rowDiv.data.scrollV
+	}
 
 	touch := &ui.win.io.touch
 	keys := &ui.win.io.keys
