@@ -152,12 +152,20 @@ func (node *SANode) GetAttrString(name string, defValue string) string {
 	}
 }
 
+func (node *SANode) showAttrName(grid *OsV4, name string, isDefault bool) {
+	ui := node.app.base.ui
+	if !isDefault {
+		name = "**" + name + "**"
+	}
+	ui.Comp_text(grid.Start.X+0, grid.Start.Y, grid.Size.X, grid.Size.Y, name, 0)
+}
+
 func (node *SANode) ShowAttrV4(grid *OsV4, namePrefix string, defValue OsV4) OsV4 {
 	ui := node.app.base.ui
 
 	value := node.GetAttrV4(namePrefix, defValue)
 
-	ui.Comp_text(grid.Start.X+0, grid.Start.Y, grid.Size.X, grid.Size.Y, namePrefix, 0)
+	node.showAttrName(grid, namePrefix, value.Cmp(defValue))
 
 	ui.Div_start(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y)
 	{
@@ -184,7 +192,7 @@ func (node *SANode) ShowAttrCd(grid *OsV4, namePrefix string, defValue OsCd) OsC
 
 	value := node.GetAttrCd(namePrefix, defValue)
 
-	ui.Comp_text(grid.Start.X+0, grid.Start.Y, grid.Size.X, grid.Size.Y, namePrefix, 0)
+	node.showAttrName(grid, namePrefix, value.Cmp(defValue))
 
 	if ui.comp_colorPicker(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, "pick_cd_"+node.Name, "", true) {
 		node.SetAttrCd(namePrefix, value)
@@ -199,7 +207,7 @@ func (node *SANode) ShowAttrBool(grid *OsV4, name string, defValue bool) bool {
 
 	value := node.GetAttrBool(name, defValue)
 
-	ui.Comp_text(grid.Start.X+0, grid.Start.Y, grid.Size.X, grid.Size.Y, name, 0)
+	node.showAttrName(grid, name, value == defValue)
 
 	if ui.Comp_switch(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, "", "", true) {
 		node.Attrs[name] = value
@@ -214,7 +222,7 @@ func (node *SANode) ShowAttrInt(grid *OsV4, name string, defValue int) int {
 
 	value := node.GetAttrInt(name, defValue)
 
-	ui.Comp_text(grid.Start.X+0, grid.Start.Y, grid.Size.X, grid.Size.Y, name, 0)
+	node.showAttrName(grid, name, value == defValue)
 
 	_, _, _, fnshd1, _ := ui.Comp_editbox(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, Comp_editboxProp().Precision(0))
 	if fnshd1 {
@@ -229,7 +237,7 @@ func (node *SANode) ShowAttrFloat(grid *OsV4, name string, defValue float64, pre
 
 	value := node.GetAttrFloat(name, defValue)
 
-	ui.Comp_text(grid.Start.X+0, grid.Start.Y, grid.Size.X, grid.Size.Y, name, 0)
+	node.showAttrName(grid, name, value == defValue)
 
 	_, _, _, fnshd1, _ := ui.Comp_editbox(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, Comp_editboxProp().Precision(prec))
 	if fnshd1 {
@@ -250,7 +258,7 @@ func (node *SANode) ShowAttrString(grid *OsV4, name string, defValue string, mul
 
 	value := node.GetAttrString(name, defValue)
 
-	ui.Comp_text(grid.Start.X+0, grid.Start.Y, grid.Size.X, grid.Size.Y, name, 0)
+	node.showAttrName(grid, name, value == defValue)
 
 	_, _, _, fnshd, _ := ui.Comp_editbox(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, Comp_editboxProp().Align(0, OsTrn(multiLine, 0, 1)).MultiLine(multiLine))
 	if fnshd {
@@ -267,7 +275,7 @@ func (node *SANode) ShowAttrIntCombo(grid *OsV4, name string, defValue int, opti
 
 	value := node.GetAttrInt(name, defValue)
 
-	ui.Comp_text(grid.Start.X+0, grid.Start.Y, grid.Size.X, grid.Size.Y, name, 0)
+	node.showAttrName(grid, name, value == defValue)
 
 	valueStr := strconv.Itoa(value)
 	if ui.Comp_combo(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &valueStr, options_names, options_values, "", true, false) {
@@ -282,7 +290,7 @@ func (node *SANode) ShowAttrStringCombo(grid *OsV4, name string, defValue string
 
 	value := node.GetAttrString(name, defValue)
 
-	ui.Comp_text(grid.Start.X+0, grid.Start.Y, grid.Size.X, grid.Size.Y, name, 0)
+	node.showAttrName(grid, name, value == defValue)
 
 	if ui.Comp_combo(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, options_names, options_values, "", true, false) {
 		node.Attrs[name] = value
@@ -297,7 +305,7 @@ func (node *SANode) ShowAttrFilePicker(grid *OsV4, name string, defValue string,
 
 	value := node.GetAttrString(name, defValue)
 
-	ui.Comp_text(grid.Start.X+0, grid.Start.Y, grid.Size.X, grid.Size.Y, name, 0)
+	node.showAttrName(grid, name, value == defValue)
 
 	if ui.Comp_dirPicker(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, selectFile, dialogName, true) {
 		node.Attrs[name] = value
