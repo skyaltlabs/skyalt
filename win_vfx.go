@@ -115,7 +115,7 @@ func (ptcs *WinParticles) Emit() error {
 		}
 	}
 
-	const SUBS = 2 // 3
+	const SUBS = 2
 	n *= (SUBS * SUBS)
 
 	// alloc
@@ -210,19 +210,18 @@ func (ptcs *WinParticles) Draw(cd_theme OsCd, win *Win) (bool, error) {
 
 	front_cd := OsCd{50, 50, 50, 255}
 
-	var logoCd OsCd
-	if ptcs.num_draw == 0 {
-		logoCd = front_cd
-	} else {
-		logoCd = cd_theme
-	}
-
 	coord, err := ptcs.GetLogoCoord()
 	if err != nil {
 		return false, fmt.Errorf("Draw() GetLogoCoord() failed: %w", err)
 	}
 
-	ptcs.logo.DrawQuad(coord, 0, logoCd)
+	ptcs.logo.DrawQuad(coord, 0, cd_theme)
+	{
+		w := OsMaxFloat32(0, (1 - ptcs.oldDone))
+		cutCoord := coord
+		cutCoord.Size.X = int(float32(cutCoord.Size.X) * w)
+		ptcs.logo.DrawQuadUV(cutCoord, 0, front_cd, OsV2f{0, 0}, OsV2f{w, 1})
+	}
 
 	if ptcs.num_draw == 0 {
 		return false, nil
@@ -235,7 +234,7 @@ func (ptcs *WinParticles) Draw(cd_theme OsCd, win *Win) (bool, error) {
 	for i := 0; i < ptcs.num; i++ {
 
 		a := OsFAbs(ptcs.alphas[i])
-		if a > 0.01 && !last_p.Cmp(ptcs.poses[i].toV2()) { // one particles per pixel(in row)
+		if ptcs.alphas[i] > 0 && a > 0.01 && !last_p.Cmp(ptcs.poses[i].toV2()) { // one particles per pixel(in row)
 			var p OsV2f
 			p.X = float32(coord.Start.X) + ptcs.poses[i].X*ratio.X
 			p.Y = float32(coord.Start.Y) + ptcs.poses[i].Y*ratio.Y
