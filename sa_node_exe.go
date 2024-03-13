@@ -470,10 +470,7 @@ func UiSQLite_Attrs(node *SANode) {
 		return
 	}
 
-	if ui.Comp_button(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, "Vacuum", "Run database maintenance", true) > 0 {
-		db.Vacuum()
-	}
-	grid.Start.Y++
+	grid.Start.Y++ //space
 
 	if ui.Comp_button(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, "Generate 'init_sql'", "Create SQL structure command from current database.", true) > 0 {
 		info, err := db.GetTableInfo()
@@ -503,6 +500,13 @@ func UiSQLite_Attrs(node *SANode) {
 			node.SetError(err)
 			return
 		}
+	}
+	grid.Start.Y++
+
+	grid.Start.Y++ //space
+
+	if ui.Comp_button(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, "Vacuum", "Run database maintenance", true) > 0 {
+		db.Vacuum()
 	}
 	grid.Start.Y++
 }
