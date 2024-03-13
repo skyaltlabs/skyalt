@@ -62,6 +62,10 @@ type SANodeCode struct {
 	output string //terminal
 
 	exeTimeSec float64
+
+	file_err error
+	exe_err  error
+	ans_err  error
 }
 
 func InitSANodeCode(node *SANode) SANodeCode {
@@ -131,19 +135,14 @@ func (ls *SANodeCode) addMsgDepend(nm string) error {
 	return nil
 }
 
-func (ls *SANodeCode) UpdateLinks(node *SANode) error {
+func (ls *SANodeCode) UpdateLinks(node *SANode) {
 	ls.node = node
 
 	if !node.IsTypeCode() {
-		return nil
+		return
 	}
 
-	err := ls.updateFile() //create/update file + (re)compile
-	if err != nil {
-		return err
-	}
-
-	return nil
+	ls.UpdateFile() //create/update file + (re)compile
 }
 
 func (ls *SANodeCode) buildSqlInfos() (string, error) {
@@ -222,11 +221,14 @@ func (ls *SANodeCode) CheckLastChatEmpty() {
 	}
 }
 
-func (ls *SANodeCode) GetAnswer() error {
+func (ls *SANodeCode) GetAnswer() {
+
+	ls.ans_err = nil
 
 	ls.CheckLastChatEmpty()
 	if ls.Messages[0].User == "" {
-		return errors.New("no message")
+		ls.ans_err = errors.New("no message")
+		return
 	}
 
 	messages := []SAServiceMsg{
@@ -238,10 +240,9 @@ func (ls *SANodeCode) GetAnswer() error {
 		user := msg.User
 		if i == 0 {
 			//1st user message is prompt
-			var err error
-			user, err = ls.buildPrompt(user)
-			if err != nil {
-				return err
+			user, ls.ans_err = ls.buildPrompt(user)
+			if ls.ans_err != nil {
+				return
 			}
 		}
 		messages = append(messages, SAServiceMsg{Role: "user", Content: user})
@@ -254,19 +255,18 @@ func (ls *SANodeCode) GetAnswer() error {
 
 	oai, err := ls.node.app.base.services.GetOpenAI()
 	if err != nil {
-		return err
+		ls.ans_err = err
+		return
 	}
 
 	answer, err := oai.Complete(&SAServiceOpenAIProps{Model: "gpt-4-turbo-preview", Messages: messages})
 	if err != nil {
-		//ls.Command = oldCommand
-		return fmt.Errorf("Complete() failed: %w", err)
+		ls.ans_err = err
+		return
 	}
 
 	//save
 	ls.Messages[len(ls.Messages)-1].Assistent = string(answer)
-
-	return nil
 }
 
 func (ls *SANodeCode) IsTriggered() bool {
@@ -288,8 +288,10 @@ func (ls *SANodeCode) GetFileName() string {
 	return ls.node.app.Name + "_" + ls.node.Name
 }
 
-func (ls *SANodeCode) Execute() error {
+func (ls *SANodeCode) Execute() {
 	st := OsTime()
+
+	ls.exe_err = nil
 
 	//input
 	{
@@ -307,7 +309,8 @@ func (ls *SANodeCode) Execute() error {
 		}
 		inputJs, err := json.Marshal(vars)
 		if err != nil {
-			return fmt.Errorf("Marshal() failed: %w", err)
+			ls.exe_err = err
+			return
 		}
 
 		ls.node.app.base.services.SetJob(inputJs, ls.node.app)
@@ -316,12 +319,14 @@ func (ls *SANodeCode) Execute() error {
 	//process
 	{
 		cmd := exec.Command("./temp/go/"+ls.GetFileName(), strconv.Itoa(ls.node.app.base.services.port))
-
 		output, err := cmd.CombinedOutput()
 		if err != nil {
-			return err
+			ls.exe_err = errors.New(string(output))
+			return
 		}
 		ls.output = string(output)
+
+		//možná dát chybu do codeErr a nakopírovat ji do node? .................................
 	}
 
 	//output
@@ -331,7 +336,8 @@ func (ls *SANodeCode) Execute() error {
 		var vars map[string]interface{}
 		err := json.Unmarshal(outputJs, &vars)
 		if err != nil {
-			return fmt.Errorf("Unmarshal() failed: %w", err)
+			ls.exe_err = err
+			return
 		}
 
 		for key, node := range vars {
@@ -352,26 +358,21 @@ func (ls *SANodeCode) Execute() error {
 
 	ls.exeTimeSec = OsTime() - st
 	fmt.Printf("Executed node '%s' in %.3f\n", ls.node.Name, ls.exeTimeSec)
-
-	return nil
 }
 
-func (ls *SANodeCode) UseAnswer(answer string) error {
+func (ls *SANodeCode) UseCodeFromAnswer(answer string) {
+	ls.ans_err = nil
 
 	var err error
 	ls.Code, err = ls.extractCode(answer)
 	if err != nil {
-		return err
+		ls.ans_err = err
+		return
 	}
 
 	ls.Code = strings.ReplaceAll(ls.Code, "package main", "")
 
-	err = ls.updateFile()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	ls.UpdateFile()
 }
 
 func (ls *SANodeCode) extractCode(answer string) (string, error) {
@@ -425,11 +426,14 @@ func (ls *SANodeCode) extractFunc(code string) (string, error) {
 	return code, nil
 }
 
-func (ls *SANodeCode) updateFile() error {
+func (ls *SANodeCode) UpdateFile() {
+
+	ls.file_err = nil
 
 	file, err := ls.buildCode()
 	if err != nil {
-		return err
+		ls.file_err = err
+		return
 	}
 
 	fileName := ls.GetFileName()
@@ -440,9 +444,9 @@ func (ls *SANodeCode) updateFile() error {
 	file_saved, err := os.ReadFile(filePath)
 	if err != nil || !bytes.Equal(file_saved, file) {
 		OsFolderCreate("temp/go/")
-		err = os.WriteFile(filePath, file, 0644)
-		if err != nil {
-			return err
+		ls.file_err = os.WriteFile(filePath, file, 0644)
+		if ls.file_err != nil {
+			return
 		}
 		recompile = true
 	}
@@ -451,16 +455,13 @@ func (ls *SANodeCode) updateFile() error {
 	if recompile || !OsFileExists("temp/go/"+fileName) {
 		cmd := exec.Command("go", "build", fileName+".go")
 		cmd.Dir = "temp/go/"
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err = cmd.Start()
+
+		output, err := cmd.CombinedOutput()
 		if err != nil {
-			return err
+			ls.file_err = errors.New(string(output))
+			return
 		}
-		cmd.Wait()
-		//show compiler errors in output? ...........
 	}
-	return nil
 }
 
 func (ls *SANodeCode) buildCode() ([]byte, error) {
@@ -641,7 +642,7 @@ func ReplaceWord(str string, oldWord string, newWord string) string {
 	return str
 }
 
-func (ls *SANodeCode) RenameNode(old_name string, new_name string) error {
+func (ls *SANodeCode) RenameNode(old_name string, new_name string) {
 
 	//triggers
 	for i, tr := range ls.Triggers {
@@ -662,10 +663,5 @@ func (ls *SANodeCode) RenameNode(old_name string, new_name string) error {
 	ls.Code = ReplaceWord(ls.Code, old_name, new_name)
 
 	//refresh
-	err := ls.UpdateLinks(ls.node)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	ls.UpdateLinks(ls.node)
 }

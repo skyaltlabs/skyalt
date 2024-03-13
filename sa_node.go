@@ -335,10 +335,7 @@ func (node *SANode) updateLinks(parent *SANode, app *SAApp) {
 		node.Attrs = make(map[string]interface{})
 	}
 
-	err := node.Code.UpdateLinks(node)
-	if err != nil {
-		fmt.Printf("updateLinks() for node '%s' failed: %v\n", node.Name, err)
-	}
+	node.Code.UpdateLinks(node)
 
 	for _, it := range node.Subs {
 		it.updateLinks(node, app)
@@ -672,10 +669,7 @@ func (node *SANode) renderLayout() {
 }
 
 func (node *SANode) RenameDepends(oldName string, newName string) {
-	err := node.Code.RenameNode(oldName, newName)
-	if err != nil {
-		fmt.Println(err)
-	}
+	node.Code.RenameNode(oldName, newName)
 }
 
 // use node.GetAbsoluteRoot().RenameSubDepends()

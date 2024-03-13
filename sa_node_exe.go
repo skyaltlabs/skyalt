@@ -837,10 +837,7 @@ func UiCodeGo_AttrChat(node *SANode) {
 					ui.Comp_textSelectMulti(1, 0, 2, nlines, str.Assistent, OsV2{0, 0}, true, false)
 
 					if ui.Comp_buttonLight(2, nlines, 1, 1, "Use this code", "", true) > 0 {
-						err := node.Code.UseAnswer(str.Assistent)
-						if err != nil {
-							node.SetError(err)
-						}
+						node.Code.UseCodeFromAnswer(str.Assistent)
 					}
 				}
 				ui.Div_end()
@@ -857,10 +854,7 @@ func UiCodeGo_AttrChat(node *SANode) {
 
 				//or ctrl+enter ..........
 				if ui.Comp_buttonLight(2, y, 1, 1, "Send", "", true) > 0 {
-					err := node.Code.GetAnswer()
-					if err != nil {
-						node.SetError(err)
-					}
+					node.Code.GetAnswer()
 				}
 
 			}
@@ -877,6 +871,22 @@ func UiCodeGo_Attrs(node *SANode) {
 	ui.Div_colMax(1, 100)
 
 	y := 0
+
+	if node.Code.ans_err != nil {
+		ui.Comp_textCd(0, y, 2, 1, "Answer Error: "+node.Code.ans_err.Error(), 0, CdPalette_E)
+		y++
+		node.SetError(fmt.Errorf("Answer"))
+	}
+	if node.Code.file_err != nil {
+		ui.Comp_textCd(0, y, 2, 1, "File Error: "+node.Code.file_err.Error(), 0, CdPalette_E)
+		y++
+		node.SetError(fmt.Errorf("File"))
+	}
+	if node.Code.exe_err != nil {
+		ui.Comp_textCd(0, y, 2, 1, "Execute Error: "+node.Code.exe_err.Error(), 0, CdPalette_E)
+		y++
+		node.SetError(fmt.Errorf("Execute"))
+	}
 
 	//bypass
 	{
@@ -976,16 +986,13 @@ func UiCodeGo_Attrs(node *SANode) {
 		nlines := WinFontProps_NumRows(node.Code.Code)
 		_, _, _, fnshd, _ := ui.Comp_editbox(1, y, 1, nlines, &node.Code.Code, Comp_editboxProp().Align(0, 0).MultiLine(true))
 		if fnshd {
-			node.Code.updateFile()
+			node.Code.UpdateFile()
 		}
 		y += nlines
 
 		//run button
 		if ui.Comp_button(1, y, 1, 1, "Run", "", true) > 0 {
-			err := node.Code.Execute()
-			if err != nil {
-				node.SetError(err)
-			}
+			node.Code.Execute()
 		}
 		y++
 	}
@@ -1000,7 +1007,6 @@ func UiCodeGo_Attrs(node *SANode) {
 		ui.Comp_textSelectMulti(1, y, 1, nlines, node.Code.output, OsV2{0, 0}, true, true)
 		y += nlines
 	}
-
 }
 
 var g_whisper_formats = []string{"verbose_json", "json", "text", "srt", "vtt"}

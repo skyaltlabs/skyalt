@@ -197,10 +197,7 @@ func (app *SAApp) Tick() {
 
 	for _, nd := range app.all_nodes {
 		if nd.Code.IsTriggered() && !nd.IsBypassed() {
-			err := nd.Code.Execute()
-			if err != nil {
-				fmt.Printf("Execute() failed: %v\n", err)
-			}
+			nd.Code.Execute()
 		}
 	}
 
