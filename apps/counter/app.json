@@ -1,0 +1,174 @@
+{
+"Pos": {
+"X": 0,
+"Y": 0
+},
+"Name": "root",
+"Exe": "layout",
+"Code": {
+"Triggers": null,
+"Messages": null,
+"Code": ""
+},
+"Cols": [
+{
+"Pos": 0,
+"Min": 1,
+"Max": 100,
+"Resize": 1
+},
+{
+"Pos": 1,
+"Min": 1,
+"Max": 2,
+"Resize": 1
+},
+{
+"Pos": 2,
+"Min": 1,
+"Max": 2,
+"Resize": 1
+},
+{
+"Pos": 3,
+"Min": 1,
+"Max": 2,
+"Resize": 1
+},
+{
+"Pos": 4,
+"Min": 1,
+"Max": 100,
+"Resize": 1
+}
+],
+"Rows": [
+{
+"Pos": 0,
+"Min": 1,
+"Max": 100,
+"Resize": 1
+},
+{
+"Pos": 1,
+"Min": 1,
+"Max": 2,
+"Resize": 1
+},
+{
+"Pos": 2,
+"Min": 1,
+"Max": 100,
+"Resize": 1
+}
+],
+"Subs": [
+{
+"Pos": {
+"X": 13.2516775,
+"Y": -8.704175
+},
+"Name": "func_go",
+"Exe": "func_go",
+"Code": {
+"Triggers": [
+"add_one",
+"sub_one"
+],
+"Messages": [
+{
+"User": "If 'add_one' is clicked, then increment the 'counter'.\nIf 'sub_one' is clicked, then decrement the 'counter'.",
+"Assistent": "```go\nimport (\n\t\"strconv\"\n)\n\nfunc func_go(add_one *Button, counter *Text, sub_one *Button) error {\n\tcurrent, err := strconv.Atoi(counter.Label)\n\tif err != nil {\n\t\treturn err\n\t}\n\tif add_one.Clicked {\n\t\tcurrent++\n\t}\n\tif sub_one.Clicked {\n\t\tcurrent--\n\t}\n\tcounter.Label = strconv.Itoa(current)\n\treturn nil\n}\n```"
+},
+{
+"User": "",
+"Assistent": ""
+}
+],
+"Code": "\nimport (\n\t\"strconv\"\n)\n\nfunc func_go(add_one *Button, counter *Text, sub_one *Button) error {\n\tcurrent, err := strconv.Atoi(counter.Label)\n\tif err != nil {\n\t\treturn err\n\t}\n\tif add_one.Clicked {\n\t\tcurrent++\n\t}\n\tif sub_one.Clicked {\n\t\tcurrent--\n\t}\n\tcounter.Label = strconv.Itoa(current)\n\treturn nil\n}\n"
+},
+"Attrs": {
+"bypass": false
+},
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": 13.3722515,
+"Y": -5.3884974
+},
+"Name": "counter",
+"Exe": "text",
+"Code": {
+"Triggers": null,
+"Messages": null,
+"Code": ""
+},
+"Attrs": {
+"align_h": 1,
+"align_v": 1,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 2,
+"grid_y": 1,
+"label": "10",
+"multi_line": false,
+"selection": true,
+"show": true,
+"show_border": false
+},
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": 6.875413,
+"Y": -7.0088067
+},
+"Name": "sub_one",
+"Exe": "button",
+"Code": {
+"Triggers": null,
+"Messages": null,
+"Code": ""
+},
+"Attrs": {
+"clicked": false,
+"enable": true,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 3,
+"grid_y": 1,
+"label": "-",
+"show": true,
+"tooltip": ""
+},
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": 6.784933,
+"Y": -10.234278
+},
+"Name": "add_one",
+"Exe": "button",
+"Code": {
+"Triggers": null,
+"Messages": null,
+"Code": ""
+},
+"Attrs": {
+"clicked": false,
+"enable": true,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 1,
+"grid_y": 1,
+"label": "+",
+"show": true,
+"tooltip": ""
+},
+"ShowCodeChat": false
+}
+],
+"ShowCodeChat": false
+}

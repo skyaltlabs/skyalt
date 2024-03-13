@@ -1,0 +1,182 @@
+{
+"Pos": {
+"X": 0,
+"Y": 0
+},
+"Name": "root",
+"Exe": "layout",
+"Code": {
+"Triggers": null,
+"Messages": null,
+"Code": ""
+},
+"Cols": [
+{
+"Pos": 0,
+"Min": 1,
+"Max": 100,
+"Resize": 1
+},
+{
+"Pos": 1,
+"Min": 1,
+"Max": 15,
+"Resize": 9.45945945945946
+},
+{
+"Pos": 2,
+"Min": 1,
+"Max": 100,
+"Resize": 1
+}
+],
+"Rows": [
+{
+"Pos": 0,
+"Min": 1,
+"Max": 10,
+"Resize": 1
+},
+{
+"Pos": 1,
+"Min": 1,
+"Max": 1,
+"Resize": 1
+},
+{
+"Pos": 2,
+"Min": 1,
+"Max": 5,
+"Resize": 1
+}
+],
+"Subs": [
+{
+"Pos": {
+"X": 32.859215,
+"Y": 1.4485751
+},
+"Name": "Summary",
+"Exe": "func_go",
+"Code": {
+"Triggers": [
+"button"
+],
+"Messages": [
+{
+"User": "Use 'openai' to create summary of 'editbox'.\nMake a prompt in the form: \"Please summarize this article into a few bullet points: \" + content of 'editbox' on the new line.\nSet answer to 'text'.",
+"Assistent": "```go\nimport (\n\t\"fmt\"\n)\n\nfunc Summary(openai *Openai, editbox *Editbox, text *Text) error {\n\tmessage := []OpenaiMessage{\n\t\t{\n\t\t\tRole:    \"system\",\n\t\t\tContent: \"Please summarize this article into a few bullet points:\",\n\t\t},\n\t\t{\n\t\t\tRole:    \"user\",\n\t\t\tContent: editbox.Value,\n\t\t},\n\t}\n\n\tanswer, err := openai.GetAnswer(message)\n\tif err != nil {\n\t\treturn fmt.Errorf(\"failed to get summary: %w\", err)\n\t}\n\n\ttext.Label = answer\n\treturn nil\n}\n```"
+},
+{
+"User": "",
+"Assistent": ""
+}
+],
+"Code": "\nimport (\n\t\"fmt\"\n)\n\nfunc Summary(openai *Openai, editbox *Editbox, text *Text) error {\n\tmessage := []OpenaiMessage{\n\t\t{\n\t\t\tRole:    \"system\",\n\t\t\tContent: \"Please summarize this article into a few bullet points:\",\n\t\t},\n\t\t{\n\t\t\tRole:    \"user\",\n\t\t\tContent: editbox.Value,\n\t\t},\n\t}\n\n\tanswer, err := openai.GetAnswer(message)\n\tif err != nil {\n\t\treturn fmt.Errorf(\"failed to get summary: %w\", err)\n\t}\n\n\ttext.Label = answer\n\treturn nil\n}\n"
+},
+"Attrs": {
+"bypass": false
+},
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": 32.853073,
+"Y": -1.0852087
+},
+"Name": "openai",
+"Exe": "openai",
+"Code": {
+"Triggers": null,
+"Messages": null,
+"Code": ""
+},
+"Attrs": {
+"model": "gpt-3.5-turbo"
+},
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": 25.641022,
+"Y": 4.092611
+},
+"Name": "text",
+"Exe": "text",
+"Code": {
+"Triggers": null,
+"Messages": null,
+"Code": ""
+},
+"Attrs": {
+"align_h": 0,
+"align_v": 0,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 1,
+"grid_y": 2,
+"label": "- The Velvet Revolution occurred in Czechoslovakia from 17th to 28th November 1989.\n- It was a non-violent transition of power that led to the end of 41 years of one-party rule in Czechoslovakia.\n- The revolution involved popular demonstrations against the Communist Party government, with participation from students and older dissidents.\n- The event began with a student demonstration on 17th November which was forcefully suppressed by riot police, leading to further protests.\n- The resignation of the entire top leadership of the Communist Party, including General Secretary Miloš Jakeš, occurred on 24th November.\n- On 27th November, a two-hour general strike involving all citizens of Czechoslovakia took place.",
+"multi_line": true,
+"selection": true,
+"show": true,
+"show_border": true
+},
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": 25.549984,
+"Y": 1.5490556
+},
+"Name": "button",
+"Exe": "button",
+"Code": {
+"Triggers": null,
+"Messages": null,
+"Code": ""
+},
+"Attrs": {
+"clicked": false,
+"enable": true,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 1,
+"grid_y": 1,
+"label": "Summary",
+"show": true,
+"tooltip": ""
+},
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": 25.396122,
+"Y": -0.882856
+},
+"Name": "editbox",
+"Exe": "editbox",
+"Code": {
+"Triggers": null,
+"Messages": null,
+"Code": ""
+},
+"Attrs": {
+"align_h": 0,
+"align_v": 0,
+"enable": true,
+"finished": false,
+"ghost": "",
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 1,
+"grid_y": 0,
+"multi_line": true,
+"multi_line_enter_finish": false,
+"show": true,
+"value": "The Velvet Revolution (Czech: Sametová revoluce) or Gentle Revolution (Slovak: Nežná revolúcia) was a non-violent transition of power in what was then Czechoslovakia, occurring from 17 November to 28 November 1989. Popular demonstrations against the one-party government of the Communist Party of Czechoslovakia included students and older dissidents. The result was the end of 41 years of one-party rule in Czechoslovakia, and the subsequent dismantling of the command economy and conversion to a parliamentary republic.[3]\n\nOn 17 November 1989 (International Students' Day), riot police suppressed a student demonstration in Prague.[4] The event marked the 50th anniversary of a violently suppressed demonstration against the Nazi storming of Prague University in 1939 where 1,200 students were arrested and 9 killed (see Origin of International Students' Day). The 1989 event sparked a series of demonstrations from 17 November to late December and turned into an anti-communist demonstration. On 20 November, the number of protesters assembled in Prague grew from 200,000 the previous day to an estimated 500,000. The entire top leadership of the Communist Party, including General Secretary Miloš Jakeš, resigned on 24 November. On 27 November, a two-hour general strike involving all citizens of Czechoslovakia was held."
+},
+"ShowCodeChat": false
+}
+],
+"ShowCodeChat": false
+}
