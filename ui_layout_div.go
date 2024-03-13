@@ -210,7 +210,7 @@ func (div *UiLayoutDiv) Maintenance() {
 func (div *UiLayoutDiv) updateGridAndScroll(screen *OsV2, gridMax OsV2, makeSmallerX *bool, makeSmallerY *bool, win *Win) bool {
 
 	// update cols/rows
-	div.data.UpdateArray(win.Cell(), *screen, gridMax)
+	div.data.UpdateArray(win.Cell(), *screen, gridMax, div.childs)
 
 	// get max
 	data := div.data.Convert(win.Cell(), OsV4{OsV2{}, gridMax}).Size

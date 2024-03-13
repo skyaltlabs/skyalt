@@ -104,7 +104,7 @@ func (lay *UiLayout) Reset() {
 	lay.rows.Clear()
 }
 
-func (lay *UiLayout) UpdateArray(cell int, window OsV2, endGrid OsV2) {
+func (lay *UiLayout) UpdateArray(cell int, window OsV2, endGrid OsV2, childs []*UiLayoutDiv) {
 
 	if endGrid.X > lay.cols.NumInputs() {
 		lay.cols.Resize(int(endGrid.X))
@@ -112,6 +112,10 @@ func (lay *UiLayout) UpdateArray(cell int, window OsV2, endGrid OsV2) {
 	if endGrid.Y > lay.rows.NumInputs() {
 		lay.rows.Resize(int(endGrid.Y))
 	}
+
+	lay.cols.SetFills(childs, true)
+	lay.rows.SetFills(childs, false)
+
 	lay.cols.Update(cell, window.X)
 	lay.rows.Update(cell, window.Y)
 }

@@ -32,6 +32,8 @@ type UiLayoutArray struct {
 
 	inputs  []UiLayoutArrayItem
 	outputs []int32
+
+	fills []bool
 }
 
 func (dst *UiLayoutArray) CopySub(src *UiLayoutArray, src_start int, src_end int, cell int) {
@@ -69,6 +71,20 @@ func (arr *UiLayoutArray) Resize(num int) {
 	//huge amount of RAM if I set few items on position 1000 - all before are alocated and set & reset after frame is rendered ...
 	for i := arr.NumInputs(); i < num; i++ {
 		arr.inputs = append(arr.inputs, UiLayoutArrayItem{min: 1, max: 0, resize: nil})
+	}
+}
+
+func (arr *UiLayoutArray) SetFills(childs []*UiLayoutDiv, cols bool) {
+	arr.fills = make([]bool, arr.NumInputs())
+
+	for i := range arr.fills {
+		for _, it := range childs {
+			if (cols && i >= it.grid.Start.X && i < it.grid.Start.X+it.grid.Size.X) ||
+				(!cols && i >= it.grid.Start.Y && i < it.grid.Start.Y+it.grid.Size.Y) {
+				arr.fills[i] = true
+				break
+			}
+		}
 	}
 }
 
@@ -214,6 +230,31 @@ func (arr *UiLayoutArray) OutputAll() int {
 	return sum
 }
 
+func (arr *UiLayoutArray) makeLarger(cell int, window int, allPixels int, fill bool) int {
+
+	hasSpace := (len(arr.outputs) > 0)
+	for allPixels < window && hasSpace {
+		rest := window - allPixels
+		tryAdd := OsMax(1, rest/int(len(arr.outputs)))
+
+		hasSpace = false
+		for i := 0; i < len(arr.outputs) && allPixels < window; i++ {
+			if arr.fills[i] == fill {
+				maxAdd := int(arr.inputs[i].max*float32(cell)) - int(arr.outputs[i])
+				add := OsClamp(tryAdd, 0, maxAdd)
+
+				arr.outputs[i] += int32(add)
+				allPixels += add
+
+				if maxAdd > tryAdd {
+					hasSpace = true
+				}
+			}
+		}
+	}
+	return allPixels
+}
+
 func (arr *UiLayoutArray) Update(cell int, window int) {
 
 	arr.outputs = make([]int32, arr.NumInputs())
@@ -259,26 +300,10 @@ func (arr *UiLayoutArray) Update(cell int, window int) {
 		allPixels += int(arr.outputs[i])
 	}
 
-	// make it larger(if maxes allow)
-	hasSpace := (len(arr.outputs) > 0)
-	for allPixels < window && hasSpace {
-		rest := window - allPixels
-		tryAdd := OsMax(1, rest/int(len(arr.outputs)))
+	//make larger(when maxs allow)
+	allPixels = arr.makeLarger(cell, window, allPixels, true)  //fills
+	allPixels = arr.makeLarger(cell, window, allPixels, false) //non-fills
 
-		hasSpace = false
-		for i := 0; i < len(arr.outputs) && allPixels < window; i++ {
-
-			maxAdd := int(arr.inputs[i].max*float32(cell)) - int(arr.outputs[i])
-			add := OsClamp(tryAdd, 0, maxAdd)
-
-			arr.outputs[i] += int32(add)
-			allPixels += add
-
-			if maxAdd > tryAdd {
-				hasSpace = true
-			}
-		}
-	}
 }
 
 func (arr *UiLayoutArray) HasResize() bool {
