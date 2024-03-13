@@ -778,9 +778,9 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 		this_uid := lv.call
 		edit_uid := edit.uid
 		active = (edit_uid != nil && edit_uid == this_uid)
-		if !editable { //|| !active
-			prop.enableFormating = false
-		}
+		//if !editable { //|| !active
+		//	prop.enableFormating = false
+		//}
 
 		//touch
 		if (lv.call.IsOver(ui) || lv.call.IsTouchActive(ui)) || edit.setFirstEditbox {

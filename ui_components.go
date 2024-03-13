@@ -442,6 +442,7 @@ func (ui *Ui) Comp_textIcon(x, y, w, h int, label string, icon WinMedia, iconMar
 	style.enable = true
 	style.cd = CdPalette_B
 	style.label_align = OsV2{0, 1}
+	style.label_formating = true
 	style.image_alignV = 1
 	style.image_margin = iconMargin
 
@@ -458,6 +459,7 @@ func (ui *Ui) Comp_text(x, y, w, h int, label string, alignH int) *UiLayoutDiv {
 	style.enable = true
 	style.cd = CdPalette_B
 	style.label_align = OsV2{alignH, 1}
+	style.label_formating = true
 
 	ui.Comp_text_s(&style, label, nil, true, false, false)
 
@@ -473,6 +475,7 @@ func (ui *Ui) Comp_textCd(x, y, w, h int, label string, alignH int, cd uint8) *U
 	style.enable = true
 	style.cd = cd
 	style.label_align = OsV2{alignH, 1}
+	style.label_formating = true
 
 	//background
 	//backCd, _ := ui.win.io.GetPalette().GetCd(cd, false, true, false, false)
@@ -537,7 +540,10 @@ func (ui *Ui) Comp_text_s(style *UiComp, value string, icon *WinMedia, selection
 		}
 	}
 
-	ui.Paint_textGrid(onCd, style, value, "", InitWinFontPropsDef(ui.win), icon, selection, false, multi_line, multi_line_enter_finish)
+	prop := InitWinFontPropsDef(ui.win)
+	prop.enableFormating = style.label_formating
+
+	ui.Paint_textGrid(onCd, style, value, "", prop, icon, selection, false, multi_line, multi_line_enter_finish)
 }
 
 type Comp_editboxP struct {
