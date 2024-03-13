@@ -148,6 +148,7 @@ type Sqlite struct {
 	Write     bool   `json:"write"`
 	Enable    bool   `json:"enable"`
 	Changed   bool   `json:"changed"`
+	Init_sql  bool   `json:"init_sql"`
 }
 
 type Whispercpp struct {
