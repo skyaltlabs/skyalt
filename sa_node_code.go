@@ -325,8 +325,6 @@ func (ls *SANodeCode) Execute() {
 			return
 		}
 		ls.output = string(output)
-
-		//možná dát chybu do codeErr a nakopírovat ji do node? .................................
 	}
 
 	//output
