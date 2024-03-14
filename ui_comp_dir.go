@@ -33,7 +33,15 @@ func (ui *Ui) Comp_dirPicker(x, y, w, h int, path *string, selectFile bool, dial
 
 		exist := OsTrnBool(selectFile, OsFileExists(*path), OsFolderExists(*path))
 
-		if ui.Comp_buttonError(0, 0, 1, 1, *path, "Select file/folder", !exist, enable) > 0 {
+		nm := *path
+		if nm == "" {
+			nm = OsTrnString(selectFile, "< Select File >", "< Select Folder >")
+		} else {
+			if !exist {
+				nm = "Error - Not Found: " + nm
+			}
+		}
+		if ui.Comp_buttonError(0, 0, 1, 1, nm, "Select file/folder", !exist, enable) > 0 {
 			ui.Dialog_open(dialogName, 1)
 			ui.dir = UiDir{tempPath: *path} //reset
 		}
