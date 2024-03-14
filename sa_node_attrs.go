@@ -330,6 +330,9 @@ func (node *SANode) RenderAttrs() {
 	//rename + type
 	ui.Div_start(0, 0, 1, 1)
 	{
+		pl := ui.win.io.GetPalette()
+		ui.Paint_rect(0, 0, 1, 1, 0, pl.GetGrey(0.8), 0)
+
 		ui.Div_colMax(0, 100)
 		ui.Div_colMax(2, 4)
 		old_name := node.Name
