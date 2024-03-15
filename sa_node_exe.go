@@ -472,7 +472,7 @@ func UiSQLite_Attrs(node *SANode) {
 
 	grid.Start.Y++ //space
 
-	if ui.Comp_button(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, "Generate 'init_sql'", "Create SQL structure command from current database.", true) > 0 {
+	if ui.Comp_buttonLight(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, "Generate 'init_sql'", "Create SQL structure command from current database.", true) > 0 {
 		info, err := db.GetTableInfo()
 		if err != nil {
 			node.SetError(err)
@@ -494,7 +494,7 @@ func UiSQLite_Attrs(node *SANode) {
 	grid.Start.Y++
 
 	init_sql := node.ShowAttrString(&grid, "init_sql", "", true)
-	if ui.Comp_button(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, "Re-initialize", "Create tables & columns structure. Data are kept.", init_sql != "") > 0 {
+	if ui.Comp_buttonLight(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, "Re-initialize", "Create tables & columns structure. Data are kept.", init_sql != "") > 0 {
 		_, err := db.Write(init_sql)
 		if err != nil {
 			node.SetError(err)
@@ -505,7 +505,7 @@ func UiSQLite_Attrs(node *SANode) {
 
 	grid.Start.Y++ //space
 
-	if ui.Comp_button(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, "Vacuum", "Run database maintenance", true) > 0 {
+	if ui.Comp_buttonLight(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, "Vacuum", "Run database maintenance", true) > 0 {
 		db.Vacuum()
 	}
 	grid.Start.Y++
