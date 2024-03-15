@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -41,6 +42,7 @@ type SAServices struct {
 	job_app       *SAApp
 	job_result    []byte
 	job_result_wg sync.WaitGroup
+	job_err       error
 }
 
 func NewSAServices(ui *Ui) *SAServices {
@@ -68,12 +70,13 @@ func (srv *SAServices) Destroy() {
 func (srv *SAServices) SetJob(job []byte, app *SAApp) {
 	srv.job_str = job
 	srv.job_app = app
+	srv.job_err = nil
 	srv.job_result_wg.Add(1)
 }
 
-func (srv *SAServices) GetResult() []byte {
+func (srv *SAServices) GetResult() ([]byte, error) {
 	srv.job_result_wg.Wait()
-	return srv.job_result
+	return srv.job_result, srv.job_err
 }
 
 func (srv *SAServices) GetWhisper() *SAServiceWhisperCpp {
@@ -128,7 +131,7 @@ func (srv *SAServices) handlerGetJob(w http.ResponseWriter, r *http.Request) {
 	w.Write(srv.job_str)
 }
 
-func (srv *SAServices) handlerSetResult(w http.ResponseWriter, r *http.Request) {
+func (srv *SAServices) handlerReturnResult(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
@@ -136,6 +139,20 @@ func (srv *SAServices) handlerSetResult(w http.ResponseWriter, r *http.Request) 
 	}
 
 	srv.job_result = body
+	srv.job_err = nil
+	srv.job_result_wg.Done()
+
+	w.Write([]byte("{}"))
+}
+func (srv *SAServices) handlerReturnError(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+
+	srv.job_result = nil
+	srv.job_err = errors.New(string(body))
 	srv.job_result_wg.Done()
 
 	w.Write([]byte("{}"))
@@ -293,7 +310,8 @@ func (srv *SAServices) handlerOpenAI(w http.ResponseWriter, r *http.Request) {
 func (srv *SAServices) Run(port int) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/getjob", srv.handlerGetJob)
-	mux.HandleFunc("/setresult", srv.handlerSetResult)
+	mux.HandleFunc("/returnresult", srv.handlerReturnResult)
+	mux.HandleFunc("/returnerror", srv.handlerReturnError)
 	mux.HandleFunc("/whispercpp", srv.handlerWhisper)
 	mux.HandleFunc("/llamacpp", srv.handlerLLama)
 	mux.HandleFunc("/openai", srv.handlerOpenAI)

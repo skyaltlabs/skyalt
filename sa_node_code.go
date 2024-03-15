@@ -329,7 +329,11 @@ func (ls *SANodeCode) Execute() {
 
 	//output
 	{
-		outputJs := ls.node.app.base.services.GetResult()
+		outputJs, outputErr := ls.node.app.base.services.GetResult()
+		if outputErr != nil {
+			ls.exe_err = outputErr
+			return
+		}
 
 		var vars map[string]interface{}
 		err := json.Unmarshal(outputJs, &vars)
@@ -351,7 +355,6 @@ func (ls *SANodeCode) Execute() {
 				fmt.Println("Error: Node not found", key)
 			}
 		}
-
 	}
 
 	ls.exeTimeSec = OsTime() - st
