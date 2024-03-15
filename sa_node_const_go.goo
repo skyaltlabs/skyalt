@@ -148,7 +148,7 @@ type Sqlite struct {
 	Write     bool   `json:"write"`
 	Enable    bool   `json:"enable"`
 	Changed   bool   `json:"changed"`
-	Init_sql  bool   `json:"init_sql"`
+	Init_sql  string `json:"init_sql"`
 }
 
 type Whispercpp struct {
@@ -262,25 +262,24 @@ func main() {
 
 	G_SERVER_ADDR = fmt.Sprintf("http://127.0.0.1:%d/", G_PORT)
 
-	//fmt.Println("Asking for job . . .")
 	job, err := _send("getjob", []byte("{}"))
 	if err != nil {
 		fmt.Println("_send() failed:", err)
 		return
 	}
 
-	//fmt.Println("Running for job . . .")
 	jobBack, err := _callIt(job)
 	if err != nil {
-		jobBack = []byte(err.Error()) //only string, no {}
+		_, err = _send("returnerror", []byte(err.Error()))
+		if err != nil {
+			fmt.Println("_send() failed:", err)
+			return
+		}
+	}else{
+		_, err = _send("returnresult", jobBack)
+		if err != nil {
+			fmt.Println("_send() failed:", err)
+			return
+		}
 	}
-
-	//fmt.Println("Sending job . . .")
-	_, err = _send("setresult", jobBack)
-	if err != nil {
-		fmt.Println("_send() failed:", err)
-		return
-	}
-
-	//fmt.Println("Done")
 }
