@@ -49,7 +49,7 @@ For endurance, SkyAlt uses only well-known and open formats SQLite and JSON.
 SkyAlt is written in Go language. You can install golang from here: https://go.dev/doc/install
 
 Dependencies:
-<pre><code>go get github.com/mattn/go-sqlite
+<pre><code>go get github.com/mattn/go-sqlite3
 go get github.com/veandco/go-sdl2/sdl
 go get github.com/veandco/go-sdl2/gfx
 go get github.com/go-gl/gl/v2.1/gl
@@ -89,6 +89,16 @@ make
 - Software 2.0:  https://www.youtube.com/watch?v=y57wwucbXR8
     - Andrej Karpathy: https://www.youtube.com/watch?v=UJc8UpClSUQ
     - Chris Lattner: https://www.youtube.com/watch?v=orY5aLMDU-I
+
+
+
+## Acknowledgements
+- [Go](https://go.dev/): The Go programming language
+- [SDL](https://www.libsdl.org/) + [Go binding](https://github.com/veandco/go-sdl2): Cross-platform graphics hardware library
+- [SQLite](https://www.sqlite.org/) + [Go binding](https://github.com/mattn/go-sqlite3): Database engine
+
+- [Llama.cpp](https://github.com/ggerganov/llama.cpp): LLM inference in C/C++
+- [Whisper.cpp](https://github.com/ggerganov/whisper.cpp): Port of OpenAI's Whisper model in C/C++
 
 
 
