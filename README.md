@@ -8,6 +8,13 @@ Build node-based, local-first, and LLM-powered apps.
 
 
 
+## Videos
+- Demo 1
+    - Introduction: https://www.youtube.com/watch?v=655nz44RgLY
+    - Apps from scratch(no audio): https://www.youtube.com/watch?v=mYnBKKBY5Lw
+
+
+
 ## Node-based
 In Unix, everything is a file. In SkyAlt, everything is a node.
 - Node can be GUIs(button, slider, map, calendar, etc.) or programs(LLM, SQLite, Python, etc.).
@@ -17,7 +24,7 @@ In Unix, everything is a file. In SkyAlt, everything is a node.
 
 
 ## LLM-powered
-SkyAlt is not about AI research, but **interface research and development**. LLM is the new programming paradigm that can make human-computer interactions way more efficient. Soon, everyone will be able to build and customize software without the use of programming languages.
+SkyAlt is not about AI research, but **interface research and development**. LLM is the new programming paradigm that can make human-computer interactions way more efficient, natural and frictionless.
 
 
 
