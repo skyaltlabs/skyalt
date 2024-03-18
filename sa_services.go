@@ -37,6 +37,7 @@ type SAServices struct {
 	whisper_cpp *SAServiceWhisperCpp
 	llamaCpp    *SAServiceLLamaCpp
 	openai      *SAServiceOpenAI
+	downloader  *SAServiceDownloader
 
 	job_str       []byte
 	job_app       *SAApp
@@ -63,6 +64,9 @@ func (srv *SAServices) Destroy() {
 	if srv.openai != nil {
 		srv.openai.Destroy()
 	}
+	if srv.downloader != nil {
+		srv.downloader.Destroy()
+	}
 
 	srv.server.Shutdown(context.Background())
 }
@@ -79,18 +83,20 @@ func (srv *SAServices) GetResult() ([]byte, error) {
 	return srv.job_result, srv.job_err
 }
 
-func (srv *SAServices) GetWhisper() *SAServiceWhisperCpp {
+func (srv *SAServices) GetWhisper(init_model string) (*SAServiceWhisperCpp, error) {
+	var err error
 	if srv.whisper_cpp == nil {
-		srv.whisper_cpp = NewSAServiceWhisperCpp(srv, "http://127.0.0.1", "8090")
+		srv.whisper_cpp, err = NewSAServiceWhisperCpp(srv, "http://127.0.0.1", "8090", init_model)
 	}
-	return srv.whisper_cpp
+	return srv.whisper_cpp, err
 }
 
-func (srv *SAServices) GetLLama() *SAServiceLLamaCpp {
+func (srv *SAServices) GetLLama(init_model string) (*SAServiceLLamaCpp, error) {
+	var err error
 	if srv.llamaCpp == nil {
-		srv.llamaCpp = NewSAServiceLLamaCpp(srv, "http://127.0.0.1", "8091")
+		srv.llamaCpp, err = NewSAServiceLLamaCpp(srv, "http://127.0.0.1", "8091", init_model)
 	}
-	return srv.llamaCpp
+	return srv.llamaCpp, err
 }
 
 func (srv *SAServices) GetOpenAI() (*SAServiceOpenAI, error) {
@@ -102,6 +108,17 @@ func (srv *SAServices) GetOpenAI() (*SAServiceOpenAI, error) {
 		srv.openai = NewSAServiceOpenAI(srv)
 	}
 	return srv.openai, nil
+}
+
+func (srv *SAServices) GetDownloader() (*SAServiceDownloader, error) {
+	if !srv.online {
+		return nil, fmt.Errorf("internet is disabled(Menu:Settings:Internet Connection)")
+	}
+
+	if srv.downloader == nil {
+		srv.downloader = NewSAServiceDownloader(srv)
+	}
+	return srv.downloader, nil
 }
 
 func (srv *SAServices) Render() {
@@ -203,9 +220,16 @@ func (srv *SAServices) handlerWhisper(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//translate
-	outJs, _, _, err := srv.GetWhisper().Translate(node.GetAttrString("model", ""), InitOsBlob(st.Data), &props)
+	model := node.GetAttrString("model", "")
+	wh, err := srv.GetWhisper(model)
 	if err != nil {
-		http.Error(w, "Whisper() failed: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "GetWhisper() failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	outJs, _, _, err := wh.Translate(model, InitOsBlob(st.Data), &props)
+	if err != nil {
+		http.Error(w, "Translate() failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -268,9 +292,15 @@ func (srv *SAServices) handlerLLama(w http.ResponseWriter, r *http.Request) {
 	props.Messages = msgs
 
 	//complete
-	answer, err := srv.GetLLama().Complete(&props)
+	lm, err := srv.GetLLama(props.Model)
 	if err != nil {
-		http.Error(w, "LLama() failed: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "GetLLama() failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	answer, err := lm.Complete(&props)
+	if err != nil {
+		http.Error(w, "Complete() failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -307,6 +337,55 @@ func (srv *SAServices) handlerOpenAI(w http.ResponseWriter, r *http.Request) {
 	w.Write(answer)
 }
 
+func (srv *SAServices) handlerNetwork(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+
+	//get base struct
+	type Net struct {
+		Node string `json:"node"`
+		Path string `json:"path"` //otherwise return []byte(keep it in RAM)
+	}
+	var st Net
+	err = json.Unmarshal(body, &st)
+	if err != nil {
+		http.Error(w, "Unmarshal() 1 failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	//find node
+	if srv.job_app == nil {
+		http.Error(w, "job_app is nil", http.StatusInternalServerError)
+		return
+	}
+	node := srv.job_app.root.FindNode(st.Node)
+	if node == nil {
+		http.Error(w, "Node not found", http.StatusInternalServerError)
+		return
+	}
+
+	//build properties
+	/*down, err := srv.GetDownloader()
+	if err != nil {
+		http.Error(w, "GetDownloader() failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}*/
+
+	//down.AddJob()
+	//......................
+	//struct: file or RAM?
+
+	//user can cancel ... bottom header with actual action
+	//ask: start from scratch or continue - if size is over 10MB?
+
+	//down.AddJob()
+
+	//w.Write(outJs)
+}
+
 func (srv *SAServices) Run(port int) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/getjob", srv.handlerGetJob)
@@ -315,6 +394,7 @@ func (srv *SAServices) Run(port int) {
 	mux.HandleFunc("/whispercpp", srv.handlerWhisper)
 	mux.HandleFunc("/llamacpp", srv.handlerLLama)
 	mux.HandleFunc("/openai", srv.handlerOpenAI)
+	mux.HandleFunc("/net", srv.handlerNetwork)
 	srv.server = &http.Server{Addr: ":" + strconv.Itoa(port), Handler: mux}
 
 	go func() {
