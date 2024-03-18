@@ -230,16 +230,9 @@ func (wh *SAServiceLLamaCpp) complete(props *SAServiceLLamaCppProps) ([]byte, er
 
 func (wh *SAServiceLLamaCpp) getHealth() error {
 
-	req, err := http.NewRequest(http.MethodPost, wh.addr+"health", nil)
+	res, err := http.Get(wh.addr + "health")
 	if err != nil {
-		return fmt.Errorf("NewRequest() failed: %w", err)
-	}
-	req.Header.Add("Content-Type", "application/json")
-
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("Do() failed: %w", err)
+		return fmt.Errorf("Get() failed: %w", err)
 	}
 
 	resBody, err := io.ReadAll(res.Body)
