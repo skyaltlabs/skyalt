@@ -19,11 +19,14 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"sync"
+	"time"
 )
 
 type SAServiceLLamaCppProps struct {
@@ -68,6 +71,7 @@ func (p *SAServiceLLamaCppProps) Hash() (OsHash, error) {
 
 type SAServiceLLamaCpp struct {
 	services *SAServices
+	cmd      *exec.Cmd
 	addr     string //http://127.0.0.1:8080/
 
 	cache      map[string][]byte //results
@@ -78,7 +82,7 @@ func SAServiceLLamaCpp_cachePath() string {
 	return "services/llama.cpp.json"
 }
 
-func NewSAServiceLLamaCpp(services *SAServices, addr string, port string) *SAServiceLLamaCpp {
+func NewSAServiceLLamaCpp(services *SAServices, addr string, port string, init_model string) (*SAServiceLLamaCpp, error) {
 	wh := &SAServiceLLamaCpp{services: services}
 
 	wh.addr = addr + ":" + port + "/"
@@ -91,12 +95,38 @@ func NewSAServiceLLamaCpp(services *SAServices, addr string, port string) *SASer
 		if len(js) > 0 {
 			err := json.Unmarshal(js, &wh.cache)
 			if err != nil {
-				fmt.Printf("NewSAServiceLLamaCpp() failed: %v\n", err)
+				return nil, fmt.Errorf("NewSAServiceLLamaCpp() failed: %w", err)
 			}
 		}
 	}
 
-	return wh
+	//run process
+	{
+		wh.cmd = exec.Command("./server", "--port", port, "-m", "models/"+init_model)
+		wh.cmd.Dir = "services/llama.cpp/"
+
+		wh.cmd.Stdout = os.Stdout
+		wh.cmd.Stderr = os.Stderr
+		err := wh.cmd.Start()
+		if err != nil {
+			return nil, fmt.Errorf("Command() failed: %w", err)
+		}
+	}
+
+	//wait until it's running
+	{
+		err := errors.New("err")
+		st := OsTicks()
+		for err != nil && OsIsTicksIn(st, 60000) { //max 60sec to start
+			err = wh.getHealth()
+			time.Sleep(200 * time.Millisecond)
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return wh, nil
 }
 func (wh *SAServiceLLamaCpp) Destroy() {
 	//save cache
@@ -196,4 +226,30 @@ func (wh *SAServiceLLamaCpp) complete(props *SAServiceLLamaCppProps) ([]byte, er
 	}
 
 	return []byte(answer.Choices[0].Message.Content), nil
+}
+
+func (wh *SAServiceLLamaCpp) getHealth() error {
+
+	req, err := http.NewRequest(http.MethodPost, wh.addr+"health", nil)
+	if err != nil {
+		return fmt.Errorf("NewRequest() failed: %w", err)
+	}
+	req.Header.Add("Content-Type", "application/json")
+
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("Do() failed: %w", err)
+	}
+
+	resBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("ReadAll() failed: %w", err)
+	}
+
+	if res.StatusCode != 200 {
+		return fmt.Errorf("statusCode: %d, response: %s", res.StatusCode, resBody)
+	}
+
+	return nil
 }
