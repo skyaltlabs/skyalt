@@ -132,7 +132,7 @@
 "grid_x": 0,
 "grid_y": 0,
 "init_sql": "CREATE TABLE IF NOT EXISTS chat (role TEXT, content TEXT);\n",
-"path": "chat.sqlite",
+"path": "apps/chat/chat.sqlite",
 "selected_table": "chat",
 "show": false,
 "write": false
