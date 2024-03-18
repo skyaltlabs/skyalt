@@ -109,7 +109,7 @@ func SAServiceWhisperCpp_cachePath() string {
 	return "services/whisper.cpp.json"
 }
 
-func NewSAServiceWhisperCpp(services *SAServices, addr string, port string) *SAServiceWhisperCpp {
+func NewSAServiceWhisperCpp(services *SAServices, addr string, port string, init_model string) (*SAServiceWhisperCpp, error) {
 	wh := &SAServiceWhisperCpp{services: services}
 
 	wh.addr = addr + ":" + port + "/"
@@ -122,21 +122,22 @@ func NewSAServiceWhisperCpp(services *SAServices, addr string, port string) *SAS
 		if len(js) > 0 {
 			err := json.Unmarshal(js, &wh.cache)
 			if err != nil {
-				fmt.Printf("NewSAServiceWhisperCpp() failed: %v\n", err)
+				return nil, fmt.Errorf("NewSAServiceWhisperCpp() failed: %w", err)
 			}
 		}
 	}
 
 	//run process
+	modelPath := "models/" + init_model + ".bin"
 	{
-		wh.cmd = exec.Command("./server", "--port", port, "--convert", "-m", "models/ggml-tiny.en.bin")
+		wh.cmd = exec.Command("./server", "--port", port, "--convert", "-m", modelPath)
 		wh.cmd.Dir = "services/whisper.cpp/"
 
 		wh.cmd.Stdout = os.Stdout
 		wh.cmd.Stderr = os.Stderr
 		err := wh.cmd.Start()
 		if err != nil {
-			fmt.Println(err)
+			return nil, fmt.Errorf("Command() failed: %w", err)
 		}
 	}
 
@@ -144,13 +145,17 @@ func NewSAServiceWhisperCpp(services *SAServices, addr string, port string) *SAS
 	{
 		err := errors.New("err")
 		st := OsTicks()
-		for err != nil && OsIsTicksIn(st, 3000) {
-			err = wh.setModel("")
-			time.Sleep(50 * time.Millisecond)
+		for err != nil && OsIsTicksIn(st, 10000) { //max 10sec to start
+			err = wh.setModel(modelPath)
+			time.Sleep(200 * time.Millisecond)
 		}
+		if err != nil {
+			return nil, err
+		}
+		wh.last_setModel = init_model
 	}
 
-	return wh
+	return wh, nil
 }
 func (wh *SAServiceWhisperCpp) Destroy() {
 	//save cache
