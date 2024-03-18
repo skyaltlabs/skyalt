@@ -51,7 +51,7 @@ type SANodeCodeImport struct {
 type SANodeCode struct {
 	node *SANode
 
-	Triggers []string //nodes
+	//Triggers []string //nodes
 	Messages []SANodeCodeChat
 
 	Code string
@@ -74,14 +74,14 @@ func InitSANodeCode(node *SANode) SANodeCode {
 	return ls
 }
 
-func (ls *SANodeCode) addTrigger(name string) {
+/*func (ls *SANodeCode) addTrigger(name string) {
 	for _, tr := range ls.Triggers {
 		if tr == name {
 			return
 		}
 	}
 	ls.Triggers = append(ls.Triggers, name)
-}
+}*/
 
 func (ls *SANodeCode) findNodeName(nm string) (*SANode, error) {
 	node := ls.node.FindNode(nm)
@@ -271,7 +271,7 @@ func (ls *SANodeCode) GetAnswer() {
 
 func (ls *SANodeCode) IsTriggered() bool {
 
-	for _, tr := range ls.Triggers {
+	/*for _, tr := range ls.Triggers {
 		nd := ls.node.FindNode(tr)
 		if nd != nil {
 			if nd.IsTriggered() {
@@ -280,7 +280,14 @@ func (ls *SANodeCode) IsTriggered() bool {
 		} else {
 			fmt.Println("Error: Node not found", tr)
 		}
+	}*/
+
+	for _, nd := range ls.func_depends {
+		if nd.IsTriggered() {
+			return true
+		}
 	}
+
 	return false
 }
 
@@ -646,11 +653,11 @@ func ReplaceWord(str string, oldWord string, newWord string) string {
 func (ls *SANodeCode) RenameNode(old_name string, new_name string) {
 
 	//triggers
-	for i, tr := range ls.Triggers {
+	/*for i, tr := range ls.Triggers {
 		if tr == old_name {
 			ls.Triggers[i] = new_name
 		}
-	}
+	}*/
 
 	//chat
 	for _, it := range ls.Messages {

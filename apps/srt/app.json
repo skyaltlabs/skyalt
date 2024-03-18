@@ -6,7 +6,6 @@
 "Name": "root",
 "Exe": "layout",
 "Code": {
-"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -72,25 +71,22 @@
 "Exe": "func_go",
 "Selected": true,
 "Code": {
-"Triggers": [
-"button"
-],
 "Messages": [
 {
-"User": "Use 'whispercpp' to translate all .wav files in 'disk_dir'. Save translations as files with same name + \".srt\".",
-"Assistent": "```go\nimport (\n\t\"io/ioutil\"\n\t\"path/filepath\"\n\t\"strings\"\n)\n\nfunc func_go(whispercpp *Whispercpp, disk_dir *Disk_dir) error {\n\tfiles, err := ioutil.ReadDir(disk_dir.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tfor _, file := range files {\n\t\tif filepath.Ext(file.Name()) == \".wav\" {\n\t\t\ttranslation, err := whispercpp.Translate(filepath.Join(disk_dir.Path, file.Name()))\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t\tsrtPath := filepath.Join(disk_dir.Path, strings.TrimSuffix(file.Name(), filepath.Ext(file.Name()))+\".srt\")\n\t\t\terr = ioutil.WriteFile(srtPath, []byte(translation), 0644)\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n```"
+"User": "If 'button' is clicked, use 'whispercpp' to translate all .wav files in 'disk_dir'.\nSave translations as files with same name + \".srt\".",
+"Assistent": "```go\nimport (\n\t\"io/ioutil\"\n\t\"path/filepath\"\n\t\"strings\"\n)\n\nfunc func_go(button *Button, whispercpp *Whispercpp, disk_dir *Disk_dir) error {\n\tif button.Clicked {\n\t\tfiles, err := ioutil.ReadDir(disk_dir.Path)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tfor _, file := range files {\n\t\t\tif filepath.Ext(file.Name()) == \".wav\" {\n\t\t\t\ttranslation, err := whispercpp.Translate(filepath.Join(disk_dir.Path, file.Name()))\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t\tsrtFilename := strings.TrimSuffix(file.Name(), filepath.Ext(file.Name())) + \".srt\"\n\t\t\t\tsrtPath := filepath.Join(disk_dir.Path, srtFilename)\n\t\t\t\terr = ioutil.WriteFile(srtPath, []byte(translation), 0644)\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n```"
 },
 {
 "User": "",
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"io/ioutil\"\n\t\"path/filepath\"\n)\n\nfunc func_go(whispercpp *Whispercpp, disk_dir *Disk_dir) error {\n\tfiles, err := ioutil.ReadDir(disk_dir.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tfor _, file := range files {\n\t\tif filepath.Ext(file.Name()) == \".wav\" {\n\t\t\ttranslation, err := whispercpp.Translate(filepath.Join(disk_dir.Path, file.Name()))\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t\tsrtPath := filepath.Join(disk_dir.Path, strings.TrimSuffix(file.Name(), filepath.Ext(file.Name()))+\".srt\")\n\t\t\terr = ioutil.WriteFile(srtPath, []byte(translation), 0644)\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n"
+"Code": "\nimport (\n\t\"io/ioutil\"\n\t\"path/filepath\"\n\t\"strings\"\n)\n\nfunc func_go(button *Button, whispercpp *Whispercpp, disk_dir *Disk_dir) error {\n\tif button.Clicked {\n\t\tfiles, err := ioutil.ReadDir(disk_dir.Path)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tfor _, file := range files {\n\t\t\tif filepath.Ext(file.Name()) == \".wav\" {\n\t\t\t\ttranslation, err := whispercpp.Translate(filepath.Join(disk_dir.Path, file.Name()))\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t\tsrtFilename := strings.TrimSuffix(file.Name(), filepath.Ext(file.Name())) + \".srt\"\n\t\t\t\tsrtPath := filepath.Join(disk_dir.Path, srtFilename)\n\t\t\t\terr = ioutil.WriteFile(srtPath, []byte(translation), 0644)\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n"
 },
 "Attrs": {
 "bypass": false
 },
-"ShowCodeChat": false
+"ShowCodeChat": true
 },
 {
 "Pos": {
@@ -100,7 +96,6 @@
 "Name": "whispercpp",
 "Exe": "whispercpp",
 "Code": {
-"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -137,7 +132,6 @@
 "Name": "button",
 "Exe": "button",
 "Code": {
-"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -162,7 +156,6 @@
 "Name": "disk_dir",
 "Exe": "disk_dir",
 "Code": {
-"Triggers": null,
 "Messages": null,
 "Code": ""
 },

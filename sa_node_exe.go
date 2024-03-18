@@ -900,7 +900,7 @@ func UiCodeGo_Attrs(node *SANode) {
 	}
 
 	//triggers
-	{
+	/*{
 		ui.Comp_text(0, y, 1, 1, "Triggers", 0)
 		nTrigs := len(node.Code.Triggers)
 		ui.Div_start(1, y, 1, nTrigs+1)
@@ -927,7 +927,7 @@ func UiCodeGo_Attrs(node *SANode) {
 		}
 		ui.Div_end()
 		y += nTrigs + 1
-	}
+	}*/
 
 	ui.Div_SpacerRow(0, y, 2, 1)
 	y++
@@ -1023,18 +1023,26 @@ func UiWhisperCpp_Attrs(node *SANode) {
 	ui.Div_colMax(1, 100)
 
 	grid := InitOsV4(0, 0, 1, 1)
-
-	//build model list
-	var models []string
-	for _, m := range g_whisper_modelList {
-		if m != "" { //1st is empty
+	ui.Div_start(0, 0, 2, 1)
+	{
+		//build model list
+		var models []string
+		for _, m := range g_whisper_modelList {
 			if OsFileExists(filepath.Join(g_whisper_modelsFolder, m+".bin")) {
 				models = append(models, m)
 			}
 		}
-	}
 
-	node.ShowAttrStringCombo(&grid, "model", OsTrnString(len(models) > 0, models[0], ""), models, models)
+		ui.Div_colMax(0, 3)
+		ui.Div_colMax(1, 100)
+		ui.Div_colMax(2, 5)
+		node.ShowAttrStringCombo(&grid, "model", OsTrnString(len(models) > 0, models[0], ""), models, models)
+		ui.Comp_text(2, 0, 1, 1, "Use Whisper_downloader App", 0) //Launch it ...
+		//if ui.Comp_buttonLight(2, 0, 1, 1, "Download", "", true) > 0 {
+		//	ui.Dialog_open("models", 0)
+		//}
+	}
+	ui.Div_end()
 
 	node.ShowAttrInt(&grid, "offset_t", 0)
 	node.ShowAttrInt(&grid, "offset_n", 0)
@@ -1061,8 +1069,6 @@ func UiWhisperCpp_Attrs(node *SANode) {
 	node.ShowAttrFloat(&grid, "temperature_inc", 0.2, 3)
 
 	node.ShowAttrStringCombo(&grid, "response_format", "verbose_json", g_whisper_formats, g_whisper_formats)
-
-	// downloader ...
 }
 
 var g_llama_modelsFolder = "services/llama.cpp/models/"
@@ -1073,17 +1079,27 @@ func UiLLamaCpp_Attrs(node *SANode) {
 	ui.Div_colMax(1, 100)
 
 	grid := InitOsV4(0, 0, 1, 1)
-
-	//build model list
-	var models []string
-	modelFiles := OsFileListBuild(g_llama_modelsFolder, "", true)
-	for _, m := range modelFiles.Subs {
-		if !m.IsDir && !strings.HasPrefix(m.Name, "ggml-vocab") {
-			models = append(models, m.Name)
+	ui.Div_start(0, 0, 2, 1)
+	{
+		//build model list
+		var models []string
+		modelFiles := OsFileListBuild(g_llama_modelsFolder, "", true)
+		for _, m := range modelFiles.Subs {
+			if !m.IsDir && !strings.HasPrefix(m.Name, "ggml-vocab") {
+				models = append(models, m.Name)
+			}
 		}
-	}
 
-	node.ShowAttrStringCombo(&grid, "model", OsTrnString(len(models) > 0, models[0], ""), models, models)
+		ui.Div_colMax(0, 3)
+		ui.Div_colMax(1, 100)
+		ui.Div_colMax(2, 3)
+		node.ShowAttrStringCombo(&grid, "model", OsTrnString(len(models) > 0, models[0], ""), models, models)
+		ui.Comp_text(2, 0, 1, 1, "Use LLama_downloader App", 0) //Launch it ...
+		//if ui.Comp_buttonLight(2, 0, 1, 1, "Download", "", true) > 0 {
+		//	ui.Dialog_open("models", 0)
+		//}
+	}
+	ui.Div_end()
 
 	//...
 	/*stopAttr := node.GetAttr("stop", []byte(`["</s>", "Llama:", "User:"]`))
@@ -1116,8 +1132,6 @@ func UiLLamaCpp_Attrs(node *SANode) {
 	//Image_data
 	node.ShowAttrBool(&grid, "cache_prompt", false)
 	node.ShowAttrInt(&grid, "slot_id", -1)
-
-	//downloader ...
 }
 
 var g_oia_modelList = []string{"gpt-3.5-turbo", "gpt-4", "gpt-4-turbo-preview"}

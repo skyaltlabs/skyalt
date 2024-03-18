@@ -6,7 +6,6 @@
 "Name": "root",
 "Exe": "layout",
 "Code": {
-"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -65,15 +64,12 @@
 "Subs": [
 {
 "Pos": {
-"X": 21.281536,
-"Y": 10.052498
+"X": 20.143398,
+"Y": 11.929375
 },
 "Name": "BuildTextChat",
 "Exe": "func_go",
 "Code": {
-"Triggers": [
-"db"
-],
 "Messages": [
 {
 "User": "From 'db' create text in form: \u003crole\u003e: \u003ccontent\u003e\\n.  Save text into 'text'.",
@@ -84,7 +80,7 @@
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc BuildTextChat(db *Sqlite, text *Text) error {\n\tdatabase, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer database.Close()\n\n\trows, err := database.Query(\"SELECT role, content FROM chat\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tvar chatText string\n\tfor rows.Next() {\n\t\tvar role, content string\n\t\tif err := rows.Scan(\u0026role, \u0026content); err != nil {\n\t\t\treturn err\n\t\t}\n\t\tchatText += fmt.Sprintf(\"%s: %s\\n\", role, content)\n\t}\n\tif err := rows.Err(); err != nil {\n\t\treturn err\n\t}\n\n\ttext.Label = chatText\n\treturn nil\n}\n"
+"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc BuildTextChat(db *Sqlite, text *Text) error {\n\tdatabase, _ := sql.Open(\"sqlite3\", db.Path)\n\tdefer database.Close()\n\n\trows, _ := database.Query(\"SELECT role, content FROM chat\")\n\tdefer rows.Close()\n\n\tvar chatText string\n\tfor rows.Next() {\n\t\tvar role, content string\n\t \trows.Scan(\u0026role, \u0026content)\n\t\t\t\n\t\tchatText += fmt.Sprintf(\"%s: %s\\n\", role, content)\n\t}\n\n\ttext.Label = chatText\n\treturn nil\n}\n"
 },
 "Attrs": {
 "bypass": false
@@ -93,41 +89,38 @@
 },
 {
 "Pos": {
-"X": 13.665918,
-"Y": 6.6290755
+"X": 12.419673,
+"Y": 8.505952
 },
 "Name": "Chat",
 "Exe": "func_go",
 "Code": {
-"Triggers": [
-"button"
-],
 "Messages": [
 {
-"User": "Build messages from 'db'. Add 'user_msg' to messages and send it to 'llamacpp' to get answer.\nSave answer and 'user_msg' into 'db'. Reset 'user_msg' editbox.",
-"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc Chat(db *Sqlite, user_msg *Editbox, llamacpp *Llamacpp) error {\n\tsqlDB, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer sqlDB.Close()\n\n\t// Read chat history from SQLite database\n\trows, err := sqlDB.Query(\"SELECT role, content FROM chat\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tvar messages []LlamaMessage\n\tfor rows.Next() {\n\t\tvar role, content string\n\t\tif err := rows.Scan(\u0026role, \u0026content); err != nil {\n\t\t\treturn err\n\t\t}\n\t\tmessages = append(messages, LlamaMessage{Role: role, Content: content})\n\t}\n\tif err := rows.Err(); err != nil {\n\t\treturn err\n\t}\n\n\t// Add user message to the chat history\n\tmessages = append(messages, LlamaMessage{Role: \"user\", Content: user_msg.Value})\n\n\t// Get answer from llamacpp\n\tanswer, err := llamacpp.GetAnswer(messages)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\t// Save the user message and llamacpp's answer into the SQLite database\n\ttx, err := sqlDB.Begin()\n\tif err != nil {\n\t\treturn err\n\t}\n\n\t_, err = tx.Exec(\"INSERT INTO chat(role, content) VALUES(?, ?)\", \"user\", user_msg.Value)\n\tif err != nil {\n\t\ttx.Rollback()\n\t\treturn err\n\t}\n\n\t_, err = tx.Exec(\"INSERT INTO chat(role, content) VALUES(?, ?)\", \"assistant\", answer)\n\tif err != nil {\n\t\ttx.Rollback()\n\t\treturn err\n\t}\n\n\terr = tx.Commit()\n\tif err != nil {\n\t\treturn err\n\t}\n\n\t// Reset 'user_msg' editbox\n\tuser_msg.Value = \"\"\n\n\treturn nil\n}\n```"
+"User": "If 'button' is clicked, build messages from 'db'. Add 'user_msg' to messages and send it to 'llamacpp' to get answer.\nSave answer and 'user_msg' into 'db'. Reset 'user_msg' editbox.",
+"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc Chat(button *Button, db *Sqlite, user_msg *Editbox, llamacpp *Llamacpp) error {\n\tif !button.Clicked {\n\t\treturn nil\n\t}\n\tbutton.Clicked = false\n\n\tsqlDB, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer sqlDB.Close()\n\n\t// Build messages from database.\n\tvar messages []LlamaMessage\n\trows, err := sqlDB.Query(\"SELECT role, content FROM chat\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tfor rows.Next() {\n\t\tvar msg LlamaMessage\n\t\tif err := rows.Scan(\u0026msg.Role, \u0026msg.Content); err != nil {\n\t\t\treturn err\n\t\t}\n\t\tmessages = append(messages, msg)\n\t}\n\trows.Close()\n\n\t// Add 'user_msg' to messages.\n\tmessages = append(messages, LlamaMessage{Role: \"user\", Content: user_msg.Value})\n\n\t// Get answer from llamacpp.\n\tanswer, err := llamacpp.GetAnswer(messages)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\t// Begin transaction.\n\ttx, err := sqlDB.Begin()\n\tif err != nil {\n\t\treturn err\n\t}\n\n\t// Insert 'user_msg' into 'db'.\n\t_, err = tx.Exec(\"INSERT INTO chat (role, content) VALUES (?, ?)\", \"user\", user_msg.Value)\n\tif err != nil {\n\t\ttx.Rollback()\n\t\treturn err\n\t}\n\n\t// Insert answer into 'db'.\n\t_, err = tx.Exec(\"INSERT INTO chat (role, content) VALUES (?, ?)\", \"assistant\", answer)\n\tif err != nil {\n\t\ttx.Rollback()\n\t\treturn err\n\t}\n\n\t// Commit the transaction.\n\tif err := tx.Commit(); err != nil {\n\t\treturn err\n\t}\n\n\t// Reset 'user_msg' editbox.\n\tuser_msg.Value = \"\"\n\n\treturn nil\n}\n```"
 },
 {
 "User": "",
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"database/sql\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc Chat(db *Sqlite, user_msg *Editbox, llamacpp *Llamacpp) error {\n\tsqlDB, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer sqlDB.Close()\n\n\t// Read chat history from SQLite database\n\trows, err := sqlDB.Query(\"SELECT role, content FROM chat\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tvar messages []LlamaMessage\n\tfor rows.Next() {\n\t\tvar role, content string\n\t\tif err := rows.Scan(\u0026role, \u0026content); err != nil {\n\t\t\treturn err\n\t\t}\n\t\tmessages = append(messages, LlamaMessage{Role: role, Content: content})\n\t}\n\tif err := rows.Err(); err != nil {\n\t\treturn err\n\t}\n\n\t// Add user message to the chat history\n\tmessages = append(messages, LlamaMessage{Role: \"user\", Content: user_msg.Value})\n\n\t// Get answer from llamacpp\n\tanswer, err := llamacpp.GetAnswer(messages)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\t// Save the user message and llamacpp's answer into the SQLite database\n\ttx, err := sqlDB.Begin()\n\tif err != nil {\n\t\treturn err\n\t}\n\n\t_, err = tx.Exec(\"INSERT INTO chat(role, content) VALUES(?, ?)\", \"user\", user_msg.Value)\n\tif err != nil {\n\t\ttx.Rollback()\n\t\treturn err\n\t}\n\n\t_, err = tx.Exec(\"INSERT INTO chat(role, content) VALUES(?, ?)\", \"assistant\", answer)\n\tif err != nil {\n\t\ttx.Rollback()\n\t\treturn err\n\t}\n\n\terr = tx.Commit()\n\tif err != nil {\n\t\treturn err\n\t}\n\n\t// Reset 'user_msg' editbox\n\tuser_msg.Value = \"\"\n\n\treturn nil\n}\n"
+"Code": "\nimport (\n\t\"database/sql\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc Chat(button *Button, db *Sqlite, user_msg *Editbox, llamacpp *Llamacpp) error {\n\tif !button.Clicked {\n\t\treturn nil\n\t}\n\tbutton.Clicked = false\n\n\tsqlDB, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer sqlDB.Close()\n\n\t// Build messages from database.\n\tvar messages []LlamaMessage\n\trows, err := sqlDB.Query(\"SELECT role, content FROM chat\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tfor rows.Next() {\n\t\tvar msg LlamaMessage\n\t\tif err := rows.Scan(\u0026msg.Role, \u0026msg.Content); err != nil {\n\t\t\treturn err\n\t\t}\n\t\tmessages = append(messages, msg)\n\t}\n\trows.Close()\n\n\t// Add 'user_msg' to messages.\n\tmessages = append(messages, LlamaMessage{Role: \"user\", Content: user_msg.Value})\n\n\t// Get answer from llamacpp.\n\tanswer, err := llamacpp.GetAnswer(messages)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\t// Begin transaction.\n\ttx, err := sqlDB.Begin()\n\tif err != nil {\n\t\treturn err\n\t}\n\n\t// Insert 'user_msg' into 'db'.\n\t_, err = tx.Exec(\"INSERT INTO chat (role, content) VALUES (?, ?)\", \"user\", user_msg.Value)\n\tif err != nil {\n\t\ttx.Rollback()\n\t\treturn err\n\t}\n\n\t// Insert answer into 'db'.\n\t_, err = tx.Exec(\"INSERT INTO chat (role, content) VALUES (?, ?)\", \"assistant\", answer)\n\tif err != nil {\n\t\ttx.Rollback()\n\t\treturn err\n\t}\n\n\t// Commit the transaction.\n\tif err := tx.Commit(); err != nil {\n\t\treturn err\n\t}\n\n\t// Reset 'user_msg' editbox.\n\tuser_msg.Value = \"\"\n\n\treturn nil\n}\n"
 },
 "Attrs": {
 "bypass": false
 },
-"ShowCodeChat": false
+"ShowCodeChat": true
 },
 {
 "Pos": {
-"X": 13.774025,
-"Y": 10.007454
+"X": 12.524776,
+"Y": 11.82427
 },
 "Name": "db",
 "Exe": "sqlite",
+"Selected": true,
 "Code": {
-"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -148,13 +141,12 @@
 },
 {
 "Pos": {
-"X": 5.8400917,
-"Y": 6.6290746
+"X": 4.563815,
+"Y": 8.445891
 },
 "Name": "llamacpp",
 "Exe": "llamacpp",
 "Code": {
-"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -185,15 +177,12 @@
 },
 {
 "Pos": {
-"X": 13.58784,
-"Y": 3.487934
+"X": 12.28754,
+"Y": 5.265712
 },
 "Name": "func_go",
 "Exe": "func_go",
 "Code": {
-"Triggers": [
-"user_msg"
-],
 "Messages": [
 {
 "User": "If 'user_msg' is empty, disable 'button'. Otherwise button is enabled.",
@@ -209,17 +198,16 @@
 "Attrs": {
 "bypass": false
 },
-"ShowCodeChat": false
+"ShowCodeChat": true
 },
 {
 "Pos": {
-"X": 20.93102,
-"Y": 3.4972522
+"X": 19.816908,
+"Y": 5.3681235
 },
 "Name": "button",
 "Exe": "button",
 "Code": {
-"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -238,13 +226,12 @@
 },
 {
 "Pos": {
-"X": 5.7109613,
-"Y": 3.4316897
+"X": 4.4346848,
+"Y": 5.248507
 },
 "Name": "user_msg",
 "Exe": "editbox",
 "Code": {
-"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -267,13 +254,12 @@
 },
 {
 "Pos": {
-"X": 21.210209,
-"Y": 6.7066345
+"X": 19.933933,
+"Y": 8.44237
 },
 "Name": "text",
 "Exe": "text",
 "Code": {
-"Triggers": null,
 "Messages": null,
 "Code": ""
 },

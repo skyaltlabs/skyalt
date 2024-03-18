@@ -34,8 +34,8 @@ type SAGraph struct {
 	touch_start        OsV2
 	node_move_selected SANodePath
 
-	connect_in  *SANode
-	connect_out *SANode
+	//connect_in  *SANode
+	//connect_out *SANode
 
 	showNodeList          bool
 	showNodeList_justOpen bool
@@ -51,7 +51,7 @@ func NewSAGraph(app *SAApp) *SAGraph {
 	return &gr
 }
 
-func (gr *SAGraph) isConnecting() bool {
+/*func (gr *SAGraph) isConnecting() bool {
 	return gr.connect_in != nil || gr.connect_out != nil
 }
 
@@ -78,7 +78,7 @@ func (gr *SAGraph) SetConnectIn(attr *SANode) {
 func (gr *SAGraph) SetConnectOut(attr *SANode) {
 	gr.connect_out = attr
 	gr.tryConnect()
-}
+}*/
 
 func (gr *SAGraph) drawCreateNode() {
 	ui := gr.app.base.ui
@@ -283,7 +283,7 @@ func (gr *SAGraph) drawConnections() {
 
 	ui := gr.app.base.ui
 	lv := ui.GetCall()
-	cellr := gr.app.root.cellZoom(ui)
+	//cellr := gr.app.root.cellZoom(ui)
 
 	for _, out := range gr.app.all_nodes {
 
@@ -307,7 +307,7 @@ func (gr *SAGraph) drawConnections() {
 			gr.drawConnectionDirect(coordOut, coordIn, 0, Node_connectionCd(in.Selected || out.Selected, ui), 0)
 		}
 
-		for _, inName := range out.Code.Triggers {
+		/*for _, inName := range out.Code.Triggers {
 
 			in := out.FindNode(inName)
 			if in == nil {
@@ -325,7 +325,7 @@ func (gr *SAGraph) drawConnections() {
 			//coordOut = selCoordOut //move by button_circle_rad
 			//gr.drawConnectionTrigger(OsV2{selCoordIn.End().X, selCoordIn.Middle().Y}, OsV2{coordOut.Start.X, coordOut.Middle().Y}, cellr, cellr, Node_connectionCd(in.Selected || out.Selected, ui))
 			gr.drawConnectionDirect(coordOut, coordIn, cellr, Node_connectionCd(in.Selected || out.Selected, ui), cellr/10)
-		}
+		}*/
 	}
 }
 
@@ -409,7 +409,7 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 	}
 
 	//making connection
-	{
+	/*{
 		cellr := gr.app.root.cellZoom(ui)
 		cd := pl.P
 
@@ -428,7 +428,7 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 			}
 			gr.drawConnectionTrigger(ui.win.io.touch.pos, OsV2{coordOut.Start.X, coordOut.Middle().Y}, cellr, 0, cd)
 		}
-	}
+	}*/
 
 	//must be below dialog!
 	if !ui.GetCall().call.enableInput {
@@ -441,9 +441,9 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 	//keys actions
 	if keyAllow {
 		//reset connecting
-		if keys.esc {
+		/*if keys.esc {
 			gr.resetConnect(false)
-		}
+		}*/
 
 		//delete
 		if keys.delete {
@@ -528,7 +528,7 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 	//touch actions
 	{
 		//nodes
-		if touchInsideNode != nil && over && touch.start && !keys.shift && !keys.ctrl && !gr.isConnecting() {
+		if touchInsideNode != nil && over && touch.start && !keys.shift && !keys.ctrl /*&& !gr.isConnecting()*/ {
 			gr.node_move = true
 			gr.touch_start = touch.pos
 			gr.app.root.SetPosStart() //ALL nodes(not only selected)
@@ -573,7 +573,7 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 				gr.node_select = true
 				gr.touch_start = touch.pos
 
-				gr.resetConnect(true)
+				//gr.resetConnect(true)
 			}
 		}
 

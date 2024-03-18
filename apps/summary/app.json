@@ -6,7 +6,6 @@
 "Name": "root",
 "Exe": "layout",
 "Code": {
-"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -53,31 +52,28 @@
 "Subs": [
 {
 "Pos": {
-"X": 32.859215,
-"Y": 1.4485751
+"X": 32.940296,
+"Y": 1.5566833
 },
 "Name": "Summary",
 "Exe": "func_go",
 "Code": {
-"Triggers": [
-"button"
-],
 "Messages": [
 {
-"User": "Use 'openai' to create summary of 'editbox'.\nMake a prompt in the form: \"Please summarize this article into a few bullet points: \" + content of 'editbox' on the new line.\nSet answer to 'text'.",
-"Assistent": "```go\nimport (\n\t\"fmt\"\n)\n\nfunc Summary(openai *Openai, editbox *Editbox, text *Text) error {\n\tmessage := []OpenaiMessage{\n\t\t{\n\t\t\tRole:    \"system\",\n\t\t\tContent: \"Please summarize this article into a few bullet points:\",\n\t\t},\n\t\t{\n\t\t\tRole:    \"user\",\n\t\t\tContent: editbox.Value,\n\t\t},\n\t}\n\n\tanswer, err := openai.GetAnswer(message)\n\tif err != nil {\n\t\treturn fmt.Errorf(\"failed to get summary: %w\", err)\n\t}\n\n\ttext.Label = answer\n\treturn nil\n}\n```"
+"User": "If 'button' is clicked, use 'openai' to create summary of 'editbox'.\nMake a prompt in the form: \"Please summarize this article into a few bullet points: \" + content of 'editbox' on the new line.\nSet answer to 'text'.",
+"Assistent": "```go\nimport (\n\t\"fmt\"\n)\n\nfunc Summary(button *Button, openai *Openai, editbox *Editbox, text *Text) error {\n\tif button.Clicked {\n\t\tprompt := fmt.Sprintf(\"Please summarize this article into a few bullet points:\\n%s\", editbox.Value)\n\t\tanswer, err := openai.GetAnswer([]OpenaiMessage{{Role: \"user\", Content: prompt}})\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\ttext.Label = answer\n\t}\n\treturn nil\n}\n```"
 },
 {
 "User": "",
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"fmt\"\n)\n\nfunc Summary(openai *Openai, editbox *Editbox, text *Text) error {\n\tmessage := []OpenaiMessage{\n\t\t{\n\t\t\tRole:    \"system\",\n\t\t\tContent: \"Please summarize this article into a few bullet points:\",\n\t\t},\n\t\t{\n\t\t\tRole:    \"user\",\n\t\t\tContent: editbox.Value,\n\t\t},\n\t}\n\n\tanswer, err := openai.GetAnswer(message)\n\tif err != nil {\n\t\treturn fmt.Errorf(\"failed to get summary: %w\", err)\n\t}\n\n\ttext.Label = answer\n\treturn nil\n}\n"
+"Code": "\nimport (\n\t\"fmt\"\n)\n\nfunc Summary(button *Button, openai *Openai, editbox *Editbox, text *Text) error {\n\tif button.Clicked {\n\t\tprompt := fmt.Sprintf(\"Please summarize this article into a few bullet points:\\n%s\", editbox.Value)\n\t\tanswer, err := openai.GetAnswer([]OpenaiMessage{{Role: \"user\", Content: prompt}})\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\ttext.Label = answer\n\t}\n\treturn nil\n}\n"
 },
 "Attrs": {
 "bypass": false
 },
-"ShowCodeChat": false
+"ShowCodeChat": true
 },
 {
 "Pos": {
@@ -87,7 +83,6 @@
 "Name": "openai",
 "Exe": "openai",
 "Code": {
-"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -99,12 +94,11 @@
 {
 "Pos": {
 "X": 25.641022,
-"Y": 4.092611
+"Y": 4.0655837
 },
 "Name": "text",
 "Exe": "text",
 "Code": {
-"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -115,7 +109,7 @@
 "grid_w": 1,
 "grid_x": 1,
 "grid_y": 2,
-"label": "- The Velvet Revolution occurred in Czechoslovakia from 17th to 28th November 1989.\n- It was a non-violent transition of power that led to the end of 41 years of one-party rule in Czechoslovakia.\n- The revolution involved popular demonstrations against the Communist Party government, with participation from students and older dissidents.\n- The event began with a student demonstration on 17th November which was forcefully suppressed by riot police, leading to further protests.\n- The resignation of the entire top leadership of the Communist Party, including General Secretary Miloš Jakeš, occurred on 24th November.\n- On 27th November, a two-hour general strike involving all citizens of Czechoslovakia took place.",
+"label": "- The Velvet Revolution was a non-violent transition of power in Czechoslovakia from 17 to 28 November 1989\n- Popular demonstrations against the Communist Party of Czechoslovakia led to the end of 41 years of one-party rule\n- The revolution resulted in the dismantling of the command economy and the establishment of a parliamentary republic\n- The revolution began with a student demonstration on 17 November and continued with increasing protests culminating in a two-hour general strike on 27 November",
 "multi_line": true,
 "selection": true,
 "show": true,
@@ -125,13 +119,12 @@
 },
 {
 "Pos": {
-"X": 25.549984,
+"X": 25.522957,
 "Y": 1.5490556
 },
 "Name": "button",
 "Exe": "button",
 "Code": {
-"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -150,13 +143,12 @@
 },
 {
 "Pos": {
-"X": 25.396122,
+"X": 25.369095,
 "Y": -0.882856
 },
 "Name": "editbox",
 "Exe": "editbox",
 "Code": {
-"Triggers": null,
 "Messages": null,
 "Code": ""
 },
