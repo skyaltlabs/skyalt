@@ -140,8 +140,6 @@ func (node *SANode) IsTypeCode() bool {
 }
 
 func (node *SANode) IsWithChangedAttr() bool {
-	//Button and Editbox NOT here, because the have 'clicked' and 'finished'
-
 	grnd := node.app.base.node_groups.FindNode(node.Exe)
 	return grnd != nil && grnd.changedAttr
 }

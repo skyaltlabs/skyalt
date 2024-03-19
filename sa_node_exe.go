@@ -20,8 +20,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/go-audio/wav"
 )
 
 func UiButton_Attrs(node *SANode) {
@@ -456,6 +459,112 @@ func UiDiskFile_render(node *SANode) {
 		node.Attrs["changed"] = true
 	}
 }
+
+func UiMicrophone_Attrs(node *SANode) {
+	ui := node.app.base.ui
+	ui.Div_colMax(0, 3)
+	ui.Div_colMax(1, 100)
+
+	grid := InitOsV4(0, 0, 1, 1)
+
+	node.ShowAttrFilePicker(&grid, "path", "", true, "microphone_path_"+node.Name)
+	node.ShowAttrBool(&grid, "enable", true)
+	node.ShowAttrBool(&grid, "changed", false)
+}
+
+func UiMicrophone_render(node *SANode) {
+	grid := node.GetGrid()
+	path := node.GetAttrString("path", "")
+	enable := node.GetAttrBool("enable", true)
+
+	nodePath := NewSANodePath(node)
+	rec_active := node.app.IsMicNodeRecording(nodePath)
+
+	cd := CdPalette_B
+	if rec_active {
+		cd = CdPalette_P
+	}
+	ui := node.app.base.ui
+	if ui.Comp_buttonIcon(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, InitWinMedia_url("file:apps/base/resources/mic.png"), 0.15, "Enable/Disable audio recording", cd, enable, rec_active) > 0 {
+
+		if !rec_active {
+			//start
+			if ui.win.io.ini.MicOff {
+				node.SetError(errors.New("microphone is disabled in SkyAlt Settings"))
+				return
+			}
+			node.app.AddMicNode(nodePath)
+		} else {
+			//stop
+			node.app.RemoveMicNode(nodePath)
+
+			//make WAV file
+			{
+				//encode
+				//file := &OsWriterSeeker{}
+				file, err := os.Create(path)
+				if err != nil {
+					node.SetError(err)
+					return
+				}
+
+				buff := node.temp_mic_data
+				enc := wav.NewEncoder(file, buff.Format.SampleRate, buff.SourceBitDepth, buff.Format.NumChannels, 1)
+				err = enc.Write(&buff)
+				if err != nil {
+					enc.Close()
+					file.Close()
+					node.SetError(err)
+					return
+				}
+				enc.Close()
+				file.Close()
+
+				//save
+				//node.Attrs["data"] = file.buf.Bytes()
+
+				//reset
+				node.temp_mic_data.Data = nil
+			}
+
+			//set finished
+			node.Attrs["changed"] = true
+		}
+	}
+}
+
+/*func SAExe_Render_Microphone(w *SANode, renderIt bool) {
+	ui := w.app.base.ui
+	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
+
+	grid := w.GetGrid()
+
+	enable := w.GetAttrUi("enable", 1, SAAttrUi_SWITCH).GetBool()
+	fileAttr := w.GetAttr("temp_file", "temp_mic.wav")
+	outAttr := w.GetAttr("_out", "")
+	finishedAttr := w.GetAttrUi("finished", 0, SAAttrUi_SWITCH)
+
+	if fileAttr.GetString() == "" {
+		fileAttr.SetErrorStr("empty")
+		return
+	}
+
+	if showIt {
+
+
+	}
+
+	//read file
+	if !renderIt { //waste of resources to load file every drawFrame() ..........
+
+		wavData, err := os.ReadFile(fileAttr.GetString())
+		if err != nil {
+			w.SetError(err)
+			return
+		}
+		outAttr.SetOutBlob(wavData)
+	}
+}*/
 
 func UiSQLite_Attrs(node *SANode) {
 	ui := node.app.base.ui

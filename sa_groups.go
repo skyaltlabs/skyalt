@@ -63,13 +63,12 @@ func InitSAGroups() SAGroups {
 		{name: "divider", render: UiDivider_render, attrs: UiDivider_Attrs},
 		{name: "timer", render: UiTimer_render, attrs: UiTimer_Attrs},
 		{name: "date", render: UiDate_render, attrs: UiDate_Attrs, changedAttr: true},
+		{name: "microphone", render: UiMicrophone_render, attrs: UiMicrophone_Attrs, changedAttr: true},
 
-		/*
-			{name: "map", render: SAExe_Render_Map},
+		/*	{name: "map", render: SAExe_Render_Map},
 			{name: "image", render: SAExe_Render_Image},
 			{name: "list", render: SAExe_Render_List},
 			{name: "table", render: SAExe_Render_Table},
-			{name: "microphone", render: SAExe_Render_Microphone},
 			{name: "layout", render: SAExe_Render_Layout},
 			{name: "dialog", render: SAExe_Render_Dialog},*/
 	}})

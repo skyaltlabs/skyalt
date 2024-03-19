@@ -185,7 +185,7 @@ func (wh *SAServiceWhisperCpp) addCache(model string, blob OsBlob, propsHash OsH
 	wh.cache[model+blob.hash.Hex()+propsHash.Hex()] = value
 }
 
-func (wh *SAServiceWhisperCpp) Translate(model string, blob OsBlob, props *SAServiceWhisperCppProps) ([]byte, float64, bool, error) {
+func (wh *SAServiceWhisperCpp) Transcribe(model string, blob OsBlob, props *SAServiceWhisperCppProps) ([]byte, float64, bool, error) {
 	//find
 	propsHash, err := props.Hash()
 	if err != nil {
@@ -205,9 +205,9 @@ func (wh *SAServiceWhisperCpp) Translate(model string, blob OsBlob, props *SASer
 	}
 
 	//translate
-	out, err := wh.translate(blob, props)
+	out, err := wh.transcribe(blob, props)
 	if err != nil {
-		return nil, 0, false, fmt.Errorf("translate() failed: %w", err)
+		return nil, 0, false, fmt.Errorf("transcribe() failed: %w", err)
 	}
 
 	wh.addCache(model, blob, propsHash, out)
@@ -245,7 +245,7 @@ func (wh *SAServiceWhisperCpp) setModel(model string) error {
 	return nil
 }
 
-func (wh *SAServiceWhisperCpp) translate(blob OsBlob, props *SAServiceWhisperCppProps) ([]byte, error) {
+func (wh *SAServiceWhisperCpp) transcribe(blob OsBlob, props *SAServiceWhisperCppProps) ([]byte, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 

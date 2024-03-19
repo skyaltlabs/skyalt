@@ -227,9 +227,9 @@ func (srv *SAServices) handlerWhisper(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	outJs, _, _, err := wh.Translate(model, InitOsBlob(st.Data), &props)
+	outJs, _, _, err := wh.Transcribe(model, InitOsBlob(st.Data), &props)
 	if err != nil {
-		http.Error(w, "Translate() failed: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Transcribe() failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 

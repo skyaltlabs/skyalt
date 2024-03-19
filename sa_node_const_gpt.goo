@@ -67,10 +67,20 @@ type Sqlite struct {
 	Write bool
 }
 
+type Microphone struct {
+	Path  string	//path to the file with recorded audio
+	Enable  bool
+}
+
+
 type Whispercpp struct {
 	Model string
 }
-func (w *Whispercpp) Translate(filePath string) (string, error) {
+func (w *Whispercpp) TranscribeBlob(data []byte) (string, error) {
+	//TBD
+	return text
+}
+func (w *Whispercpp) TranscribeFile(filePath string) (string, error) {
 	//TBD
 	return text
 }
