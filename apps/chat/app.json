@@ -119,7 +119,6 @@
 },
 "Name": "db",
 "Exe": "sqlite",
-"Selected": true,
 "Code": {
 "Messages": null,
 "Code": ""
@@ -182,6 +181,7 @@
 },
 "Name": "func_go",
 "Exe": "func_go",
+"Selected": true,
 "Code": {
 "Messages": [
 {
@@ -213,7 +213,7 @@
 },
 "Attrs": {
 "clicked": false,
-"enable": true,
+"enable": false,
 "grid_h": 1,
 "grid_w": 1,
 "grid_x": 2,
@@ -238,8 +238,8 @@
 "Attrs": {
 "align_h": 0,
 "align_v": 0,
+"changed": false,
 "enable": true,
-"finished": false,
 "ghost": "",
 "grid_h": 1,
 "grid_w": 1,
@@ -248,6 +248,7 @@
 "multi_line": true,
 "multi_line_enter_finish": true,
 "show": true,
+"temp_to_value": true,
 "value": ""
 },
 "ShowCodeChat": false
@@ -270,7 +271,7 @@
 "grid_w": 2,
 "grid_x": 1,
 "grid_y": 1,
-"label": "user: What is the biggest city in the Czech Republic?\nassistant: The biggest city in the Czech Republic is Prague. It has a population of over 1.3 million people and is the capital of the country.\nuser: What is the 2nd?\nassistant: The second biggest city in the Czech Republic is Brno, with a population of over 400,000 people. It is located in the south-east of the country and is known for its cultural attractions.\n",
+"label": "user: What is the biggest city in the Czech Republic?\nassistant: The biggest city in the Czech Republic is Prague. It has a population of over 1.3 million people and is the capital of the country.\nuser: What is the 2nd?\nassistant: The second biggest city in the Czech Republic is Brno, with a population of over 400,000 people. It is located in the south-east of the country and is known for its cultural attractions.\nuser: What is the 3rd?\nassistant: The third biggest city in the Czech Republic is Ostrava, with a population of over 300,000 people. It is located in the north-east of the country and is known for its industrial heritage.\n",
 "multi_line": true,
 "selection": true,
 "show": true,
