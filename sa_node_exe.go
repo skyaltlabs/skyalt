@@ -99,7 +99,9 @@ func UiEditbox_Attrs(node *SANode) {
 	node.ShowAttrBool(&grid, "enable", true)
 	node.ShowAttrBool(&grid, "multi_line", false)
 	node.ShowAttrBool(&grid, "multi_line_enter_finish", false)
-	node.ShowAttrBool(&grid, "finished", false)
+	node.ShowAttrBool(&grid, "changed", false)
+	node.ShowAttrBool(&grid, "temp_to_value", false)
+
 }
 
 func UiEditbox_render(node *SANode) {
@@ -111,12 +113,21 @@ func UiEditbox_render(node *SANode) {
 	enable := node.GetAttrBool("enable", true)
 	multi_line := node.GetAttrBool("multi_line", false)
 	multi_line_enter_finish := node.GetAttrBool("multi_line_enter_finish", false)
-	//finished := node.GetAttrBool("finished", false)
+	temp_to_value := node.GetAttrBool("temp_to_value", false)
 
-	_, _, _, fnshd, _ := node.app.base.ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, Comp_editboxProp().Ghost(ghost).MultiLine(multi_line).MultiLineEnterFinish(multi_line_enter_finish).Enable(enable).Align(align_h, align_v))
+	editedValue, active, _, fnshd, _ := node.app.base.ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, Comp_editboxProp().Ghost(ghost).MultiLine(multi_line).MultiLineEnterFinish(multi_line_enter_finish).Enable(enable).Align(align_h, align_v))
+
+	if temp_to_value && active {
+		old_changed := node.GetAttrBool("changed", false)
+		if !old_changed {
+			node.Attrs["changed"] = (node.Attrs["value"] != editedValue)
+		}
+		node.Attrs["value"] = editedValue
+	}
+
 	if fnshd {
+		node.Attrs["changed"] = (node.Attrs["value"] != value)
 		node.Attrs["value"] = value
-		node.Attrs["finished"] = true
 	}
 }
 

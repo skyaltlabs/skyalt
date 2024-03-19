@@ -154,12 +154,10 @@ func (node *SANode) IsTriggered() bool {
 	if strings.EqualFold(node.Exe, "button") {
 		return node.GetAttrBool("clicked", false)
 	}
-	if strings.EqualFold(node.Exe, "editbox") {
-		return node.GetAttrBool("finished", false)
-	}
 	if strings.EqualFold(node.Exe, "timer") {
 		return node.GetAttrBool("done", false)
 	}
+
 	if node.IsWithChangedAttr() {
 		return node.GetAttrBool("changed", false)
 	}
@@ -171,12 +169,10 @@ func (node *SANode) ResetTriggers() {
 	if strings.EqualFold(node.Exe, "button") {
 		node.Attrs["clicked"] = false
 	}
-	if strings.EqualFold(node.Exe, "editbox") {
-		node.Attrs["finished"] = false
-	}
 	if strings.EqualFold(node.Exe, "timer") {
 		node.Attrs["done"] = false
 	}
+
 	if node.IsWithChangedAttr() {
 		node.Attrs["changed"] = false
 	}

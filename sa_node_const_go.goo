@@ -24,7 +24,8 @@ type Editbox struct {
 	Enable                  bool   `json:"enable"`
 	Multi_line              bool   `json:"multi_line"`
 	Multi_line_enter_finish bool   `json:"multi_line_enter_finish"`
-	Finished                bool   `json:"finished"`
+	Temp_to_value           bool   `json:"temp_to_value"`
+	Changed 				bool   `json:"changed"`
 }
 type Button struct {
 	Grid_x  int    `json:"grid_x"`
