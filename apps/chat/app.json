@@ -19,17 +19,23 @@
 {
 "Pos": 1,
 "Min": 1,
-"Max": 20,
+"Max": 1,
 "Resize": 1
 },
 {
 "Pos": 2,
 "Min": 1,
-"Max": 3,
+"Max": 20,
 "Resize": 1
 },
 {
 "Pos": 3,
+"Min": 1,
+"Max": 3,
+"Resize": 1
+},
+{
+"Pos": 4,
 "Min": 1,
 "Max": 100,
 "Resize": 1
@@ -64,6 +70,90 @@
 "Subs": [
 {
 "Pos": {
+"X": 4.453457,
+"Y": 2.5442185
+},
+"Name": "transcribe_mic",
+"Exe": "func_go",
+"Code": {
+"Messages": [
+{
+"User": "Transcribe 'microphone' with 'whispercpp'. Save result into 'user_msg'.",
+"Assistent": "```go\nimport (\n\t\"io/ioutil\"\n)\n\nfunc transcribe_mic(microphone *Microphone, whispercpp *Whispercpp, user_msg *Editbox) error {\n\tif !microphone.Enable {\n\t\treturn nil\n\t}\n\n\taudioData, err := ioutil.ReadFile(microphone.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\tresult, err := whispercpp.TranscribeBlob(audioData)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\tuser_msg.Value = result\n\tuser_msg.Enable = true\n\treturn nil\n}\n```"
+},
+{
+"User": "",
+"Assistent": ""
+}
+],
+"Code": "\nimport (\n\t\"io/ioutil\"\n)\n\nfunc transcribe_mic(microphone *Microphone, whispercpp *Whispercpp, user_msg *Editbox) error {\n\tif !microphone.Enable {\n\t\treturn nil\n\t}\n\n\taudioData, err := ioutil.ReadFile(microphone.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\tresult, err := whispercpp.TranscribeBlob(audioData)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\tuser_msg.Value = result\n\tuser_msg.Enable = true\n\treturn nil\n}\n"
+},
+"Attrs": {
+"bypass": false
+},
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": 4.4196734,
+"Y": 0.21313758
+},
+"Name": "whispercpp",
+"Exe": "whispercpp",
+"Code": {
+"Messages": null,
+"Code": ""
+},
+"Attrs": {
+"beam_size": -1,
+"best_of": 2,
+"detect_language": false,
+"diarize": false,
+"duration": 0,
+"entropy_thold": 2.4,
+"language": "",
+"logprob_thold": -1,
+"max_context": -1,
+"max_len": 0,
+"model": "ggml-tiny.en",
+"no_timestamps": false,
+"offset_n": 0,
+"offset_t": 0,
+"response_format": "text",
+"split_on_word": false,
+"temperature": 0,
+"temperature_inc": 0.2,
+"tinydiarize": false,
+"translate": false,
+"word_thold": 0.01
+},
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": -2.611003,
+"Y": 2.5112078
+},
+"Name": "microphone",
+"Exe": "microphone",
+"Code": {
+"Messages": null,
+"Code": ""
+},
+"Attrs": {
+"changed": false,
+"enable": true,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 1,
+"grid_y": 2,
+"path": "apps/chat/mic.wav",
+"show": true
+},
+"ShowCodeChat": false
+},
+{
+"Pos": {
 "X": 20.143398,
 "Y": 11.929375
 },
@@ -83,7 +173,11 @@
 "Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc BuildTextChat(db *Sqlite, text *Text) error {\n\tdatabase, _ := sql.Open(\"sqlite3\", db.Path)\n\tdefer database.Close()\n\n\trows, _ := database.Query(\"SELECT role, content FROM chat\")\n\tdefer rows.Close()\n\n\tvar chatText string\n\tfor rows.Next() {\n\t\tvar role, content string\n\t \trows.Scan(\u0026role, \u0026content)\n\t\t\t\n\t\tchatText += fmt.Sprintf(\"%s: %s\\n\", role, content)\n\t}\n\n\ttext.Label = chatText\n\treturn nil\n}\n"
 },
 "Attrs": {
-"bypass": false
+"bypass": false,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 0,
+"grid_y": 0
 },
 "ShowCodeChat": false
 },
@@ -108,7 +202,11 @@
 "Code": "\nimport (\n\t\"database/sql\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc Chat(button *Button, db *Sqlite, user_msg *Editbox, llamacpp *Llamacpp) error {\n\tif !button.Clicked {\n\t\treturn nil\n\t}\n\tbutton.Clicked = false\n\n\tsqlDB, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer sqlDB.Close()\n\n\t// Build messages from database.\n\tvar messages []LlamaMessage\n\trows, err := sqlDB.Query(\"SELECT role, content FROM chat\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tfor rows.Next() {\n\t\tvar msg LlamaMessage\n\t\tif err := rows.Scan(\u0026msg.Role, \u0026msg.Content); err != nil {\n\t\t\treturn err\n\t\t}\n\t\tmessages = append(messages, msg)\n\t}\n\trows.Close()\n\n\t// Add 'user_msg' to messages.\n\tmessages = append(messages, LlamaMessage{Role: \"user\", Content: user_msg.Value})\n\n\t// Get answer from llamacpp.\n\tanswer, err := llamacpp.GetAnswer(messages)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\t// Begin transaction.\n\ttx, err := sqlDB.Begin()\n\tif err != nil {\n\t\treturn err\n\t}\n\n\t// Insert 'user_msg' into 'db'.\n\t_, err = tx.Exec(\"INSERT INTO chat (role, content) VALUES (?, ?)\", \"user\", user_msg.Value)\n\tif err != nil {\n\t\ttx.Rollback()\n\t\treturn err\n\t}\n\n\t// Insert answer into 'db'.\n\t_, err = tx.Exec(\"INSERT INTO chat (role, content) VALUES (?, ?)\", \"assistant\", answer)\n\tif err != nil {\n\t\ttx.Rollback()\n\t\treturn err\n\t}\n\n\t// Commit the transaction.\n\tif err := tx.Commit(); err != nil {\n\t\treturn err\n\t}\n\n\t// Reset 'user_msg' editbox.\n\tuser_msg.Value = \"\"\n\n\treturn nil\n}\n"
 },
 "Attrs": {
-"bypass": false
+"bypass": false,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 0,
+"grid_y": 0
 },
 "ShowCodeChat": true
 },
@@ -154,6 +252,10 @@
 "dynatemp_exponent": 1,
 "dynatemp_range": 0,
 "frequency_penalty": 0,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 0,
+"grid_y": 0,
 "min_p": 0.05,
 "mirostat": false,
 "mirostat_eta": 0.1,
@@ -181,7 +283,6 @@
 },
 "Name": "func_go",
 "Exe": "func_go",
-"Selected": true,
 "Code": {
 "Messages": [
 {
@@ -196,7 +297,11 @@
 "Code": "\nimport (\n\t\"strings\"\n)\n\nfunc func_go(user_msg *Editbox, button *Button) error {\n\tbutton.Enable = strings.TrimSpace(user_msg.Value) != \"\"\n\treturn nil\n}\n"
 },
 "Attrs": {
-"bypass": false
+"bypass": false,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 0,
+"grid_y": 0
 },
 "ShowCodeChat": true
 },
@@ -216,7 +321,7 @@
 "enable": false,
 "grid_h": 1,
 "grid_w": 1,
-"grid_x": 2,
+"grid_x": 3,
 "grid_y": 2,
 "label": "Send",
 "show": true,
@@ -243,13 +348,13 @@
 "ghost": "",
 "grid_h": 1,
 "grid_w": 1,
-"grid_x": 1,
+"grid_x": 2,
 "grid_y": 2,
 "multi_line": true,
 "multi_line_enter_finish": true,
 "show": true,
 "temp_to_value": true,
-"value": ""
+"value": " Hello, this is Dutch. I mean, first one.\n"
 },
 "ShowCodeChat": false
 },
@@ -268,7 +373,7 @@
 "align_h": 0,
 "align_v": 0,
 "grid_h": 1,
-"grid_w": 2,
+"grid_w": 3,
 "grid_x": 1,
 "grid_y": 1,
 "label": "user: What is the biggest city in the Czech Republic?\nassistant: The biggest city in the Czech Republic is Prague. It has a population of over 1.3 million people and is the capital of the country.\nuser: What is the 2nd?\nassistant: The second biggest city in the Czech Republic is Brno, with a population of over 400,000 people. It is located in the south-east of the country and is known for its cultural attractions.\nuser: What is the 3rd?\nassistant: The third biggest city in the Czech Republic is Ostrava, with a population of over 300,000 people. It is located in the north-east of the country and is known for its industrial heritage.\n",
