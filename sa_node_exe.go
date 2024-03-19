@@ -533,39 +533,6 @@ func UiMicrophone_render(node *SANode) {
 	}
 }
 
-/*func SAExe_Render_Microphone(w *SANode, renderIt bool) {
-	ui := w.app.base.ui
-	showIt := renderIt && w.CanBeRenderOnCanvas() && w.GetGridShow() && ui != nil
-
-	grid := w.GetGrid()
-
-	enable := w.GetAttrUi("enable", 1, SAAttrUi_SWITCH).GetBool()
-	fileAttr := w.GetAttr("temp_file", "temp_mic.wav")
-	outAttr := w.GetAttr("_out", "")
-	finishedAttr := w.GetAttrUi("finished", 0, SAAttrUi_SWITCH)
-
-	if fileAttr.GetString() == "" {
-		fileAttr.SetErrorStr("empty")
-		return
-	}
-
-	if showIt {
-
-
-	}
-
-	//read file
-	if !renderIt { //waste of resources to load file every drawFrame() ..........
-
-		wavData, err := os.ReadFile(fileAttr.GetString())
-		if err != nil {
-			w.SetError(err)
-			return
-		}
-		outAttr.SetOutBlob(wavData)
-	}
-}*/
-
 func UiSQLite_Attrs(node *SANode) {
 	ui := node.app.base.ui
 	ui.Div_colMax(0, 3)
