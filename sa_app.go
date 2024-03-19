@@ -61,6 +61,8 @@ type SAApp struct {
 
 	all_triggers     []*SANode
 	all_triggers_str []string
+
+	last_trigger_ticks int64
 }
 
 func (a *SAApp) init(base *SABase) {
@@ -182,6 +184,10 @@ func (app *SAApp) rebuildLists() {
 
 func (app *SAApp) Tick() {
 
+	if OsIsTicksIn(app.last_trigger_ticks, 500) {
+		return //avoid editbox "temp_to_value" is called to often
+	}
+
 	//update "changed" for sqlite dbs
 	for _, nd := range app.all_nodes {
 		if nd.Exe == "sqlite" {
@@ -204,6 +210,8 @@ func (app *SAApp) Tick() {
 	for _, nd := range app.all_nodes {
 		nd.ResetTriggers()
 	}
+
+	app.last_trigger_ticks = OsTicks()
 }
 
 func SAApp_getYellow() OsCd {
