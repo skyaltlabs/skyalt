@@ -237,114 +237,128 @@ func (base *SABase) Render() bool {
 	ui := base.ui
 	icon_rad := 1.5
 
-	ui.Div_rowMax(0, 100)
-	ui.Div_col(0, icon_rad)
-	ui.Div_colMax(1, 100)
-	if app.IDE {
-		ui.Div_colResize(2, "graph", 8, false)
-	}
+	if base.services.IsJobRunning(app) {
+		ui.Div_rowMax(0, 100)
+		ui.Div_col(0, icon_rad)
+		ui.Div_colMax(1, 100)
 
-	ui.Div_start(0, 0, 1, 1)
-	base.drawLauncher(app, icon_rad)
-	ui.Div_end()
-
-	//canvas
-	if base.HasApp() {
-		app.rebuildLists() //!!!
-
-		ui.Div_startName(1, 0, 1, 1, base.Apps[base.Selected].Name)
-		{
-			if app.IDE {
-				app.renderIDE()
-			} else {
-				app.RenderApp(false)
-			}
-		}
+		ui.Div_start(0, 0, 1, 1)
+		base.drawLauncher(app, icon_rad)
 		ui.Div_end()
-	}
 
-	if app.IDE {
-		//graph
-		ui.Div_start(2, 0, 1, 1)
-		{
-			var graphCanvas OsV4
+		ui.Div_start(1, 0, 1, 1)
+		base.services.RenderJobs(app)
+		ui.Div_end()
 
-			ui.Div_col(0, 4)
-			ui.Div_colMax(0, 100)
-			ui.Div_rowMax(0, 100)
+	} else {
 
-			sel_node := app.root.FindSelected()
-			if app.graph.showNodeList || (sel_node != nil && sel_node.ShowCodeChat) {
-				ui.Div_col(1, 3) //min
-				ui.Div_colResize(1, "right_panel", 7, false)
-			}
+		ui.Div_rowMax(0, 100)
+		ui.Div_col(0, icon_rad)
+		ui.Div_colMax(1, 100)
+		if app.IDE {
+			ui.Div_colResize(2, "graph", 8, false)
+		}
 
-			ui.Div_start(0, 0, 1, 1)
+		ui.Div_start(0, 0, 1, 1)
+		base.drawLauncher(app, icon_rad)
+		ui.Div_end()
+
+		//canvas
+		if base.HasApp() {
+			app.rebuildLists() //!!!
+
+			ui.Div_startName(1, 0, 1, 1, base.Apps[base.Selected].Name)
 			{
+				if app.IDE {
+					app.renderIDE()
+				} else {
+					app.RenderApp(false)
+				}
+			}
+			ui.Div_end()
+		}
+
+		if app.IDE {
+			//graph
+			ui.Div_start(2, 0, 1, 1)
+			{
+				var graphCanvas OsV4
+
+				ui.Div_col(0, 4)
 				ui.Div_colMax(0, 100)
+				ui.Div_rowMax(0, 100)
 
-				ui.Div_row(0, 3)
-				ui.Div_rowResize(0, "attributes", 4, false)
-				ui.Div_rowMax(1, 100)
+				sel_node := app.root.FindSelected()
+				if app.graph.showNodeList || (sel_node != nil && sel_node.ShowCodeChat) {
+					ui.Div_col(1, 3) //min
+					ui.Div_colResize(1, "right_panel", 7, false)
+				}
 
-				//attributes
 				ui.Div_start(0, 0, 1, 1)
 				{
-					selNode := app.root.FindSelected()
-					if selNode != nil {
-						selNode.RenderAttrs()
-					} else {
-						ui.Div_colMax(0, 100)
-						ui.Div_rowMax(0, 100)
-						ui.Comp_text(0, 0, 1, 1, "No node selected", 1)
-					}
-
-				}
-				ui.Div_end()
-
-				//graph layout
-				ui.Div_start(0, 1, 1, 1)
-				{
 					ui.Div_colMax(0, 100)
+
+					ui.Div_row(0, 3)
+					ui.Div_rowResize(0, "attributes", 4, false)
 					ui.Div_rowMax(1, 100)
 
-					if app.Cam_z <= 0 {
-						app.Cam_z = 1
-					}
+					//attributes
+					ui.Div_start(0, 0, 1, 1)
+					{
+						selNode := app.root.FindSelected()
+						if selNode != nil {
+							selNode.RenderAttrs()
+						} else {
+							ui.Div_colMax(0, 100)
+							ui.Div_rowMax(0, 100)
+							ui.Comp_text(0, 0, 1, 1, "No node selected", 1)
+						}
 
-					//graph
-					ui.Div_start(0, 1, 1, 1)
-					var keyAllow bool
-					graphCanvas, keyAllow = app.graph.drawGraph(app.root)
+					}
 					ui.Div_end()
 
-					//panel
-					ui.Div_start(0, 0, 1, 1)
-					app.graph.drawPanel(graphCanvas, keyAllow)
+					//graph layout
+					ui.Div_start(0, 1, 1, 1)
+					{
+						ui.Div_colMax(0, 100)
+						ui.Div_rowMax(1, 100)
+
+						if app.Cam_z <= 0 {
+							app.Cam_z = 1
+						}
+
+						//graph
+						ui.Div_start(0, 1, 1, 1)
+						var keyAllow bool
+						graphCanvas, keyAllow = app.graph.drawGraph(app.root)
+						ui.Div_end()
+
+						//panel
+						ui.Div_start(0, 0, 1, 1)
+						app.graph.drawPanel(graphCanvas, keyAllow)
+						ui.Div_end()
+					}
 					ui.Div_end()
 				}
 				ui.Div_end()
+
+				//node list
+				if app.graph.showNodeList {
+					ui.Div_start(1, 0, 1, 1)
+					app.graph.drawNodeList(graphCanvas)
+					ui.Div_end()
+				} else if sel_node != nil && sel_node.ShowCodeChat {
+					ui.Div_start(1, 0, 1, 1)
+					UiCodeGo_AttrChat(sel_node)
+					ui.Div_end()
+				}
+
 			}
 			ui.Div_end()
 
-			//node list
-			if app.graph.showNodeList {
-				ui.Div_start(1, 0, 1, 1)
-				app.graph.drawNodeList(graphCanvas)
-				ui.Div_end()
-			} else if sel_node != nil && sel_node.ShowCodeChat {
-				ui.Div_start(1, 0, 1, 1)
-				UiCodeGo_AttrChat(sel_node)
-				ui.Div_end()
-			}
-
+			app.graph.History()
 		}
-		ui.Div_end()
-
-		app.graph.History()
 	}
-
-	//app.flamingo.Tick()
 
 	base.ui.renderEnd(true)
 

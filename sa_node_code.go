@@ -253,20 +253,27 @@ func (ls *SANodeCode) GetAnswer() {
 		}
 	}
 
+	props := &SAServiceOpenAIProps{Model: "gpt-4-turbo-preview", Messages: messages}
+
 	oai, err := ls.node.app.base.services.GetOpenAI()
 	if err != nil {
 		ls.ans_err = err
 		return
 	}
 
-	answer, err := oai.Complete(&SAServiceOpenAIProps{Model: "gpt-4-turbo-preview", Messages: messages})
-	if err != nil {
-		ls.ans_err = err
-		return
-	}
+	go func() {
+		job := oai.AddJob(ls.node.app, props)
+		defer oai.RemoveJob(job)
 
-	//save
-	ls.Messages[len(ls.Messages)-1].Assistent = string(answer)
+		answer, err := job.Run()
+		if err != nil {
+			ls.ans_err = err
+			return
+		}
+
+		//save
+		ls.Messages[len(ls.Messages)-1].Assistent = string(answer)
+	}()
 }
 
 func (ls *SANodeCode) IsTriggered() bool {

@@ -293,7 +293,25 @@ func (node *SANode) HasError() bool {
 }
 
 func (node *SANode) CanBeRenderOnCanvas() bool {
-	return node.app.base.node_groups.IsUI(node.Exe) && node.GetGridShow()
+
+	if node.GetGridShow() {
+		gr := node.app.base.node_groups.FindNode(node.Exe)
+		return gr != nil && gr.render != nil
+	}
+	return false
+}
+
+func (node *SANode) IsTypeWhispercpp() bool {
+	return node.Exe == "whispercpp"
+}
+func (node *SANode) IsTypeLLamacpp() bool {
+	return node.Exe == "llamacpp"
+}
+func (node *SANode) IsTypeOpenAI() bool {
+	return node.Exe == "openai"
+}
+func (node *SANode) IsTypeNet() bool {
+	return node.Exe == "net"
 }
 
 func (node *SANode) FindNode(name string) *SANode {

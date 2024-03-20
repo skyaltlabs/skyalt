@@ -21,6 +21,7 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
+	"sync/atomic"
 
 	"github.com/go-audio/audio"
 )
@@ -63,6 +64,8 @@ type SAApp struct {
 	all_triggers_str []string
 
 	last_trigger_ticks int64
+
+	exe_run atomic.Bool
 }
 
 func (a *SAApp) init(base *SABase) {
@@ -184,6 +187,10 @@ func (app *SAApp) rebuildLists() {
 
 func (app *SAApp) Tick() {
 
+	if app.exe_run.Load() {
+		return
+	}
+
 	if OsIsTicksIn(app.last_trigger_ticks, 500) {
 		return //avoid editbox "temp_to_value" is called to often
 	}
@@ -201,6 +208,22 @@ func (app *SAApp) Tick() {
 		}
 	}
 
+	hasTrigger := false
+	for _, nd := range app.all_nodes {
+		if nd.Code.IsTriggered() && !nd.IsBypassed() {
+			hasTrigger = true
+		}
+	}
+
+	if hasTrigger {
+		app.exe_run.Store(true)
+		go app.exe() //in 2nd thread and keep GUI showin progressrunning
+	}
+
+	app.last_trigger_ticks = OsTicks()
+}
+
+func (app *SAApp) exe() {
 	for _, nd := range app.all_nodes {
 		if nd.Code.IsTriggered() && !nd.IsBypassed() {
 			nd.Code.Execute()
@@ -211,7 +234,7 @@ func (app *SAApp) Tick() {
 		nd.ResetTriggers()
 	}
 
-	app.last_trigger_ticks = OsTicks()
+	app.exe_run.Store(false)
 }
 
 func SAApp_getYellow() OsCd {
