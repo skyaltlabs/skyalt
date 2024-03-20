@@ -533,6 +533,16 @@ func UiMicrophone_render(node *SANode) {
 	}
 }
 
+func UiNet_Attrs(node *SANode) {
+	ui := node.app.base.ui
+	ui.Div_colMax(0, 3)
+	ui.Div_colMax(1, 100)
+
+	grid := InitOsV4(0, 0, 1, 1)
+
+	node.ShowAttrString(&grid, "url", "", false)
+}
+
 func UiSQLite_Attrs(node *SANode) {
 	ui := node.app.base.ui
 	ui.Div_colMax(0, 3)
@@ -1172,7 +1182,7 @@ func UiLLamaCpp_Attrs(node *SANode) {
 		var models []string
 		modelFiles := OsFileListBuild(g_llama_modelsFolder, "", true)
 		for _, m := range modelFiles.Subs {
-			if !m.IsDir && !strings.HasPrefix(m.Name, "ggml-vocab") {
+			if !m.IsDir && !strings.HasPrefix(m.Name, "ggml-vocab") && !strings.HasSuffix(m.Name, ".temp") {
 				models = append(models, m.Name)
 			}
 		}

@@ -77,6 +77,7 @@ func InitSAGroups() SAGroups {
 		{name: "disk_dir", render: UiDiskDir_render, attrs: UiDiskDir_Attrs, changedAttr: true},
 		{name: "disk_file", render: UiDiskFile_render, attrs: UiDiskFile_Attrs, changedAttr: true},
 		{name: "sqlite", render: UiSQLite_render, attrs: UiSQLite_Attrs, changedAttr: true},
+		{name: "net", attrs: UiNet_Attrs},
 	}})
 
 	grs.groups = append(grs.groups, &SAGroup{name: "Neural networks", icon: InitWinMedia_url(path + "node_nn.png"), nodes: []*SAGroupNode{
@@ -91,11 +92,6 @@ func InitSAGroups() SAGroups {
 	}})
 
 	return grs
-}
-
-func (grs *SAGroups) IsUI(node string) bool {
-	gr := grs.FindNode(node)
-	return gr != nil && gr.render != nil
 }
 
 func (grs *SAGroups) FindNode(node string) *SAGroupNode {
