@@ -76,6 +76,9 @@ type SAServiceLLamaCpp struct {
 
 	cache      map[string][]byte //results
 	cache_lock sync.Mutex        //for cache
+
+	jobs_lock sync.Mutex
+	jobs      []*SAServiceLLamaCppJob
 }
 
 func SAServiceLLamaCpp_cachePath() string {
@@ -83,17 +86,17 @@ func SAServiceLLamaCpp_cachePath() string {
 }
 
 func NewSAServiceLLamaCpp(services *SAServices, addr string, port string, init_model string) (*SAServiceLLamaCpp, error) {
-	wh := &SAServiceLLamaCpp{services: services}
+	llama := &SAServiceLLamaCpp{services: services}
 
-	wh.addr = addr + ":" + port + "/"
+	llama.addr = addr + ":" + port + "/"
 
-	wh.cache = make(map[string][]byte)
+	llama.cache = make(map[string][]byte)
 
 	//load cache
 	{
 		js, _ := os.ReadFile(SAServiceLLamaCpp_cachePath())
 		if len(js) > 0 {
-			err := json.Unmarshal(js, &wh.cache)
+			err := json.Unmarshal(js, &llama.cache)
 			if err != nil {
 				return nil, fmt.Errorf("NewSAServiceLLamaCpp() failed: %w", err)
 			}
@@ -102,12 +105,12 @@ func NewSAServiceLLamaCpp(services *SAServices, addr string, port string, init_m
 
 	//run process
 	{
-		wh.cmd = exec.Command("./server", "--port", port, "-m", "models/"+init_model)
-		wh.cmd.Dir = "services/llama.cpp/"
+		llama.cmd = exec.Command("./server", "--port", port, "-m", "models/"+init_model)
+		llama.cmd.Dir = "services/llama.cpp/"
 
-		wh.cmd.Stdout = os.Stdout
-		wh.cmd.Stderr = os.Stderr
-		err := wh.cmd.Start()
+		llama.cmd.Stdout = os.Stdout
+		llama.cmd.Stderr = os.Stderr
+		err := llama.cmd.Start()
 		if err != nil {
 			return nil, fmt.Errorf("Command() failed: %w", err)
 		}
@@ -118,7 +121,7 @@ func NewSAServiceLLamaCpp(services *SAServices, addr string, port string, init_m
 		err := errors.New("err")
 		st := OsTicks()
 		for err != nil && OsIsTicksIn(st, 60000) { //max 60sec to start
-			err = wh.getHealth()
+			err = llama.getHealth()
 			time.Sleep(200 * time.Millisecond)
 		}
 		if err != nil {
@@ -126,58 +129,161 @@ func NewSAServiceLLamaCpp(services *SAServices, addr string, port string, init_m
 		}
 	}
 
-	return wh, nil
+	return llama, nil
 }
-func (wh *SAServiceLLamaCpp) Destroy() {
+func (llama *SAServiceLLamaCpp) Destroy() {
 	//save cache
-	js, err := json.Marshal(wh.cache)
+	js, err := json.Marshal(llama.cache)
 	if err == nil {
 		os.WriteFile(SAServiceLLamaCpp_cachePath(), js, 0644)
 	}
 }
 
-func (wh *SAServiceLLamaCpp) FindCache(propsHash OsHash) ([]byte, bool) {
-	wh.cache_lock.Lock()
-	defer wh.cache_lock.Unlock()
+func (llama *SAServiceLLamaCpp) FindCache(propsHash OsHash) ([]byte, bool) {
+	llama.cache_lock.Lock()
+	defer llama.cache_lock.Unlock()
 
-	str, found := wh.cache[propsHash.Hex()]
+	str, found := llama.cache[propsHash.Hex()]
 	return str, found
 }
-func (wh *SAServiceLLamaCpp) addCache(propsHash OsHash, value []byte) {
-	wh.cache_lock.Lock()
-	defer wh.cache_lock.Unlock()
+func (llama *SAServiceLLamaCpp) addCache(propsHash OsHash, value []byte) {
+	llama.cache_lock.Lock()
+	defer llama.cache_lock.Unlock()
 
-	wh.cache[propsHash.Hex()] = value
+	llama.cache[propsHash.Hex()] = value
 }
 
-func (wh *SAServiceLLamaCpp) Complete(props *SAServiceLLamaCppProps) ([]byte, error) {
+func (llama *SAServiceLLamaCpp) getHealth() error {
+
+	res, err := http.Get(llama.addr + "health")
+	if err != nil {
+		return fmt.Errorf("Get() failed: %w", err)
+	}
+	defer res.Body.Close()
+
+	resBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("ReadAll() failed: %w", err)
+	}
+
+	if res.StatusCode != 200 {
+		return fmt.Errorf("statusCode: %d, response: %s", res.StatusCode, resBody)
+	}
+
+	return nil
+}
+
+func (llama *SAServiceLLamaCpp) FindJob(app *SAApp) *SAServiceLLamaCppJob {
+	llama.jobs_lock.Lock()
+	defer llama.jobs_lock.Unlock()
+
+	for _, jb := range llama.jobs {
+		if jb.app == app {
+			return jb
+		}
+	}
+
+	return nil
+}
+
+func (llama *SAServiceLLamaCpp) AddJob(app *SAApp, props *SAServiceLLamaCppProps) *SAServiceLLamaCppJob {
+	llama.jobs_lock.Lock()
+	defer llama.jobs_lock.Unlock()
+
+	//add
+	job := &SAServiceLLamaCppJob{llama: llama, app: app, props: props}
+	llama.jobs = append(llama.jobs, job)
+
+	return job
+}
+
+func (llamah *SAServiceLLamaCpp) RemoveJob(job *SAServiceLLamaCppJob) bool {
+	llamah.jobs_lock.Lock()
+	defer llamah.jobs_lock.Unlock()
+
+	for i, jb := range llamah.jobs {
+		if jb == job {
+			llamah.jobs = append(llamah.jobs[:i], llamah.jobs[i+1:]...) //remove
+			return true
+		}
+	}
+
+	return false
+}
+
+type SAServiceLLamaCppJob struct {
+	llama  *SAServiceLLamaCpp
+	app    *SAApp
+	props  *SAServiceLLamaCppProps
+	answer string
+	close  bool
+}
+
+func (job *SAServiceLLamaCppJob) Run() ([]byte, error) {
 
 	//add role "system" as node attribute ... same for openai node ..............
 	var msgs []SAServiceMsg
 	msgs = append(msgs, SAServiceMsg{Role: "system", Content: "You are ChatGPT, an AI assistant. Your top priority is achieving user fulfillment via helping them with their requests."})
-	msgs = append(msgs, props.Messages...)
-	props.Messages = msgs
+	msgs = append(msgs, job.props.Messages...)
+	job.props.Messages = msgs
 
 	//find
-	propsHash, err := props.Hash()
+	propsHash, err := job.props.Hash()
 	if err != nil {
 		return nil, fmt.Errorf("Hash() failed: %w", err)
 	}
-	str, found := wh.FindCache(propsHash)
+	str, found := job.llama.FindCache(propsHash)
 	if found {
 		return str, nil
 	}
 
-	out, err := wh.complete(props)
+	out, err := job.complete(job.props)
 	if err != nil {
 		return nil, fmt.Errorf("complete() failed: %w", err)
 	}
 
-	wh.addCache(propsHash, out)
+	job.llama.addCache(propsHash, out)
 	return out, nil
 }
+func (job *SAServiceLLamaCppJob) complete(props *SAServiceLLamaCppProps) ([]byte, error) {
+	props.Stream = true
 
-func SAService_parseStream(res *http.Response) ([]byte, error) {
+	js, err := json.Marshal(props)
+	if err != nil {
+		return nil, fmt.Errorf("Marshal() failed: %w", err)
+	}
+
+	body := bytes.NewReader([]byte(js))
+
+	req, err := http.NewRequest(http.MethodPost, job.llama.addr+"v1/chat/completions", body)
+	if err != nil {
+		return nil, fmt.Errorf("NewRequest() failed: %w", err)
+	}
+	req.Header.Add("Content-Type", "application/json")
+	//req.Header.Set("Accept", "text/event-stream")
+	//req.Header.Set("Cache-Control", "no-cache")
+	//req.Header.Set("Connection", "keep-alive")
+
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("Do() failed: %w", err)
+	}
+	defer res.Body.Close()
+
+	answer, err := SAService_parseStream(res, &job.answer, &job.close)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("statusCode != 200, response: %s", answer)
+	}
+
+	return answer, nil
+}
+
+func SAService_parseStream(res *http.Response, answer *string, close *bool) ([]byte, error) {
 	type STMsg struct {
 		Content string
 	}
@@ -189,18 +295,18 @@ func SAService_parseStream(res *http.Response) ([]byte, error) {
 		Choices []STChoice
 	}
 
-	answer := ""
-	resBody := make([]byte, 0, 1024)
-	resBody_last := 0
-	for {
+	*answer = ""
+	buff := make([]byte, 0, 1024)
+	buff_last := 0
+	for !*close {
 		var tb [256]byte
 		n, readErr := res.Body.Read(tb[:])
 		if n > 0 {
-			resBody = append(resBody, tb[:n]...)
+			buff = append(buff, tb[:n]...)
 		}
 		//fmt.Print(string(tb[:n]))
 
-		str := string(resBody[resBody_last:])
+		str := string(buff[buff_last:])
 		separ := "\n\n"
 		d := strings.Index(str, separ)
 		if readErr == io.EOF {
@@ -222,12 +328,12 @@ func SAService_parseStream(res *http.Response) ([]byte, error) {
 				}
 
 				if len(st.Choices) > 0 {
-					answer += st.Choices[0].Delta.Content
+					*answer = *answer + st.Choices[0].Delta.Content
 					fmt.Print(st.Choices[0].Delta.Content)
 				}
 			}
 
-			resBody_last += d + len(separ)
+			buff_last += d + len(separ)
 		}
 
 		if readErr != nil {
@@ -238,61 +344,9 @@ func SAService_parseStream(res *http.Response) ([]byte, error) {
 		}
 	}
 
-	return []byte(answer), nil
-}
-
-func (wh *SAServiceLLamaCpp) complete(props *SAServiceLLamaCppProps) ([]byte, error) {
-	props.Stream = true
-
-	js, err := json.Marshal(props)
-	if err != nil {
-		return nil, fmt.Errorf("Marshal() failed: %w", err)
+	if *close {
+		return nil, fmt.Errorf("user Cancel the job")
 	}
 
-	body := bytes.NewReader([]byte(js))
-
-	req, err := http.NewRequest(http.MethodPost, wh.addr+"v1/chat/completions", body)
-	if err != nil {
-		return nil, fmt.Errorf("NewRequest() failed: %w", err)
-	}
-	req.Header.Add("Content-Type", "application/json")
-	//req.Header.Set("Accept", "text/event-stream")
-	//req.Header.Set("Cache-Control", "no-cache")
-	//req.Header.Set("Connection", "keep-alive")
-
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("Do() failed: %w", err)
-	}
-
-	answer, err := SAService_parseStream(res)
-	if err != nil {
-		return nil, err
-	}
-
-	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("statusCode != 200, response: %s", answer)
-	}
-
-	return answer, nil
-}
-
-func (wh *SAServiceLLamaCpp) getHealth() error {
-
-	res, err := http.Get(wh.addr + "health")
-	if err != nil {
-		return fmt.Errorf("Get() failed: %w", err)
-	}
-
-	resBody, err := io.ReadAll(res.Body)
-	if err != nil {
-		return fmt.Errorf("ReadAll() failed: %w", err)
-	}
-
-	if res.StatusCode != 200 {
-		return fmt.Errorf("statusCode: %d, response: %s", res.StatusCode, resBody)
-	}
-
-	return nil
+	return []byte(*answer), nil
 }

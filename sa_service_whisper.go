@@ -103,6 +103,9 @@ type SAServiceWhisperCpp struct {
 	cache_lock sync.Mutex        //for cache
 
 	last_setModel string
+
+	jobs_lock sync.Mutex
+	jobs      []*SAServiceWhisperCppJob
 }
 
 func SAServiceWhisperCpp_cachePath() string {
@@ -185,33 +188,42 @@ func (wh *SAServiceWhisperCpp) addCache(model string, blob OsBlob, propsHash OsH
 	wh.cache[model+blob.hash.Hex()+propsHash.Hex()] = value
 }
 
-func (wh *SAServiceWhisperCpp) Transcribe(model string, blob OsBlob, props *SAServiceWhisperCppProps) ([]byte, float64, bool, error) {
-	//find
-	propsHash, err := props.Hash()
-	if err != nil {
-		return nil, 0, false, fmt.Errorf("Hash() failed: %w", err)
-	}
-	str, found := wh.FindCache(model, blob, propsHash)
-	if found {
-		return str, 1, true, nil
-	}
+func (wh *SAServiceWhisperCpp) FindJob(app *SAApp) *SAServiceWhisperCppJob {
+	wh.jobs_lock.Lock()
+	defer wh.jobs_lock.Unlock()
 
-	//set model
-	if model != wh.last_setModel {
-		err := wh.setModel(model)
-		if err != nil {
-			return nil, 0, false, fmt.Errorf("setModel() failed: %w", err)
+	for _, jb := range wh.jobs {
+		if jb.app == app {
+			return jb
 		}
 	}
 
-	//translate
-	out, err := wh.transcribe(blob, props)
-	if err != nil {
-		return nil, 0, false, fmt.Errorf("transcribe() failed: %w", err)
+	return nil
+}
+
+func (wh *SAServiceWhisperCpp) AddJob(app *SAApp, model string, blob OsBlob, props *SAServiceWhisperCppProps) *SAServiceWhisperCppJob {
+	wh.jobs_lock.Lock()
+	defer wh.jobs_lock.Unlock()
+
+	//add
+	job := &SAServiceWhisperCppJob{wh: wh, app: app, model: model, blob: blob, props: props}
+	wh.jobs = append(wh.jobs, job)
+
+	return job
+}
+
+func (wh *SAServiceWhisperCpp) RemoveJob(job *SAServiceWhisperCppJob) bool {
+	wh.jobs_lock.Lock()
+	defer wh.jobs_lock.Unlock()
+
+	for i, jb := range wh.jobs {
+		if jb == job {
+			wh.jobs = append(wh.jobs[:i], wh.jobs[i+1:]...) //remove
+			return true
+		}
 	}
 
-	wh.addCache(model, blob, propsHash, out)
-	return out, 1, true, nil
+	return false
 }
 
 func (wh *SAServiceWhisperCpp) setModel(model string) error {
@@ -231,6 +243,7 @@ func (wh *SAServiceWhisperCpp) setModel(model string) error {
 	if err != nil {
 		return fmt.Errorf("Do() failed: %w", err)
 	}
+	defer res.Body.Close()
 
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -245,7 +258,48 @@ func (wh *SAServiceWhisperCpp) setModel(model string) error {
 	return nil
 }
 
-func (wh *SAServiceWhisperCpp) transcribe(blob OsBlob, props *SAServiceWhisperCppProps) ([]byte, error) {
+type SAServiceWhisperCppJob struct {
+	wh  *SAServiceWhisperCpp
+	app *SAApp
+
+	model  string
+	blob   OsBlob
+	props  *SAServiceWhisperCppProps
+	answer []byte
+
+	close bool
+}
+
+func (job *SAServiceWhisperCppJob) Run() ([]byte, error) {
+	//find
+	propsHash, err := job.props.Hash()
+	if err != nil {
+		return nil, fmt.Errorf("Hash() failed: %w", err)
+	}
+	str, found := job.wh.FindCache(job.model, job.blob, propsHash)
+	if found {
+		return str, nil
+	}
+
+	//set model
+	if job.model != job.wh.last_setModel {
+		err := job.wh.setModel(job.model)
+		if err != nil {
+			return nil, fmt.Errorf("setModel() failed: %w", err)
+		}
+	}
+
+	//translate
+	out, err := job.transcribe(job.blob, job.props)
+	if err != nil {
+		return nil, fmt.Errorf("transcribe() failed: %w", err)
+	}
+
+	job.wh.addCache(job.model, job.blob, propsHash, out)
+	return out, nil
+}
+
+func (job *SAServiceWhisperCppJob) transcribe(blob OsBlob, props *SAServiceWhisperCppProps) ([]byte, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -260,7 +314,7 @@ func (wh *SAServiceWhisperCpp) transcribe(blob OsBlob, props *SAServiceWhisperCp
 	}
 	writer.Close()
 
-	req, err := http.NewRequest(http.MethodPost, wh.addr+"inference", body)
+	req, err := http.NewRequest(http.MethodPost, job.wh.addr+"inference", body)
 	if err != nil {
 		return nil, fmt.Errorf("NewRequest() failed: %w", err)
 	}
@@ -272,7 +326,7 @@ func (wh *SAServiceWhisperCpp) transcribe(blob OsBlob, props *SAServiceWhisperCp
 		return nil, fmt.Errorf("Do() failed: %w", err)
 	}
 
-	resBody, err := io.ReadAll(res.Body)
+	resBody, err := io.ReadAll(res.Body) //job.close .......
 	if err != nil {
 		return nil, fmt.Errorf("ReadAll() failed: %w", err)
 	}

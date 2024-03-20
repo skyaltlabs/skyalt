@@ -53,6 +53,9 @@ type SAServiceOpenAI struct {
 	services   *SAServices
 	cache      map[string][]byte //results
 	cache_lock sync.Mutex        //for cache
+
+	jobs_lock sync.Mutex
+	jobs      []*SAServiceOpenAIJob
 }
 
 func SAServiceOpenAI_cachePath() string {
@@ -60,69 +63,115 @@ func SAServiceOpenAI_cachePath() string {
 }
 
 func NewSAServiceOpenAI(services *SAServices) *SAServiceOpenAI {
-	wh := &SAServiceOpenAI{services: services}
+	oai := &SAServiceOpenAI{services: services}
 
-	wh.cache = make(map[string][]byte)
+	oai.cache = make(map[string][]byte)
 
 	//load cache
 	{
 		js, _ := os.ReadFile(SAServiceOpenAI_cachePath())
 		if len(js) > 0 {
-			err := json.Unmarshal(js, &wh.cache)
+			err := json.Unmarshal(js, &oai.cache)
 			if err != nil {
 				fmt.Printf("NewSAServiceOpenAI() failed: %v\n", err)
 			}
 		}
 	}
 
-	return wh
+	return oai
 }
-func (wh *SAServiceOpenAI) Destroy() {
+func (oai *SAServiceOpenAI) Destroy() {
 	//save cache
-	js, err := json.Marshal(wh.cache)
+	js, err := json.Marshal(oai.cache)
 	if err == nil {
 		os.WriteFile(SAServiceOpenAI_cachePath(), js, 0644)
 	}
 }
 
-func (wh *SAServiceOpenAI) FindCache(propsHash OsHash) ([]byte, bool) {
-	wh.cache_lock.Lock()
-	defer wh.cache_lock.Unlock()
+func (oai *SAServiceOpenAI) FindCache(propsHash OsHash) ([]byte, bool) {
+	oai.cache_lock.Lock()
+	defer oai.cache_lock.Unlock()
 
-	str, found := wh.cache[propsHash.Hex()]
+	str, found := oai.cache[propsHash.Hex()]
 	return str, found
 }
-func (wh *SAServiceOpenAI) addCache(propsHash OsHash, value []byte) {
-	wh.cache_lock.Lock()
-	defer wh.cache_lock.Unlock()
+func (oai *SAServiceOpenAI) addCache(propsHash OsHash, value []byte) {
+	oai.cache_lock.Lock()
+	defer oai.cache_lock.Unlock()
 
-	wh.cache[propsHash.Hex()] = value
+	oai.cache[propsHash.Hex()] = value
 }
 
-func (wh *SAServiceOpenAI) Complete(props *SAServiceOpenAIProps) ([]byte, error) {
+func (oai *SAServiceOpenAI) FindJob(app *SAApp) *SAServiceOpenAIJob {
+	oai.jobs_lock.Lock()
+	defer oai.jobs_lock.Unlock()
+
+	for _, jb := range oai.jobs {
+		if jb.app == app {
+			return jb
+		}
+	}
+
+	return nil
+}
+
+func (oai *SAServiceOpenAI) AddJob(app *SAApp, props *SAServiceOpenAIProps) *SAServiceOpenAIJob {
+	oai.jobs_lock.Lock()
+	defer oai.jobs_lock.Unlock()
+
+	//add
+	job := &SAServiceOpenAIJob{openai: oai, app: app, props: props}
+	oai.jobs = append(oai.jobs, job)
+
+	return job
+}
+
+func (oai *SAServiceOpenAI) RemoveJob(job *SAServiceOpenAIJob) bool {
+	oai.jobs_lock.Lock()
+	defer oai.jobs_lock.Unlock()
+
+	for i, jb := range oai.jobs {
+		if jb == job {
+			oai.jobs = append(oai.jobs[:i], oai.jobs[i+1:]...) //remove
+			return true
+		}
+	}
+
+	return false
+}
+
+type SAServiceOpenAIJob struct {
+	openai *SAServiceOpenAI
+	app    *SAApp
+	props  *SAServiceOpenAIProps
+	answer string
+	close  bool
+}
+
+func (job *SAServiceOpenAIJob) Run() ([]byte, error) {
 	//find
-	propsHash, err := props.Hash()
+	propsHash, err := job.props.Hash()
 	if err != nil {
 		return nil, fmt.Errorf("Hash() failed: %w", err)
 	}
-	str, found := wh.FindCache(propsHash)
+	str, found := job.openai.FindCache(propsHash)
 	if found {
 		return str, nil
 	}
 
-	out, err := wh.complete(props)
+	out, err := job.complete(job.props)
 	if err != nil {
 		return nil, fmt.Errorf("complete() failed: %w", err)
 	}
 
-	wh.addCache(propsHash, out)
+	job.openai.addCache(propsHash, out)
 	return out, nil
 }
 
-func (wh *SAServiceOpenAI) complete(props *SAServiceOpenAIProps) ([]byte, error) {
+func (job *SAServiceOpenAIJob) complete(props *SAServiceOpenAIProps) ([]byte, error) {
 	props.Stream = true
 
-	skey := wh.services.ui.win.io.ini.OpenAI_key
+	skey := job.openai.services.ui.win.io.ini.OpenAI_key
 	if skey == "" {
 		return nil, fmt.Errorf("OpenAI API key is empty")
 	}
@@ -149,16 +198,12 @@ func (wh *SAServiceOpenAI) complete(props *SAServiceOpenAIProps) ([]byte, error)
 	if err != nil {
 		return nil, fmt.Errorf("Do() failed: %w", err)
 	}
+	defer res.Body.Close()
 
-	answer, err := SAService_parseStream(res)
+	answer, err := SAService_parseStream(res, &job.answer, &job.close)
 	if err != nil {
 		return nil, err
 	}
-
-	/*resBody, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, fmt.Errorf("ReadAll() failed: %w", err)
-	}*/
 
 	if res.StatusCode != 200 {
 		return nil, fmt.Errorf("statusCode != 200, response: %s", answer)

@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
 )
 
 type SAServices struct {
@@ -34,10 +35,10 @@ type SAServices struct {
 
 	online bool
 
-	whisper_cpp *SAServiceWhisperCpp
-	llamaCpp    *SAServiceLLamaCpp
-	openai      *SAServiceOpenAI
-	downloader  *SAServiceDownloader
+	whisperCpp *SAServiceWhisperCpp
+	llamaCpp   *SAServiceLLamaCpp
+	oai        *SAServiceOpenAI
+	net        *SAServiceNet
 
 	job_str       []byte
 	job_app       *SAApp
@@ -55,17 +56,17 @@ func NewSAServices(ui *Ui) *SAServices {
 }
 
 func (srv *SAServices) Destroy() {
-	if srv.whisper_cpp != nil {
-		srv.whisper_cpp.Destroy()
+	if srv.whisperCpp != nil {
+		srv.whisperCpp.Destroy()
 	}
 	if srv.llamaCpp != nil {
 		srv.llamaCpp.Destroy()
 	}
-	if srv.openai != nil {
-		srv.openai.Destroy()
+	if srv.oai != nil {
+		srv.oai.Destroy()
 	}
-	if srv.downloader != nil {
-		srv.downloader.Destroy()
+	if srv.net != nil {
+		srv.net.Destroy()
 	}
 
 	srv.server.Shutdown(context.Background())
@@ -85,10 +86,10 @@ func (srv *SAServices) GetResult() ([]byte, error) {
 
 func (srv *SAServices) GetWhisper(init_model string) (*SAServiceWhisperCpp, error) {
 	var err error
-	if srv.whisper_cpp == nil {
-		srv.whisper_cpp, err = NewSAServiceWhisperCpp(srv, "http://127.0.0.1", "8090", init_model)
+	if srv.whisperCpp == nil {
+		srv.whisperCpp, err = NewSAServiceWhisperCpp(srv, "http://127.0.0.1", "8090", init_model)
 	}
-	return srv.whisper_cpp, err
+	return srv.whisperCpp, err
 }
 
 func (srv *SAServices) GetLLama(init_model string) (*SAServiceLLamaCpp, error) {
@@ -104,21 +105,21 @@ func (srv *SAServices) GetOpenAI() (*SAServiceOpenAI, error) {
 		return nil, fmt.Errorf("internet is disabled(Menu:Settings:Internet Connection)")
 	}
 
-	if srv.openai == nil {
-		srv.openai = NewSAServiceOpenAI(srv)
+	if srv.oai == nil {
+		srv.oai = NewSAServiceOpenAI(srv)
 	}
-	return srv.openai, nil
+	return srv.oai, nil
 }
 
-func (srv *SAServices) GetDownloader() (*SAServiceDownloader, error) {
+func (srv *SAServices) GetDownloader() (*SAServiceNet, error) {
 	if !srv.online {
 		return nil, fmt.Errorf("internet is disabled(Menu:Settings:Internet Connection)")
 	}
 
-	if srv.downloader == nil {
-		srv.downloader = NewSAServiceDownloader(srv)
+	if srv.net == nil {
+		srv.net = NewSAServiceNet(srv)
 	}
-	return srv.downloader, nil
+	return srv.net, nil
 }
 
 func (srv *SAServices) Render() {
@@ -205,6 +206,10 @@ func (srv *SAServices) handlerWhisper(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Node not found", http.StatusInternalServerError)
 		return
 	}
+	if !node.IsTypeWhispercpp() {
+		http.Error(w, "Node is not type 'whispercpp'", http.StatusInternalServerError)
+		return
+	}
 
 	//build properties
 	propsJs, err := json.Marshal(node.Attrs)
@@ -227,16 +232,19 @@ func (srv *SAServices) handlerWhisper(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	outJs, _, _, err := wh.Transcribe(model, InitOsBlob(st.Data), &props)
+	job := wh.AddJob(srv.job_app, model, InitOsBlob(st.Data), &props)
+	defer wh.RemoveJob(job)
+
+	answer, err := job.Run()
 	if err != nil {
-		http.Error(w, "Transcribe() failed: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Complete() failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.Write(outJs)
+	w.Write(answer)
 }
 
-func (srv *SAServices) _extractMessages(body []byte) ([]SAServiceMsg, *SANode, error) {
+func (srv *SAServices) _prepareMessages(body []byte) ([]SAServiceMsg, *SANode, error) {
 
 	//get base struct
 	type St struct {
@@ -269,9 +277,13 @@ func (srv *SAServices) handlerLLama(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//extract
-	msgs, node, err := srv._extractMessages(body)
+	msgs, node, err := srv._prepareMessages(body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if !node.IsTypeLLamacpp() {
+		http.Error(w, "Node is not type 'llamacpp'", http.StatusInternalServerError)
 		return
 	}
 
@@ -298,7 +310,10 @@ func (srv *SAServices) handlerLLama(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	answer, err := lm.Complete(&props)
+	job := lm.AddJob(srv.job_app, &props)
+	defer lm.RemoveJob(job)
+
+	answer, err := job.Run()
 	if err != nil {
 		http.Error(w, "Complete() failed: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -315,22 +330,32 @@ func (srv *SAServices) handlerOpenAI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//extract
-	msgs, node, err := srv._extractMessages(body)
+	msgs, node, err := srv._prepareMessages(body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	if !node.IsTypeOpenAI() {
+		http.Error(w, "Node is not type 'openai'", http.StatusInternalServerError)
+		return
+	}
+
+	props := &SAServiceOpenAIProps{Model: node.GetAttrString("model", "gpt-3.5-turbo"), Messages: msgs}
+	//more properties ..........
 
 	//complete
-	g4f, err := srv.GetOpenAI()
+	oai, err := srv.GetOpenAI()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	answer, err := g4f.Complete(&SAServiceOpenAIProps{Model: node.GetAttrString("model", "gpt-4-turbo-preview"), Messages: msgs}) //more properties ..........
+	job := oai.AddJob(srv.job_app, props)
+	defer oai.RemoveJob(job)
+
+	answer, err := job.Run() //slots or one at the time => lock ............................
 	if err != nil {
-		http.Error(w, "OpenAI() failed: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Complete() failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -346,8 +371,10 @@ func (srv *SAServices) handlerNetwork(w http.ResponseWriter, r *http.Request) {
 
 	//get base struct
 	type Net struct {
-		Node string `json:"node"`
-		Path string `json:"path"` //otherwise return []byte(keep it in RAM)
+		Node     string `json:"node"`
+		FilePath string `json:"file_path"`
+
+		Url string `json:"url"`
 	}
 	var st Net
 	err = json.Unmarshal(body, &st)
@@ -366,24 +393,32 @@ func (srv *SAServices) handlerNetwork(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Node not found", http.StatusInternalServerError)
 		return
 	}
+	if !node.IsTypeNet() {
+		http.Error(w, "Node is not type 'net'", http.StatusInternalServerError)
+		return
+	}
 
 	//build properties
-	/*down, err := srv.GetDownloader()
+	down, err := srv.GetDownloader()
 	if err != nil {
 		http.Error(w, "GetDownloader() failed: "+err.Error(), http.StatusInternalServerError)
 		return
-	}*/
+	}
 
-	//down.AddJob()
-	//......................
-	//struct: file or RAM?
+	job := down.AddJob(srv.job_app, st.FilePath, st.Url) //file or RAM? ...
+	defer down.RemoveJob(job)
 
-	//user can cancel ... bottom header with actual action
-	//ask: start from scratch or continue - if size is over 10MB?
+	//check if file already exist or wait for confirmation? ........ if size is over 10MB? ...
 
-	//down.AddJob()
+	time.Sleep(100 * time.Second) //......
 
-	//w.Write(outJs)
+	err = job.Run()
+	if err != nil {
+		http.Error(w, "Complete() failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	//w.Write(outJs)	//.....
 }
 
 func (srv *SAServices) Run(port int) {
@@ -403,4 +438,95 @@ func (srv *SAServices) Run(port int) {
 			return
 		}
 	}()
+}
+
+func (srv *SAServices) IsJobRunning(app *SAApp) bool {
+
+	if srv.net != nil && srv.net.FindJob(app) != nil {
+		return true
+	}
+
+	if srv.llamaCpp != nil && srv.llamaCpp.FindJob(app) != nil {
+		return true
+	}
+
+	if srv.oai != nil && srv.oai.FindJob(app) != nil {
+		return true
+	}
+
+	if srv.whisperCpp != nil && srv.whisperCpp.FindJob(app) != nil {
+		return true
+	}
+
+	return false
+}
+
+func (srv *SAServices) RenderJobs(app *SAApp) {
+	ui := srv.ui
+
+	//net
+	if srv.net != nil {
+		if job := srv.net.FindJob(app); job != nil {
+			ui.Div_colMax(0, 100)
+			ui.Div_colMax(1, 20)
+			ui.Div_colMax(2, 100)
+
+			ui.Comp_text(1, 0, 1, 1, fmt.Sprintf("Downloading: %s", job.url), 1)
+			ui.Comp_text(1, 1, 1, 1, job.GetStats(), 1)
+
+			if ui.Comp_button(1, 3, 1, 1, "Cancel", "", true) > 0 {
+				job.close = true
+			}
+		}
+	}
+
+	//llama
+	if srv.llamaCpp != nil {
+		if job := srv.llamaCpp.FindJob(app); job != nil {
+			ui.Div_colMax(0, 100)
+			ui.Div_colMax(1, 20)
+			ui.Div_colMax(2, 100)
+			ui.Div_rowMax(1, 10)
+
+			ui.Comp_text(1, 0, 1, 1, "LLama is answering", 0)
+			ui.Comp_textSelectMulti(1, 1, 1, 1, job.answer, OsV2{0, 0}, true, true)
+
+			if ui.Comp_button(1, 2, 1, 1, "Cancel", "", true) > 0 {
+				job.close = true
+			}
+		}
+	}
+
+	//openai
+	if srv.oai != nil {
+		if job := srv.oai.FindJob(app); job != nil {
+			ui.Div_colMax(0, 100)
+			ui.Div_colMax(1, 20)
+			ui.Div_colMax(2, 100)
+			ui.Div_rowMax(1, 10)
+
+			ui.Comp_text(1, 0, 1, 1, "OpenAI is answering ...", 0)
+			ui.Comp_textSelectMulti(1, 1, 1, 1, job.answer, OsV2{0, 0}, true, true)
+
+			if ui.Comp_button(1, 2, 1, 1, "Cancel", "", true) > 0 {
+				job.close = true
+			}
+		}
+	}
+
+	//whisper
+	if srv.whisperCpp != nil {
+		if job := srv.whisperCpp.FindJob(app); job != nil {
+			ui.Div_colMax(0, 100)
+			ui.Div_colMax(1, 20)
+			ui.Div_colMax(2, 100)
+			ui.Div_rowMax(1, 10)
+
+			ui.Comp_text(1, 0, 1, 1, "Whisper is transcribing ...", 0)
+
+			if ui.Comp_button(1, 2, 1, 1, "Cancel", "", true) > 0 {
+				job.close = true
+			}
+		}
+	}
 }
