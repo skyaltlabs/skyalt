@@ -319,13 +319,13 @@ func (node *SANode) RenderAttrs() {
 
 	ui := node.app.base.ui
 
-	attr_start := 1
+	attr_start_y := 1
 	if node.HasError() {
-		attr_start = 2
+		attr_start_y = 2
 	}
 
 	ui.Div_colMax(0, 100)
-	ui.Div_rowMax(attr_start, 100)
+	ui.Div_rowMax(attr_start_y, 100)
 
 	//rename + type
 	ui.Div_start(0, 0, 1, 1)
@@ -382,7 +382,7 @@ func (node *SANode) RenderAttrs() {
 	gnd := node.app.base.node_groups.FindNode(node.Exe)
 	if gnd != nil && gnd.attrs != nil {
 
-		ui.Div_start(0, attr_start, 1, 1)
+		ui.Div_start(0, attr_start_y, 1, 1)
 		ui.Div_colMax(0, 100)
 
 		node.errExe = nil //reset
