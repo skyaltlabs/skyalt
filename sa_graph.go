@@ -185,7 +185,7 @@ func (gr *SAGraph) drawConnectionDirect(startRect OsV4, endRect OsV4, dash float
 
 }
 
-func (gr *SAGraph) drawConnectionTrigger(start OsV2, end OsV2, cellr float32, dash float32, cd OsCd) {
+/*func (gr *SAGraph) drawConnectionTrigger(start OsV2, end OsV2, cellr float32, dash float32, cd OsCd) {
 	ui := gr.app.base.ui
 	t := cellr * 0.3
 	end.X -= int(t) //connect to left of arrow
@@ -218,7 +218,7 @@ func (gr *SAGraph) drawConnectionTrigger(start OsV2, end OsV2, cellr float32, da
 
 	//arrow
 	ui.buff.AddPoly(end.Add(OsV2{0, int(-t / 2)}), []OsV2f{{0, 0}, {-t, -t / 2}, {-t, t / 2}}, cd, 0)
-}
+}*/
 
 func (gr *SAGraph) autoZoom(onlySelected bool, canvas OsV4) {
 	gr.app.rebuildLists()
