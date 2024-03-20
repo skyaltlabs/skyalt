@@ -259,7 +259,8 @@ func _send(url string, js []byte) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Do() failed: %w", err)
 	}
-
+	defer res.Body.Close()
+	
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, fmt.Errorf("ReadAll() failed: %w", err)
