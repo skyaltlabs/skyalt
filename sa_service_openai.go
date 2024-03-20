@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"sync"
@@ -33,7 +32,7 @@ type SAServiceMsg struct {
 type SAServiceOpenAIProps struct {
 	Model    string         `json:"model"`
 	Messages []SAServiceMsg `json:"messages"`
-
+	Stream   bool           `json:"stream"`
 	//.....
 	//Temperature       float64 //1
 	//Max_tokens        int     //256
@@ -100,53 +99,28 @@ func (wh *SAServiceOpenAI) addCache(propsHash OsHash, value []byte) {
 	wh.cache[propsHash.Hex()] = value
 }
 
-func SAServiceOpenAI_getAnswer(js []byte) ([]byte, error) {
-
-	type Msg struct {
-		Content string
-	}
-	type Choice struct {
-		Message Msg
-	}
-	type Answer struct {
-		Choices []Choice
-	}
-
-	var ans Answer
-	err := json.Unmarshal(js, &ans)
-	if err != nil {
-		return nil, err
-	}
-
-	var str []byte
-	for _, cho := range ans.Choices {
-		str = append(str, cho.Message.Content...)
-	}
-
-	return str, err
-}
-
 func (wh *SAServiceOpenAI) Complete(props *SAServiceOpenAIProps) ([]byte, error) {
 	//find
 	propsHash, err := props.Hash()
 	if err != nil {
 		return nil, fmt.Errorf("Hash() failed: %w", err)
 	}
-	js, found := wh.FindCache(propsHash)
+	str, found := wh.FindCache(propsHash)
 	if found {
-		return SAServiceOpenAI_getAnswer(js)
+		return str, nil
 	}
 
-	js, err = wh.complete(props)
+	out, err := wh.complete(props)
 	if err != nil {
 		return nil, fmt.Errorf("complete() failed: %w", err)
 	}
 
-	wh.addCache(propsHash, js)
-	return SAServiceOpenAI_getAnswer(js)
+	wh.addCache(propsHash, out)
+	return out, nil
 }
 
 func (wh *SAServiceOpenAI) complete(props *SAServiceOpenAIProps) ([]byte, error) {
+	props.Stream = true
 
 	skey := wh.services.ui.win.io.ini.OpenAI_key
 	if skey == "" {
@@ -166,6 +140,9 @@ func (wh *SAServiceOpenAI) complete(props *SAServiceOpenAIProps) ([]byte, error)
 	}
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Bearer "+skey)
+	//req.Header.Set("Accept", "text/event-stream")
+	//req.Header.Set("Cache-Control", "no-cache")
+	//req.Header.Set("Connection", "keep-alive")
 
 	client := &http.Client{}
 	res, err := client.Do(req)
@@ -173,14 +150,19 @@ func (wh *SAServiceOpenAI) complete(props *SAServiceOpenAIProps) ([]byte, error)
 		return nil, fmt.Errorf("Do() failed: %w", err)
 	}
 
-	resBody, err := io.ReadAll(res.Body)
+	answer, err := SAService_parseStream(res)
+	if err != nil {
+		return nil, err
+	}
+
+	/*resBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, fmt.Errorf("ReadAll() failed: %w", err)
-	}
+	}*/
 
 	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("statusCode != 200, response: %s", resBody)
+		return nil, fmt.Errorf("statusCode != 200, response: %s", answer)
 	}
 
-	return resBody, nil
+	return answer, nil
 }

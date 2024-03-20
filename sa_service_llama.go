@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
 )
@@ -57,8 +58,7 @@ type SAServiceLLamaCppProps struct {
 	//Image_data //{"data": "<BASE64_STRING>", "id": 12}
 	Cache_prompt bool `json:"cache_prompt"`
 	Slot_id      int  `json:"slot_id"`
-
-	//Stream bool ......
+	Stream       bool `json:"stream"`
 }
 
 func (p *SAServiceLLamaCppProps) Hash() (OsHash, error) {
@@ -177,7 +177,73 @@ func (wh *SAServiceLLamaCpp) Complete(props *SAServiceLLamaCppProps) ([]byte, er
 	return out, nil
 }
 
+func SAService_parseStream(res *http.Response) ([]byte, error) {
+	type STMsg struct {
+		Content string
+	}
+	type STChoice struct {
+		Message STMsg
+		Delta   STMsg
+	}
+	type ST struct {
+		Choices []STChoice
+	}
+
+	answer := ""
+	resBody := make([]byte, 0, 1024)
+	resBody_last := 0
+	for {
+		var tb [256]byte
+		n, readErr := res.Body.Read(tb[:])
+		if n > 0 {
+			resBody = append(resBody, tb[:n]...)
+		}
+		//fmt.Print(string(tb[:n]))
+
+		str := string(resBody[resBody_last:])
+		separ := "\n\n"
+		d := strings.Index(str, separ)
+		if readErr == io.EOF {
+			d = len(str)
+		}
+		if d > 0 {
+			str := str[:d]                               //cut end
+			js, found := strings.CutPrefix(str, "data:") //cut start
+			if !found {
+				return nil, fmt.Errorf("missing 'data:'")
+			}
+			js = strings.TrimSpace(js)
+
+			if js != "[DONE]" {
+				var st ST
+				err := json.Unmarshal([]byte(js), &st)
+				if err != nil {
+					return nil, fmt.Errorf("Unmarshal() failed: %w", err)
+				}
+
+				if len(st.Choices) > 0 {
+					answer += st.Choices[0].Delta.Content
+					fmt.Print(st.Choices[0].Delta.Content)
+				}
+			}
+
+			resBody_last += d + len(separ)
+		}
+
+		if readErr != nil {
+			if readErr == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf("Read() failed: %w", readErr)
+		}
+	}
+
+	return []byte(answer), nil
+}
+
 func (wh *SAServiceLLamaCpp) complete(props *SAServiceLLamaCppProps) ([]byte, error) {
+	props.Stream = true
+
 	js, err := json.Marshal(props)
 	if err != nil {
 		return nil, fmt.Errorf("Marshal() failed: %w", err)
@@ -190,6 +256,9 @@ func (wh *SAServiceLLamaCpp) complete(props *SAServiceLLamaCppProps) ([]byte, er
 		return nil, fmt.Errorf("NewRequest() failed: %w", err)
 	}
 	req.Header.Add("Content-Type", "application/json")
+	//req.Header.Set("Accept", "text/event-stream")
+	//req.Header.Set("Cache-Control", "no-cache")
+	//req.Header.Set("Connection", "keep-alive")
 
 	client := &http.Client{}
 	res, err := client.Do(req)
@@ -197,35 +266,16 @@ func (wh *SAServiceLLamaCpp) complete(props *SAServiceLLamaCppProps) ([]byte, er
 		return nil, fmt.Errorf("Do() failed: %w", err)
 	}
 
-	resBody, err := io.ReadAll(res.Body)
+	answer, err := SAService_parseStream(res)
 	if err != nil {
-		return nil, fmt.Errorf("ReadAll() failed: %w", err)
+		return nil, err
 	}
 
 	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("statusCode != 200, response: %s", resBody)
+		return nil, fmt.Errorf("statusCode != 200, response: %s", answer)
 	}
 
-	type STMsg struct {
-		Content string
-	}
-	type STChoice struct {
-		Message STMsg
-	}
-	type ST struct {
-		Choices []STChoice
-	}
-	var answer ST
-	err = json.Unmarshal(resBody, &answer)
-	if err != nil {
-		return nil, fmt.Errorf("Unmarshal() failed: %w", err)
-	}
-
-	if len(answer.Choices) == 0 {
-		return nil, fmt.Errorf("answer is empty")
-	}
-
-	return []byte(answer.Choices[0].Message.Content), nil
+	return answer, nil
 }
 
 func (wh *SAServiceLLamaCpp) getHealth() error {
