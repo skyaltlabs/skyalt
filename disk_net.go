@@ -47,13 +47,13 @@ func (job *DiskNetJob) downloadWithAgent() {
 
 	req.Header.Set("User-Agent", job.agent)
 
-	resp, err := client.Do(req)
+	res, err := client.Do(req)
 	if err != nil {
 		job.err = err
 		return
 	}
 
-	job.data, err = io.ReadAll(resp.Body)
+	job.data, err = io.ReadAll(res.Body)
 	if err != nil {
 		job.err = err
 		return
@@ -67,6 +67,7 @@ func (job *DiskNetJob) download() {
 		job.err = err
 		return
 	}
+	defer resp.Body.Close()
 
 	job.data, err = io.ReadAll(resp.Body)
 	if err != nil {
