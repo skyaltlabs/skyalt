@@ -107,6 +107,8 @@ make
 - [Llama.cpp](https://github.com/ggerganov/llama.cpp): LLM inference in C/C++
 - [Whisper.cpp](https://github.com/ggerganov/whisper.cpp): Port of OpenAI's Whisper model in C/C++
 
+- [Inter](https://github.com/rsms/inter): The Inter font family
+
 
 
 ## Author
