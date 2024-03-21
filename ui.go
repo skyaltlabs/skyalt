@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 )
 
 type UiLayoutEdit struct {
@@ -74,6 +75,8 @@ type Ui struct {
 	date_page int64
 
 	mapp *UiLayoutMap
+
+	bookmarks []string
 }
 
 func NewUi(win *Win, base_app_layout_path string) (*Ui, error) {
@@ -94,6 +97,10 @@ func NewUi(win *Win, base_app_layout_path string) (*Ui, error) {
 		return nil, fmt.Errorf("reloadTranslations() failed: %w", err)
 	}
 
+	//read bookmarks
+	ui.reloadBookmarks("/home/milan/.config/gtk-3.0/bookmarks")
+	ui.reloadBookmarks("/home/milan/.config/gtk-4.0/bookmarks")
+
 	return &ui, nil
 }
 
@@ -110,6 +117,20 @@ func (ui *Ui) Destroy() {
 	}
 	ui.dialogs = nil
 	ui.calls = nil
+}
+
+func (ui *Ui) reloadBookmarks(filePath string) {
+	f, err := os.ReadFile(filePath)
+	if err != nil {
+		return
+	}
+	list := strings.Split(string(f), "\n")
+	for _, l := range list {
+		ll, found := strings.CutPrefix(l, "file://")
+		if found {
+			ui.bookmarks = append(ui.bookmarks, ll)
+		}
+	}
 }
 
 func (ui *Ui) reloadTranslations() error {
@@ -264,6 +285,9 @@ func (ui *Ui) GetLastApp() *UiLayoutApp {
 }
 
 func (ui *Ui) IsStackTop() bool {
+	if len(ui.dialogs) <= 1 {
+		return true
+	}
 	return ui.dialogs[len(ui.dialogs)-1] == ui.GetCall() //last dialog
 }
 
