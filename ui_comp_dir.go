@@ -160,6 +160,7 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 					}
 					directory += f.Name()
 					ui.dir.tempPath = directory + "/"
+					ui.dir.search = "" //reset
 				} else {
 					if directory != "/" {
 						directory += "/"
