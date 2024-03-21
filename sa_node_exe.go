@@ -683,7 +683,6 @@ func UiSQLite_render(node *SANode) {
 				dnm := "create_table_" + node.Name
 				if ui.Comp_button(0, 0, 1, 1, "+", "Create table", true) > 0 {
 					ui.Dialog_open(dnm, 1)
-					node.Attrs["selected_table"] = g_table_name
 					g_table_name = ""
 				}
 				if ui.Dialog_start(dnm) {
@@ -694,6 +693,7 @@ func UiSQLite_render(node *SANode) {
 					//button
 					if ui.Comp_button(1, 0, 1, 1, "Create Table", "", g_table_name != "") > 0 {
 						db.Write_unsafe("CREATE TABLE " + g_table_name + "(firstColumn TEXT);")
+						node.Attrs["selected_table"] = g_table_name
 						ui.Dialog_close()
 					}
 					ui.Dialog_end()
@@ -703,31 +703,37 @@ func UiSQLite_render(node *SANode) {
 			//list of tables
 			for i, t := range info {
 
-				dnm := "detail_table" + t.Name + node.Name
-				cl := ui.Comp_buttonMenu(1+i, 0, 1, 1, t.Name, "", true, t.Name == selected_table)
-				if cl == 1 {
-					node.Attrs["selected_table"] = t.Name
-				} else if cl == 2 {
-					ui.Dialog_open(dnm, 1)
-					g_table_name = t.Name
-				}
+				ui.Div_start(1+i, 0, 1, 1)
+				{
+					ui.Div_colMax(0, 100)
 
-				if ui.Dialog_start(dnm) {
-					ui.Div_colMax(0, 7)
-					//rename
-					_, _, _, fnshd, _ := ui.Comp_editbox_desc("Name", 0, 3, 0, 0, 1, 1, &g_table_name, Comp_editboxProp())
-					if fnshd {
-						db.Write_unsafe(fmt.Sprintf("ALTER TABLE %s RENAME TO %s;", t.Name, g_table_name))
-						if selected_table == t.Name {
-							node.Attrs["selected_table"] = g_table_name
+					dnm := "detail_table" + t.Name + node.Name
+					if ui.Comp_buttonMenu(0, 0, 1, 1, t.Name, "", true, t.Name == selected_table) > 0 {
+						node.Attrs["selected_table"] = t.Name
+					}
+					if ui.Comp_buttonIcon(1, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/context.png"), 0.3, "", CdPalette_P, true, t.Name == selected_table) > 0 {
+						ui.Dialog_open(dnm, 1)
+						g_table_name = t.Name
+					}
+
+					if ui.Dialog_start(dnm) {
+						ui.Div_colMax(0, 7)
+						//rename
+						_, _, _, fnshd, _ := ui.Comp_editbox_desc("Name", 0, 3, 0, 0, 1, 1, &g_table_name, Comp_editboxProp())
+						if fnshd {
+							db.Write_unsafe(fmt.Sprintf("ALTER TABLE %s RENAME TO %s;", t.Name, g_table_name))
+							if selected_table == t.Name {
+								node.Attrs["selected_table"] = g_table_name
+							}
 						}
+						//delete
+						if ui.Comp_buttonError(0, 2, 1, 1, "Delete", "", true, true) > 0 {
+							db.Write_unsafe(fmt.Sprintf("DROP TABLE %s;", t.Name))
+						}
+						ui.Dialog_end()
 					}
-					//delete
-					if ui.Comp_buttonError(0, 2, 1, 1, "Delete", "", true, true) > 0 {
-						db.Write_unsafe(fmt.Sprintf("DROP TABLE %s;", t.Name))
-					}
-					ui.Dialog_end()
 				}
+				ui.Div_end()
 			}
 		}
 		ui.Div_end()
