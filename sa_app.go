@@ -191,7 +191,7 @@ func (app *SAApp) Tick() {
 		return
 	}
 
-	if OsIsTicksIn(app.last_trigger_ticks, 500) {
+	if OsIsTicksIn(app.last_trigger_ticks, 500) && app.base.ui.win.io.touch.end {
 		return //avoid editbox "temp_to_value" is called to often
 	}
 
