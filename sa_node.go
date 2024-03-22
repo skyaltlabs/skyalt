@@ -127,16 +127,33 @@ func (node *SANode) AddPos(r OsV2f) {
 	}
 }
 
+func (node *SANode) IsTypeWhispercpp() bool {
+	return node.Exe == "whispercpp"
+}
+func (node *SANode) IsTypeLLamacpp() bool {
+	return node.Exe == "llamacpp"
+}
+func (node *SANode) IsTypeOpenAI() bool {
+	return node.Exe == "openai"
+}
+func (node *SANode) IsTypeNet() bool {
+	return node.Exe == "net"
+}
+
+func (node *SANode) IsTypeCode() bool {
+	return strings.EqualFold(node.Exe, "func_go")
+}
+
+func (node *SANode) IsTypeTable() bool {
+	return strings.EqualFold(node.Exe, "table")
+}
+
 func (node *SANode) HasAttrNode() bool {
 	return node.Exe == "whispercpp" || node.Exe == "llamacpp" || node.Exe == "openai"
 }
 
 func (node *SANode) HasNodeSubs() bool {
-	return strings.EqualFold(node.Exe, "layout") || strings.EqualFold(node.Exe, "dialog")
-}
-
-func (node *SANode) IsTypeCode() bool {
-	return strings.EqualFold(node.Exe, "func_go") || strings.EqualFold(node.Exe, "code_python")
+	return strings.EqualFold(node.Exe, "layout") || strings.EqualFold(node.Exe, "dialog") || node.IsTypeTable()
 }
 
 func (node *SANode) IsWithChangedAttr() bool {
@@ -299,19 +316,6 @@ func (node *SANode) CanBeRenderOnCanvas() bool {
 		return gr != nil && gr.render != nil
 	}
 	return false
-}
-
-func (node *SANode) IsTypeWhispercpp() bool {
-	return node.Exe == "whispercpp"
-}
-func (node *SANode) IsTypeLLamacpp() bool {
-	return node.Exe == "llamacpp"
-}
-func (node *SANode) IsTypeOpenAI() bool {
-	return node.Exe == "openai"
-}
-func (node *SANode) IsTypeNet() bool {
-	return node.Exe == "net"
 }
 
 func (node *SANode) FindNode(name string) *SANode {

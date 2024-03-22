@@ -416,7 +416,8 @@ func UiDiskDir_Attrs(node *SANode) {
 	ui.Div_colMax(1, 100)
 
 	grid := InitOsV4(0, 0, 1, 1)
-
+	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
+	node.ShowAttrBool(&grid, "show", true)
 	node.ShowAttrFilePicker(&grid, "path", "", false, "disk_dir_"+node.Name)
 	node.ShowAttrBool(&grid, "write", false)
 	node.ShowAttrBool(&grid, "enable", true)
@@ -441,7 +442,8 @@ func UiDiskFile_Attrs(node *SANode) {
 	ui.Div_colMax(1, 100)
 
 	grid := InitOsV4(0, 0, 1, 1)
-
+	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
+	node.ShowAttrBool(&grid, "show", true)
 	node.ShowAttrFilePicker(&grid, "path", "", true, "disk_file_"+node.Name)
 	node.ShowAttrBool(&grid, "write", false)
 	node.ShowAttrBool(&grid, "enable", true)
@@ -466,7 +468,8 @@ func UiMicrophone_Attrs(node *SANode) {
 	ui.Div_colMax(1, 100)
 
 	grid := InitOsV4(0, 0, 1, 1)
-
+	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
+	node.ShowAttrBool(&grid, "show", true)
 	node.ShowAttrFilePicker(&grid, "path", "", true, "microphone_path_"+node.Name)
 	node.ShowAttrBool(&grid, "enable", true)
 	node.ShowAttrBool(&grid, "changed", false)
@@ -531,6 +534,111 @@ func UiMicrophone_render(node *SANode) {
 			node.Attrs["changed"] = true
 		}
 	}
+}
+
+func UiTable_Attrs(node *SANode) {
+	ui := node.app.base.ui
+	ui.Div_colMax(0, 3)
+	ui.Div_colMax(1, 100)
+
+	grid := InitOsV4(0, 0, 1, 1)
+	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
+	node.ShowAttrBool(&grid, "show", true)
+	node.ShowAttrBool(&grid, "enable", true)
+	node.ShowAttrBool(&grid, "changed", false)
+}
+
+func UiTable_render(node *SANode) {
+	grid := node.GetGrid()
+	enable := node.GetAttrBool("enable", true)
+
+	rws, found := node.Attrs["rows"]
+	if !found {
+		return //empty
+	}
+
+	rows, ok := rws.([]interface{})
+	if !ok {
+		//...
+		return
+	}
+
+	ui := node.app.base.ui
+	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
+	{
+		for x := range node.Subs {
+			ui.Div_colMax(x, 100)
+		}
+
+		for y, rw := range rows {
+			nodes, ok := rw.(map[string]interface{})
+			if !ok {
+				//...
+				continue
+			}
+
+			//columns
+			for x, it := range node.Subs {
+				nd, found := nodes[it.Name]
+				if found {
+					attrs, ok := nd.(map[string]interface{})
+					if ok {
+
+						//bug: it's hidden because show is default false ...
+
+						it.Attrs = attrs //rewrite default attrs ... create row copies here ...
+						//add DefaultRow Table<Name>Row ... jak? .....................................................
+						//init with 'tb.DefaultRow' inside AddRow() ...
+
+						//FINAL SOLUTION? ............. žádný 'Table' node, ale předělat SQLite? .............
+						//co kdyby Table měla na pozadí SQLite(můžu SELECT z jiné db)
+						//- generovat všechny sub-nodes z tabulky(column name => node name)
+						//- user může convert z text -> combo
+						//- jak Buttons? ...
+
+						//Great:
+						//- map widget as cell
+
+						//Problems:
+						//- big json file
+						//- slow when 10M must be generated
+
+						it.SetAttrV4("grid", InitOsV4(x, y, 1, 1))
+						it.Attrs["enable"] = enable
+						it.RenderCanvas()
+					} else {
+						//...
+						continue
+					}
+				} else {
+					//...
+					continue
+				}
+			}
+
+			/*for key, attrs := range vars {
+				prmNode := node.FindNode(key)
+				if prmNode != nil {
+					if !prmNode.HasAttrNode() {
+						switch vv := attrs.(type) {
+						case map[string]interface{}:
+							prmNode.Attrs = vv
+							prmNode.SetAttrV4("grid", InitOsV4())
+							prmNode.RenderCanvas()
+						}
+					}
+				} else {
+					fmt.Println("Error: Node not found", key)
+				}
+			}*/
+		}
+
+		//rect around
+		pl := ui.win.io.GetPalette()
+		ui.Paint_rect(0, 0, 1, 1, 0, pl.OnB, 0.03)
+	}
+	ui.Div_end()
+
 }
 
 func UiNet_Attrs(node *SANode) {

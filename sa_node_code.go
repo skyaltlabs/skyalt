@@ -182,6 +182,48 @@ func (ls *SANodeCode) buildSqlInfos() (string, error) {
 	return str, nil
 }
 
+func (node *SANode) getStructName() string {
+
+	if node.IsTypeTable() {
+		return fmt.Sprintf("Table_%s", node.Name)
+	}
+
+	return strings.ToUpper(node.Exe[0:1]) + node.Exe[1:] //1st letter must be upper
+}
+
+func (ls *SANodeCode) buildTableStructs(nodes []*SANode, addExtraAttrs bool) string {
+	str := ""
+	for _, prmNode := range nodes {
+		if !prmNode.IsTypeTable() {
+			continue
+		}
+
+		StructName := prmNode.getStructName()
+
+		//Table<name>Row
+		str += fmt.Sprintf("type %sRow struct {", StructName)
+		for _, it := range prmNode.Subs {
+			itVarName := strings.ToUpper(it.Name[0:1]) + it.Name[1:] //1st letter must be upper
+			itStructName := it.getStructName()                       //table inside table? .........
+
+			str += fmt.Sprintf("\t%s %s `json:\"%s\"`\n", itVarName, itStructName, it.Name)
+		}
+		str += "}\n"
+
+		//Table<name>
+		extraAttrs := "\tGrid_x  int    `json:\"grid_x\"`\n\tGrid_y  int    `json:\"grid_y\"`\n\tGrid_w  int    `json:\"grid_w\"`\n\tGrid_h  int    `json:\"grid_h\"`\n\tShow    bool   `json:\"show\"`\n\tEnable  bool   `json:\"enable\"`\n\tChanged bool   `json:\"changed\"`\n"
+		if !addExtraAttrs {
+			extraAttrs = ""
+		}
+		str += fmt.Sprintf("type %s struct {\n%s\tRows []*%sRow `json:\"rows\"`\n}\n", StructName, extraAttrs, StructName)
+
+		//Func
+		//init 'r' with tb.defaultRow ........
+		str += fmt.Sprintf("func (tb *%s) AddRow() * %sRow {\n\tr := &%sRow{} \n\ttb.Rows = append(tb.Rows, r)\n\treturn r\n}\n", StructName, StructName, StructName)
+	}
+	return str
+}
+
 func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 
 	err := ls.updateMsgsDepends()
@@ -192,10 +234,11 @@ func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 	str := "I have this golang code:\n\n"
 	str += g_code_const_gpt + "\n"
 
+	str += ls.buildTableStructs(ls.msgs_depends, false)
+
 	params := ""
 	for _, prmNode := range ls.msgs_depends {
-
-		StructName := strings.ToUpper(prmNode.Exe[0:1]) + prmNode.Exe[1:] //1st letter must be upper
+		StructName := prmNode.getStructName()
 		params += fmt.Sprintf("%s *%s, ", prmNode.Name, StructName)
 	}
 	params, _ = strings.CutSuffix(params, ", ")
@@ -356,11 +399,11 @@ func (ls *SANodeCode) Execute() {
 			return
 		}
 
-		for key, node := range vars {
+		for key, attrs := range vars {
 			prmNode := ls.node.FindNode(key)
 			if prmNode != nil {
 				if !prmNode.HasAttrNode() {
-					switch vv := node.(type) {
+					switch vv := attrs.(type) {
 					case map[string]interface{}:
 						prmNode.Attrs = vv
 					}
@@ -523,9 +566,10 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 	//struct
 	str += "type MainStruct struct {\n"
 	for _, prmNode := range ls.func_depends {
-		VvarName := strings.ToUpper(prmNode.Name[0:1]) + prmNode.Name[1:] //1st letter must be upper
-		StructName := strings.ToUpper(prmNode.Exe[0:1]) + prmNode.Exe[1:] //1st letter must be upper
-		str += fmt.Sprintf("\t%s %s `json:\"%s\"`\n", VvarName, StructName, prmNode.Name)
+		VarName := strings.ToUpper(prmNode.Name[0:1]) + prmNode.Name[1:] //1st letter must be upper
+		StructName := prmNode.getStructName()
+
+		str += fmt.Sprintf("\t%s %s `json:\"%s\"`\n", VarName, StructName, prmNode.Name)
 	}
 	str += "}\n\n"
 
@@ -542,8 +586,8 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 		`
 	params := ""
 	for _, prmNode := range ls.func_depends {
-		VvarName := strings.ToUpper(prmNode.Name[0:1]) + prmNode.Name[1:] //1st letter must be upper
-		params += fmt.Sprintf("&st.%s, ", VvarName)
+		VarName := strings.ToUpper(prmNode.Name[0:1]) + prmNode.Name[1:] //1st letter must be upper
+		params += fmt.Sprintf("&st.%s, ", VarName)
 
 	}
 	params, _ = strings.CutSuffix(params, ", ")
@@ -559,6 +603,10 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 		}
 		return res, nil
 	}`
+
+	//tables
+	str += "\n"
+	str += ls.buildTableStructs(ls.func_depends, true)
 
 	//rest
 	str += "\n" + g_code_const_go

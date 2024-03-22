@@ -65,10 +65,11 @@ func InitSAGroups() SAGroups {
 		{name: "date", render: UiDate_render, attrs: UiDate_Attrs, changedAttr: true},
 		{name: "microphone", render: UiMicrophone_render, attrs: UiMicrophone_Attrs, changedAttr: true},
 
+		{name: "table", render: UiTable_render, attrs: UiTable_Attrs, changedAttr: true},
+
 		/*	{name: "map", render: SAExe_Render_Map},
 			{name: "image", render: SAExe_Render_Image},
 			{name: "list", render: SAExe_Render_List},
-			{name: "table", render: SAExe_Render_Table},
 			{name: "layout", render: SAExe_Render_Layout},
 			{name: "dialog", render: SAExe_Render_Dialog},*/
 	}})
@@ -88,7 +89,6 @@ func InitSAGroups() SAGroups {
 
 	grs.groups = append(grs.groups, &SAGroup{name: "Functions", icon: InitWinMedia_url(path + "node_code.png"), nodes: []*SAGroupNode{
 		{name: "func_go", attrs: UiCodeGo_Attrs},
-		//{name: "code_python", fn: SAExe_Code_python},
 	}})
 
 	return grs
