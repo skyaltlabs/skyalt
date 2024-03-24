@@ -569,18 +569,6 @@ func UiSQLite_Attrs(node *SANode) {
 		return
 	}
 
-	node.ShowAttrBool(&grid, "show_header", true)
-
-	{
-		info, err := db.GetTableInfo()
-		if err != nil {
-			node.SetError(err)
-			return
-		}
-		tablesList := DiskDbIndex_ListOfTables(info)
-		node.ShowAttrStringCombo(&grid, "selected_table", "", tablesList, tablesList)
-	}
-
 	grid.Start.Y++ //space
 
 	//editor
@@ -665,248 +653,78 @@ func UiSQLite_Attrs(node *SANode) {
 }
 
 func UiSQLite_render(node *SANode) {
+	//editor ...................
+}
+
+func UiLayout_Attrs(node *SANode) {
+	ui := node.app.base.ui
+	ui.Div_colMax(0, 3)
+	ui.Div_colMax(1, 100)
+
+	grid := InitOsV4(0, 0, 1, 1)
+	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
+	node.ShowAttrBool(&grid, "show", true)
+	node.ShowAttrBool(&grid, "write", false)
+	node.ShowAttrBool(&grid, "enable", true)
+}
+
+func UiLayout_render(node *SANode) {
 	grid := node.GetGrid()
-
-	path := node.GetAttrString("path", "")
-	//enable := node.GetAttrBool("enable", true)
-	show_header := node.GetAttrBool("show_header", true)
-	selected_table := node.GetAttrString("selected_table", "")
-	//changed := node.GetAttrBool("changed", false)
-
-	db, _, err := node.app.base.ui.win.disk.OpenDb(path)
-	if err != nil {
-		node.SetError(err)
-		return
-	}
-
-	info, err := db.GetTableInfo()
-	if err != nil {
-		node.SetError(err)
-		return
-	}
-
-	//check
-	var tinfo *DiskDbIndexTable
-	for _, t := range info {
-		if t.Name == selected_table {
-			tinfo = t
-		}
-	}
-	if tinfo == nil {
-		node.SetError(fmt.Errorf("selected_table(%s) not found", selected_table))
-		return
-	}
 
 	ui := node.app.base.ui
 
 	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 	{
-		y := 0
-
-		//col sizes
-		num_cols := 0
-		for _, nd := range node.Subs {
-			if nd.CanBeRenderOnCanvas() {
-				ui.Div_colMax(num_cols, 100)
-				num_cols++
-			}
-		}
-
-		//header
-		if show_header {
-			ui.Div_rowMax(1, 100)
-
-			x := 0
-			for _, nd := range node.Subs {
-				if nd.CanBeRenderOnCanvas() {
-					/*nm := ""
-					if nd.IsTypeWithAttrLabel() {
-						nm = nd.GetAttrString("label", "")
-					}
-					if nm == "" {
-						nm = nd.Name
-					}*/
-					nm := nd.Name
-
-					ui.Comp_text(x, y, 1, 1, nm, 1)
-					x++
-				}
-			}
-			y++
-		} else {
-			ui.Div_rowMax(0, 100)
-		}
-
-		//rows
-		parentId := ui.DivInfo_get(SA_DIV_GET_uid, 0)
-		ui.Div_start(0, y, num_cols, 1)
-		{
-			//copy cols from parent
-			ui.DivInfo_set(SA_DIV_SET_copyCols, parentId, 0)
-			ui.DivInfo_set(SA_DIV_SET_scrollOnScreen, 1, 0)
-			ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
-
-			//visible rows
-			lv := ui.GetCall()
-			row_st := lv.call.data.scrollV.GetWheel() / ui.win.Cell()
-			row_en := row_st + OsRoundUp(float64(lv.call.crop.Size.Y)/float64(ui.win.Cell())) + 1
-
-			updateTableCache := (node.tableCache == nil)
-			if node.tableCache != nil {
-				n := len(node.tableCache)
-				row_st = OsMin(row_st, n)
-				row_en = OsMin(row_en, n)
-
-				for i := row_st; i < row_en; i++ {
-					if node.tableCache[i] == nil {
-						updateTableCache = true
-						break
-					}
-				}
-			}
-
-			//if db file change: updateTableCache=true ..................
-
-			if updateTableCache {
-				err := node.fillTableCache(db, tinfo, row_st, row_en)
-				if err != nil {
-					node.SetError(err)
-				}
-			}
-
-			num_rows := len(node.tableCache)
-			if num_rows > 0 {
-				ui.Div_row(num_rows-1, 1) //set last
-			}
-
-			row_st = OsMin(row_st, num_rows)
-			row_en = OsMin(row_en, num_rows)
-
-			//draw
-			for r := row_st; r < row_en; r++ {
-
-				isTriggered := false
-				row := node.tableCache[r]
-				for _, nd := range row {
-					gr := node.app.base.node_groups.FindNode(nd.Exe)
-					gr.render(nd) //from temp_table
-
-					//je potřeba reset, jinak bude pořád clicked, etc. ...................................
-					if nd.IsTriggered() {
-						isTriggered = true
-					}
-				}
-
-				if isTriggered {
-					//copy
-					for _, nd := range row {
-						ndd := node.FindNode(nd.Name)
-						if ndd != nil {
-							ndd.Attrs = nd.Attrs //copy back, so for ex: Button is clicked
-						}
-					}
-					node.app.Tick(true)
-				}
-			}
-		}
-		ui.Div_end()
+		node.renderLayout()
 	}
 	ui.Div_end()
 }
 
-func (node *SANode) fillTableCache(db *DiskDb, tinfo *DiskDbIndexTable, row_st int, row_en int) error {
+func UiCopy_Attrs(node *SANode) {
+	ui := node.app.base.ui
+	ui.Div_colMax(0, 3)
+	ui.Div_colMax(1, 100)
 
-	//rows
-	var num_rows int
-	var rows *sql.Rows
-	if tinfo != nil {
-		db.Lock()
-		defer db.Unlock()
+	grid := InitOsV4(0, 0, 1, 1)
+	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
+	node.ShowAttrBool(&grid, "show", true)
+	node.ShowAttrBool(&grid, "write", false)
+	node.ShowAttrBool(&grid, "enable", true)
+	//node.ShowAttrBool(&grid, "changed", false) //...
+}
 
-		row := db.ReadRow_unsafe("SELECT COUNT(*) FROM " + tinfo.Name)
-		row.Scan(&num_rows)
+func UiCopy_render(node *SANode) {
+	grid := node.GetGrid()
 
-		var err error
-		rows, err = db.Read_unsafe("SELECT " + tinfo.ListOfColumnNames(true) + " FROM " + tinfo.Name)
-		if err != nil {
-			return err
+	ui := node.app.base.ui
+
+	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
+	{
+		ui.Div_colMax(0, 100)
+
+		num_rows := len(node.copySubs)
+		if num_rows > 0 {
+			ui.Div_row(num_rows-1, 1) //set last
 		}
-		defer rows.Close()
+
+		//visible rows
+		lv := ui.GetCall()
+		row_st := lv.call.data.scrollV.GetWheel() / ui.win.Cell()
+		row_en := row_st + OsRoundUp(float64(lv.call.crop.Size.Y)/float64(ui.win.Cell())) + 1
+
+		row_st = OsMin(row_st, num_rows)
+		row_en = OsMin(row_en, num_rows)
+
+		//draw items
+		for i := row_st; i < row_en; i++ {
+			it := node.copySubs[i]
+			gr := node.app.base.node_groups.FindNode(it.Exe)
+
+			it.SetGrid(InitOsV4(0, i, 1, 1))
+			gr.render(it) //from temp_table
+		}
 	}
-
-	//aloc rows
-	if num_rows != len(node.tableCache) {
-		node.tableCache = make([][]*SANode, num_rows)
-	}
-
-	//cut
-	row_st = OsMin(row_st, num_rows)
-	row_en = OsMin(row_en, num_rows)
-
-	//prepare for scan()
-	vals := make([]string, len(tinfo.Columns))
-	valsPtrs := make([]interface{}, len(vals))
-	for i := range vals {
-		valsPtrs[i] = &vals[i]
-	}
-
-	//number of columns
-	num_cols := 0
-	for _, nd := range node.Subs {
-		if nd.CanBeRenderOnCanvas() {
-			num_cols++
-		}
-	}
-
-	r := 0
-	for rows.Next() && r < row_en {
-		if r < row_st {
-			r++
-			continue //skip invisible rows
-		}
-
-		if node.tableCache[r] != nil {
-			r++
-			continue
-		}
-
-		err := rows.Scan(valsPtrs...) //err ...
-		if err != nil {
-			continue
-		}
-
-		//copy row into .Subs(not .tableCache)
-		for _, nd := range node.Subs {
-			ci := tinfo.FindColumn(nd.Name)
-			if ci >= 0 {
-				if nd.IsTypeWithAttrLabel() {
-					nd.Attrs["label"] = vals[ci]
-				} else {
-					nd.Attrs["value"] = vals[ci]
-				}
-				nd.Attrs["changed"] = true
-			}
-		}
-
-		//exe
-		node.app.Tick(true) //bug: run 1st row but then it's busy, so others are skip ..........................
-
-		//alloc & copy columns
-		node.tableCache[r] = make([]*SANode, num_cols)
-		c := 0
-		for _, nd := range node.Subs {
-			if nd.CanBeRenderOnCanvas() {
-				cp, _ := nd.Copy() //error ...
-				cp.SetGrid(InitOsV4(c, r, 1, 1))
-				node.tableCache[r][c] = cp
-				c++
-			}
-		}
-
-		r++
-	}
-
-	return nil
+	ui.Div_end()
 }
 
 var g_table_name string
