@@ -788,6 +788,7 @@ func (gr *SAGraph) recoverHistory() {
 		return
 	}
 	dst.updateLinks(nil, gr.app)
+	dst.updateCodeLinks()
 	gr.app.root = dst
 }
 

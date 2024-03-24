@@ -53,7 +53,7 @@ func InitSAGroups() SAGroups {
 
 	grs.groups = append(grs.groups, &SAGroup{name: "UI", icon: InitWinMedia_url(path + "node_ui.png"), nodes: []*SAGroupNode{
 		{name: "button", render: UiButton_render, attrs: UiButton_Attrs},
-		{name: "text", render: UiText_render, attrs: UiText_Attrs},
+		{name: "text", render: UiText_render, attrs: UiText_Attrs, changedAttr: true},
 		{name: "editbox", render: UiEditbox_render, attrs: UiEditbox_Attrs, changedAttr: true},
 		{name: "checkbox", render: UiCheckbox_render, attrs: UiCheckbox_Attrs, changedAttr: true},
 		{name: "switch", render: UiSwitch_render, attrs: UiSwitch_Attrs, changedAttr: true},
@@ -65,7 +65,7 @@ func InitSAGroups() SAGroups {
 		{name: "date", render: UiDate_render, attrs: UiDate_Attrs, changedAttr: true},
 		{name: "microphone", render: UiMicrophone_render, attrs: UiMicrophone_Attrs, changedAttr: true},
 
-		{name: "table", render: UiTable_render, attrs: UiTable_Attrs, changedAttr: true},
+		//{name: "table", render: UiTable_render, attrs: UiTable_Attrs, changedAttr: true},
 
 		/*	{name: "map", render: SAExe_Render_Map},
 			{name: "image", render: SAExe_Render_Image},
@@ -74,10 +74,10 @@ func InitSAGroups() SAGroups {
 			{name: "dialog", render: SAExe_Render_Dialog},*/
 	}})
 
-	grs.groups = append(grs.groups, &SAGroup{name: "Disk access", icon: InitWinMedia_url(path + "node_file.png"), nodes: []*SAGroupNode{
+	grs.groups = append(grs.groups, &SAGroup{name: "Access", icon: InitWinMedia_url(path + "node_file.png"), nodes: []*SAGroupNode{
 		{name: "disk_dir", render: UiDiskDir_render, attrs: UiDiskDir_Attrs, changedAttr: true},
 		{name: "disk_file", render: UiDiskFile_render, attrs: UiDiskFile_Attrs, changedAttr: true},
-		{name: "sqlite", render: UiSQLite_render, attrs: UiSQLite_Attrs, changedAttr: true},
+		{name: "tables", render: UiSQLite_render, attrs: UiSQLite_Attrs, changedAttr: true},
 		{name: "net", attrs: UiNet_Attrs},
 	}})
 
