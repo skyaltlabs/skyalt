@@ -23,6 +23,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"path/filepath"
 	"strconv"
 	"sync"
 	"time"
@@ -201,7 +203,7 @@ func (srv *SAServices) handlerWhisper(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "job_app is nil", http.StatusInternalServerError)
 		return
 	}
-	node := srv.job_app.root.FindNode(st.Node)
+	node := srv.job_app.root.FindNodeSplit(st.Node)
 	if node == nil {
 		http.Error(w, "Node not found", http.StatusInternalServerError)
 		return
@@ -261,7 +263,7 @@ func (srv *SAServices) _prepareMessages(body []byte) ([]SAServiceMsg, *SANode, e
 	if srv.job_app == nil {
 		return nil, nil, fmt.Errorf("job_app failed: %w", err)
 	}
-	node := srv.job_app.root.FindNode(st.Node)
+	node := srv.job_app.root.FindNodeSplit(st.Node)
 	if node == nil {
 		return nil, nil, fmt.Errorf("node '%s' not found", st.Node)
 	}
@@ -371,8 +373,8 @@ func (srv *SAServices) handlerNetwork(w http.ResponseWriter, r *http.Request) {
 
 	//get base struct
 	type Net struct {
-		Node     string `json:"node"`
-		FilePath string `json:"file_path"`
+		Node      string `json:"node"`
+		File_path string `json:"file_path"`
 
 		Url string `json:"url"`
 	}
@@ -388,7 +390,7 @@ func (srv *SAServices) handlerNetwork(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "job_app is nil", http.StatusInternalServerError)
 		return
 	}
-	node := srv.job_app.root.FindNode(st.Node)
+	node := srv.job_app.root.FindNodeSplit(st.Node)
 	if node == nil {
 		http.Error(w, "Node not found", http.StatusInternalServerError)
 		return
@@ -405,7 +407,17 @@ func (srv *SAServices) handlerNetwork(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	job := down.AddJob(srv.job_app, st.FilePath, st.Url) //file or RAM? ...
+	u, err := url.Parse(node.GetAttrString("url", ""))
+	if err != nil {
+		http.Error(w, "Parse() failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	u.Path = filepath.Join(u.Path, st.Url)
+
+	//err := net.DownloadFile(filePath, net.Url+db___model.Label+".bin") .................................
+
+	job := down.AddJob(srv.job_app, st.File_path, u.String()) //file or RAM? ...
 	defer down.RemoveJob(job)
 
 	//check if file already exist or wait for confirmation? ........ if size is over 10MB? ...
@@ -489,7 +501,7 @@ func (srv *SAServices) RenderJobs(app *SAApp) {
 			ui.Div_rowMax(1, 10)
 
 			ui.Comp_text(1, 0, 1, 1, "LLama is answering", 0)
-			ui.Comp_textSelectMulti(1, 1, 1, 1, job.answer, OsV2{0, 0}, true, true)
+			ui.Comp_textSelectMulti(1, 1, 1, 1, job.answer, OsV2{0, 0}, true, true, false)
 
 			if ui.Comp_button(1, 2, 1, 1, "Cancel", "", true) > 0 {
 				job.close = true
@@ -506,7 +518,7 @@ func (srv *SAServices) RenderJobs(app *SAApp) {
 			ui.Div_rowMax(1, 10)
 
 			ui.Comp_text(1, 0, 1, 1, "OpenAI is answering ...", 0)
-			ui.Comp_textSelectMulti(1, 1, 1, 1, job.answer, OsV2{0, 0}, true, true)
+			ui.Comp_textSelectMulti(1, 1, 1, 1, job.answer, OsV2{0, 0}, true, true, false)
 
 			if ui.Comp_button(1, 2, 1, 1, "Cancel", "", true) > 0 {
 				job.close = true
