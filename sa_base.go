@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 )
 
 type SABase struct {
@@ -250,6 +251,8 @@ func (base *SABase) Render() bool {
 		base.services.RenderJobs(app)
 		ui.Div_end()
 
+		ui.win.SetRedraw()
+		time.Sleep(500 * time.Millisecond)
 	} else {
 
 		ui.Div_rowMax(0, 100)
