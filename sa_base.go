@@ -225,7 +225,7 @@ func (base *SABase) Tick() {
 	base.HasApp() //fix range
 
 	app := base.GetApp()
-	app.Tick()
+	app.Tick(app.base.ui.win.io.touch.end)
 }
 
 func (base *SABase) Render() bool {

@@ -185,19 +185,19 @@ func (app *SAApp) rebuildLists() {
 	app.all_triggers_str = app.buildTriggersStr(app.root)
 }
 
-func (app *SAApp) Tick() {
+func (app *SAApp) Tick(force bool) {
 
 	if app.exe_run.Load() {
 		return
 	}
 
-	if OsIsTicksIn(app.last_trigger_ticks, 500) && app.base.ui.win.io.touch.end {
+	if OsIsTicksIn(app.last_trigger_ticks, 500) && !force {
 		return //avoid editbox "temp_to_value" is called to often
 	}
 
 	//update "changed" for sqlite dbs
 	for _, nd := range app.all_nodes {
-		if nd.Exe == "sqlite" {
+		if nd.Exe == "tables" {
 
 			path := nd.GetAttrString("path", "")
 
@@ -217,7 +217,7 @@ func (app *SAApp) Tick() {
 
 	if hasTrigger {
 		app.exe_run.Store(true)
-		go app.exe() //in 2nd thread and keep GUI showin progressrunning
+		go app.exe() //in 2nd thread and keep GUI showing progressrunning
 	}
 
 	app.last_trigger_ticks = OsTicks()

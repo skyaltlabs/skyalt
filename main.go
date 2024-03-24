@@ -58,6 +58,8 @@ func main() {
 	}
 	defer win.Destroy()
 
+	//DomTest(win)
+
 	//UI
 	ui, err := NewUi(win, SABase_GetPathLayout())
 	if err != nil {
@@ -103,11 +105,11 @@ func main() {
 				ui.EndRender()
 			}
 
+			base.Tick()
+
 			win.EndRender(true)
 		} else {
 			time.Sleep(20 * time.Millisecond)
 		}
-
-		base.Tick()
 	}
 }
