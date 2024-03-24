@@ -65,7 +65,8 @@ func InitSAGroups() SAGroups {
 		{name: "date", render: UiDate_render, attrs: UiDate_Attrs, changedAttr: true},
 		{name: "microphone", render: UiMicrophone_render, attrs: UiMicrophone_Attrs, changedAttr: true},
 
-		//{name: "table", render: UiTable_render, attrs: UiTable_Attrs, changedAttr: true},
+		{name: "layout", render: UiLayout_render, attrs: UiLayout_Attrs},
+		{name: "copy", render: UiCopy_render, attrs: UiCopy_Attrs, changedAttr: true},
 
 		/*	{name: "map", render: SAExe_Render_Map},
 			{name: "image", render: SAExe_Render_Image},
