@@ -84,7 +84,7 @@ func InitSANodeCode(node *SANode) SANodeCode {
 }*/
 
 func (ls *SANodeCode) findNodeName(nm string) (*SANode, error) {
-	node := ls.node.FindNode(nm)
+	node := ls.node.FindNodeSplit(nm)
 	if node == nil {
 		return nil, fmt.Errorf("node '%s' not found", nm)
 	}
@@ -92,7 +92,7 @@ func (ls *SANodeCode) findNodeName(nm string) (*SANode, error) {
 		return nil, fmt.Errorf("can't connect to it self")
 	}
 	if node.IsTypeCode() {
-		return nil, fmt.Errorf("can't connect to node(%s) which is type code", node.Name)
+		return nil, fmt.Errorf("can't connect to node(%s) which is type code", nm)
 	}
 	return node, nil
 }
@@ -105,7 +105,7 @@ func (ls *SANodeCode) addFuncDepend(nm string) error {
 
 	//find
 	for _, dp := range ls.func_depends {
-		if dp.Name == node.Name {
+		if dp == node {
 			return nil //already added
 		}
 	}
@@ -124,7 +124,7 @@ func (ls *SANodeCode) addMsgDepend(nm string) error {
 
 	//find
 	for _, dp := range ls.msgs_depends {
-		if dp.Name == node.Name {
+		if dp == node {
 			return nil //already added
 		}
 	}
@@ -149,8 +149,8 @@ func (ls *SANodeCode) buildSqlInfos() (string, error) {
 	str := ""
 
 	for _, prmNode := range ls.msgs_depends {
-		if prmNode.Exe == "sqlite" {
-			str += fmt.Sprintf("'%s' is SQLite database which includes these tables(columns): ", prmNode.Name)
+		if prmNode.Exe == "tables" {
+			str += fmt.Sprintf("'%s' is SQLite database which includes these tables(columns): ", prmNode.GetPathSplit())
 
 			tablesStr := ""
 			db, _, err := ls.node.app.base.ui.win.disk.OpenDb(prmNode.GetAttrString("path", ""))
@@ -184,14 +184,14 @@ func (ls *SANodeCode) buildSqlInfos() (string, error) {
 
 func (node *SANode) getStructName() string {
 
-	if node.IsTypeTable() {
+	/*if node.IsTypeTable() {
 		return fmt.Sprintf("Table_%s", node.Name)
-	}
+	}*/
 
 	return strings.ToUpper(node.Exe[0:1]) + node.Exe[1:] //1st letter must be upper
 }
 
-func (ls *SANodeCode) buildTableStructs(nodes []*SANode, addExtraAttrs bool) string {
+/*func (ls *SANodeCode) buildTableStructs(nodes []*SANode, addExtraAttrs bool) string {
 	str := ""
 	for _, prmNode := range nodes {
 		if !prmNode.IsTypeTable() {
@@ -222,7 +222,7 @@ func (ls *SANodeCode) buildTableStructs(nodes []*SANode, addExtraAttrs bool) str
 		str += fmt.Sprintf("func (tb *%s) AddRow() * %sRow {\n\tr := &%sRow{} \n\ttb.Rows = append(tb.Rows, r)\n\treturn r\n}\n", StructName, StructName, StructName)
 	}
 	return str
-}
+}*/
 
 func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 
@@ -234,12 +234,12 @@ func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 	str := "I have this golang code:\n\n"
 	str += g_code_const_gpt + "\n"
 
-	str += ls.buildTableStructs(ls.msgs_depends, false)
+	//str += ls.buildTableStructs(ls.msgs_depends, false)
 
 	params := ""
 	for _, prmNode := range ls.msgs_depends {
 		StructName := prmNode.getStructName()
-		params += fmt.Sprintf("%s *%s, ", prmNode.Name, StructName)
+		params += fmt.Sprintf("%s *%s, ", prmNode.GetPathSplit(), StructName)
 	}
 	params, _ = strings.CutSuffix(params, ", ")
 	str += fmt.Sprintf("\nfunc %s(%s) error {\n\n}\n\n", ls.node.Name, params)
@@ -354,15 +354,14 @@ func (ls *SANodeCode) Execute() {
 	{
 		vars := make(map[string]interface{})
 		for _, prmNode := range ls.func_depends {
-			vars[prmNode.Name] = prmNode.Attrs
+			vars[prmNode.GetPathSplit()] = prmNode.Attrs
 
 			attrs := prmNode.Attrs
 			if prmNode.HasAttrNode() {
 				attrs = make(map[string]interface{})
-				attrs["node"] = prmNode.Name
-
+				attrs["node"] = prmNode.GetPathSplit()
 			}
-			vars[prmNode.Name] = attrs
+			vars[prmNode.GetPathSplit()] = attrs
 		}
 		inputJs, err := json.Marshal(vars)
 		if err != nil {
@@ -400,7 +399,7 @@ func (ls *SANodeCode) Execute() {
 		}
 
 		for key, attrs := range vars {
-			prmNode := ls.node.FindNode(key)
+			prmNode := ls.node.FindNodeSplit(key)
 			if prmNode != nil {
 				if !prmNode.HasAttrNode() {
 					switch vv := attrs.(type) {
@@ -566,10 +565,11 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 	//struct
 	str += "type MainStruct struct {\n"
 	for _, prmNode := range ls.func_depends {
-		VarName := strings.ToUpper(prmNode.Name[0:1]) + prmNode.Name[1:] //1st letter must be upper
+		prmName := prmNode.GetPathSplit()
+		VarName := strings.ToUpper(prmName[0:1]) + prmName[1:] //1st letter must be upper
 		StructName := prmNode.getStructName()
 
-		str += fmt.Sprintf("\t%s %s `json:\"%s\"`\n", VarName, StructName, prmNode.Name)
+		str += fmt.Sprintf("\t%s %s `json:\"%s\"`\n", VarName, StructName, prmName)
 	}
 	str += "}\n\n"
 
@@ -586,7 +586,8 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 		`
 	params := ""
 	for _, prmNode := range ls.func_depends {
-		VarName := strings.ToUpper(prmNode.Name[0:1]) + prmNode.Name[1:] //1st letter must be upper
+		prmName := prmNode.GetPathSplit()
+		VarName := strings.ToUpper(prmName[0:1]) + prmName[1:] //1st letter must be upper
 		params += fmt.Sprintf("&st.%s, ", VarName)
 
 	}
@@ -605,8 +606,8 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 	}`
 
 	//tables
-	str += "\n"
-	str += ls.buildTableStructs(ls.func_depends, true)
+	//str += "\n"
+	//str += ls.buildTableStructs(ls.func_depends, true)
 
 	//rest
 	str += "\n" + g_code_const_go
@@ -627,13 +628,14 @@ func (ls *SANodeCode) updateFuncDepends() error {
 
 	//add depends from argument names
 	for _, decl := range node.Decls {
-
 		if fn, ok := decl.(*ast.FuncDecl); ok {
 			if fn.Name.Name == ls.node.Name {
 				for _, prm := range fn.Type.Params.List {
-					err := ls.addFuncDepend(prm.Names[0].Name)
-					if err != nil {
-						return err
+					if len(prm.Names) > 0 {
+						err := ls.addFuncDepend(prm.Names[0].Name)
+						if err != nil {
+							return err
+						}
 					}
 				}
 			}

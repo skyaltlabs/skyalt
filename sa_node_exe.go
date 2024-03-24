@@ -80,7 +80,7 @@ func UiText_render(node *SANode) {
 	show_border := node.GetAttrBool("show_border", false)
 
 	if node.GetAttrBool("multi_line", false) {
-		node.app.base.ui.Comp_textSelectMulti(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, OsV2{align_h, align_v}, selection, show_border)
+		node.app.base.ui.Comp_textSelectMulti(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, OsV2{align_h, align_v}, selection, show_border, true)
 	} else {
 		node.app.base.ui.Comp_textSelect(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, OsV2{align_h, align_v}, selection, show_border)
 	}
@@ -536,111 +536,6 @@ func UiMicrophone_render(node *SANode) {
 	}
 }
 
-func UiTable_Attrs(node *SANode) {
-	ui := node.app.base.ui
-	ui.Div_colMax(0, 3)
-	ui.Div_colMax(1, 100)
-
-	grid := InitOsV4(0, 0, 1, 1)
-	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
-	node.ShowAttrBool(&grid, "show", true)
-	node.ShowAttrBool(&grid, "enable", true)
-	node.ShowAttrBool(&grid, "changed", false)
-}
-
-func UiTable_render(node *SANode) {
-	grid := node.GetGrid()
-	enable := node.GetAttrBool("enable", true)
-
-	rws, found := node.Attrs["rows"]
-	if !found {
-		return //empty
-	}
-
-	rows, ok := rws.([]interface{})
-	if !ok {
-		//...
-		return
-	}
-
-	ui := node.app.base.ui
-	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
-	{
-		for x := range node.Subs {
-			ui.Div_colMax(x, 100)
-		}
-
-		for y, rw := range rows {
-			nodes, ok := rw.(map[string]interface{})
-			if !ok {
-				//...
-				continue
-			}
-
-			//columns
-			for x, it := range node.Subs {
-				nd, found := nodes[it.Name]
-				if found {
-					attrs, ok := nd.(map[string]interface{})
-					if ok {
-
-						//bug: it's hidden because show is default false ...
-
-						it.Attrs = attrs //rewrite default attrs ... create row copies here ...
-						//add DefaultRow Table<Name>Row ... jak? .....................................................
-						//init with 'tb.DefaultRow' inside AddRow() ...
-
-						//FINAL SOLUTION? ............. žádný 'Table' node, ale předělat SQLite? .............
-						//co kdyby Table měla na pozadí SQLite(můžu SELECT z jiné db)
-						//- generovat všechny sub-nodes z tabulky(column name => node name)
-						//- user může convert z text -> combo
-						//- jak Buttons? ...
-
-						//Great:
-						//- map widget as cell
-
-						//Problems:
-						//- big json file
-						//- slow when 10M must be generated
-
-						it.SetAttrV4("grid", InitOsV4(x, y, 1, 1))
-						it.Attrs["enable"] = enable
-						it.RenderCanvas()
-					} else {
-						//...
-						continue
-					}
-				} else {
-					//...
-					continue
-				}
-			}
-
-			/*for key, attrs := range vars {
-				prmNode := node.FindNode(key)
-				if prmNode != nil {
-					if !prmNode.HasAttrNode() {
-						switch vv := attrs.(type) {
-						case map[string]interface{}:
-							prmNode.Attrs = vv
-							prmNode.SetAttrV4("grid", InitOsV4())
-							prmNode.RenderCanvas()
-						}
-					}
-				} else {
-					fmt.Println("Error: Node not found", key)
-				}
-			}*/
-		}
-
-		//rect around
-		pl := ui.win.io.GetPalette()
-		ui.Paint_rect(0, 0, 1, 1, 0, pl.OnB, 0.03)
-	}
-	ui.Div_end()
-
-}
-
 func UiNet_Attrs(node *SANode) {
 	ui := node.app.base.ui
 	ui.Div_colMax(0, 3)
@@ -668,6 +563,115 @@ func UiSQLite_Attrs(node *SANode) {
 		node.SetError(errors.New("file not exist"))
 		return
 	}
+	db, _, err := node.app.base.ui.win.disk.OpenDb(path)
+	if err != nil {
+		node.SetError(err)
+		return
+	}
+
+	node.ShowAttrBool(&grid, "show_header", true)
+
+	{
+		info, err := db.GetTableInfo()
+		if err != nil {
+			node.SetError(err)
+			return
+		}
+		tablesList := DiskDbIndex_ListOfTables(info)
+		node.ShowAttrStringCombo(&grid, "selected_table", "", tablesList, tablesList)
+	}
+
+	grid.Start.Y++ //space
+
+	//editor
+	{
+		dnm := "db_editor_" + node.Name
+		if ui.Comp_button(grid.Start.X+1, grid.Start.Y, 1, 2, "Editor", "", true) > 0 {
+			ui.Dialog_open(dnm, 0)
+		}
+		grid.Start.Y += 2
+
+		if ui.Dialog_start(dnm) {
+
+			ui.Div_colMax(1, 40)
+			ui.Div_rowMax(0, 30)
+			ui.Div_col(2, 1)
+			ui.Div_row(1, 1)
+
+			ui.Div_start(1, 0, 1, 1)
+			UiSQLite_renderEditor(node)
+			ui.Div_end()
+
+			ui.Dialog_end()
+		}
+	}
+
+	grid.Start.Y++ //space
+
+	//init
+	{
+		dnm := "db_init_" + node.Name
+		if ui.Comp_buttonLight(grid.Start.X+1, grid.Start.Y, 1, 1, "Initalization", "", true) > 0 {
+			ui.Dialog_open(dnm, 1)
+		}
+		grid.Start.Y++
+
+		if ui.Dialog_start(dnm) {
+			ui.Div_colMax(0, 20)
+			if ui.Comp_button(0, 0, 1, 1, "Generate 'init_sql'", "Create SQL structure command from current database.", true) > 0 {
+				info, err := db.GetTableInfo()
+				if err != nil {
+					node.SetError(err)
+					return
+				}
+
+				ini := ""
+				for _, t := range info {
+					ini += fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (", t.Name)
+					for _, c := range t.Columns {
+						ini += fmt.Sprintf("%s %s, ", c.Name, c.Type)
+					}
+					ini, _ = strings.CutSuffix(ini, ", ")
+					ini += ");\n"
+				}
+
+				node.Attrs["init_sql"] = ini
+			}
+
+			gr := InitOsV4(0, 1, 1, 1)
+			init_sql := node.ShowAttrStringEx(&gr, "init_sql", "", true, false)
+
+			gr.Start.Y++ //space
+
+			if ui.Comp_button(0, gr.Start.Y, 1, 1, "Re-initialize", "Create tables & columns structure. Data are kept.", init_sql != "") > 0 {
+				_, err := db.Write(init_sql)
+				if err != nil {
+					node.SetError(err)
+					return
+				}
+			}
+
+			ui.Dialog_end()
+		}
+	}
+
+	grid.Start.Y++ //space
+
+	//Maintenance
+	if ui.Comp_buttonLight(grid.Start.X+1, grid.Start.Y, 1, 1, "Vacuum", "Run database maintenance", true) > 0 {
+		db.Vacuum()
+	}
+	grid.Start.Y++
+}
+
+func UiSQLite_render(node *SANode) {
+	grid := node.GetGrid()
+
+	path := node.GetAttrString("path", "")
+	//enable := node.GetAttrBool("enable", true)
+	show_header := node.GetAttrBool("show_header", true)
+	selected_table := node.GetAttrString("selected_table", "")
+	//changed := node.GetAttrBool("changed", false)
 
 	db, _, err := node.app.base.ui.win.disk.OpenDb(path)
 	if err != nil {
@@ -675,57 +679,245 @@ func UiSQLite_Attrs(node *SANode) {
 		return
 	}
 
-	grid.Start.Y++ //space
+	info, err := db.GetTableInfo()
+	if err != nil {
+		node.SetError(err)
+		return
+	}
 
-	if ui.Comp_buttonLight(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, "Generate 'init_sql'", "Create SQL structure command from current database.", true) > 0 {
-		info, err := db.GetTableInfo()
-		if err != nil {
-			node.SetError(err)
-			return
+	//check
+	var tinfo *DiskDbIndexTable
+	for _, t := range info {
+		if t.Name == selected_table {
+			tinfo = t
 		}
+	}
+	if tinfo == nil {
+		node.SetError(fmt.Errorf("selected_table(%s) not found", selected_table))
+		return
+	}
 
-		ini := ""
-		for _, t := range info {
-			ini += fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (", t.Name)
-			for _, c := range t.Columns {
-				ini += fmt.Sprintf("%s %s, ", c.Name, c.Type)
+	ui := node.app.base.ui
+
+	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
+	{
+		y := 0
+
+		//col sizes
+		num_cols := 0
+		for _, nd := range node.Subs {
+			if nd.CanBeRenderOnCanvas() {
+				ui.Div_colMax(num_cols, 100)
+				num_cols++
 			}
-			ini, _ = strings.CutSuffix(ini, ", ")
-			ini += ");\n"
 		}
 
-		node.Attrs["init_sql"] = ini
-	}
-	grid.Start.Y++
+		//header
+		if show_header {
+			ui.Div_rowMax(1, 100)
 
-	init_sql := node.ShowAttrString(&grid, "init_sql", "", true)
-	if ui.Comp_buttonLight(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, "Re-initialize", "Create tables & columns structure. Data are kept.", init_sql != "") > 0 {
-		_, err := db.Write(init_sql)
+			x := 0
+			for _, nd := range node.Subs {
+				if nd.CanBeRenderOnCanvas() {
+					/*nm := ""
+					if nd.IsTypeWithAttrLabel() {
+						nm = nd.GetAttrString("label", "")
+					}
+					if nm == "" {
+						nm = nd.Name
+					}*/
+					nm := nd.Name
+
+					ui.Comp_text(x, y, 1, 1, nm, 1)
+					x++
+				}
+			}
+			y++
+		} else {
+			ui.Div_rowMax(0, 100)
+		}
+
+		//rows
+		parentId := ui.DivInfo_get(SA_DIV_GET_uid, 0)
+		ui.Div_start(0, y, num_cols, 1)
+		{
+			//copy cols from parent
+			ui.DivInfo_set(SA_DIV_SET_copyCols, parentId, 0)
+			ui.DivInfo_set(SA_DIV_SET_scrollOnScreen, 1, 0)
+			ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
+
+			//visible rows
+			lv := ui.GetCall()
+			row_st := lv.call.data.scrollV.GetWheel() / ui.win.Cell()
+			row_en := row_st + OsRoundUp(float64(lv.call.crop.Size.Y)/float64(ui.win.Cell())) + 1
+
+			updateTableCache := (node.tableCache == nil)
+			if node.tableCache != nil {
+				n := len(node.tableCache)
+				row_st = OsMin(row_st, n)
+				row_en = OsMin(row_en, n)
+
+				for i := row_st; i < row_en; i++ {
+					if node.tableCache[i] == nil {
+						updateTableCache = true
+						break
+					}
+				}
+			}
+
+			//if db file change: updateTableCache=true ..................
+
+			if updateTableCache {
+				err := node.fillTableCache(db, tinfo, row_st, row_en)
+				if err != nil {
+					node.SetError(err)
+				}
+			}
+
+			num_rows := len(node.tableCache)
+			if num_rows > 0 {
+				ui.Div_row(num_rows-1, 1) //set last
+			}
+
+			row_st = OsMin(row_st, num_rows)
+			row_en = OsMin(row_en, num_rows)
+
+			//draw
+			for r := row_st; r < row_en; r++ {
+
+				isTriggered := false
+				row := node.tableCache[r]
+				for _, nd := range row {
+					gr := node.app.base.node_groups.FindNode(nd.Exe)
+					gr.render(nd) //from temp_table
+
+					//je potřeba reset, jinak bude pořád clicked, etc. ...................................
+					if nd.IsTriggered() {
+						isTriggered = true
+					}
+				}
+
+				if isTriggered {
+					//copy
+					for _, nd := range row {
+						ndd := node.FindNode(nd.Name)
+						if ndd != nil {
+							ndd.Attrs = nd.Attrs //copy back, so for ex: Button is clicked
+						}
+					}
+					node.app.Tick(true)
+				}
+			}
+		}
+		ui.Div_end()
+	}
+	ui.Div_end()
+}
+
+func (node *SANode) fillTableCache(db *DiskDb, tinfo *DiskDbIndexTable, row_st int, row_en int) error {
+
+	//rows
+	var num_rows int
+	var rows *sql.Rows
+	if tinfo != nil {
+		db.Lock()
+		defer db.Unlock()
+
+		row := db.ReadRow_unsafe("SELECT COUNT(*) FROM " + tinfo.Name)
+		row.Scan(&num_rows)
+
+		var err error
+		rows, err = db.Read_unsafe("SELECT " + tinfo.ListOfColumnNames(true) + " FROM " + tinfo.Name)
 		if err != nil {
-			node.SetError(err)
-			return
+			return err
+		}
+		defer rows.Close()
+	}
+
+	//aloc rows
+	if num_rows != len(node.tableCache) {
+		node.tableCache = make([][]*SANode, num_rows)
+	}
+
+	//cut
+	row_st = OsMin(row_st, num_rows)
+	row_en = OsMin(row_en, num_rows)
+
+	//prepare for scan()
+	vals := make([]string, len(tinfo.Columns))
+	valsPtrs := make([]interface{}, len(vals))
+	for i := range vals {
+		valsPtrs[i] = &vals[i]
+	}
+
+	//number of columns
+	num_cols := 0
+	for _, nd := range node.Subs {
+		if nd.CanBeRenderOnCanvas() {
+			num_cols++
 		}
 	}
-	grid.Start.Y++
 
-	grid.Start.Y++ //space
+	r := 0
+	for rows.Next() && r < row_en {
+		if r < row_st {
+			r++
+			continue //skip invisible rows
+		}
 
-	if ui.Comp_buttonLight(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, "Vacuum", "Run database maintenance", true) > 0 {
-		db.Vacuum()
+		if node.tableCache[r] != nil {
+			r++
+			continue
+		}
+
+		err := rows.Scan(valsPtrs...) //err ...
+		if err != nil {
+			continue
+		}
+
+		//copy row into .Subs(not .tableCache)
+		for _, nd := range node.Subs {
+			ci := tinfo.FindColumn(nd.Name)
+			if ci >= 0 {
+				if nd.IsTypeWithAttrLabel() {
+					nd.Attrs["label"] = vals[ci]
+				} else {
+					nd.Attrs["value"] = vals[ci]
+				}
+				nd.Attrs["changed"] = true
+			}
+		}
+
+		//exe
+		node.app.Tick(true) //bug: run 1st row but then it's busy, so others are skip ..........................
+
+		//alloc & copy columns
+		node.tableCache[r] = make([]*SANode, num_cols)
+		c := 0
+		for _, nd := range node.Subs {
+			if nd.CanBeRenderOnCanvas() {
+				cp, _ := nd.Copy() //error ...
+				cp.SetGrid(InitOsV4(c, r, 1, 1))
+				node.tableCache[r][c] = cp
+				c++
+			}
+		}
+
+		r++
 	}
-	grid.Start.Y++
+
+	return nil
 }
 
 var g_table_name string
 var g_column_name string
 var g_column_type string
 
-func UiSQLite_render(node *SANode) {
-	grid := node.GetGrid()
-
+func UiSQLite_renderEditor(node *SANode) {
+	//grid := node.GetGrid()
 	path := node.GetAttrString("path", "")
-	enable := node.GetAttrBool("enable", true)
-	selected_table := node.GetAttrString("selected_table", "")
+	//enable := node.GetAttrBool("enable", true)
+	edited_table := node.GetAttrString("edited_table", "")
 	//changed := node.GetAttrBool("changed", false)
 
 	db, _, err := node.app.base.ui.win.disk.OpenDb(path)
@@ -742,7 +934,7 @@ func UiSQLite_render(node *SANode) {
 
 	var tinfo *DiskDbIndexTable
 	for _, t := range info {
-		if t.Name == selected_table {
+		if t.Name == edited_table {
 			tinfo = t
 		}
 	}
@@ -753,10 +945,10 @@ func UiSQLite_render(node *SANode) {
 		db.Lock()
 		defer db.Unlock()
 
-		row := db.ReadRow_unsafe("SELECT COUNT(*) FROM " + selected_table)
+		row := db.ReadRow_unsafe("SELECT COUNT(*) FROM " + edited_table)
 		row.Scan(&num_rows)
 
-		rows, err = db.Read_unsafe("SELECT rowid, " + tinfo.ListOfColumnNames() + " FROM " + selected_table)
+		rows, err = db.Read_unsafe("SELECT " + tinfo.ListOfColumnNames(true) + " FROM " + edited_table)
 		if err != nil {
 			node.SetError(err)
 			return
@@ -764,16 +956,16 @@ func UiSQLite_render(node *SANode) {
 		defer rows.Close()
 	}
 
-	ui := node.app.base.ui
-	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 	{
+		ui := node.app.base.ui
 		ui.Div_colMax(0, 100)
 		ui.Div_rowMax(2, 100)
 
-		if ui.Comp_dirPicker(0, 0, 1, 1, &path, true, "dir_picker_"+node.Name, enable) {
+		ui.Comp_text(0, 0, 1, 1, path, 1)
+		/*if ui.Comp_dirPicker(0, 0, 1, 1, &path, true, "dir_picker_"+node.Name, enable) {
 			node.Attrs["path"] = path
 			node.Attrs["changed"] = true
-		}
+		}*/
 
 		//list of tables
 		ui.Div_start(0, 1, 1, 1)
@@ -801,7 +993,7 @@ func UiSQLite_render(node *SANode) {
 					//button
 					if ui.Comp_button(1, 0, 1, 1, "Create Table", "", g_table_name != "") > 0 {
 						db.Write_unsafe("CREATE TABLE " + g_table_name + "(firstColumn TEXT);")
-						node.Attrs["selected_table"] = g_table_name
+						node.Attrs["edited_table"] = g_table_name
 						ui.Dialog_close()
 					}
 					ui.Dialog_end()
@@ -816,10 +1008,10 @@ func UiSQLite_render(node *SANode) {
 					ui.Div_colMax(0, 100)
 
 					dnm := "detail_table" + t.Name + node.Name
-					if ui.Comp_buttonMenu(0, 0, 1, 1, t.Name, "", true, t.Name == selected_table) > 0 {
-						node.Attrs["selected_table"] = t.Name
+					if ui.Comp_buttonMenu(0, 0, 1, 1, t.Name, "", true, t.Name == edited_table) > 0 {
+						node.Attrs["edited_table"] = t.Name
 					}
-					if ui.Comp_buttonIcon(1, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/context.png"), 0.3, "", CdPalette_P, true, t.Name == selected_table) > 0 {
+					if ui.Comp_buttonIcon(1, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/context.png"), 0.3, "", CdPalette_P, true, t.Name == edited_table) > 0 {
 						ui.Dialog_open(dnm, 1)
 						g_table_name = t.Name
 					}
@@ -830,8 +1022,8 @@ func UiSQLite_render(node *SANode) {
 						_, _, _, fnshd, _ := ui.Comp_editbox_desc("Name", 0, 3, 0, 0, 1, 1, &g_table_name, Comp_editboxProp())
 						if fnshd {
 							db.Write_unsafe(fmt.Sprintf("ALTER TABLE %s RENAME TO %s;", t.Name, g_table_name))
-							if selected_table == t.Name {
-								node.Attrs["selected_table"] = g_table_name
+							if edited_table == t.Name {
+								node.Attrs["edited_table"] = g_table_name
 							}
 						}
 						//delete
@@ -851,9 +1043,9 @@ func UiSQLite_render(node *SANode) {
 			ui.Div_start(0, 2, 1, 1)
 			{
 				for i := range tinfo.Columns {
-					ui.Div_colMax(1+i, 10)
+					ui.Div_colMax(i, float64(OsTrn(i == 0, 1, 10))) //rowid size is 1
 				}
-				ui.Div_col(1+len(tinfo.Columns), 0.5) //extra empty
+				ui.Div_col(len(tinfo.Columns), 0.5) //extra empty
 				ui.Div_rowMax(1, 100)
 
 				//add column
@@ -883,8 +1075,11 @@ func UiSQLite_render(node *SANode) {
 
 				//list of columns
 				for i, c := range tinfo.Columns {
+					if i == 0 {
+						continue //skip rowid
+					}
 					dnm := "column_detail" + c.Name + node.Name
-					if ui.Comp_buttonLight(1+i, 0, 1, 1, fmt.Sprintf("%s(%s)", c.Name, c.Type), "", true) > 0 {
+					if ui.Comp_buttonLight(i, 0, 1, 1, fmt.Sprintf("%s(%s)", c.Name, c.Type), "", true) > 0 {
 						ui.Dialog_open(dnm, 1)
 						g_column_name = c.Name
 					}
@@ -904,7 +1099,7 @@ func UiSQLite_render(node *SANode) {
 				}
 
 				parentId := ui.DivInfo_get(SA_DIV_GET_uid, 0)
-				ui.Div_start(0, 1, 1+len(tinfo.Columns)+1, 1)
+				ui.Div_start(0, 1, len(tinfo.Columns)+1, 1)
 				{
 					//copy cols from parent
 					ui.DivInfo_set(SA_DIV_SET_copyCols, parentId, 0)
@@ -920,7 +1115,7 @@ func UiSQLite_render(node *SANode) {
 					}
 
 					//prepare for scan()
-					vals := make([]string, 1+len(tinfo.Columns)) //1=rowid
+					vals := make([]string, len(tinfo.Columns))
 					valsPtrs := make([]interface{}, len(vals))
 					for i := range vals {
 						valsPtrs[i] = &vals[i]
@@ -940,7 +1135,7 @@ func UiSQLite_render(node *SANode) {
 
 						//rowid + detail dialog
 						{
-							dnm := "row_detail_" + node.Name + selected_table + vals[0]
+							dnm := "row_detail_" + node.Name + edited_table + vals[0]
 							if ui.Comp_buttonLight(0, r, 1, 1, vals[0], "", true) > 0 {
 								ui.Dialog_open(dnm, 1)
 							}
@@ -972,18 +1167,16 @@ func UiSQLite_render(node *SANode) {
 			{
 				ui.Div_colMax(0, 3)
 				if ui.Comp_button(0, 0, 1, 1, "Add row", "", true) > 0 {
-					db.Write_unsafe(fmt.Sprintf("INSERT INTO %s (%s) VALUES(%s);", tinfo.Name, tinfo.ListOfColumnNames(), tinfo.ListOfColumnValues()))
+					db.Write_unsafe(fmt.Sprintf("INSERT INTO %s (%s) VALUES(%s);", tinfo.Name, tinfo.ListOfColumnNames(false), tinfo.ListOfColumnValues(false)))
 				}
 			}
 			ui.Div_end()
 		}
 
 		//rect around
-		pl := ui.win.io.GetPalette()
-		ui.Paint_rect(0, 0, 1, 1, 0, pl.OnB, 0.03)
+		//pl := ui.win.io.GetPalette()
+		//ui.Paint_rect(0, 0, 1, 1, 0, pl.OnB, 0.03)
 	}
-	ui.Div_end()
-
 }
 
 func UiCodeGo_AttrChat(node *SANode) {
@@ -1035,7 +1228,7 @@ func UiCodeGo_AttrChat(node *SANode) {
 			if i+1 < len(node.Code.Messages) {
 				nlines := WinFontProps_NumRows(str.User)
 				ui.Comp_text(0, y, 1, 1, "User", 0)
-				ui.Comp_textSelectMulti(1, y, 2, nlines, str.User, OsV2{0, 0}, true, false)
+				ui.Comp_textSelectMulti(1, y, 2, nlines, str.User, OsV2{0, 0}, true, false, false)
 				y += nlines
 
 				nlines = WinFontProps_NumRows(str.Assistent)
@@ -1049,7 +1242,7 @@ func UiCodeGo_AttrChat(node *SANode) {
 					ui.Paint_rect(0, 0, 1, 1, 0, pl.GetGrey(0.85), 0)
 
 					ui.Comp_text(0, 0, 1, 1, "Bot", 0)
-					ui.Comp_textSelectMulti(1, 0, 2, nlines, str.Assistent, OsV2{0, 0}, true, false)
+					ui.Comp_textSelectMulti(1, 0, 2, nlines, str.Assistent, OsV2{0, 0}, true, false, false)
 
 					if ui.Comp_buttonLight(2, nlines, 1, 1, "Use this code", "", true) > 0 {
 						node.Code.UseCodeFromAnswer(str.Assistent)
@@ -1064,7 +1257,7 @@ func UiCodeGo_AttrChat(node *SANode) {
 				//last one is only user editbox
 
 				nlines := WinFontProps_NumRows(str.User) + 2
-				ui.Comp_editbox(0, y, 3, nlines, &node.Code.Messages[i].User, Comp_editboxProp().MultiLine(true).Align(0, 0))
+				ui.Comp_editbox(0, y, 3, nlines, &node.Code.Messages[i].User, Comp_editboxProp().MultiLine(true).Align(0, 0).Formating(false))
 				y += nlines
 
 				//or ctrl+enter ..........
@@ -1199,7 +1392,7 @@ func UiCodeGo_Attrs(node *SANode) {
 		ui.Comp_text(0, y, 1, 1, "Code", 0)
 
 		nlines := WinFontProps_NumRows(node.Code.Code)
-		_, _, _, fnshd, _ := ui.Comp_editbox(1, y, 1, nlines, &node.Code.Code, Comp_editboxProp().Align(0, 0).MultiLine(true))
+		_, _, _, fnshd, _ := ui.Comp_editbox(1, y, 1, nlines, &node.Code.Code, Comp_editboxProp().Align(0, 0).MultiLine(true).Formating(false))
 		if fnshd {
 			node.Code.UpdateFile()
 		}
@@ -1219,7 +1412,7 @@ func UiCodeGo_Attrs(node *SANode) {
 	{
 		ui.Comp_text(0, y, 1, 1, "Output", 0)
 		nlines := OsClamp(WinFontProps_NumRows(node.Code.output), 2, 5)
-		ui.Comp_textSelectMulti(1, y, 1, nlines, node.Code.output, OsV2{0, 0}, true, true)
+		ui.Comp_textSelectMulti(1, y, 1, nlines, node.Code.output, OsV2{0, 0}, true, true, false)
 		y += nlines
 	}
 }

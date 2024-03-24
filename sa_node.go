@@ -66,6 +66,8 @@ type SANode struct {
 	z_depth float64
 
 	temp_mic_data audio.IntBuffer
+
+	tableCache [][]*SANode
 }
 
 func NewSANode(app *SAApp, parent *SANode, name string, exe string, grid OsV4, pos OsV2f) *SANode {
@@ -101,6 +103,7 @@ func NewSANodeRoot(path string, app *SAApp) (*SANode, error) {
 			}
 		}
 		w.updateLinks(nil, app)
+		w.updateCodeLinks()
 	}
 
 	return w, nil
@@ -144,16 +147,16 @@ func (node *SANode) IsTypeCode() bool {
 	return strings.EqualFold(node.Exe, "func_go")
 }
 
-func (node *SANode) IsTypeTable() bool {
-	return strings.EqualFold(node.Exe, "table")
+func (node *SANode) IsTypeTables() bool {
+	return strings.EqualFold(node.Exe, "tables")
 }
 
 func (node *SANode) HasAttrNode() bool {
-	return node.Exe == "whispercpp" || node.Exe == "llamacpp" || node.Exe == "openai"
+	return node.Exe == "whispercpp" || node.Exe == "llamacpp" || node.Exe == "openai" || node.Exe == "net"
 }
 
 func (node *SANode) HasNodeSubs() bool {
-	return strings.EqualFold(node.Exe, "layout") || strings.EqualFold(node.Exe, "dialog") || node.IsTypeTable()
+	return strings.EqualFold(node.Exe, "layout") || strings.EqualFold(node.Exe, "dialog") || node.IsTypeTables()
 }
 
 func (node *SANode) IsWithChangedAttr() bool {
@@ -163,6 +166,10 @@ func (node *SANode) IsWithChangedAttr() bool {
 
 func (node *SANode) IsTypeTrigger() bool {
 	return node.IsWithChangedAttr() || strings.EqualFold(node.Exe, "button") || strings.EqualFold(node.Exe, "editbox") || strings.EqualFold(node.Exe, "timer")
+}
+
+func (node *SANode) IsTypeWithAttrLabel() bool {
+	return strings.EqualFold(node.Exe, "text") || strings.EqualFold(node.Exe, "button") //|| strings.EqualFold(node.Exe, "checkbox") || strings.EqualFold(node.Exe, "switch")
 }
 
 func (node *SANode) IsTriggered() bool {
@@ -333,6 +340,20 @@ func (node *SANode) FindNode(name string) *SANode {
 	return nil
 }
 
+func (node *SANode) FindNodeSplit(name string) *SANode {
+
+	parts := strings.Split(name, "___")
+
+	for _, nm := range parts {
+		node = node.FindNode(nm)
+		if node == nil {
+			break
+		}
+	}
+
+	return node
+}
+
 func (node *SANode) FindParent(parent *SANode) bool {
 	for node != nil {
 		if node == parent {
@@ -351,10 +372,14 @@ func (node *SANode) updateLinks(parent *SANode, app *SAApp) {
 		node.Attrs = make(map[string]interface{})
 	}
 
-	node.Code.UpdateLinks(node)
-
 	for _, it := range node.Subs {
 		it.updateLinks(node, app)
+	}
+}
+func (node *SANode) updateCodeLinks() {
+	node.Code.UpdateLinks(node)
+	for _, it := range node.Subs {
+		it.updateCodeLinks()
 	}
 }
 
@@ -370,6 +395,7 @@ func (node *SANode) Copy() (*SANode, error) {
 		return nil, err
 	}
 	dst.updateLinks(nil, node.app)
+	dst.updateCodeLinks()
 
 	return dst, nil
 }
@@ -498,6 +524,19 @@ func (node *SANode) GetPath() string {
 	return path
 }
 
+func (node *SANode) GetPathSplit() string {
+
+	var path string
+
+	if node.parent != nil && node.parent.parent != nil {
+		path += node.parent.GetPathSplit() + "___"
+	}
+
+	path += node.Name
+
+	return path
+}
+
 func (node *SANode) NumAttrNames(name string) int {
 	n := 0
 	for nm := range node.Attrs {
@@ -554,6 +593,7 @@ func (node *SANode) AddNode(grid OsV4, pos OsV2f, name string, exe string) *SANo
 func (node *SANode) AddNodeCopy(src *SANode) *SANode { // note: 'w' can be root graph
 	nw, _ := src.Copy() //err ...
 	nw.updateLinks(node, node.app)
+	nw.updateCodeLinks()
 
 	//move Pos
 	nw.Pos = nw.Pos.Add(OsV2f{1, 1})
