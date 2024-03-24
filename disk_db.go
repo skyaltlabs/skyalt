@@ -36,10 +36,30 @@ type DiskDbIndexTable struct {
 	Columns []*DiskDbIndexColumn
 }
 
-func (tb *DiskDbIndexTable) ListOfColumnNames() string {
+func DiskDbIndex_ListOfTables(info []*DiskDbIndexTable) []string {
+	list := make([]string, len(info))
+	for i, tb := range info {
+		list[i] = tb.Name
+	}
+	return list
+}
+
+func (tb *DiskDbIndexTable) FindColumn(name string) int {
+	for i, c := range tb.Columns {
+		if c.Name == name {
+			return i
+		}
+	}
+	return -1
+}
+
+func (tb *DiskDbIndexTable) ListOfColumnNames(withRowId bool) string {
 	str := ""
 
 	for _, c := range tb.Columns {
+		if !withRowId && c.Name == "rowid" {
+			continue
+		}
 		str += c.Name + ", "
 	}
 	str, _ = strings.CutSuffix(str, ", ")
@@ -47,10 +67,14 @@ func (tb *DiskDbIndexTable) ListOfColumnNames() string {
 	return str
 }
 
-func (tb *DiskDbIndexTable) ListOfColumnValues() string {
+func (tb *DiskDbIndexTable) ListOfColumnValues(withRowId bool) string {
 	str := ""
 
 	for _, c := range tb.Columns {
+		if !withRowId && c.Name == "rowid" {
+			continue
+		}
+
 		str += fmt.Sprintf("%v, ", c.DefValue)
 	}
 	str, _ = strings.CutSuffix(str, ", ")
@@ -183,6 +207,7 @@ func (db *DiskDb) GetTableInfo() ([]*DiskDbIndexTable, error) {
 
 		indt := &DiskDbIndexTable{Name: tname}
 		tables = append(tables, indt)
+		indt.Columns = append(indt.Columns, &DiskDbIndexColumn{Name: "rowid", Type: "INTEGER", Pk: true, NotNull: true, DefValue: 0})
 
 		query := "pragma table_info(" + indt.Name + ");"
 		columnRows, err := db.Read_unsafe(query)
