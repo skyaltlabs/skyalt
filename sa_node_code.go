@@ -323,17 +323,6 @@ func (ls *SANodeCode) GetAnswer() {
 
 func (ls *SANodeCode) IsTriggered() bool {
 
-	/*for _, tr := range ls.Triggers {
-		nd := ls.node.FindNode(tr)
-		if nd != nil {
-			if nd.IsTriggered() {
-				return true
-			}
-		} else {
-			fmt.Println("Error: Node not found", tr)
-		}
-	}*/
-
 	for _, nd := range ls.func_depends {
 		if nd.IsTriggered() {
 			return true
