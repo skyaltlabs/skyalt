@@ -580,38 +580,76 @@ func UiCopy_Attrs(node *SANode) {
 	node.ShowAttrBool(&grid, "show", true)
 	node.ShowAttrBool(&grid, "write", false)
 	node.ShowAttrBool(&grid, "enable", true)
+	node.ShowAttrIntCombo(&grid, "direction", 0, []string{"Vertical", "Horizonal"}, []string{"0", "1"})
+	node.ShowAttrFloat(&grid, "max_width", 100, 1)
+	node.ShowAttrFloat(&grid, "max_height", 1, 1)
 	//node.ShowAttrBool(&grid, "changed", false) //...
 }
 
 func UiCopy_render(node *SANode) {
 	grid := node.GetGrid()
 
+	direction := node.GetAttrInt("direction", 0)
+	max_width := node.GetAttrFloat("max_width", 100)
+	max_height := node.GetAttrFloat("max_height", 1)
+
 	ui := node.app.base.ui
 
 	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 	{
-		ui.Div_colMax(0, 100)
-
 		num_rows := len(node.copySubs)
-		if num_rows > 0 {
-			ui.Div_row(num_rows-1, 1) //set last
-		}
 
-		//visible rows
-		lv := ui.GetCall()
-		row_st := lv.call.data.scrollV.GetWheel() / ui.win.Cell()
-		row_en := row_st + OsRoundUp(float64(lv.call.crop.Size.Y)/float64(ui.win.Cell())) + 1
+		if direction == 0 {
+			//vertical
+			ui.Div_colMax(0, max_width)
+			for y := 0; y < num_rows; y++ {
+				ui.Div_rowMax(y, max_height)
+			}
 
-		row_st = OsMin(row_st, num_rows)
-		row_en = OsMin(row_en, num_rows)
+			//visible rows
+			lv := ui.GetCall()
+			row_st := lv.call.data.scrollV.GetWheel() / ui.win.Cell()
+			row_en := row_st + OsRoundUp(float64(lv.call.crop.Size.Y)/float64(ui.win.Cell())) + 1
 
-		//draw items
-		for i := row_st; i < row_en; i++ {
-			it := node.copySubs[i]
-			gr := node.app.base.node_groups.FindNode(it.Exe)
+			row_st = OsMin(row_st, num_rows)
+			row_en = OsMin(row_en, num_rows)
 
-			it.SetGrid(InitOsV4(0, i, 1, 1))
-			gr.render(it) //from temp_table
+			//draw items
+			for i := row_st; i < row_en; i++ {
+				it := node.copySubs[i]
+				gr := node.app.base.node_groups.FindNode(it.Exe)
+
+				it.Cols = node.Cols
+				it.Rows = node.Rows
+				it.SetGrid(InitOsV4(0, i, 1, 1))
+				gr.render(it)
+			}
+
+		} else {
+			//horizontal
+			ui.Div_rowMax(0, max_height)
+			for y := 0; y < num_rows; y++ {
+				ui.Div_colMax(y, max_width)
+			}
+
+			//visible rows
+			lv := ui.GetCall()
+			row_st := lv.call.data.scrollH.GetWheel() / ui.win.Cell()
+			row_en := row_st + OsRoundUp(float64(lv.call.crop.Size.X)/float64(ui.win.Cell())) + 1
+
+			row_st = OsMin(row_st, num_rows)
+			row_en = OsMin(row_en, num_rows)
+
+			//draw items
+			for i := row_st; i < row_en; i++ {
+				it := node.copySubs[i]
+				gr := node.app.base.node_groups.FindNode(it.Exe)
+
+				it.Cols = node.Cols
+				it.Rows = node.Rows
+				it.SetGrid(InitOsV4(i, 0, 1, 1))
+				gr.render(it)
+			}
 		}
 	}
 	ui.Div_end()

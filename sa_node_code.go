@@ -211,14 +211,25 @@ func (ls *SANodeCode) buildCopyStructs(nodes []*SANode, addExtraAttrs bool) stri
 		str += "}\n"
 
 		//Copy<name>
-		extraAttrs := "\tGrid_x  int    `json:\"grid_x\"`\n\tGrid_y  int    `json:\"grid_y\"`\n\tGrid_w  int    `json:\"grid_w\"`\n\tGrid_h  int    `json:\"grid_h\"`\n\tShow    bool   `json:\"show\"`\n\tEnable  bool   `json:\"enable\"`\n\tChanged bool   `json:\"changed\"`\n"
+		extraAttrs := "\tGrid_x  int     `json:\"grid_x\"`\n" +
+			"\tGrid_y  int     `json:\"grid_y\"`\n" +
+			"\tGrid_w int      `json:\"grid_w\"`\n" +
+			"\tGrid_h  int     `json:\"grid_h\"`\n" +
+			"\tShow    bool    `json:\"show\"`\n" +
+			"\tEnable  bool    `json:\"enable\"`\n" +
+			"\tChanged bool    `json:\"changed\"`\n" +
+			"\tDirection int   `json:\"direction\"`\n" +
+			"\tMax_width float64  `json:\"max_width\"`\n" +
+			"\tMax_height float64 `json:\"max_height\"`\n"
+
 		if !addExtraAttrs {
 			extraAttrs = ""
 		}
 
 		str += fmt.Sprintf("type %s struct {\n%s\tDefRow %sRow `json:\"defRow\"`\n\tRows []*%sRow `json:\"rows\"`\n}\n", StructName, extraAttrs, StructName, StructName)
 
-		//Func
+		//Funcs
+		str += fmt.Sprintf("func (tb *%s) ClearRows() {\n\ttb.Rows = nil\n}\n", StructName)
 		str += fmt.Sprintf("func (tb *%s) AddRow() * %sRow {\n\tr := &%sRow{}\n\t*r = tb.DefRow\n\ttb.Rows = append(tb.Rows, r)\n\treturn r\n}\n", StructName, StructName, StructName)
 	}
 	return str
@@ -254,7 +265,7 @@ func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 
 	str += "Your job: " + userCommand
 
-	fmt.Println(str)
+	fmt.Println(str) //remove ............
 
 	return str, nil
 }
