@@ -72,6 +72,12 @@ type Microphone struct {
 	Enable  bool
 }
 
+type Net struct {
+}
+func (net *Net) DownloadFile(filePath string, url string) error {
+	//TBD
+	return nil
+}
 
 type Whispercpp struct {
 	Model string
