@@ -92,11 +92,12 @@ func (job *SAServiceNetJob) Run() error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
 		file.Close()
 		return errors.New(resp.Status)
 	}
-	job.final_bytes = resp.ContentLength
+	job.recv_bytes = file_bytes
+	job.final_bytes = file_bytes + resp.ContentLength
 
 	// Loop
 	var retErr error
@@ -119,16 +120,13 @@ func (job *SAServiceNetJob) Run() error {
 		job.recv_bytes += int64(m)
 
 		job.stat_recv.Add(uint64(m))
-
-		//if job.recv_bytes == resp.ContentLength {
-		//	w.Close()
-		//}
 	}
 
 	file.Close()
 
 	if job.recv_bytes == job.final_bytes {
 		OsFileRename(path, job.path)
+		retErr = nil
 	}
 
 	return retErr
@@ -165,7 +163,7 @@ func (job *SAServiceNetJob) GetStats() string {
 	predict := now.Add(time.Duration(remain_sec) * time.Second)
 	diff := predict.Sub(now)
 
-	return fmt.Sprintf("%.1f%%(%.1f/%.1fMB) %.3fMB/s %v", job.GetProcDone()*100, float64(job.recv_bytes)/(1024*1024), float64(job.final_bytes)/(1024*1024), speed, diff)
+	return fmt.Sprintf("%.1f%%(%.1f/%.1fMB) %.3fMB/s %v", job.GetProcDone()*100, float64(job.recv_bytes)/(1024*1024), float64(job.final_bytes)/(1024*1024), speed/(1024*1024), diff)
 }
 
 type SAServiceNet struct {

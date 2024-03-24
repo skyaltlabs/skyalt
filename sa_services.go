@@ -27,7 +27,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"sync"
-	"time"
 )
 
 type SAServices struct {
@@ -421,8 +420,6 @@ func (srv *SAServices) handlerNetwork(w http.ResponseWriter, r *http.Request) {
 	defer down.RemoveJob(job)
 
 	//check if file already exist or wait for confirmation? ........ if size is over 10MB? ...
-
-	time.Sleep(100 * time.Second) //......
 
 	err = job.Run()
 	if err != nil {
