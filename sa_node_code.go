@@ -219,7 +219,6 @@ func (ls *SANodeCode) buildCopyStructs(nodes []*SANode, addExtraAttrs bool) stri
 		str += fmt.Sprintf("type %s struct {\n%s\tDefRow %sRow `json:\"defRow\"`\n\tRows []*%sRow `json:\"rows\"`\n}\n", StructName, extraAttrs, StructName, StructName)
 
 		//Func
-		//init 'r' with tb.defaultRow ........
 		str += fmt.Sprintf("func (tb *%s) AddRow() * %sRow {\n\tr := &%sRow{}\n\t*r = tb.DefRow\n\ttb.Rows = append(tb.Rows, r)\n\treturn r\n}\n", StructName, StructName, StructName)
 	}
 	return str
