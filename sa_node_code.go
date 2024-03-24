@@ -184,45 +184,46 @@ func (ls *SANodeCode) buildSqlInfos() (string, error) {
 
 func (node *SANode) getStructName() string {
 
-	/*if node.IsTypeTable() {
-		return fmt.Sprintf("Table_%s", node.Name)
-	}*/
+	if node.IsTypeCopy() {
+		return "Copy" + strings.ToUpper(node.Name[0:1]) + node.Name[1:] //Copy<name>
+	}
 
 	return strings.ToUpper(node.Exe[0:1]) + node.Exe[1:] //1st letter must be upper
 }
 
-/*func (ls *SANodeCode) buildTableStructs(nodes []*SANode, addExtraAttrs bool) string {
+func (ls *SANodeCode) buildCopyStructs(nodes []*SANode, addExtraAttrs bool) string {
 	str := ""
 	for _, prmNode := range nodes {
-		if !prmNode.IsTypeTable() {
+		if !prmNode.IsTypeCopy() {
 			continue
 		}
 
 		StructName := prmNode.getStructName()
 
-		//Table<name>Row
-		str += fmt.Sprintf("type %sRow struct {", StructName)
+		//Copy<name>Row
+		str += fmt.Sprintf("type %sRow struct {\n", StructName)
 		for _, it := range prmNode.Subs {
 			itVarName := strings.ToUpper(it.Name[0:1]) + it.Name[1:] //1st letter must be upper
-			itStructName := it.getStructName()                       //table inside table? .........
+			itStructName := it.getStructName()                       //copy inside copy? .........
 
 			str += fmt.Sprintf("\t%s %s `json:\"%s\"`\n", itVarName, itStructName, it.Name)
 		}
 		str += "}\n"
 
-		//Table<name>
+		//Copy<name>
 		extraAttrs := "\tGrid_x  int    `json:\"grid_x\"`\n\tGrid_y  int    `json:\"grid_y\"`\n\tGrid_w  int    `json:\"grid_w\"`\n\tGrid_h  int    `json:\"grid_h\"`\n\tShow    bool   `json:\"show\"`\n\tEnable  bool   `json:\"enable\"`\n\tChanged bool   `json:\"changed\"`\n"
 		if !addExtraAttrs {
 			extraAttrs = ""
 		}
-		str += fmt.Sprintf("type %s struct {\n%s\tRows []*%sRow `json:\"rows\"`\n}\n", StructName, extraAttrs, StructName)
+
+		str += fmt.Sprintf("type %s struct {\n%s\tDefRow %sRow `json:\"defRow\"`\n\tRows []*%sRow `json:\"rows\"`\n}\n", StructName, extraAttrs, StructName, StructName)
 
 		//Func
 		//init 'r' with tb.defaultRow ........
-		str += fmt.Sprintf("func (tb *%s) AddRow() * %sRow {\n\tr := &%sRow{} \n\ttb.Rows = append(tb.Rows, r)\n\treturn r\n}\n", StructName, StructName, StructName)
+		str += fmt.Sprintf("func (tb *%s) AddRow() * %sRow {\n\tr := &%sRow{}\n\t*r = tb.DefRow\n\ttb.Rows = append(tb.Rows, r)\n\treturn r\n}\n", StructName, StructName, StructName)
 	}
 	return str
-}*/
+}
 
 func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 
@@ -234,7 +235,7 @@ func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 	str := "I have this golang code:\n\n"
 	str += g_code_const_gpt + "\n"
 
-	//str += ls.buildTableStructs(ls.msgs_depends, false)
+	str += ls.buildCopyStructs(ls.msgs_depends, false)
 
 	params := ""
 	for _, prmNode := range ls.msgs_depends {
@@ -253,6 +254,8 @@ func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 	str += strSQL
 
 	str += "Your job: " + userCommand
+
+	fmt.Println(str)
 
 	return str, nil
 }
@@ -354,13 +357,34 @@ func (ls *SANodeCode) Execute() {
 	{
 		vars := make(map[string]interface{})
 		for _, prmNode := range ls.func_depends {
-			vars[prmNode.GetPathSplit()] = prmNode.Attrs
 
 			attrs := prmNode.Attrs
 			if prmNode.HasAttrNode() {
 				attrs = make(map[string]interface{})
 				attrs["node"] = prmNode.GetPathSplit()
 			}
+
+			if prmNode.IsTypeCopy() {
+				//defaults
+				defRows := make(map[string]interface{})
+				for _, it := range prmNode.Subs {
+					defRows[it.Name] = it.Attrs
+				}
+				attrs["defRow"] = defRows
+
+				//rows
+				rows := make([]map[string]interface{}, len(prmNode.copySubs))
+				for i, it := range prmNode.copySubs {
+
+					rws := make(map[string]interface{})
+					for _, it := range it.Subs {
+						rws[it.Name] = it.Attrs
+					}
+					rows[i] = rws
+				}
+				attrs["rows"] = rows
+			}
+
 			vars[prmNode.GetPathSplit()] = attrs
 		}
 		inputJs, err := json.Marshal(vars)
@@ -405,6 +429,43 @@ func (ls *SANodeCode) Execute() {
 					switch vv := attrs.(type) {
 					case map[string]interface{}:
 						prmNode.Attrs = vv
+					}
+				}
+
+				if prmNode.IsTypeCopy() {
+					rw := prmNode.Attrs["rows"]
+					delete(prmNode.Attrs, "rows")
+
+					rows, ok := rw.([]interface{})
+					if ok {
+						//alloc
+						prmNode.copySubs = make([]*SANode, len(rows))
+
+						//set
+						for i, r := range rows {
+
+							vars, ok := r.(map[string]interface{})
+							if ok {
+								prmNode.copySubs[i], err = prmNode.Copy()
+								prmNode.copySubs[i].Exe = "layout" //copy -> layout
+								if err == nil {
+									for key, attrs := range vars {
+										prmNode2 := prmNode.copySubs[i].FindNodeSplit(key)
+										if prmNode2 != nil {
+											if !prmNode2.HasAttrNode() {
+												switch vv := attrs.(type) {
+												case map[string]interface{}:
+													prmNode2.Attrs = vv
+												}
+											}
+										} else {
+											fmt.Println("Error: Node not found", key)
+										}
+									}
+									//prmNode.copySubs[i].Attrs = vars
+								}
+							}
+						}
 					}
 				}
 			} else {
@@ -606,8 +667,8 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 	}`
 
 	//tables
-	//str += "\n"
-	//str += ls.buildTableStructs(ls.func_depends, true)
+	str += "\n"
+	str += ls.buildCopyStructs(ls.func_depends, true)
 
 	//rest
 	str += "\n" + g_code_const_go
