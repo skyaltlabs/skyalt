@@ -477,14 +477,19 @@ func (srv *SAServices) RenderJobs(app *SAApp) {
 	if srv.net != nil {
 		if job := srv.net.FindJob(app); job != nil {
 			ui.Div_colMax(0, 100)
-			ui.Div_colMax(1, 20)
-			ui.Div_colMax(2, 100)
+			ui.Div_colMax(1, 5)
+			ui.Div_colMax(2, 5)
+			ui.Div_colMax(3, 100)
 
-			ui.Comp_text(1, 0, 1, 1, fmt.Sprintf("Downloading: %s", job.url), 1)
-			ui.Comp_text(1, 1, 1, 1, job.GetStats(), 1)
+			ui.Comp_text(1, 0, 2, 1, fmt.Sprintf("Downloading: %s", job.url), 1)
+			ui.Comp_text(1, 1, 2, 1, job.GetStats(), 1)
 
-			if ui.Comp_button(1, 3, 1, 1, "Cancel", "", true) > 0 {
+			if ui.Comp_button(1, 3, 1, 1, "Stop", "", true) > 0 {
 				job.close = true
+			}
+
+			if ui.Comp_button(2, 3, 1, 1, "Stop & Delete file", "", true) > 0 {
+				job.close_and_delete = true
 			}
 		}
 	}

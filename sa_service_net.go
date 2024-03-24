@@ -38,7 +38,8 @@ type SAServiceNetJob struct {
 	recv_bytes  int64
 	final_bytes int64
 
-	close bool
+	close            bool
+	close_and_delete bool
 	//err   error
 
 	stat_time float64
@@ -102,7 +103,7 @@ func (job *SAServiceNetJob) Run() error {
 	// Loop
 	var retErr error
 	data := make([]byte, 1024*64)
-	for job.downloader.services.online && !job.close {
+	for job.downloader.services.online && !job.close && !job.close_and_delete {
 
 		//download
 		n, err := resp.Body.Read(data)
@@ -125,15 +126,26 @@ func (job *SAServiceNetJob) Run() error {
 	file.Close()
 
 	if job.recv_bytes == job.final_bytes {
-		OsFileRename(path, job.path)
+		OsFileRename(path, job.path) //<name>.temp -> <name>
 		retErr = nil
+	} else {
+		if job.close_and_delete {
+			OsFileRemove(path)
+		}
+	}
+
+	if job.close || job.close_and_delete {
+		retErr = fmt.Errorf("downloading canceled")
 	}
 
 	return retErr
 }
 
 func (job *SAServiceNetJob) GetProcDone() float64 {
-	return float64(job.recv_bytes) / float64(job.final_bytes)
+	if job.final_bytes > 0 {
+		return float64(job.recv_bytes) / float64(job.final_bytes)
+	}
+	return 0
 }
 
 func (job *SAServiceNetJob) GetAvgRecvBytesPerSec() float64 {
