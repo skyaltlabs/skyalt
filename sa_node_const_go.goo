@@ -138,15 +138,13 @@ type Disk_file struct {
 	Changed   bool   `json:"changed"`
 }
 
-type Sqlite struct {
+type Tables struct {
 	Grid_x    int    `json:"grid_x"`
 	Grid_y    int    `json:"grid_y"`
 	Grid_w    int    `json:"grid_w"`
 	Grid_h    int    `json:"grid_h"`
 	Show      bool   `json:"show"`
 	Path      string `json:"path"`
-	Selected_table string `json:"selected_table"`
-	Edited_table string `json:"edited_table"`
 	Write     bool   `json:"write"`
 	Enable    bool   `json:"enable"`
 	Changed   bool   `json:"changed"`

@@ -62,7 +62,7 @@ type Disk_file struct {
 	Write bool
 }
 
-type Sqlite struct {
+type Tables struct {
 	Path  string
 	Write bool
 }
