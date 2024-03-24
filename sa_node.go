@@ -220,6 +220,19 @@ func (node *SANode) ResetTriggers() {
 	if node.IsWithChangedAttr() {
 		node.Attrs["changed"] = false
 	}
+
+	if node.IsTypeCopy() {
+		for _, nd := range node.copySubs {
+			nd.ResetTriggers()
+		}
+	}
+
+	if node.HasNodeSubs() {
+		for _, nd := range node.Subs {
+			nd.ResetTriggers()
+		}
+	}
+
 }
 
 func (node *SANode) IsBypassed() bool {
