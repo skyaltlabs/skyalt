@@ -48,6 +48,8 @@ type SAApp struct {
 	Cam_x, Cam_y, Cam_z float64 `json:",omitempty"`
 	EnableExecution     bool
 
+	Selected_canvas SANodePath
+
 	root *SANode
 
 	graph  *SAGraph
@@ -241,7 +243,20 @@ func SAApp_getYellow() OsCd {
 	return OsCd{204, 204, 0, 255} //...
 }
 
-func (app *SAApp) RenderApp(ide bool) {
+func (app *SAApp) checkSelectedCanvas() *SANode {
+	node := app.Selected_canvas.FindPath(app.root)
+	if node == nil {
+		node = app.root
+	}
+	for node != nil && !node.HasNodeSubs() {
+		node = node.parent
+	}
+	app.Selected_canvas = NewSANodePath(node)
+
+	return node
+}
+
+func (app *SAApp) RenderApp() {
 	app.root.renderLayout()
 }
 
@@ -255,7 +270,7 @@ func (app *SAApp) renderIDE() {
 	var colDiv *UiLayoutDiv
 	var rowDiv *UiLayoutDiv
 
-	node := app.root
+	node := app.checkSelectedCanvas()
 
 	//app
 	var appID float64
@@ -263,7 +278,7 @@ func (app *SAApp) renderIDE() {
 	{
 		appID = ui.DivInfo_get(SA_DIV_GET_uid, 0)
 
-		app.RenderApp(true)
+		node.renderLayout()
 	}
 	ui.Div_end()
 

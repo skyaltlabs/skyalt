@@ -171,7 +171,7 @@ func (node *SANode) drawHeader() bool {
 	ui.Div_col(0, 0.5)
 	ui.Div_colMax(1, 100)
 	ui.Div_col(2, 0.5)
-	if node.IsTypeCode() {
+	if node.IsTypeCode() || node.HasNodeSubs() {
 		//chat icon
 		ui.Div_col(2, 1)
 		ui.Div_col(3, 0.5)
@@ -204,6 +204,25 @@ func (node *SANode) drawHeader() bool {
 		}
 		if ui.Comp_buttonIcon(2, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/chat.png"), 0.2, "Code Chat", cd, true, false) > 0 {
 			node.ShowCodeChat = !node.ShowCodeChat
+		}
+	}
+
+	if node.HasNodeSubs() {
+		cd := CdPalette_B
+
+		isCanvasSelected := (node.app.checkSelectedCanvas() == node)
+
+		file := "layout_light.png"
+		if isCanvasSelected {
+			cd = CdPalette_P
+			file = "layout_full.png"
+		}
+		if ui.Comp_buttonIcon(2, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/"+file), 0.2, "Code Chat", cd, true, false) > 0 {
+			if isCanvasSelected {
+				node.app.Selected_canvas = SANodePath{}
+			} else {
+				node.app.Selected_canvas = NewSANodePath(node)
+			}
 		}
 	}
 
@@ -264,6 +283,15 @@ func (node *SANode) drawRectNode(someNodeIsDraged bool, app *SAApp) bool {
 
 	//border
 	ui.buff.AddRectRound(coord, ui.CellWidth(roundc), backkCd, ui.CellWidth((0.03)))
+
+	//acutal layout
+	if node.app.Selected_canvas.FindPath(node.app.root) == node {
+		cq := coord
+		cq.Start.Y += ui.CellWidth(1)
+		cq.Size.Y -= ui.CellWidth(1)
+		cq = cq.AddSpace(ui.CellWidth((0.1)))
+		ui.buff.AddRectRound(cq, ui.CellWidth(roundc), pl.P, ui.CellWidth((0.03)))
+	}
 
 	//header
 	ui.Div_startCoord(0, 0, 1, 1, headerCoord.AddSpaceX(-ui.CellWidth(0.25)), node.Name)

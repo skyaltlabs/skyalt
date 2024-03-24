@@ -275,7 +275,7 @@ func (base *SABase) Render() bool {
 				if app.IDE {
 					app.renderIDE()
 				} else {
-					app.RenderApp(false)
+					app.RenderApp()
 				}
 			}
 			ui.Div_end()

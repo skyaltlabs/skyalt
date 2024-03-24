@@ -626,6 +626,15 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 			}
 		}
 
+		if touch.numClicks > 1 {
+			sel := gr.app.root.FindSelected()
+			if sel == nil {
+				gr.app.Selected_canvas = SANodePath{}
+			} else {
+				gr.app.Selected_canvas = NewSANodePath(sel)
+			}
+		}
+
 		gr.cam_move = false
 		gr.node_move = false
 		gr.node_select = false
