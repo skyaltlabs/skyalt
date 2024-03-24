@@ -149,6 +149,9 @@ type Tables struct {
 	Enable    bool   `json:"enable"`
 	Changed   bool   `json:"changed"`
 	Init_sql  string `json:"init_sql"`
+	Show_path        bool   `json:"show_path"`
+	Show_table_list  bool   `json:"show_table_list"`
+	Selected_table   string   `json:"selected_table"`
 }
 
 type Microphone struct {

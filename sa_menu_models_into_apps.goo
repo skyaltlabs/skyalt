@@ -1,0 +1,265 @@
+/*
+Copyright 2023 Milan Suk
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this db except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package main
+
+import (
+	"fmt"
+	"net/url"
+	"path/filepath"
+	"strconv"
+	"strings"
+)
+
+var g_whisper_formats = []string{"verbose_json", "json", "text", "srt", "vtt"}
+var g_whisper_modelList = []string{"ggml-tiny.en", "ggml-tiny", "ggml-base.en", "ggml-base", "ggml-small.en", "ggml-small", "ggml-medium.en", "ggml-medium", "ggml-large-v1", "ggml-large-v2", "ggml-large-v3"}
+var g_whisper_modelsFolder = "services/whisper.cpp/models/"
+
+func (base *SABase) drawMenu(ui *Ui) {
+	ui.Div_colMax(0, 8)
+	ui.Div_row(1, 0.2)
+	ui.Div_row(4, 0.2)
+	ui.Div_row(6, 0.2)
+	ui.Div_row(8, 0.2)
+	ui.Div_row(10, 0.2)
+
+	iconMargin := 0.22
+	ini := &ui.win.io.ini
+	y := 0
+	//save
+	if ui.Comp_buttonMenuIcon(0, y, 1, 1, ui.trns.SAVE, InitWinMedia_url("file:apps/base/resources/save.png"), iconMargin, "", true, false) > 0 {
+		base.Save()
+		ui.Dialog_close()
+	}
+	y++
+	ui.Div_SpacerRow(0, y, 1, 1)
+	y++
+
+	//settings
+	if ui.Comp_buttonMenuIcon(0, y, 1, 1, ui.trns.SETTINGS, InitWinMedia_url("file:apps/base/resources/settings.png"), iconMargin, "", true, false) > 0 {
+		ui.Dialog_close()
+		ui.Dialog_open("settings", 0)
+	}
+	y++
+
+	if ui.Comp_buttonMenuIcon(0, y, 1, 1, "LLM Models", InitWinMedia_url("file:apps/base/resources/download.png"), iconMargin, "", true, false) > 0 {
+		ui.Dialog_close()
+		ui.Dialog_open("models", 0)
+	}
+	y++
+
+	ui.Div_SpacerRow(0, y, 1, 1)
+	y++
+
+	//zoom
+	ui.Div_start(0, y, 1, 1)
+	{
+		ui.Div_colMax(0, 100)
+		ui.Div_colMax(2, 2)
+
+		ui.Comp_textIcon(0, 0, 1, 1, ui.trns.ZOOM, InitWinMedia_url("file:apps/base/resources/zoom.png"), iconMargin)
+
+		if ui.Comp_buttonOutlined(1, 0, 1, 1, "+", "", true, false) > 0 {
+			ini.Dpi += 3
+		}
+
+		dpiV := int(float64(ini.Dpi) / float64(ini.Dpi_default) * 100)
+		ui.Comp_text(2, 0, 1, 1, strconv.Itoa(dpiV)+"%", 1)
+
+		if ui.Comp_buttonOutlined(3, 0, 1, 1, "-", "", true, false) > 0 {
+			ini.Dpi -= 3
+		}
+	}
+	ui.Div_end()
+	y++
+	ui.Div_SpacerRow(0, y, 1, 1)
+	y++
+
+	//window/fullscreen switch
+	{
+		ff := ui.trns.WINDOW_MODE
+		icon := "file:apps/base/resources/window_mode.png"
+		if !ini.Fullscreen {
+			ff = ui.trns.FULLSCREEN_MODE
+			icon = "file:apps/base/resources/fullscreen_mode.png"
+		}
+		if ui.Comp_buttonMenuIcon(0, y, 1, 1, ff, InitWinMedia_url(icon), iconMargin, "", true, false) > 0 {
+			ini.Fullscreen = !ini.Fullscreen
+		}
+	}
+	y++
+	ui.Div_SpacerRow(0, y, 1, 1)
+	y++
+
+	if ui.Comp_buttonMenuIcon(0, y, 1, 1, ui.trns.ABOUT, InitWinMedia_url("file:apps/base/resources/about.png"), iconMargin, "", true, false) > 0 {
+		ui.Dialog_close()
+		ui.Dialog_open("about", 0)
+	}
+	y++
+	ui.Div_SpacerRow(0, y, 1, 1)
+	y++
+
+	if ui.Comp_buttonMenuIcon(0, y, 1, 1, ui.trns.QUIT, InitWinMedia_url("file:apps/base/resources/quit.png"), iconMargin, "", true, false) > 0 {
+		base.exit = true
+		ui.Dialog_close()
+	}
+	y++
+}
+
+// https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
+var g_lang_names = []string{"English", "Chinese(中文)", "Hindi(हिंदी)", "Spanish(Español)", "Russian(Руштина)", "Czech(Česky)"}
+var g_lang_codes = []string{"en", "zh", "hi", "es", "ru", "cs"}
+
+func (base *SABase) drawMenuDialogs(ui *Ui) {
+
+	if ui.Dialog_start("models") {
+
+		ui.Div_colMax(0, 8) //name
+		ui.Div_colMax(1, 4) //status
+		ui.Div_colMax(2, 4) //button
+
+		y := 0
+
+		downloader, err := base.services.GetDownloader()
+		if err != nil {
+			ui.Comp_textCd(0, y, 3, 1, "Warning: "+err.Error(), 0, CdPalette_E)
+			y++
+		}
+
+		//whisper
+		ui.Comp_text(0, y, 3, 1, "**Whisper models**", 1)
+		y++
+
+		//2x app: whisper_download, llama_download ....
+		// musím mít Network node ..........
+		// /web starts Job and returns progress
+		// - into file or ram
+		//triggers RUN in extra thread - one after another - show que ...........
+		// .goo has loop which
+		// user can Cancel in GUI - .goo fail with error
+		//after start, ask: start from scratch or continue - if size is over 10MB?
+
+		for _, m := range g_whisper_modelList {
+			exist := OsFileExists(filepath.Join(g_whisper_modelsFolder, m+".bin"))
+			downloading := OsFileExists(filepath.Join(g_whisper_modelsFolder, m+".bin.temp"))
+
+			if downloading {
+				//downloader.FindJob()
+				downloading = false //..........
+			}
+
+			ui.Comp_text(0, y, 1, 1, m, 0)
+
+			if downloading {
+				//job := downloader.AddJob()
+				//ui.Comp_text(1, y, 1, 1, job.GetStats(), 0)
+				if ui.Comp_buttonLight(2, y, 1, 1, "Cancel", "", true) > 0 {
+					//...
+				}
+			} else if exist {
+				//ui.Comp_text(1, y, 1, 1, "local", 0)
+				if ui.Comp_buttonError(2, y, 1, 1, "Delete", "", true, true) > 0 {
+					//ask ...
+				}
+			} else {
+				if ui.Comp_buttonLight(2, y, 1, 1, "Download", "", downloader != nil) > 0 {
+					if downloader != nil {
+						u, err := url.Parse("https://huggingface.co/ggerganov/whisper.cpp/resolve/main/")
+						if err == nil {
+							u.Path = filepath.Join(u.Path, m+".bin")
+							downloader.AddJob(filepath.Join(g_whisper_modelsFolder, m+".bin"), u.String())
+						}
+					}
+				}
+			}
+			y++
+		}
+
+		ui.Div_SpacerRow(0, y, 3, 1)
+		y++
+
+		//llama
+		ui.Comp_text(0, y, 3, 1, "**Llama models**", 1)
+		y++
+
+		type SAExe_llama_cpp_model struct {
+			url_base    string
+			name        string
+			exist       bool
+			downloading bool
+		}
+		var models = []SAExe_llama_cpp_model{
+			{"https://huggingface.co/TheBloke/Llama-2-7b-Chat-GGUF/resolve/main", "llama-2-7b-chat.Q4_K_S.gguf", false, false},
+			{"https://huggingface.co/TheBloke/Llama-2-7b-Chat-GGUF/resolve/main", "llama-2-7b-chat.Q6_K.gguf", false, false},
+
+			{"https://huggingface.co/TheBloke/phi-2-GGUF/resolve/main", "phi-2.Q4_K_S.gguf", false, false},
+			{"https://huggingface.co/TheBloke/phi-2-GGUF/resolve/main", "phi-2.Q6_K.gguf", false, false},
+
+			{"https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF/resolve/main", "mistral-7b-instruct-v0.1.Q4_K_S.gguf", false, false},
+			{"https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF/resolve/main", "mistral-7b-instruct-v0.1.Q6_K.gguf", false, false},
+
+			{"https://huggingface.co/TheBloke/CodeLlama-7B-Instruct-GGUF/resolve/main", "codellama-7b-instruct.Q4_K_S.gguf", false, false},
+			{"https://huggingface.co/TheBloke/CodeLlama-7B-Instruct-GGUF/resolve/main", "codellama-7b-instruct.Q6_K.gguf", false, false},
+		}
+
+		modelFiles := OsFileListBuild(g_llama_modelsFolder, "", true)
+		for _, m := range modelFiles.Subs {
+			if !m.IsDir && !strings.HasPrefix(m.Name, "ggml-vocab") {
+
+				downloading := strings.HasSuffix(m.Name, ".temp")
+
+				found_i := -1
+				for i, mm := range models {
+					if mm.name == m.Name {
+						found_i = i
+						break
+					}
+				}
+				if found_i < 0 {
+					models = append(models, SAExe_llama_cpp_model{name: m.Name})
+					found_i = len(models) - 1
+				}
+				models[found_i].downloading = downloading
+				models[found_i].exist = true
+			}
+		}
+
+		for _, m := range models {
+			ui.Comp_text(0, y, 1, 1, m.name, 0)
+
+			if m.downloading {
+				ui.Comp_text(1, y, 1, 1, "30%, 2MB/s, 1h3m5s", 0)
+				if ui.Comp_buttonLight(2, y, 1, 1, "Cancel", "", true) > 0 {
+					//...
+				}
+			} else if m.exist {
+				//ui.Comp_text(1, y, 1, 1, "local", 0)
+				if ui.Comp_buttonError(2, y, 1, 1, "Delete", "", true, true) > 0 {
+					//...
+				}
+			} else {
+				if ui.Comp_buttonLight(2, y, 1, 1, "Download", "", downloader != nil) > 0 {
+					if downloader != nil {
+						downloader.AddJob("services/llama.cpp/models/"+m.name, m.url_base)
+					}
+				}
+			}
+			y++
+		}
+
+		ui.Dialog_end()
+	}
+}

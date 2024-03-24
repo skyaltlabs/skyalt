@@ -546,116 +546,6 @@ func UiNet_Attrs(node *SANode) {
 	node.ShowAttrString(&grid, "url", "", false)
 }
 
-func UiSQLite_Attrs(node *SANode) {
-	ui := node.app.base.ui
-	ui.Div_colMax(0, 3)
-	ui.Div_colMax(1, 100)
-
-	grid := InitOsV4(0, 0, 1, 1)
-	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
-	node.ShowAttrBool(&grid, "show", true)
-	node.ShowAttrBool(&grid, "write", false)
-	node.ShowAttrBool(&grid, "enable", true)
-	node.ShowAttrBool(&grid, "changed", false) //...
-
-	path := node.ShowAttrFilePicker(&grid, "path", "", true, "render_sqlite_"+node.Name)
-	if !OsFileExists(path) {
-		node.SetError(errors.New("file not exist"))
-		return
-	}
-	db, _, err := node.app.base.ui.win.disk.OpenDb(path)
-	if err != nil {
-		node.SetError(err)
-		return
-	}
-
-	grid.Start.Y++ //space
-
-	//editor
-	{
-		dnm := "db_editor_" + node.Name
-		if ui.Comp_button(grid.Start.X+1, grid.Start.Y, 1, 2, "Editor", "", true) > 0 {
-			ui.Dialog_open(dnm, 0)
-		}
-		grid.Start.Y += 2
-
-		if ui.Dialog_start(dnm) {
-
-			ui.Div_colMax(1, 40)
-			ui.Div_rowMax(0, 30)
-			ui.Div_col(2, 1)
-			ui.Div_row(1, 1)
-
-			ui.Div_start(1, 0, 1, 1)
-			UiSQLite_renderEditor(node)
-			ui.Div_end()
-
-			ui.Dialog_end()
-		}
-	}
-
-	grid.Start.Y++ //space
-
-	//init
-	{
-		dnm := "db_init_" + node.Name
-		if ui.Comp_buttonLight(grid.Start.X+1, grid.Start.Y, 1, 1, "Initalization", "", true) > 0 {
-			ui.Dialog_open(dnm, 1)
-		}
-		grid.Start.Y++
-
-		if ui.Dialog_start(dnm) {
-			ui.Div_colMax(0, 20)
-			if ui.Comp_button(0, 0, 1, 1, "Generate 'init_sql'", "Create SQL structure command from current database.", true) > 0 {
-				info, err := db.GetTableInfo()
-				if err != nil {
-					node.SetError(err)
-					return
-				}
-
-				ini := ""
-				for _, t := range info {
-					ini += fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (", t.Name)
-					for _, c := range t.Columns {
-						ini += fmt.Sprintf("%s %s, ", c.Name, c.Type)
-					}
-					ini, _ = strings.CutSuffix(ini, ", ")
-					ini += ");\n"
-				}
-
-				node.Attrs["init_sql"] = ini
-			}
-
-			gr := InitOsV4(0, 1, 1, 1)
-			init_sql := node.ShowAttrStringEx(&gr, "init_sql", "", true, false)
-
-			gr.Start.Y++ //space
-
-			if ui.Comp_button(0, gr.Start.Y, 1, 1, "Re-initialize", "Create tables & columns structure. Data are kept.", init_sql != "") > 0 {
-				_, err := db.Write(init_sql)
-				if err != nil {
-					node.SetError(err)
-					return
-				}
-			}
-
-			ui.Dialog_end()
-		}
-	}
-
-	grid.Start.Y++ //space
-
-	//Maintenance
-	if ui.Comp_buttonLight(grid.Start.X+1, grid.Start.Y, 1, 1, "Vacuum", "Run database maintenance", true) > 0 {
-		db.Vacuum()
-	}
-	grid.Start.Y++
-}
-
-func UiSQLite_render(node *SANode) {
-	//editor ...................
-}
-
 func UiLayout_Attrs(node *SANode) {
 	ui := node.app.base.ui
 	ui.Div_colMax(0, 3)
@@ -727,15 +617,121 @@ func UiCopy_render(node *SANode) {
 	ui.Div_end()
 }
 
+func UiSQLite_Attrs(node *SANode) {
+	ui := node.app.base.ui
+	ui.Div_colMax(0, 3)
+	ui.Div_colMax(1, 100)
+
+	grid := InitOsV4(0, 0, 1, 1)
+	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
+	node.ShowAttrBool(&grid, "show", true)
+	node.ShowAttrBool(&grid, "write", false)
+	node.ShowAttrBool(&grid, "enable", true)
+	node.ShowAttrBool(&grid, "changed", false) //...
+
+	path := node.ShowAttrFilePicker(&grid, "path", "", true, "render_sqlite_"+node.Name)
+	if !OsFileExists(path) {
+		node.SetError(errors.New("file not exist"))
+		return
+	}
+	db, _, err := node.app.base.ui.win.disk.OpenDb(path)
+	if err != nil {
+		node.SetError(err)
+		return
+	}
+
+	grid.Start.Y++ //space
+
+	node.ShowAttrBool(&grid, "show_path", true)
+	node.ShowAttrBool(&grid, "show_table_list", true)
+	{
+		info, err := db.GetTableInfo()
+		if err != nil {
+			node.SetError(err)
+			return
+		}
+		tablesList := DiskDbIndex_ListOfTables(info)
+		node.ShowAttrStringCombo(&grid, "selected_table", "", tablesList, tablesList)
+	}
+
+	grid.Start.Y++ //space
+
+	//init
+	{
+		dnm := "db_init_" + node.Name
+		if ui.Comp_buttonLight(grid.Start.X+1, grid.Start.Y, 1, 1, "Initalization", "", true) > 0 {
+			ui.Dialog_open(dnm, 1)
+		}
+		grid.Start.Y++
+
+		if ui.Dialog_start(dnm) {
+			ui.Div_colMax(0, 20)
+			if ui.Comp_button(0, 0, 1, 1, "Generate 'init_sql'", "Create SQL structure command from current database.", true) > 0 {
+				info, err := db.GetTableInfo()
+				if err != nil {
+					node.SetError(err)
+					return
+				}
+
+				ini := ""
+				for _, t := range info {
+					ini += fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (", t.Name)
+					for _, c := range t.Columns {
+						ini += fmt.Sprintf("%s %s, ", c.Name, c.Type)
+					}
+					ini, _ = strings.CutSuffix(ini, ", ")
+					ini += ");\n"
+				}
+
+				node.Attrs["init_sql"] = ini
+			}
+
+			gr := InitOsV4(0, 1, 1, 1)
+			init_sql := node.ShowAttrStringEx(&gr, "init_sql", "", true, false)
+
+			gr.Start.Y++ //space
+
+			if ui.Comp_button(0, gr.Start.Y, 1, 1, "Re-initialize", "Create tables & columns structure. Data are kept.", init_sql != "") > 0 {
+				_, err := db.Write(init_sql)
+				if err != nil {
+					node.SetError(err)
+					return
+				}
+			}
+
+			ui.Dialog_end()
+		}
+	}
+
+	grid.Start.Y++ //space
+
+	//Maintenance
+	if ui.Comp_buttonLight(grid.Start.X+1, grid.Start.Y, 1, 1, "Vacuum", "Run database maintenance", true) > 0 {
+		db.Vacuum()
+	}
+	grid.Start.Y++
+}
+
+func UiSQLite_render(node *SANode) {
+	grid := node.GetGrid()
+
+	ui := node.app.base.ui
+	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
+	{
+		UiSQLite_renderEditor(node)
+	}
+	ui.Div_end()
+}
+
 var g_table_name string
 var g_column_name string
 var g_column_type string
 
 func UiSQLite_renderEditor(node *SANode) {
-	//grid := node.GetGrid()
 	path := node.GetAttrString("path", "")
-	//enable := node.GetAttrBool("enable", true)
-	edited_table := node.GetAttrString("edited_table", "")
+	show_path := node.GetAttrBool("show_path", true)
+	show_table_list := node.GetAttrBool("show_table_list", true)
+	selected_table := node.GetAttrString("selected_table", "")
 	//changed := node.GetAttrBool("changed", false)
 
 	db, _, err := node.app.base.ui.win.disk.OpenDb(path)
@@ -752,7 +748,7 @@ func UiSQLite_renderEditor(node *SANode) {
 
 	var tinfo *DiskDbIndexTable
 	for _, t := range info {
-		if t.Name == edited_table {
+		if t.Name == selected_table {
 			tinfo = t
 		}
 	}
@@ -763,10 +759,10 @@ func UiSQLite_renderEditor(node *SANode) {
 		db.Lock()
 		defer db.Unlock()
 
-		row := db.ReadRow_unsafe("SELECT COUNT(*) FROM " + edited_table)
+		row := db.ReadRow_unsafe("SELECT COUNT(*) FROM " + selected_table)
 		row.Scan(&num_rows)
 
-		rows, err = db.Read_unsafe("SELECT " + tinfo.ListOfColumnNames(true) + " FROM " + edited_table)
+		rows, err = db.Read_unsafe("SELECT " + tinfo.ListOfColumnNames(true) + " FROM " + selected_table)
 		if err != nil {
 			node.SetError(err)
 			return
@@ -777,88 +773,91 @@ func UiSQLite_renderEditor(node *SANode) {
 	{
 		ui := node.app.base.ui
 		ui.Div_colMax(0, 100)
-		ui.Div_rowMax(2, 100)
+		ui.Div_rowMax(OsTrn(show_path, 1, 0)+OsTrn(show_table_list, 1, 0), 100)
 
-		ui.Comp_text(0, 0, 1, 1, path, 1)
-		/*if ui.Comp_dirPicker(0, 0, 1, 1, &path, true, "dir_picker_"+node.Name, enable) {
-			node.Attrs["path"] = path
-			node.Attrs["changed"] = true
-		}*/
+		y := 0
+		if show_path {
+			ui.Comp_text(0, y, 1, 1, path, 1)
+			y++
+		}
 
 		//list of tables
-		ui.Div_start(0, 1, 1, 1)
-		{
-			ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
-			ui.DivInfo_set(SA_DIV_SET_scrollHnarrow, 1, 0)
-
-			for i := range info {
-				ui.Div_col(1+i, 2)
-				ui.Div_colMax(1+i, 100)
-			}
-
-			//add table
+		if show_table_list {
+			ui.Div_start(0, y, 1, 1)
 			{
-				dnm := "create_table_" + node.Name
-				if ui.Comp_button(0, 0, 1, 1, "+", "Create table", true) > 0 {
-					ui.Dialog_open(dnm, 1)
-					g_table_name = ""
-				}
-				if ui.Dialog_start(dnm) {
-					ui.Div_colMax(0, 7)
-					ui.Div_colMax(1, 4)
-					//name
-					ui.Comp_editbox(0, 0, 1, 1, &g_table_name, Comp_editboxProp().TempToValue(true))
-					//button
-					if ui.Comp_button(1, 0, 1, 1, "Create Table", "", g_table_name != "") > 0 {
-						db.Write_unsafe("CREATE TABLE " + g_table_name + "(firstColumn TEXT);")
-						node.Attrs["edited_table"] = g_table_name
-						ui.Dialog_close()
-					}
-					ui.Dialog_end()
-				}
-			}
+				ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
+				ui.DivInfo_set(SA_DIV_SET_scrollHnarrow, 1, 0)
 
-			//list of tables
-			for i, t := range info {
+				for i := range info {
+					ui.Div_col(1+i, 2)
+					ui.Div_colMax(1+i, 100)
+				}
 
-				ui.Div_start(1+i, 0, 1, 1)
+				//add table
 				{
-					ui.Div_colMax(0, 100)
-
-					dnm := "detail_table" + t.Name + node.Name
-					if ui.Comp_buttonMenu(0, 0, 1, 1, t.Name, "", true, t.Name == edited_table) > 0 {
-						node.Attrs["edited_table"] = t.Name
-					}
-					if ui.Comp_buttonIcon(1, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/context.png"), 0.3, "", CdPalette_P, true, t.Name == edited_table) > 0 {
+					dnm := "create_table_" + node.Name
+					if ui.Comp_button(0, 0, 1, 1, "+", "Create table", true) > 0 {
 						ui.Dialog_open(dnm, 1)
-						g_table_name = t.Name
+						g_table_name = ""
 					}
-
 					if ui.Dialog_start(dnm) {
 						ui.Div_colMax(0, 7)
-						//rename
-						_, _, _, fnshd, _ := ui.Comp_editbox_desc("Name", 0, 3, 0, 0, 1, 1, &g_table_name, Comp_editboxProp())
-						if fnshd {
-							db.Write_unsafe(fmt.Sprintf("ALTER TABLE %s RENAME TO %s;", t.Name, g_table_name))
-							if edited_table == t.Name {
-								node.Attrs["edited_table"] = g_table_name
-							}
-						}
-						//delete
-						if ui.Comp_buttonError(0, 2, 1, 1, "Delete", "", true, true) > 0 {
-							db.Write_unsafe(fmt.Sprintf("DROP TABLE %s;", t.Name))
+						ui.Div_colMax(1, 4)
+						//name
+						ui.Comp_editbox(0, 0, 1, 1, &g_table_name, Comp_editboxProp().TempToValue(true))
+						//button
+						if ui.Comp_button(1, 0, 1, 1, "Create Table", "", g_table_name != "") > 0 {
+							db.Write_unsafe("CREATE TABLE " + g_table_name + "(firstColumn TEXT);")
+							node.Attrs["selected_table"] = g_table_name
+							ui.Dialog_close()
 						}
 						ui.Dialog_end()
 					}
 				}
-				ui.Div_end()
+
+				//list of tables
+				for i, t := range info {
+
+					ui.Div_start(1+i, 0, 1, 1)
+					{
+						ui.Div_colMax(0, 100)
+
+						dnm := "detail_table" + t.Name + node.Name
+						if ui.Comp_buttonMenu(0, 0, 1, 1, t.Name, "", true, t.Name == selected_table) > 0 {
+							node.Attrs["selected_table"] = t.Name
+						}
+						if ui.Comp_buttonIcon(1, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/context.png"), 0.3, "", CdPalette_P, true, t.Name == selected_table) > 0 {
+							ui.Dialog_open(dnm, 1)
+							g_table_name = t.Name
+						}
+
+						if ui.Dialog_start(dnm) {
+							ui.Div_colMax(0, 7)
+							//rename
+							_, _, _, fnshd, _ := ui.Comp_editbox_desc("Name", 0, 3, 0, 0, 1, 1, &g_table_name, Comp_editboxProp())
+							if fnshd {
+								db.Write_unsafe(fmt.Sprintf("ALTER TABLE %s RENAME TO %s;", t.Name, g_table_name))
+								if selected_table == t.Name {
+									node.Attrs["selected_table"] = g_table_name
+								}
+							}
+							//delete
+							if ui.Comp_buttonError(0, 2, 1, 1, "Delete", "", true, true) > 0 {
+								db.Write_unsafe(fmt.Sprintf("DROP TABLE %s;", t.Name))
+							}
+							ui.Dialog_end()
+						}
+					}
+					ui.Div_end()
+				}
 			}
+			ui.Div_end()
+			y++
 		}
-		ui.Div_end()
 
 		if tinfo != nil {
 			//table(column+rows)
-			ui.Div_start(0, 2, 1, 1)
+			ui.Div_start(0, y, 1, 1)
 			{
 				for i := range tinfo.Columns {
 					ui.Div_colMax(i, float64(OsTrn(i == 0, 1, 10))) //rowid size is 1
@@ -953,7 +952,7 @@ func UiSQLite_renderEditor(node *SANode) {
 
 						//rowid + detail dialog
 						{
-							dnm := "row_detail_" + node.Name + edited_table + vals[0]
+							dnm := "row_detail_" + node.Name + selected_table + vals[0]
 							if ui.Comp_buttonLight(0, r, 1, 1, vals[0], "", true) > 0 {
 								ui.Dialog_open(dnm, 1)
 							}
@@ -979,9 +978,10 @@ func UiSQLite_renderEditor(node *SANode) {
 				ui.Div_end()
 			}
 			ui.Div_end()
+			y++
 
 			//+row
-			ui.Div_start(0, 3, 1, 1)
+			ui.Div_start(0, y, 1, 1)
 			{
 				ui.Div_colMax(0, 3)
 				if ui.Comp_button(0, 0, 1, 1, "Add row", "", true) > 0 {
@@ -989,11 +989,12 @@ func UiSQLite_renderEditor(node *SANode) {
 				}
 			}
 			ui.Div_end()
+			y++
 		}
 
 		//rect around
-		//pl := ui.win.io.GetPalette()
-		//ui.Paint_rect(0, 0, 1, 1, 0, pl.OnB, 0.03)
+		pl := ui.win.io.GetPalette()
+		ui.Paint_rect(0, 0, 1, 1, 0, pl.OnB, 0.03)
 	}
 }
 
