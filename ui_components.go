@@ -508,7 +508,7 @@ func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, align OsV2, selectio
 	ui.Div_end()
 	return div
 }
-func (ui *Ui) Comp_textSelectMulti(x, y, w, h int, label string, align OsV2, selection bool, drawBorder bool) *UiLayoutDiv {
+func (ui *Ui) Comp_textSelectMulti(x, y, w, h int, label string, align OsV2, selection bool, drawBorder bool, formating bool) *UiLayoutDiv {
 	ui.Div_start(x, y, w, h)
 	div := ui.GetCall().call
 
@@ -517,6 +517,7 @@ func (ui *Ui) Comp_textSelectMulti(x, y, w, h int, label string, align OsV2, sel
 	style.cd = CdPalette_B
 	style.label_align = align
 	style.label_formating = true
+	style.label_formating = formating
 
 	ui.Comp_text_s(&style, label, nil, selection, true, false)
 
