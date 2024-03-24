@@ -56,6 +56,8 @@ type SANode struct {
 	Rows []*SANodeColRow `json:",omitempty"`
 	Subs []*SANode       `json:",omitempty"`
 
+	copySubs []*SANode
+
 	ShowCodeChat bool
 
 	//state         int //0=SANode_STATE_WAITING, 1=SANode_STATE_RUNNING, 2=SANode_STATE_DONE
@@ -67,7 +69,7 @@ type SANode struct {
 
 	temp_mic_data audio.IntBuffer
 
-	tableCache [][]*SANode
+	//tableCache [][]*SANode
 }
 
 func NewSANode(app *SAApp, parent *SANode, name string, exe string, grid OsV4, pos OsV2f) *SANode {
@@ -151,12 +153,16 @@ func (node *SANode) IsTypeTables() bool {
 	return strings.EqualFold(node.Exe, "tables")
 }
 
-func (node *SANode) HasAttrNode() bool {
-	return node.Exe == "whispercpp" || node.Exe == "llamacpp" || node.Exe == "openai" || node.Exe == "net"
+func (node *SANode) IsTypeCopy() bool {
+	return strings.EqualFold(node.Exe, "copy")
 }
 
 func (node *SANode) HasNodeSubs() bool {
-	return strings.EqualFold(node.Exe, "layout") || strings.EqualFold(node.Exe, "dialog") || node.IsTypeTables()
+	return strings.EqualFold(node.Exe, "layout") || strings.EqualFold(node.Exe, "dialog") || node.IsTypeCopy()
+}
+
+func (node *SANode) HasAttrNode() bool {
+	return node.Exe == "whispercpp" || node.Exe == "llamacpp" || node.Exe == "openai" || node.Exe == "net"
 }
 
 func (node *SANode) IsWithChangedAttr() bool {
@@ -178,6 +184,22 @@ func (node *SANode) IsTriggered() bool {
 	}
 	if strings.EqualFold(node.Exe, "timer") {
 		return node.GetAttrBool("done", false)
+	}
+
+	if node.IsTypeCopy() {
+		for _, nd := range node.copySubs {
+			if nd.IsTriggered() {
+				return true
+			}
+		}
+	}
+
+	if node.HasNodeSubs() {
+		for _, nd := range node.Subs {
+			if nd.IsTriggered() {
+				return true
+			}
+		}
 	}
 
 	if node.IsWithChangedAttr() {
