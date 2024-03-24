@@ -248,7 +248,7 @@ func (node *SANode) ShowAttrFloat(grid *OsV4, name string, defValue float64, pre
 	return value
 }
 
-func (node *SANode) ShowAttrString(grid *OsV4, name string, defValue string, multiLine bool) string {
+func (node *SANode) ShowAttrStringEx(grid *OsV4, name string, defValue string, multiLine bool, showName bool) string {
 	ui := node.app.base.ui
 
 	oldSizeY := grid.Size.Y
@@ -258,9 +258,11 @@ func (node *SANode) ShowAttrString(grid *OsV4, name string, defValue string, mul
 
 	value := node.GetAttrString(name, defValue)
 
-	node.showAttrName(grid, name, value == defValue)
+	if showName {
+		node.showAttrName(grid, name, value == defValue)
+	}
 
-	_, _, _, fnshd, _ := ui.Comp_editbox(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, Comp_editboxProp().Align(0, OsTrn(multiLine, 0, 1)).MultiLine(multiLine))
+	_, _, _, fnshd, _ := ui.Comp_editbox(grid.Start.X+OsTrn(showName, 1, 0), grid.Start.Y, grid.Size.X, grid.Size.Y, &value, Comp_editboxProp().Align(0, OsTrn(multiLine, 0, 1)).MultiLine(multiLine))
 	if fnshd {
 		node.Attrs[name] = value
 	}
@@ -268,6 +270,10 @@ func (node *SANode) ShowAttrString(grid *OsV4, name string, defValue string, mul
 	grid.Start.Y += grid.Size.Y
 	grid.Size.Y = oldSizeY
 	return value
+}
+
+func (node *SANode) ShowAttrString(grid *OsV4, name string, defValue string, multiLine bool) string {
+	return node.ShowAttrStringEx(grid, name, defValue, multiLine, true)
 }
 
 func (node *SANode) ShowAttrIntCombo(grid *OsV4, name string, defValue int, options_names []string, options_values []string) int {
