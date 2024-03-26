@@ -21,6 +21,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -1060,4 +1061,70 @@ func OsIsSearchedName(name string, search []string) bool {
 		}
 	}
 	return true
+}
+
+type OsWriterSeeker struct {
+	buf bytes.Buffer
+	pos int
+}
+
+func (wr *OsWriterSeeker) Write(p []byte) (n int, err error) {
+	if extra := wr.pos - wr.buf.Len(); extra > 0 {
+		if _, err := wr.buf.Write(make([]byte, extra)); err != nil {
+			return n, err
+		}
+	}
+
+	if wr.pos < wr.buf.Len() {
+		n = copy(wr.buf.Bytes()[wr.pos:], p)
+		p = p[n:]
+	}
+
+	if len(p) > 0 {
+		var bt int
+		bt, err = wr.buf.Write(p)
+		n += bt
+	}
+
+	wr.pos += n
+	return n, err
+}
+func (wr *OsWriterSeeker) Seek(offset int64, whence int) (int64, error) {
+	newPos, offs := 0, int(offset)
+	switch whence {
+	case io.SeekStart:
+		newPos = offs
+	case io.SeekCurrent:
+		newPos = wr.pos + offs
+	case io.SeekEnd:
+		newPos = wr.buf.Len() + offs
+	}
+	if newPos < 0 {
+		return 0, errors.New("pos is negative")
+	}
+	wr.pos = newPos
+	return int64(newPos), nil
+}
+func (wr *OsWriterSeeker) Reader() io.Reader {
+	return bytes.NewReader(wr.buf.Bytes())
+}
+func (wr *OsWriterSeeker) Close() error {
+	return nil
+}
+func (wr *OsWriterSeeker) BytesReader() *bytes.Reader {
+	return bytes.NewReader(wr.buf.Bytes())
+}
+
+func OsConvertBytesToString(bytes int) string {
+	var str string
+	if bytes >= 1000*1000*1000 {
+		str = fmt.Sprintf("%.1f GB", float64(bytes)/(1000*1000*1000))
+	} else if bytes >= 1000*1000 {
+		str = fmt.Sprintf("%.1f MB", float64(bytes)/(1000*1000))
+	} else if bytes >= 1000 {
+		str = fmt.Sprintf("%.1f KB", float64(bytes)/(1000))
+	} else {
+		str = fmt.Sprintf("%d B", bytes)
+	}
+	return str
 }
