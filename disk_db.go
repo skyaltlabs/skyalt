@@ -82,6 +82,23 @@ func (tb *DiskDbIndexTable) ListOfColumnValues(withRowId bool) string {
 	return str
 }
 
+type DiskDbTime struct {
+	file     int64
+	file_wal int64
+	file_shm int64
+}
+
+func InitDiskDbTime(filePath string) DiskDbTime {
+	var tm DiskDbTime
+	tm.file = OsFileTime(filePath)
+	tm.file_wal = OsFileTime(filePath + "-wal")
+	tm.file_shm = OsFileTime(filePath + "-shm")
+	return tm
+}
+func (a *DiskDbTime) Cmp(b *DiskDbTime) bool {
+	return a.file == b.file && a.file_wal == b.file_wal && a.file_shm == b.file_shm
+}
+
 type DiskDb struct {
 	disk *Disk
 
@@ -95,11 +112,7 @@ type DiskDb struct {
 	lastWriteTicks int64
 	lastReadTicks  int64
 
-	written bool
-
-	file_time     int64
-	file_time_wal int64
-	file_time_shm int64
+	time DiskDbTime
 
 	last_file_tick int64
 }
@@ -124,7 +137,7 @@ func NewDiskDb(path string, inMemory bool, disk *Disk) (*DiskDb, error) {
 		}
 	}
 
-	db.HasFileChanged() //set 'file_time'
+	db.updateTime(false)
 
 	return &db, nil
 }
@@ -143,47 +156,20 @@ func (db *DiskDb) Destroy() {
 	}
 }
 
-func (db *DiskDb) hasFileChanged() bool {
-	tm := OsFileTime(db.path)
-	tm_wal := OsFileTime(db.path + "-wal")
-	tm_shm := OsFileTime(db.path + "-shm")
+func (db *DiskDb) updateTime(writeInto bool) {
+	db.time = InitDiskDbTime(db.path)
+	db.last_file_tick = OsTicks()
 
-	changed := (tm != db.file_time || tm_wal != db.file_time_wal || tm_shm != db.file_time_shm)
-
-	//update
-	db.file_time = tm
-	db.file_time_wal = tm_wal
-	db.file_time_shm = tm_shm
-
-	return changed
-}
-func (db *DiskDb) hasBeenWritten() bool {
-	written := db.written
-	db.written = false
-
-	return written
-}
-
-func (db *DiskDb) setWritten() {
-	db.written = true
-	db.hasFileChanged() //update
-}
-
-func (db *DiskDb) HasFileChanged() bool {
-
-	if !OsIsTicksIn(db.last_file_tick, 2000) {
-		db.last_file_tick = OsTicks()
-
-		if db.hasFileChanged() {
-			return true
-		}
+	if writeInto {
+		db.lastWriteTicks = int64(OsTicks())
 	}
+}
 
-	if db.hasBeenWritten() {
-		return true
+func (db *DiskDb) GetTime() DiskDbTime {
+	if db.last_file_tick == 0 || !OsIsTicksIn(db.last_file_tick, 2000) {
+		db.updateTime(false)
 	}
-
-	return false
+	return db.time
 }
 
 func (db *DiskDb) GetTableInfo() ([]*DiskDbIndexTable, error) {
@@ -256,7 +242,7 @@ func (db *DiskDb) Vacuum() error {
 	defer db.lock.Unlock()
 
 	_, err := db.db.Exec("VACUUM;")
-	db.setWritten()
+	db.updateTime(false)
 	return err
 }
 
@@ -272,9 +258,7 @@ func (db *DiskDb) Write_unsafe(query string, params ...any) (sql.Result, error) 
 		return nil, fmt.Errorf("query(%s) failed: %w", query, err)
 	}
 
-	db.lastWriteTicks = int64(OsTicks())
-
-	db.setWritten()
+	db.updateTime(true)
 	return res, nil
 }
 
