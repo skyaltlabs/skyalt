@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"reflect"
 	"sort"
 	"strings"
 
@@ -69,6 +68,10 @@ type SANode struct {
 
 	temp_mic_data audio.IntBuffer
 
+	changed       bool
+	changed_inner bool
+
+	db_time DiskDbTime
 	//tableCache [][]*SANode
 }
 
@@ -165,13 +168,9 @@ func (node *SANode) HasAttrNode() bool {
 	return node.Exe == "whispercpp" || node.Exe == "llamacpp" || node.Exe == "openai" || node.Exe == "net"
 }
 
-func (node *SANode) IsWithChangedAttr() bool {
+func (node *SANode) IsTypeTrigger() bool {
 	grnd := node.app.base.node_groups.FindNode(node.Exe)
 	return grnd != nil && grnd.changedAttr
-}
-
-func (node *SANode) IsTypeTrigger() bool {
-	return node.IsWithChangedAttr() || strings.EqualFold(node.Exe, "button") || strings.EqualFold(node.Exe, "editbox") || strings.EqualFold(node.Exe, "timer")
 }
 
 func (node *SANode) IsTypeWithAttrLabel() bool {
@@ -179,11 +178,8 @@ func (node *SANode) IsTypeWithAttrLabel() bool {
 }
 
 func (node *SANode) IsTriggered() bool {
-	if strings.EqualFold(node.Exe, "button") {
-		return node.GetAttrBool("clicked", false)
-	}
-	if strings.EqualFold(node.Exe, "timer") {
-		return node.GetAttrBool("done", false)
+	if node.changed {
+		return true
 	}
 
 	if node.IsTypeCopy() {
@@ -200,39 +196,34 @@ func (node *SANode) IsTriggered() bool {
 				return true
 			}
 		}
-	}
-
-	if node.IsWithChangedAttr() {
-		return node.GetAttrBool("changed", false)
 	}
 
 	return false
 }
 
-func (node *SANode) ResetTriggers() {
-	if strings.EqualFold(node.Exe, "button") {
-		node.Attrs["clicked"] = false
-	}
-	if strings.EqualFold(node.Exe, "timer") {
-		node.Attrs["done"] = false
-	}
+func (node *SANode) ResetTriggers(inner bool) {
 
-	if node.IsWithChangedAttr() {
-		node.Attrs["changed"] = false
+	if inner {
+		node.changed_inner = false
+	} else {
+		node.changed = node.changed_inner
+
+		if strings.EqualFold(node.Exe, "button") {
+			node.Attrs["clicked"] = false
+		}
 	}
 
 	if node.IsTypeCopy() {
 		for _, nd := range node.copySubs {
-			nd.ResetTriggers()
+			nd.ResetTriggers(inner)
 		}
 	}
 
 	if node.HasNodeSubs() {
 		for _, nd := range node.Subs {
-			nd.ResetTriggers()
+			nd.ResetTriggers(inner)
 		}
 	}
-
 }
 
 func (node *SANode) IsBypassed() bool {
@@ -291,7 +282,7 @@ func (node *SANode) Save(path string) error {
 	return nil
 }
 
-func (a *SANode) Cmp(b *SANode, historyDiff *bool) bool {
+/*func (a *SANode) Cmp(b *SANode) bool {
 	if a.Name != b.Name || a.Exe != b.Exe {
 		return false
 	}
@@ -339,13 +330,13 @@ func (a *SANode) Cmp(b *SANode, historyDiff *bool) bool {
 		return false
 	}
 	for i, itA := range a.Subs {
-		if !itA.Cmp(b.Subs[i], historyDiff) {
+		if !itA.Cmp(b.Subs[i]) {
 			return false
 		}
 	}
 
 	return true
-}
+}*/
 
 func (node *SANode) HasError() bool {
 	return node.errExe != nil

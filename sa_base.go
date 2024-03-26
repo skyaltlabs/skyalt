@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"time"
 )
 
 type SABase struct {
@@ -222,11 +221,6 @@ func (base *SABase) tickMick() {
 func (base *SABase) Tick() {
 	base.services.Tick()
 	base.tickMick()
-
-	base.HasApp() //fix range
-
-	app := base.GetApp()
-	app.Tick(app.base.ui.win.io.touch.end)
 }
 
 func (base *SABase) Render() bool {
@@ -238,7 +232,11 @@ func (base *SABase) Render() bool {
 	ui := base.ui
 	icon_rad := 1.5
 
-	if base.services.IsJobRunning(app) {
+	exeRunning := app.exe_run.Load()
+	serviceRunning := base.services.IsJobRunning(app)
+
+	if exeRunning || serviceRunning {
+		//progress
 		ui.Div_rowMax(0, 100)
 		ui.Div_col(0, icon_rad)
 		ui.Div_colMax(1, 100)
@@ -248,11 +246,18 @@ func (base *SABase) Render() bool {
 		ui.Div_end()
 
 		ui.Div_start(1, 0, 1, 1)
-		base.services.RenderJobs(app)
+		{
+			if serviceRunning {
+				base.services.RenderJobs(app)
+			} else {
+				ui.Comp_textSelect(0, 0, 1, 1, "Executing ...", OsV2{1, 1}, true, false) //.......
+			}
+		}
 		ui.Div_end()
 
 		ui.win.SetRedraw()
-		time.Sleep(500 * time.Millisecond)
+		//time.Sleep(500 * time.Millisecond)	//.....
+
 	} else {
 
 		ui.Div_rowMax(0, 100)
@@ -358,9 +363,11 @@ func (base *SABase) Render() bool {
 
 			}
 			ui.Div_end()
-
-			app.graph.History()
 		}
+
+		app.graph.History()
+
+		app.TryExecute()
 	}
 
 	base.ui.renderEnd(true)

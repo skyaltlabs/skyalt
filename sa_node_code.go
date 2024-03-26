@@ -51,7 +51,7 @@ type SANodeCodeImport struct {
 type SANodeCode struct {
 	node *SANode
 
-	//Triggers []string //nodes
+	Triggers []string //nodes
 	Messages []SANodeCodeChat
 
 	Code string
@@ -74,14 +74,14 @@ func InitSANodeCode(node *SANode) SANodeCode {
 	return ls
 }
 
-/*func (ls *SANodeCode) addTrigger(name string) {
+func (ls *SANodeCode) addTrigger(name string) {
 	for _, tr := range ls.Triggers {
 		if tr == name {
 			return
 		}
 	}
 	ls.Triggers = append(ls.Triggers, name)
-}*/
+}
 
 func (ls *SANodeCode) findNodeName(nm string) (*SANode, error) {
 	node := ls.node.FindNodeSplit(nm)
@@ -220,7 +220,8 @@ func (ls *SANodeCode) buildCopyStructs(nodes []*SANode, addExtraAttrs bool) stri
 			"\tChanged bool    `json:\"changed\"`\n" +
 			"\tDirection int   `json:\"direction\"`\n" +
 			"\tMax_width float64  `json:\"max_width\"`\n" +
-			"\tMax_height float64 `json:\"max_height\"`\n"
+			"\tMax_height float64 `json:\"max_height\"`\n" +
+			"\tShow_border bool `json:\"show_border\"`\n"
 
 		if !addExtraAttrs {
 			extraAttrs = ""
@@ -333,13 +334,12 @@ func (ls *SANodeCode) GetAnswer() {
 }
 
 func (ls *SANodeCode) IsTriggered() bool {
-
-	for _, nd := range ls.func_depends {
-		if nd.IsTriggered() {
+	for _, nm := range ls.Triggers {
+		nd := ls.node.app.root.FindNode(nm)
+		if nd != nil && nd.IsTriggered() {
 			return true
 		}
 	}
-
 	return false
 }
 
@@ -439,6 +439,10 @@ func (ls *SANodeCode) Execute() {
 					if ok {
 						//alloc
 						prmNode.copySubs = make([]*SANode, len(rows))
+
+						if !prmNode.changed { //compare attrs? ........................
+							prmNode.changed_inner = true
+						}
 
 						//set
 						for i, r := range rows {
@@ -702,8 +706,68 @@ func (ls *SANodeCode) updateFuncDepends() error {
 		}
 	}
 
+	//v := visitor{}
+	//ast.Walk(&v, node)
+
 	return nil
 }
+
+/*type visitor struct {
+	writes []string
+}
+
+var g_ops = []token.Token{
+	token.ASSIGN,
+	token.ADD_ASSIGN,
+	token.SUB_ASSIGN,
+	token.MUL_ASSIGN,
+	token.QUO_ASSIGN,
+	token.REM_ASSIGN,
+	token.AND_ASSIGN,
+	token.OR_ASSIGN,
+	token.XOR_ASSIGN,
+	token.SHL_ASSIGN,
+	token.SHR_ASSIGN,
+	token.AND_NOT_ASSIGN,
+}
+
+//problems:
+//1) table.AddRow() //ignorováno
+//2) row := range table.Rows	//ignorováno
+//3) clickButton code is mess
+
+func (v *visitor) Visit(n ast.Node) ast.Visitor {
+	if n == nil {
+		return nil
+	}
+	switch d := n.(type) {
+	case *ast.AssignStmt:
+		found := false
+		for _, dd := range g_ops {
+			if dd == d.Tok {
+				found = true
+				break
+			}
+		}
+		if found {
+			for _, name := range d.Lhs {
+
+				for name != nil {
+					if ident, ok := name.(*ast.Ident); ok {
+						v.writes = append(v.writes, ident.Name)
+						break
+					}
+					if sel, ok := name.(*ast.SelectorExpr); ok {
+						name = sel.X
+					}
+				}
+
+			}
+		}
+
+	}
+	return v
+}*/
 
 func (ls *SANodeCode) updateMsgsDepends() error {
 
@@ -770,11 +834,11 @@ func ReplaceWord(str string, oldWord string, newWord string) string {
 func (ls *SANodeCode) RenameNode(old_name string, new_name string) {
 
 	//triggers
-	/*for i, tr := range ls.Triggers {
+	for i, tr := range ls.Triggers {
 		if tr == old_name {
 			ls.Triggers[i] = new_name
 		}
-	}*/
+	}
 
 	//chat
 	for _, it := range ls.Messages {

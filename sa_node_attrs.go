@@ -262,7 +262,7 @@ func (node *SANode) ShowAttrStringEx(grid *OsV4, name string, defValue string, m
 		node.showAttrName(grid, name, value == defValue)
 	}
 
-	_, _, _, fnshd, _ := ui.Comp_editbox(grid.Start.X+OsTrn(showName, 1, 0), grid.Start.Y, grid.Size.X, grid.Size.Y, &value, Comp_editboxProp().Align(0, OsTrn(multiLine, 0, 1)).MultiLine(multiLine))
+	_, _, _, fnshd, _ := ui.Comp_editbox(grid.Start.X+OsTrn(showName, 1, 0), grid.Start.Y, grid.Size.X, grid.Size.Y, &value, Comp_editboxProp().Align(0, OsTrn(multiLine, 0, 1)).MultiLine(multiLine).Formating(false))
 	if fnshd {
 		node.Attrs[name] = value
 	}

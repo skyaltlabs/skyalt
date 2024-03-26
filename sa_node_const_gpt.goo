@@ -10,7 +10,7 @@ type Editbox struct {
 type Button struct {
 	Label   string
 	Enable  bool
-	Clicked bool
+	Clicked bool	//read-only, never set it!
 }
 
 type Checkbox struct {

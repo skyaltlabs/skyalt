@@ -52,7 +52,7 @@ func InitSAGroups() SAGroups {
 	path := "file:apps/base/resources/"
 
 	grs.groups = append(grs.groups, &SAGroup{name: "UI", icon: InitWinMedia_url(path + "node_ui.png"), nodes: []*SAGroupNode{
-		{name: "button", render: UiButton_render, attrs: UiButton_Attrs},
+		{name: "button", render: UiButton_render, attrs: UiButton_Attrs, changedAttr: true},
 		{name: "text", render: UiText_render, attrs: UiText_Attrs, changedAttr: true},
 		{name: "editbox", render: UiEditbox_render, attrs: UiEditbox_Attrs, changedAttr: true},
 		{name: "checkbox", render: UiCheckbox_render, attrs: UiCheckbox_Attrs, changedAttr: true},
@@ -61,7 +61,7 @@ func InitSAGroups() SAGroups {
 		{name: "color", render: UiColor_render, attrs: UiColor_Attrs, changedAttr: true},
 		{name: "combo", render: UiCombo_render, attrs: UiCombo_Attrs, changedAttr: true},
 		{name: "divider", render: UiDivider_render, attrs: UiDivider_Attrs},
-		{name: "timer", render: UiTimer_render, attrs: UiTimer_Attrs},
+		{name: "timer", render: UiTimer_render, attrs: UiTimer_Attrs, changedAttr: true},
 		{name: "date", render: UiDate_render, attrs: UiDate_Attrs, changedAttr: true},
 		{name: "microphone", render: UiMicrophone_render, attrs: UiMicrophone_Attrs, changedAttr: true},
 

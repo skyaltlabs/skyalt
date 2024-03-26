@@ -51,6 +51,7 @@ func UiButton_render(node *SANode) {
 
 	if node.app.base.ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, tooltip, enable) > 0 {
 		node.Attrs["clicked"] = true
+		node.changed = true
 	}
 }
 
@@ -102,7 +103,7 @@ func UiEditbox_Attrs(node *SANode) {
 	node.ShowAttrBool(&grid, "enable", true)
 	node.ShowAttrBool(&grid, "multi_line", false)
 	node.ShowAttrBool(&grid, "multi_line_enter_finish", false)
-	node.ShowAttrBool(&grid, "changed", false)
+	//node.ShowAttrBool(&grid, "changed", false)
 	node.ShowAttrBool(&grid, "temp_to_value", false)
 
 }
@@ -121,15 +122,17 @@ func UiEditbox_render(node *SANode) {
 	editedValue, active, _, fnshd, _ := node.app.base.ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, Comp_editboxProp().Ghost(ghost).MultiLine(multi_line).MultiLineEnterFinish(multi_line_enter_finish).Enable(enable).Align(align_h, align_v))
 
 	if temp_to_value && active {
-		old_changed := node.GetAttrBool("changed", false)
+		old_changed := node.changed //node.GetAttrBool("changed", false)
 		if !old_changed {
-			node.Attrs["changed"] = (node.Attrs["value"] != editedValue)
+			//node.Attrs["changed"] = (node.Attrs["value"] != editedValue)
+			node.changed = (node.Attrs["value"] != editedValue)
 		}
 		node.Attrs["value"] = editedValue
 	}
 
 	if fnshd {
-		node.Attrs["changed"] = (node.Attrs["value"] != value)
+		//node.Attrs["changed"] = (node.Attrs["value"] != value)
+		node.changed = (node.Attrs["value"] != value)
 		node.Attrs["value"] = value
 	}
 }
@@ -147,7 +150,7 @@ func UiCheckbox_Attrs(node *SANode) {
 	node.ShowAttrString(&grid, "label", "", false)
 	node.ShowAttrString(&grid, "tooltip", "", false)
 	node.ShowAttrBool(&grid, "enable", true)
-	node.ShowAttrBool(&grid, "changed", false)
+	//node.ShowAttrBool(&grid, "changed", false)
 }
 
 func UiCheckbox_render(node *SANode) {
@@ -160,7 +163,8 @@ func UiCheckbox_render(node *SANode) {
 
 	if node.app.base.ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, label, tooltip, enable) {
 		node.Attrs["value"] = value
-		node.Attrs["changed"] = true
+		//node.Attrs["changed"] = true
+		node.changed = true
 	}
 }
 
@@ -177,7 +181,7 @@ func UiSwitch_Attrs(node *SANode) {
 	node.ShowAttrString(&grid, "label", "", false)
 	node.ShowAttrString(&grid, "tooltip", "", false)
 	node.ShowAttrBool(&grid, "enable", true)
-	node.ShowAttrBool(&grid, "changed", false)
+	//node.ShowAttrBool(&grid, "changed", false)
 }
 
 func UiSwitch_render(node *SANode) {
@@ -190,7 +194,8 @@ func UiSwitch_render(node *SANode) {
 
 	if node.app.base.ui.Comp_switch(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, label, tooltip, enable) {
 		node.Attrs["value"] = value
-		node.Attrs["changed"] = true
+		//node.Attrs["changed"] = true
+		node.changed = true
 	}
 }
 
@@ -222,7 +227,8 @@ func UiSlider_render(node *SANode) {
 
 	if node.app.base.ui.Comp_slider(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, min, max, step, enable) {
 		node.Attrs["value"] = value
-		node.Attrs["changed"] = true
+		//node.Attrs["changed"] = true
+		node.changed = true
 	}
 }
 
@@ -240,7 +246,7 @@ func UiCombo_Attrs(node *SANode) {
 	node.ShowAttrString(&grid, "options_values", "0;1;2", false)
 	node.ShowAttrBool(&grid, "search", false)
 	node.ShowAttrBool(&grid, "enable", true)
-	node.ShowAttrBool(&grid, "changed", false)
+	//node.ShowAttrBool(&grid, "changed", false)
 }
 
 func UiCombo_render(node *SANode) {
@@ -259,7 +265,8 @@ func UiCombo_render(node *SANode) {
 
 	if node.app.base.ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, options_names, options_values, tooltip, enable, search) {
 		node.Attrs["value"] = value
-		node.Attrs["changed"] = true
+		//node.Attrs["changed"] = true
+		node.changed = true
 	}
 }
 
@@ -275,7 +282,7 @@ func UiColor_Attrs(node *SANode) {
 	node.ShowAttrCd(&grid, "value", OsCd{127, 127, 127, 255})
 	node.ShowAttrString(&grid, "tooltip", "", false)
 	node.ShowAttrBool(&grid, "enable", true)
-	node.ShowAttrBool(&grid, "changed", false)
+	//node.ShowAttrBool(&grid, "changed", false)
 }
 
 func UiColor_render(node *SANode) {
@@ -288,7 +295,8 @@ func UiColor_render(node *SANode) {
 
 	if node.app.base.ui.comp_colorPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, "color_picker_"+node.Name, tooltip, enable) {
 		node.SetAttrCd("value", value)
-		node.Attrs["changed"] = true
+		//node.Attrs["changed"] = true
+		node.changed = true
 	}
 }
 
@@ -370,6 +378,7 @@ func UiTimer_render(node *SANode) {
 	if enable && prc >= 1 {
 		if start_sec > 0 { //if repeat==false, set 'done' only once
 			node.Attrs["done"] = true
+			node.changed = true
 		}
 		if repeat {
 			node.Attrs["start_sec"] = OsTime()
@@ -392,7 +401,7 @@ func UiDate_Attrs(node *SANode) {
 	node.ShowAttrBool(&grid, "show_time", false)
 	node.ShowAttrString(&grid, "tooltip", "", false)
 	node.ShowAttrBool(&grid, "enable", true)
-	node.ShowAttrBool(&grid, "changed", false)
+	//node.ShowAttrBool(&grid, "changed", false)
 }
 
 func UiDate_render(node *SANode) {
@@ -406,7 +415,8 @@ func UiDate_render(node *SANode) {
 	date := int64(value)
 	if node.app.base.ui.Comp_CalendarDatePicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &date, show_time, "date_"+node.Name, tooltip, enable) {
 		node.Attrs["value"] = int(date)
-		node.Attrs["changed"] = true
+		//node.Attrs["changed"] = true
+		node.changed = true
 	}
 }
 
@@ -421,7 +431,7 @@ func UiDiskDir_Attrs(node *SANode) {
 	node.ShowAttrFilePicker(&grid, "path", "", false, "disk_dir_"+node.Name)
 	node.ShowAttrBool(&grid, "write", false)
 	node.ShowAttrBool(&grid, "enable", true)
-	node.ShowAttrBool(&grid, "changed", false)
+	//node.ShowAttrBool(&grid, "changed", false)
 }
 
 func UiDiskDir_render(node *SANode) {
@@ -432,7 +442,8 @@ func UiDiskDir_render(node *SANode) {
 
 	if node.app.base.ui.Comp_dirPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &path, false, "dir_picker_"+node.Name, enable) {
 		node.Attrs["path"] = path
-		node.Attrs["changed"] = true
+		//node.Attrs["changed"] = true
+		node.changed = true
 	}
 }
 
@@ -447,7 +458,7 @@ func UiDiskFile_Attrs(node *SANode) {
 	node.ShowAttrFilePicker(&grid, "path", "", true, "disk_file_"+node.Name)
 	node.ShowAttrBool(&grid, "write", false)
 	node.ShowAttrBool(&grid, "enable", true)
-	node.ShowAttrBool(&grid, "changed", false)
+	//node.ShowAttrBool(&grid, "changed", false)
 }
 
 func UiDiskFile_render(node *SANode) {
@@ -458,7 +469,8 @@ func UiDiskFile_render(node *SANode) {
 
 	if node.app.base.ui.Comp_dirPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &path, true, "dir_picker_"+node.Name, enable) {
 		node.Attrs["path"] = path
-		node.Attrs["changed"] = true
+		//node.Attrs["changed"] = true
+		node.changed = true
 	}
 }
 
@@ -472,7 +484,7 @@ func UiMicrophone_Attrs(node *SANode) {
 	node.ShowAttrBool(&grid, "show", true)
 	node.ShowAttrFilePicker(&grid, "path", "", true, "microphone_path_"+node.Name)
 	node.ShowAttrBool(&grid, "enable", true)
-	node.ShowAttrBool(&grid, "changed", false)
+	//node.ShowAttrBool(&grid, "changed", false)
 }
 
 func UiMicrophone_render(node *SANode) {
@@ -531,7 +543,8 @@ func UiMicrophone_render(node *SANode) {
 			}
 
 			//set finished
-			node.Attrs["changed"] = true
+			//node.Attrs["changed"] = true
+			node.changed = true
 		}
 	}
 }
@@ -583,6 +596,7 @@ func UiCopy_Attrs(node *SANode) {
 	node.ShowAttrIntCombo(&grid, "direction", 0, []string{"Vertical", "Horizonal"}, []string{"0", "1"})
 	node.ShowAttrFloat(&grid, "max_width", 100, 1)
 	node.ShowAttrFloat(&grid, "max_height", 1, 1)
+	node.ShowAttrBool(&grid, "show_border", true)
 	//node.ShowAttrBool(&grid, "changed", false) //...
 }
 
@@ -592,6 +606,7 @@ func UiCopy_render(node *SANode) {
 	direction := node.GetAttrInt("direction", 0)
 	max_width := node.GetAttrFloat("max_width", 100)
 	max_height := node.GetAttrFloat("max_height", 1)
+	show_border := node.GetAttrBool("show_border", true)
 
 	ui := node.app.base.ui
 
@@ -651,6 +666,12 @@ func UiCopy_render(node *SANode) {
 				gr.render(it)
 			}
 		}
+
+		if show_border {
+			pl := ui.win.io.GetPalette()
+			ui.Paint_rect(0, 0, 1, 1, 0, pl.OnB, 0.03)
+		}
+
 	}
 	ui.Div_end()
 }
@@ -665,7 +686,7 @@ func UiSQLite_Attrs(node *SANode) {
 	node.ShowAttrBool(&grid, "show", true)
 	node.ShowAttrBool(&grid, "write", false)
 	node.ShowAttrBool(&grid, "enable", true)
-	node.ShowAttrBool(&grid, "changed", false) //...
+	//node.ShowAttrBool(&grid, "changed", false) //...
 
 	path := node.ShowAttrFilePicker(&grid, "path", "", true, "render_sqlite_"+node.Name)
 	if !OsFileExists(path) {
@@ -882,6 +903,17 @@ func UiSQLite_renderEditor(node *SANode) {
 							//delete
 							if ui.Comp_buttonError(0, 2, 1, 1, "Delete", "", true, true) > 0 {
 								db.Write_unsafe(fmt.Sprintf("DROP TABLE %s;", t.Name))
+
+								//select close table
+								if selected_table == t.Name {
+									nm := ""
+									if i+1 < len(info) {
+										nm = info[i+1].Name //next
+									} else if i > 0 {
+										nm = info[i-1].Name //previous
+									}
+									node.Attrs["selected_table"] = nm
+								}
 							}
 							ui.Dialog_end()
 						}
@@ -1007,7 +1039,7 @@ func UiSQLite_renderEditor(node *SANode) {
 						for i := 1; i < len(vals); i++ {
 							_, _, _, fnshd, _ := ui.Comp_editbox(i, r, 1, 1, &vals[i], Comp_editboxProp())
 							if fnshd {
-								db.Write_unsafe(fmt.Sprintf("UPDATE %s SET %s=? WHERE rowid=?", tinfo.Name, tinfo.Columns[i-1].Name), vals[i], vals[0])
+								db.Write_unsafe(fmt.Sprintf("UPDATE %s SET %s=? WHERE rowid=?", tinfo.Name, tinfo.Columns[i].Name), vals[i], vals[0])
 							}
 						}
 						r++
@@ -1160,8 +1192,11 @@ func UiCodeGo_Attrs(node *SANode) {
 		y += 1
 	}
 
+	ui.Div_SpacerRow(0, y, 2, 1)
+	y++
+
 	//triggers
-	/*{
+	{
 		ui.Comp_text(0, y, 1, 1, "Triggers", 0)
 		nTrigs := len(node.Code.Triggers)
 		ui.Div_start(1, y, 1, nTrigs+1)
@@ -1188,7 +1223,11 @@ func UiCodeGo_Attrs(node *SANode) {
 		}
 		ui.Div_end()
 		y += nTrigs + 1
-	}*/
+
+		if len(node.Code.Triggers) == 0 {
+			node.SetError(fmt.Errorf("no trigger(s)"))
+		}
+	}
 
 	ui.Div_SpacerRow(0, y, 2, 1)
 	y++

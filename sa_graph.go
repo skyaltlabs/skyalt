@@ -750,10 +750,6 @@ func (gr *SAGraph) History() {
 
 	ui := gr.app.base.ui
 
-	if ui.win.io.touch.end || (!ui.edit.IsActive() && ui.win.io.keys.hasChanged) {
-		gr.checkAndAddHistory()
-	}
-
 	if len(gr.history) == 0 {
 		gr.checkAndAddHistory()
 		return
@@ -771,13 +767,22 @@ func (gr *SAGraph) History() {
 	}
 }
 
-func (gr *SAGraph) checkAndAddHistory() {
+func (gr *SAGraph) compare() ([]byte, bool) {
 
 	js, err := json.Marshal(gr.app.root)
 	if err != nil {
-		return
+		return nil, false
 	}
 	if len(gr.history) > 0 && bytes.Equal(js, gr.history[gr.history_pos]) {
+		return js, false //same as current history
+	}
+	return js, true
+}
+
+func (gr *SAGraph) checkAndAddHistory() {
+
+	js, changed := gr.compare()
+	if !changed {
 		return //same as current history
 	}
 

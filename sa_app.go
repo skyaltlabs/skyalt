@@ -187,25 +187,34 @@ func (app *SAApp) rebuildLists() {
 	app.all_triggers_str = app.buildTriggersStr(app.root)
 }
 
-func (app *SAApp) Tick(force bool) {
+func (app *SAApp) TryExecute() {
+	ui := app.base.ui
 
-	if app.exe_run.Load() {
+	if !ui.win.io.touch.end && (ui.edit.IsActive() || !ui.win.io.keys.hasChanged) && (app.last_trigger_ticks > 0 && OsIsTicksIn(app.last_trigger_ticks, 500)) {
 		return
-	}
-
-	if OsIsTicksIn(app.last_trigger_ticks, 500) && !force {
-		return //avoid editbox "temp_to_value" is called to often
 	}
 
 	//update "changed" for sqlite dbs
 	for _, nd := range app.all_nodes {
-		if nd.Exe == "tables" {
+
+		/*if nd.IsTypeCode() {
+			if len(nd.Code.Triggers) == 0 {
+				nd.SetError(fmt.Errorf("no trigger(s)"))
+			}
+		}*/
+
+		if nd.IsTypeTables() {
 
 			path := nd.GetAttrString("path", "")
 
 			db, _, err := app.base.ui.win.disk.OpenDb(path)
-			if err == nil && db.HasFileChanged() {
-				nd.Attrs["changed"] = true
+			if err == nil {
+				tm := db.GetTime()
+				if !tm.Cmp(&nd.db_time) {
+					fmt.Printf("Db '%s' has changed\n", nd.Name)
+					nd.db_time = tm
+					nd.changed = true
+				}
 			}
 		}
 	}
@@ -226,6 +235,11 @@ func (app *SAApp) Tick(force bool) {
 }
 
 func (app *SAApp) exe() {
+
+	for _, nd := range app.all_nodes {
+		nd.ResetTriggers(true)
+	}
+
 	for _, nd := range app.all_nodes {
 		if nd.Code.IsTriggered() && !nd.IsBypassed() {
 			nd.Code.Execute()
@@ -233,9 +247,12 @@ func (app *SAApp) exe() {
 	}
 
 	for _, nd := range app.all_nodes {
-		nd.ResetTriggers()
+		nd.ResetTriggers(false)
 	}
 
+	app.graph.checkAndAddHistory()
+
+	app.last_trigger_ticks = 0 //test for new changes immidiatly
 	app.exe_run.Store(false)
 }
 
