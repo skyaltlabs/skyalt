@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -169,7 +168,7 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 				}
 			}
 
-			ui.Comp_text(1, y, 1, 1, fmt.Sprintf("%d Bytes", inf.Size()), 0)
+			ui.Comp_text(1, y, 1, 1, OsConvertBytesToString(int(inf.Size())), 0)
 			ui.Comp_text(2, y, 1, 1, ui.GetTextDateTime(inf.ModTime().Unix()), 0)
 			y++
 		}
