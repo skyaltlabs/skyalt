@@ -6,8 +6,16 @@
 "Name": "root",
 "Exe": "layout",
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
+},
+"Attrs": {
+"grid_h": 0,
+"grid_w": 0,
+"grid_x": 0,
+"grid_y": 0,
+"show": true
 },
 "Cols": [
 {
@@ -58,6 +66,9 @@
 "Name": "Summary",
 "Exe": "func_go",
 "Code": {
+"Triggers": [
+"button"
+],
 "Messages": [
 {
 "User": "If 'button' is clicked, use 'openai' to create summary of 'editbox'.\nMake a prompt in the form: \"Please summarize this article into a few bullet points: \" + content of 'editbox' on the new line.\nSet answer to 'text'.",
@@ -71,7 +82,8 @@
 "Code": "\nimport (\n\t\"fmt\"\n)\n\nfunc Summary(button *Button, openai *Openai, editbox *Editbox, text *Text) error {\n\tif button.Clicked {\n\t\tprompt := fmt.Sprintf(\"Please summarize this article into a few bullet points:\\n%s\", editbox.Value)\n\t\tanswer, err := openai.GetAnswer([]OpenaiMessage{{Role: \"user\", Content: prompt}})\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\ttext.Label = answer\n\t}\n\treturn nil\n}\n"
 },
 "Attrs": {
-"bypass": false
+"bypass": false,
+"show": true
 },
 "ShowCodeChat": true
 },
@@ -83,11 +95,13 @@
 "Name": "openai",
 "Exe": "openai",
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
 },
 "Attrs": {
-"model": "gpt-3.5-turbo"
+"model": "gpt-3.5-turbo",
+"show": true
 },
 "ShowCodeChat": false
 },
@@ -98,7 +112,9 @@
 },
 "Name": "text",
 "Exe": "text",
+"Selected": true,
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -109,7 +125,7 @@
 "grid_w": 1,
 "grid_x": 1,
 "grid_y": 2,
-"label": "- The Velvet Revolution was a non-violent transition of power in Czechoslovakia from 17 to 28 November 1989\n- Popular demonstrations against the Communist Party of Czechoslovakia led to the end of 41 years of one-party rule\n- The revolution resulted in the dismantling of the command economy and the establishment of a parliamentary republic\n- The revolution began with a student demonstration on 17 November and continued with increasing protests culminating in a two-hour general strike on 27 November",
+"label": "- The Velvet Revolution was a non-violent transition of power that occurred in Czechoslovakia from 17 to 28 November 1989\n- Popular demonstrations against the Communist Party of Czechoslovakia led to the end of 41 years of one-party rule\n- The revolution began with a student demonstration that was violently suppressed by riot police on 17 November\n- The protests grew in size, with an estimated 500,000 protesters in Prague on 20 November\n- The top leadership of the Communist Party, including General Secretary Miloš Jakeš, resigned on 24 November\n- A two-hour general strike involving all citizens of Czechoslovakia was held on 27 November",
 "multi_line": true,
 "selection": true,
 "show": true,
@@ -125,6 +141,7 @@
 "Name": "button",
 "Exe": "button",
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -149,6 +166,7 @@
 "Name": "editbox",
 "Exe": "editbox",
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -156,7 +174,6 @@
 "align_h": 0,
 "align_v": 0,
 "enable": true,
-"finished": false,
 "ghost": "",
 "grid_h": 1,
 "grid_w": 1,
@@ -165,6 +182,7 @@
 "multi_line": true,
 "multi_line_enter_finish": false,
 "show": true,
+"temp_to_value": false,
 "value": "The Velvet Revolution (Czech: Sametová revoluce) or Gentle Revolution (Slovak: Nežná revolúcia) was a non-violent transition of power in what was then Czechoslovakia, occurring from 17 November to 28 November 1989. Popular demonstrations against the one-party government of the Communist Party of Czechoslovakia included students and older dissidents. The result was the end of 41 years of one-party rule in Czechoslovakia, and the subsequent dismantling of the command economy and conversion to a parliamentary republic.[3]\n\nOn 17 November 1989 (International Students' Day), riot police suppressed a student demonstration in Prague.[4] The event marked the 50th anniversary of a violently suppressed demonstration against the Nazi storming of Prague University in 1939 where 1,200 students were arrested and 9 killed (see Origin of International Students' Day). The 1989 event sparked a series of demonstrations from 17 November to late December and turned into an anti-communist demonstration. On 20 November, the number of protesters assembled in Prague grew from 200,000 the previous day to an estimated 500,000. The entire top leadership of the Communist Party, including General Secretary Miloš Jakeš, resigned on 24 November. On 27 November, a two-hour general strike involving all citizens of Czechoslovakia was held."
 },
 "ShowCodeChat": false

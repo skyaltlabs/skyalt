@@ -6,8 +6,16 @@
 "Name": "root",
 "Exe": "layout",
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
+},
+"Attrs": {
+"grid_h": 0,
+"grid_w": 0,
+"grid_x": 0,
+"grid_y": 0,
+"show": true
 },
 "Cols": [
 {
@@ -76,6 +84,9 @@
 "Name": "transcribe_mic",
 "Exe": "func_go",
 "Code": {
+"Triggers": [
+"microphone"
+],
 "Messages": [
 {
 "User": "Transcribe 'microphone' with 'whispercpp'. Save result into 'user_msg'.",
@@ -89,7 +100,8 @@
 "Code": "\nimport (\n\t\"io/ioutil\"\n)\n\nfunc transcribe_mic(microphone *Microphone, whispercpp *Whispercpp, user_msg *Editbox) error {\n\tif !microphone.Enable {\n\t\treturn nil\n\t}\n\n\taudioData, err := ioutil.ReadFile(microphone.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\tresult, err := whispercpp.TranscribeBlob(audioData)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\tuser_msg.Value = result\n\tuser_msg.Enable = true\n\treturn nil\n}\n"
 },
 "Attrs": {
-"bypass": false
+"bypass": false,
+"show": true
 },
 "ShowCodeChat": false
 },
@@ -101,6 +113,7 @@
 "Name": "whispercpp",
 "Exe": "whispercpp",
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -120,6 +133,7 @@
 "offset_n": 0,
 "offset_t": 0,
 "response_format": "text",
+"show": true,
 "split_on_word": false,
 "temperature": 0,
 "temperature_inc": 0.2,
@@ -137,6 +151,7 @@
 "Name": "microphone",
 "Exe": "microphone",
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -154,32 +169,36 @@
 },
 {
 "Pos": {
-"X": 20.143398,
-"Y": 11.929375
+"X": 20.059744,
+"Y": 12.347651
 },
 "Name": "BuildTextChat",
 "Exe": "func_go",
 "Code": {
+"Triggers": [
+"db"
+],
 "Messages": [
 {
 "User": "From 'db' create text in form: \u003crole\u003e: \u003ccontent\u003e\\n.  Save text into 'text'.",
-"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc BuildTextChat(db *Sqlite, text *Text) error {\n\tdatabase, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer database.Close()\n\n\trows, err := database.Query(\"SELECT role, content FROM chat\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tvar chatText string\n\tfor rows.Next() {\n\t\tvar role, content string\n\t\tif err := rows.Scan(\u0026role, \u0026content); err != nil {\n\t\t\treturn err\n\t\t}\n\t\tchatText += fmt.Sprintf(\"%s: %s\\n\", role, content)\n\t}\n\tif err := rows.Err(); err != nil {\n\t\treturn err\n\t}\n\n\ttext.Label = chatText\n\treturn nil\n}\n```"
+"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t_ \"github.com/mattn/go-sqlite3\"\n\t\"log\"\n)\n\nfunc BuildTextChat(db *Tables, text *Text) error {\n\tdatabase, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\tlog.Fatal(err)\n\t\treturn err\n\t}\n\tdefer database.Close()\n\n\trows, err := database.Query(\"SELECT role, content FROM chat\")\n\tif err != nil {\n\t\tlog.Fatal(err)\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tvar chatText string\n\tfor rows.Next() {\n\t\tvar role string\n\t\tvar content string\n\t\terr = rows.Scan(\u0026role, \u0026content)\n\t\tif err != nil {\n\t\t\tlog.Fatal(err)\n\t\t\treturn err\n\t\t}\n\t\tchatText += role + \": \" + content + \"\\n\"\n\t}\n\terr = rows.Err()\n\tif err != nil {\n\t\tlog.Fatal(err)\n\t\treturn err\n\t}\n\n\ttext.Label = chatText\n\treturn nil\n}\n```"
 },
 {
 "User": "",
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc BuildTextChat(db *Sqlite, text *Text) error {\n\tdatabase, _ := sql.Open(\"sqlite3\", db.Path)\n\tdefer database.Close()\n\n\trows, _ := database.Query(\"SELECT role, content FROM chat\")\n\tdefer rows.Close()\n\n\tvar chatText string\n\tfor rows.Next() {\n\t\tvar role, content string\n\t \trows.Scan(\u0026role, \u0026content)\n\t\t\t\n\t\tchatText += fmt.Sprintf(\"%s: %s\\n\", role, content)\n\t}\n\n\ttext.Label = chatText\n\treturn nil\n}\n"
+"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc BuildTextChat(db *Tables, text *Text) error {\n\tdatabase, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer database.Close()\n\n\trows, err := database.Query(\"SELECT role, content FROM chat\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tvar chatText string\n\tfor rows.Next() {\n\t\tvar role string\n\t\tvar content string\n\t\terr = rows.Scan(\u0026role, \u0026content)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tchatText += fmt.Sprintf(\"%s: %s\\n\", role, content)\n\t}\n\tif err = rows.Err(); err != nil {\n\t\treturn err\n\t}\n\n\ttext.Label = chatText\n\treturn nil\n}\n"
 },
 "Attrs": {
 "bypass": false,
 "grid_h": 1,
 "grid_w": 1,
 "grid_x": 0,
-"grid_y": 0
+"grid_y": 0,
+"show": true
 },
-"ShowCodeChat": false
+"ShowCodeChat": true
 },
 {
 "Pos": {
@@ -189,40 +208,45 @@
 "Name": "Chat",
 "Exe": "func_go",
 "Code": {
+"Triggers": [
+"button"
+],
 "Messages": [
 {
 "User": "If 'button' is clicked, build messages from 'db'. Add 'user_msg' to messages and send it to 'llamacpp' to get answer.\nSave answer and 'user_msg' into 'db'. Reset 'user_msg' editbox.",
-"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc Chat(button *Button, db *Sqlite, user_msg *Editbox, llamacpp *Llamacpp) error {\n\tif !button.Clicked {\n\t\treturn nil\n\t}\n\tbutton.Clicked = false\n\n\tsqlDB, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer sqlDB.Close()\n\n\t// Build messages from database.\n\tvar messages []LlamaMessage\n\trows, err := sqlDB.Query(\"SELECT role, content FROM chat\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tfor rows.Next() {\n\t\tvar msg LlamaMessage\n\t\tif err := rows.Scan(\u0026msg.Role, \u0026msg.Content); err != nil {\n\t\t\treturn err\n\t\t}\n\t\tmessages = append(messages, msg)\n\t}\n\trows.Close()\n\n\t// Add 'user_msg' to messages.\n\tmessages = append(messages, LlamaMessage{Role: \"user\", Content: user_msg.Value})\n\n\t// Get answer from llamacpp.\n\tanswer, err := llamacpp.GetAnswer(messages)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\t// Begin transaction.\n\ttx, err := sqlDB.Begin()\n\tif err != nil {\n\t\treturn err\n\t}\n\n\t// Insert 'user_msg' into 'db'.\n\t_, err = tx.Exec(\"INSERT INTO chat (role, content) VALUES (?, ?)\", \"user\", user_msg.Value)\n\tif err != nil {\n\t\ttx.Rollback()\n\t\treturn err\n\t}\n\n\t// Insert answer into 'db'.\n\t_, err = tx.Exec(\"INSERT INTO chat (role, content) VALUES (?, ?)\", \"assistant\", answer)\n\tif err != nil {\n\t\ttx.Rollback()\n\t\treturn err\n\t}\n\n\t// Commit the transaction.\n\tif err := tx.Commit(); err != nil {\n\t\treturn err\n\t}\n\n\t// Reset 'user_msg' editbox.\n\tuser_msg.Value = \"\"\n\n\treturn nil\n}\n```"
+"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc Chat(button *Button, db *Tables, user_msg *Editbox, llamacpp *Llamacpp) error {\n\tif button.Clicked {\n\t\tdatabase, err := sql.Open(\"sqlite3\", db.Path)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer database.Close()\n\n\t\trows, err := database.Query(\"SELECT role, content FROM chat\")\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer rows.Close()\n\n\t\tvar messages []LlamaMessage\n\t\tfor rows.Next() {\n\t\t\tvar role, content string\n\t\t\tif err := rows.Scan(\u0026role, \u0026content); err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t\tmessages = append(messages, LlamaMessage{Role: role, Content: content})\n\t\t}\n\t\tif err := rows.Err(); err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\tuserMessage := LlamaMessage{Role: \"user\", Content: user_msg.Value}\n\t\tmessages = append(messages, userMessage)\n\n\t\tanswer, err := llamacpp.GetAnswer(messages)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\ttx, err := database.Begin()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tstmt, err := tx.Prepare(\"INSERT INTO chat(role, content) VALUES(?, ?)\")\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer stmt.Close()\n\n\t\t_, err = stmt.Exec(\"user\", user_msg.Value)\n\t\tif err != nil {\n\t\t\ttx.Rollback()\n\t\t\treturn err\n\t\t}\n\n\t\t_, err = stmt.Exec(\"assistant\", answer)\n\t\tif err != nil {\n\t\t\ttx.Rollback()\n\t\t\treturn err\n\t\t}\n\n\t\terr = tx.Commit()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\tuser_msg.Value = \"\" // Reset user message editbox after sending\n\n\t\tfmt.Printf(\"The assistant's answer is: %s\\n\", answer)\n\t}\n\treturn nil\n}\n```"
 },
 {
 "User": "",
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"database/sql\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc Chat(button *Button, db *Sqlite, user_msg *Editbox, llamacpp *Llamacpp) error {\n\tif !button.Clicked {\n\t\treturn nil\n\t}\n\tbutton.Clicked = false\n\n\tsqlDB, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer sqlDB.Close()\n\n\t// Build messages from database.\n\tvar messages []LlamaMessage\n\trows, err := sqlDB.Query(\"SELECT role, content FROM chat\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tfor rows.Next() {\n\t\tvar msg LlamaMessage\n\t\tif err := rows.Scan(\u0026msg.Role, \u0026msg.Content); err != nil {\n\t\t\treturn err\n\t\t}\n\t\tmessages = append(messages, msg)\n\t}\n\trows.Close()\n\n\t// Add 'user_msg' to messages.\n\tmessages = append(messages, LlamaMessage{Role: \"user\", Content: user_msg.Value})\n\n\t// Get answer from llamacpp.\n\tanswer, err := llamacpp.GetAnswer(messages)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\t// Begin transaction.\n\ttx, err := sqlDB.Begin()\n\tif err != nil {\n\t\treturn err\n\t}\n\n\t// Insert 'user_msg' into 'db'.\n\t_, err = tx.Exec(\"INSERT INTO chat (role, content) VALUES (?, ?)\", \"user\", user_msg.Value)\n\tif err != nil {\n\t\ttx.Rollback()\n\t\treturn err\n\t}\n\n\t// Insert answer into 'db'.\n\t_, err = tx.Exec(\"INSERT INTO chat (role, content) VALUES (?, ?)\", \"assistant\", answer)\n\tif err != nil {\n\t\ttx.Rollback()\n\t\treturn err\n\t}\n\n\t// Commit the transaction.\n\tif err := tx.Commit(); err != nil {\n\t\treturn err\n\t}\n\n\t// Reset 'user_msg' editbox.\n\tuser_msg.Value = \"\"\n\n\treturn nil\n}\n"
+"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc Chat(button *Button, db *Tables, user_msg *Editbox, llamacpp *Llamacpp) error {\n\tif button.Clicked {\n\t\tdatabase, err := sql.Open(\"sqlite3\", db.Path)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer database.Close()\n\n\t\trows, err := database.Query(\"SELECT role, content FROM chat\")\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer rows.Close()\n\n\t\tvar messages []LlamaMessage\n\t\tfor rows.Next() {\n\t\t\tvar role, content string\n\t\t\tif err := rows.Scan(\u0026role, \u0026content); err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t\tmessages = append(messages, LlamaMessage{Role: role, Content: content})\n\t\t}\n\t\tif err := rows.Err(); err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\tuserMessage := LlamaMessage{Role: \"user\", Content: user_msg.Value}\n\t\tmessages = append(messages, userMessage)\n\n\t\tanswer, err := llamacpp.GetAnswer(messages)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\ttx, err := database.Begin()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tstmt, err := tx.Prepare(\"INSERT INTO chat(role, content) VALUES(?, ?)\")\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer stmt.Close()\n\n\t\t_, err = stmt.Exec(\"user\", user_msg.Value)\n\t\tif err != nil {\n\t\t\ttx.Rollback()\n\t\t\treturn err\n\t\t}\n\n\t\t_, err = stmt.Exec(\"assistant\", answer)\n\t\tif err != nil {\n\t\t\ttx.Rollback()\n\t\t\treturn err\n\t\t}\n\n\t\terr = tx.Commit()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\tuser_msg.Value = \"\" // Reset user message editbox after sending\n\n\t\tfmt.Printf(\"The assistant's answer is: %s\\n\", answer)\n\t}\n\treturn nil\n}\n"
 },
 "Attrs": {
 "bypass": false,
 "grid_h": 1,
 "grid_w": 1,
 "grid_x": 0,
-"grid_y": 0
+"grid_y": 0,
+"show": true
 },
 "ShowCodeChat": true
 },
 {
 "Pos": {
-"X": 12.524776,
-"Y": 11.82427
+"X": 12.704957,
+"Y": 13.490937
 },
 "Name": "db",
-"Exe": "sqlite",
+"Exe": "tables",
+"Selected": true,
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
 },
 "Attrs": {
-"changed": false,
 "enable": true,
 "grid_h": 1,
 "grid_w": 3,
@@ -232,6 +256,8 @@
 "path": "apps/chat/chat.sqlite",
 "selected_table": "chat",
 "show": false,
+"show_path": true,
+"show_table_list": true,
 "write": false
 },
 "ShowCodeChat": false
@@ -244,6 +270,7 @@
 "Name": "llamacpp",
 "Exe": "llamacpp",
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -267,6 +294,7 @@
 "repeat_last_n": 256,
 "repeat_penalty": 1.18,
 "seed": -1,
+"show": true,
 "slot_id": -1,
 "temperature": 0.8,
 "tfs_z": 1,
@@ -284,6 +312,9 @@
 "Name": "func_go",
 "Exe": "func_go",
 "Code": {
+"Triggers": [
+"user_msg"
+],
 "Messages": [
 {
 "User": "If 'user_msg' is empty, disable 'button'. Otherwise button is enabled.",
@@ -301,7 +332,8 @@
 "grid_h": 1,
 "grid_w": 1,
 "grid_x": 0,
-"grid_y": 0
+"grid_y": 0,
+"show": true
 },
 "ShowCodeChat": true
 },
@@ -313,12 +345,13 @@
 "Name": "button",
 "Exe": "button",
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
 },
 "Attrs": {
 "clicked": false,
-"enable": false,
+"enable": true,
 "grid_h": 1,
 "grid_w": 1,
 "grid_x": 3,
@@ -337,13 +370,13 @@
 "Name": "user_msg",
 "Exe": "editbox",
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
 },
 "Attrs": {
 "align_h": 0,
 "align_v": 0,
-"changed": false,
 "enable": true,
 "ghost": "",
 "grid_h": 1,
@@ -354,7 +387,7 @@
 "multi_line_enter_finish": true,
 "show": true,
 "temp_to_value": true,
-"value": " Hello, this is Dutch. I mean, first one.\n"
+"value": ""
 },
 "ShowCodeChat": false
 },
@@ -366,6 +399,7 @@
 "Name": "text",
 "Exe": "text",
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -376,7 +410,7 @@
 "grid_w": 3,
 "grid_x": 1,
 "grid_y": 1,
-"label": "user: What is the biggest city in the Czech Republic?\nassistant: The biggest city in the Czech Republic is Prague. It has a population of over 1.3 million people and is the capital of the country.\nuser: What is the 2nd?\nassistant: The second biggest city in the Czech Republic is Brno, with a population of over 400,000 people. It is located in the south-east of the country and is known for its cultural attractions.\nuser: What is the 3rd?\nassistant: The third biggest city in the Czech Republic is Ostrava, with a population of over 300,000 people. It is located in the north-east of the country and is known for its industrial heritage.\n",
+"label": "user: What is the biggest city in the Czech Republic?\nassistant: The biggest city in the Czech Republic is Prague. It has a population of over 1.3 million people and is the capital of the country.\nuser: What is the 2nd city?\nassistant: The second largest city in the Czech Republic is Brno, with a population of over 380,000 people. It is located in the south-east of the country and is known for its historic buildings and universities\nuser: What is the 3rd?\nassistant: The third largest city in the Czech Republic is Ostrava, with a population of over 280,000 people. It is located in the north-east of the country and is known for its coal mining industry\nuser: 4th?\nassistant: The fourth largest city in the Czech Republic is Pilsen, with a population of over 180,000 people. It is located in the west-central part of the country and is known for its brewery industry\n",
 "multi_line": true,
 "selection": true,
 "show": true,

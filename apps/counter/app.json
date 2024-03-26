@@ -6,8 +6,16 @@
 "Name": "root",
 "Exe": "layout",
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
+},
+"Attrs": {
+"grid_h": 0,
+"grid_w": 0,
+"grid_x": 0,
+"grid_y": 0,
+"show": true
 },
 "Cols": [
 {
@@ -69,7 +77,12 @@
 },
 "Name": "func_go",
 "Exe": "func_go",
+"Selected": true,
 "Code": {
+"Triggers": [
+"add_one",
+"sub_one"
+],
 "Messages": [
 {
 "User": "If 'add_one' is clicked, then increment the 'counter'.\nIf 'sub_one' is clicked, then decrement the 'counter' .",
@@ -83,7 +96,8 @@
 "Code": "\nimport (\n\t\"strconv\"\n)\n\nfunc func_go(add_one *Button, counter *Text, sub_one *Button) error {\n\tif add_one.Clicked {\n\t\tc, _ := strconv.Atoi(counter.Label)\n\t\tc++\n\t\tcounter.Label = strconv.Itoa(c)\n\t\tadd_one.Clicked = false // Reset the button clicked state\n\t}\n\tif sub_one.Clicked {\n\t\tc, _ := strconv.Atoi(counter.Label)\n\t\tc--\n\t\tcounter.Label = strconv.Itoa(c)\n\t\tsub_one.Clicked = false // Reset the button clicked state\n\t}\n\treturn nil\n}\n"
 },
 "Attrs": {
-"bypass": false
+"bypass": false,
+"show": true
 },
 "ShowCodeChat": false
 },
@@ -95,6 +109,7 @@
 "Name": "counter",
 "Exe": "text",
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -105,7 +120,7 @@
 "grid_w": 1,
 "grid_x": 2,
 "grid_y": 1,
-"label": "7",
+"label": "20",
 "multi_line": false,
 "selection": true,
 "show": true,
@@ -121,6 +136,7 @@
 "Name": "sub_one",
 "Exe": "button",
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -145,6 +161,7 @@
 "Name": "add_one",
 "Exe": "button",
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
 },

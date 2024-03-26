@@ -6,8 +6,16 @@
 "Name": "root",
 "Exe": "layout",
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
+},
+"Attrs": {
+"grid_h": 0,
+"grid_w": 0,
+"grid_x": 0,
+"grid_y": 0,
+"show": true
 },
 "Cols": [
 {
@@ -69,33 +77,38 @@
 },
 "Name": "func_go",
 "Exe": "func_go",
-"Selected": true,
 "Code": {
+"Triggers": [
+"button"
+],
 "Messages": [
 {
 "User": "If 'button' is clicked, use 'whispercpp' to translate all .wav files in 'disk_dir'.\nSave translations as files with same name + \".srt\".",
-"Assistent": "```go\nimport (\n\t\"io/ioutil\"\n\t\"path/filepath\"\n\t\"strings\"\n)\n\nfunc func_go(button *Button, whispercpp *Whispercpp, disk_dir *Disk_dir) error {\n\tif button.Clicked {\n\t\tfiles, err := ioutil.ReadDir(disk_dir.Path)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tfor _, file := range files {\n\t\t\tif filepath.Ext(file.Name()) == \".wav\" {\n\t\t\t\ttranslation, err := whispercpp.Translate(filepath.Join(disk_dir.Path, file.Name()))\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t\tsrtFilename := strings.TrimSuffix(file.Name(), filepath.Ext(file.Name())) + \".srt\"\n\t\t\t\tsrtPath := filepath.Join(disk_dir.Path, srtFilename)\n\t\t\t\terr = ioutil.WriteFile(srtPath, []byte(translation), 0644)\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n```"
+"Assistent": "```go\nimport (\n\t\"io/ioutil\"\n\t\"path/filepath\"\n\t\"strings\"\n)\n\nfunc func_go(button *Button, whispercpp *Whispercpp, disk_dir *Disk_dir) error {\n\tif button.Clicked {\n\t\tfiles, err := ioutil.ReadDir(disk_dir.Path)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tfor _, file := range files {\n\t\t\tif filepath.Ext(file.Name()) == \".wav\" {\n\t\t\t\ttranslation, err := whispercpp.TranscribeFile(filepath.Join(disk_dir.Path, file.Name()))\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t\tsrtFilename := strings.TrimSuffix(file.Name(), filepath.Ext(file.Name())) + \".srt\"\n\t\t\t\tsrtPath := filepath.Join(disk_dir.Path, srtFilename)\n\t\t\t\terr = ioutil.WriteFile(srtPath, []byte(translation), 0644)\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n```"
 },
 {
 "User": "",
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"io/ioutil\"\n\t\"path/filepath\"\n\t\"strings\"\n)\n\nfunc func_go(button *Button, whispercpp *Whispercpp, disk_dir *Disk_dir) error {\n\tif button.Clicked {\n\t\tfiles, err := ioutil.ReadDir(disk_dir.Path)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tfor _, file := range files {\n\t\t\tif filepath.Ext(file.Name()) == \".wav\" {\n\t\t\t\ttranslation, err := whispercpp.Translate(filepath.Join(disk_dir.Path, file.Name()))\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t\tsrtFilename := strings.TrimSuffix(file.Name(), filepath.Ext(file.Name())) + \".srt\"\n\t\t\t\tsrtPath := filepath.Join(disk_dir.Path, srtFilename)\n\t\t\t\terr = ioutil.WriteFile(srtPath, []byte(translation), 0644)\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n"
+"Code": "\nimport (\n\t\"io/ioutil\"\n\t\"path/filepath\"\n\t\"strings\"\n)\n\nfunc func_go(button *Button, whispercpp *Whispercpp, disk_dir *Disk_dir) error {\n\tif button.Clicked {\n\t\tfiles, err := ioutil.ReadDir(disk_dir.Path)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tfor _, file := range files {\n\t\t\tif filepath.Ext(file.Name()) == \".wav\" {\n\t\t\t\ttranslation, err := whispercpp.TranscribeFile(filepath.Join(disk_dir.Path, file.Name()))\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t\tsrtFilename := strings.TrimSuffix(file.Name(), filepath.Ext(file.Name())) + \".srt\"\n\t\t\t\tsrtPath := filepath.Join(disk_dir.Path, srtFilename)\n\t\t\t\terr = ioutil.WriteFile(srtPath, []byte(translation), 0644)\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n"
 },
 "Attrs": {
-"bypass": false
+"bypass": false,
+"show": true
 },
 "ShowCodeChat": true
 },
 {
 "Pos": {
-"X": 7.4382224,
-"Y": -0.4359718
+"X": 7.4682527,
+"Y": -0.46600184
 },
 "Name": "whispercpp",
 "Exe": "whispercpp",
+"Selected": true,
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -110,11 +123,12 @@
 "logprob_thold": -1,
 "max_context": -1,
 "max_len": 0,
-"model": "ggml-tiny.en",
+"model": "ggml-tiny",
 "no_timestamps": false,
 "offset_n": 0,
 "offset_t": 0,
 "response_format": "srt",
+"show": true,
 "split_on_word": false,
 "temperature": 0,
 "temperature_inc": 0.2,
@@ -132,6 +146,7 @@
 "Name": "button",
 "Exe": "button",
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
 },
@@ -156,11 +171,11 @@
 "Name": "disk_dir",
 "Exe": "disk_dir",
 "Code": {
+"Triggers": null,
 "Messages": null,
 "Code": ""
 },
 "Attrs": {
-"changed": false,
 "enable": true,
 "grid_h": 1,
 "grid_w": 1,
