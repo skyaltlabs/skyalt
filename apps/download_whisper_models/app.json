@@ -39,6 +39,12 @@
 ],
 "Rows": [
 {
+"Pos": 0,
+"Min": 1,
+"Max": 1,
+"Resize": 1
+},
+{
 "Pos": 1,
 "Min": 1,
 "Max": 1,
@@ -47,7 +53,7 @@
 {
 "Pos": 2,
 "Min": 1,
-"Max": 10,
+"Max": 11,
 "Resize": 1
 }
 ],
@@ -108,8 +114,8 @@
 },
 {
 "Pos": {
-"X": 3.3160646,
-"Y": 7.283033
+"X": 7.403903,
+"Y": 6.1006007
 },
 "Name": "table_button",
 "Exe": "func_go",
@@ -120,48 +126,15 @@
 ],
 "Messages": [
 {
-"User": "Go through 'table' and check if model + \".bin\" exist in 'dir'.\nIf it exists, set label to \"Delete\", else \"Download\".\nIf \"Delete\" is clicked, delete the file, else download it from 'net' + model + \".bin\" and save it into 'dir'.",
-"Assistent": "```go\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\nfunc table_button(table *CopyTable, dir *Disk_dir, net *Net) error {\n\tfor _, row := range table.Rows {\n\t\tfilePath := filepath.Join(dir.Path, row.Model.Label+\".bin\")\n\t\tif _, err := os.Stat(filePath); err == nil {\n\t\t\trow.Button.Label = \"Delete\"\n\t\t\tif row.Button.Clicked \u0026\u0026 dir.Write {\n\t\t\t\terr := os.Remove(filePath)\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t}\n\t\t} else {\n\t\t\trow.Button.Label = \"Download\"\n\t\t\tif row.Button.Clicked {\n\t\t\t\terr := net.DownloadFile(filePath, row.Model.Label+\".bin\")\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\trow.Button.Clicked = false\n\t}\n\treturn nil\n}\n```"
+"User": "Go through 'table' and check if model + \".bin\" exist in 'dir'.\nIf it exists, set button label to \"Delete\", else \"Download\".\nIf \"Delete\" is clicked, delete the file, else download it from 'net' + model + \".bin\" and save it into 'dir'.",
+"Assistent": "```go\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\nfunc table_button(table *CopyTable, dir *Disk_dir, net *Net) error {\n\tfor _, row := range table.Rows {\n\t\tfilePath := filepath.Join(dir.Path, row.Model.Label+\".bin\")\n\t\tif _, err := os.Stat(filePath); os.IsNotExist(err) {\n\t\t\trow.Button.Label = \"Download\"\n\t\t\tif row.Button.Clicked \u0026\u0026 dir.Write {\n\t\t\t\t// Assuming there's a method in 'net' to download and save the file.\n\t\t\t\t// As the implementation is TBD (To Be Done), the actual method call is skipped.\n\t\t\t\t// net.DownloadFile(filePath, \"URL to the model file\")\n\t\t\t}\n\t\t} else {\n\t\t\trow.Button.Label = \"Delete\"\n\t\t\tif row.Button.Clicked \u0026\u0026 dir.Write {\n\t\t\t\tos.Remove(filePath)\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n```"
 },
 {
 "User": "",
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\nfunc table_button(table *CopyTable, dir *Disk_dir, net *Net) error {\n\tfor _, row := range table.Rows {\n\t\tfilePath := filepath.Join(dir.Path, row.Model.Label+\".bin\")\n\t\tif _, err := os.Stat(filePath); err == nil {\n\t\t\trow.Button.Label = \"Delete\"\n\t\t\tif row.Button.Clicked \u0026\u0026 dir.Write {\n\t\t\t\terr := os.Remove(filePath)\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t}\n\t\t} else {\n\t\t\trow.Button.Label = \"Download\"\n\t\t\tif row.Button.Clicked {\n\t\t\t\terr := net.DownloadFile(filePath, row.Model.Label+\".bin\")\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\trow.Button.Clicked = false\n\t}\n\treturn nil\n}\n"
-},
-"Attrs": {
-"bypass": false,
-"grid_h": 1,
-"grid_w": 1,
-"grid_x": 0,
-"grid_y": 0,
-"show": true
-},
-"ShowCodeChat": false
-},
-{
-"Pos": {
-"X": 3.380416,
-"Y": -3.2060273
-},
-"Name": "buildTable",
-"Exe": "func_go",
-"Code": {
-"Triggers": [
-"db"
-],
-"Messages": [
-{
-"User": "Clear 'table' and copy table \"Link\" from 'db' into 'table'.",
-"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc buildTable(table *CopyTable, db *Tables) error {\n\ttable.ClearRows()\n\n\tdatabase, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn fmt.Errorf(\"opening database: %w\", err)\n\t}\n\tdefer database.Close()\n\n\trows, err := database.Query(\"SELECT model FROM links\")\n\tif err != nil {\n\t\treturn fmt.Errorf(\"querying database: %w\", err)\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tif err = rows.Scan(\u0026model); err != nil {\n\t\t\treturn fmt.Errorf(\"scanning row: %w\", err)\n\t\t}\n\n\t\tnewRow := table.AddRow()\n\t\tnewRow.Model.Label = model\n\t}\n\n\tif err = rows.Err(); err != nil {\n\t\treturn fmt.Errorf(\"iterating over rows: %w\", err)\n\t}\n\n\treturn nil\n}\n```"
-},
-{
-"User": "",
-"Assistent": ""
-}
-],
-"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc buildTable(table *CopyTable, db *Tables) error {\n\ttable.ClearRows()\n\n\tdatabase, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn fmt.Errorf(\"opening database: %w\", err)\n\t}\n\tdefer database.Close()\n\n\trows, err := database.Query(\"SELECT model FROM links\")\n\tif err != nil {\n\t\treturn fmt.Errorf(\"querying database: %w\", err)\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tif err = rows.Scan(\u0026model); err != nil {\n\t\t\treturn fmt.Errorf(\"scanning row: %w\", err)\n\t\t}\n\n\t\tnewRow := table.AddRow()\n\t\tnewRow.Model.Label = model\n\t}\n\n\tif err = rows.Err(); err != nil {\n\t\treturn fmt.Errorf(\"iterating over rows: %w\", err)\n\t}\n\n\treturn nil\n}\n"
+"Code": "\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\nfunc table_button(table *CopyTable, dir *Disk_dir, net *Net) error {\n\tfor _, row := range table.Rows {\n\t\tfilePath := filepath.Join(dir.Path, row.Model.Label+\".bin\")\n\t\tif _, err := os.Stat(filePath); os.IsNotExist(err) {\n\t\t\trow.Button.Label = \"Download\"\n\t\t\tif row.Button.Clicked \u0026\u0026 dir.Write {\n\t\t\t\t// Assuming there's a method in 'net' to download and save the file.\n\t\t\t\t// As the implementation is TBD (To Be Done), the actual method call is skipped.\n\t\t\t\t// net.DownloadFile(filePath, \"URL to the model file\")\n\t\t\t}\n\t\t} else {\n\t\t\trow.Button.Label = \"Delete\"\n\t\t\tif row.Button.Clicked \u0026\u0026 dir.Write {\n\t\t\t\tos.Remove(filePath)\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n"
 },
 "Attrs": {
 "bypass": false,
@@ -175,8 +148,41 @@
 },
 {
 "Pos": {
-"X": 4.7583647,
-"Y": 2.094273
+"X": 7.1642,
+"Y": -3.0371084
+},
+"Name": "buildTable",
+"Exe": "func_go",
+"Code": {
+"Triggers": [
+"db"
+],
+"Messages": [
+{
+"User": "Clear 'table' and copy table \"Link\" from 'db' into 'table'.\nSet \"size\" column as \u003cvalue\u003e+\"MB\".",
+"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc buildTable(table *CopyTable, db *Tables) error {\n\ttable.ClearRows()\n\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\trows, err := conn.Query(\"SELECT model, size FROM links\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tvar size int\n\t\tif err := rows.Scan(\u0026model, \u0026size); err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\trow := table.AddRow()\n\t\trow.Model.Label = model\n\t\trow.Size.Label = fmt.Sprintf(\"%dMB\", size)\n\t}\n\n\treturn rows.Err()\n}\n```"
+},
+{
+"User": "",
+"Assistent": ""
+}
+],
+"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc buildTable(table *CopyTable, db *Tables) error {\n\ttable.ClearRows()\n\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\trows, err := conn.Query(\"SELECT model, size FROM links\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tvar size int\n\t\tif err := rows.Scan(\u0026model, \u0026size); err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\trow := table.AddRow()\n\t\trow.Model.Label = model\n\t\trow.Size.Label = fmt.Sprintf(\"%dMB\", size)\n\t}\n\n\treturn rows.Err()\n}\n"
+},
+"Attrs": {
+"bypass": false,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 0,
+"grid_y": 0,
+"show": true
+},
+"ShowCodeChat": true
+},
+{
+"Pos": {
+"X": 4.0151215,
+"Y": 2.4996786
 },
 "Name": "table",
 "Exe": "copy",
@@ -193,7 +199,7 @@
 "enable": true,
 "grid_h": 1,
 "grid_w": 1,
-"grid_x": 1,
+"grid_x": 2,
 "grid_y": 0,
 "label": "b",
 "show": true,
@@ -207,6 +213,19 @@
 "grid_x": 0,
 "grid_y": 0,
 "label": "a",
+"multi_line": false,
+"selection": true,
+"show": true,
+"show_border": false
+},
+"size": {
+"align_h": 0,
+"align_v": 1,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 1,
+"grid_y": 0,
+"label": "s",
 "multi_line": false,
 "selection": true,
 "show": true,
@@ -234,6 +253,12 @@
 {
 "Pos": 1,
 "Min": 1,
+"Max": 3,
+"Resize": 1
+},
+{
+"Pos": 2,
+"Min": 1,
 "Max": 4,
 "Resize": 1
 }
@@ -242,15 +267,15 @@
 {
 "Pos": 0,
 "Min": 1,
-"Max": 2,
+"Max": 1,
 "Resize": 1
 }
 ],
 "Subs": [
 {
 "Pos": {
-"X": 3.4327545,
-"Y": 1.7596526
+"X": 2.5543761,
+"Y": 1.996139
 },
 "Name": "model",
 "Exe": "text",
@@ -277,8 +302,8 @@
 },
 {
 "Pos": {
-"X": 3.3721585,
-"Y": 3.6231236
+"X": 12.088374,
+"Y": 2.0690694
 },
 "Name": "button",
 "Exe": "button",
@@ -292,11 +317,38 @@
 "enable": true,
 "grid_h": 1,
 "grid_w": 1,
-"grid_x": 1,
+"grid_x": 2,
 "grid_y": 0,
 "label": "b",
 "show": true,
 "tooltip": ""
+},
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": 7.3621445,
+"Y": 2.0003345
+},
+"Name": "size",
+"Exe": "text",
+"Code": {
+"Triggers": null,
+"Messages": null,
+"Code": ""
+},
+"Attrs": {
+"align_h": 0,
+"align_v": 1,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 1,
+"grid_y": 0,
+"label": "s",
+"multi_line": false,
+"selection": true,
+"show": true,
+"show_border": false
 },
 "ShowCodeChat": false
 }
@@ -305,12 +357,11 @@
 },
 {
 "Pos": {
-"X": -3.931788,
-"Y": 8.633098
+"X": -3.8642204,
+"Y": 7.5520167
 },
 "Name": "net",
 "Exe": "net",
-"Selected": true,
 "Code": {
 "Triggers": null,
 "Messages": null,
@@ -330,8 +381,8 @@
 },
 {
 "Pos": {
-"X": -4.0572715,
-"Y": 5.6081095
+"X": -3.989704,
+"Y": 4.5270286
 },
 "Name": "dir",
 "Exe": "disk_dir",
