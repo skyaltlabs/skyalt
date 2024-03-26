@@ -150,7 +150,7 @@ func NewSAServiceWhisperCpp(services *SAServices, addr string, port string, init
 		st := OsTicks()
 		for err != nil && OsIsTicksIn(st, 10000) { //max 10sec to start
 			err = wh.setModel(modelPath)
-			time.Sleep(200 * time.Millisecond)
+			time.Sleep(100 * time.Millisecond)
 		}
 		if err != nil {
 			return nil, err

@@ -122,7 +122,7 @@ func NewSAServiceLLamaCpp(services *SAServices, addr string, port string, init_m
 		st := OsTicks()
 		for err != nil && OsIsTicksIn(st, 60000) { //max 60sec to start
 			err = llama.getHealth()
-			time.Sleep(200 * time.Millisecond)
+			time.Sleep(100 * time.Millisecond)
 		}
 		if err != nil {
 			return nil, err
