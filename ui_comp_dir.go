@@ -40,7 +40,7 @@ func (ui *Ui) Comp_dirPicker(x, y, w, h int, path *string, selectFile bool, dial
 				nm = "Error - Not Found: " + nm
 			}
 		}
-		if ui.Comp_buttonError(0, 0, 1, 1, nm, "Select file/folder", !exist, enable) > 0 {
+		if ui.Comp_button(0, 0, 1, 1, nm, Comp_buttonProp().Tooltip("Select file/folder").SetError(!exist).Enable(enable)) > 0 {
 			ui.Dialog_open(dialogName, 1)
 			ui.dir = UiDir{tempPath: *path} //reset
 		}
@@ -92,13 +92,13 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 		ui.Div_colMax(4, 3)
 
 		//root
-		if ui.Comp_buttonText(0, 0, 1, 1, "/", "Root directory", "", true, false) > 0 {
+		if ui.Comp_buttonText(0, 0, 1, 1, "/", Comp_buttonProp().Tooltip("Root directory")) > 0 {
 			directory = ""
 			ui.dir.tempPath = directory + "/"
 		}
 
 		//home
-		if ui.Comp_buttonIcon(1, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/home.png"), 0.3, "Home directory", CdPalette_P, true, false) > 0 {
+		if ui.Comp_buttonIcon(1, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/home.png"), 0.3, "Home directory", Comp_buttonProp()) > 0 {
 			dir, err := os.UserHomeDir()
 			if err == nil {
 				directory = dir
@@ -107,7 +107,7 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 		}
 
 		//level-up
-		if ui.Comp_buttonIcon(2, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/levelup.png"), 0.3, "Jump into parent directory", CdPalette_P, directory != "/", false) > 0 {
+		if ui.Comp_buttonIcon(2, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/levelup.png"), 0.3, "Jump into parent directory", Comp_buttonProp().Enable(directory != "/")) > 0 {
 			directory = filepath.Dir(directory)
 			if directory != "/" {
 				ui.dir.tempPath = directory + "/"
@@ -118,7 +118,7 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 		ui.Comp_editbox(3, 0, 1, 1, &ui.dir.tempPath, Comp_editboxProp())
 
 		//open
-		if ui.Comp_button(4, 0, 1, 1, "Select", "", true) > 0 {
+		if ui.Comp_button(4, 0, 1, 1, "Select", Comp_buttonProp()) > 0 {
 			ok = true
 			ui.Dialog_close()
 		}
@@ -152,7 +152,7 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 
 			selected := (directory + "/" + f.Name()) == ui.dir.tempPath
 
-			if ui.Comp_buttonMenuIcon(0, y, 1, 1, f.Name(), InitWinMedia_url("file:apps/base/resources/"+iconFile), 0.2, "", enable, selected) > 0 {
+			if ui.Comp_buttonMenuIcon(0, y, 1, 1, f.Name(), InitWinMedia_url("file:apps/base/resources/"+iconFile), 0.2, selected, Comp_buttonProp().Enable(enable)) > 0 {
 				if isDir {
 					if directory != "/" {
 						directory += "/"
@@ -185,12 +185,12 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 		ui.Div_colMax(3, 100)
 
 		//create file
-		if ui.Comp_button(0, 0, 1, 1, "Create File", "", true) > 0 {
+		if ui.Comp_button(0, 0, 1, 1, "Create File", Comp_buttonProp()) > 0 {
 			ui.Dialog_open("create_file", 1)
 		}
 
 		//create folder
-		if ui.Comp_button(1, 0, 1, 1, "Create Folder", "", true) > 0 {
+		if ui.Comp_button(1, 0, 1, 1, "Create Folder", Comp_buttonProp()) > 0 {
 			ui.Dialog_open("create_folder", 1)
 		}
 
@@ -200,7 +200,7 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 
 			ui.Comp_editbox(0, 0, 1, 1, &ui.dir.create, Comp_editboxProp().Ghost(ui.trns.NAME))
 
-			if ui.Comp_button(1, 0, 1, 1, "Create File", "", ui.dir.create != "") > 0 {
+			if ui.Comp_button(1, 0, 1, 1, "Create File", Comp_buttonProp().Enable(ui.dir.create != "")) > 0 {
 				pt := directory
 				if pt != "/" {
 					pt += "/"
@@ -222,7 +222,7 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 
 			ui.Comp_editbox(0, 0, 1, 1, &ui.dir.create, Comp_editboxProp().Ghost(ui.trns.NAME))
 
-			if ui.Comp_button(1, 0, 1, 1, "Create Folder", "", ui.dir.create != "") > 0 {
+			if ui.Comp_button(1, 0, 1, 1, "Create Folder", Comp_buttonProp().Enable(ui.dir.create != "")) > 0 {
 				pt := directory
 				if pt != "/" {
 					pt += "/"

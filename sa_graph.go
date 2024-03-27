@@ -307,7 +307,8 @@ func (gr *SAGraph) drawConnections() {
 			gr.drawConnectionDirect(coordOut, coordIn, 0, Node_connectionCd(in.Selected || out.Selected, ui), 0)
 		}
 
-		/*for _, inName := range out.Code.Triggers {
+		cellr := gr.app.root.cellZoom(ui)
+		for _, inName := range out.Code.Triggers {
 
 			in := out.FindNode(inName)
 			if in == nil {
@@ -325,7 +326,7 @@ func (gr *SAGraph) drawConnections() {
 			//coordOut = selCoordOut //move by button_circle_rad
 			//gr.drawConnectionTrigger(OsV2{selCoordIn.End().X, selCoordIn.Middle().Y}, OsV2{coordOut.Start.X, coordOut.Middle().Y}, cellr, cellr, Node_connectionCd(in.Selected || out.Selected, ui))
 			gr.drawConnectionDirect(coordOut, coordIn, cellr, Node_connectionCd(in.Selected || out.Selected, ui), cellr/10)
-		}*/
+		}
 	}
 }
 
@@ -667,7 +668,7 @@ func (gr *SAGraph) drawNodeList(graphCanvas OsV4) {
 	searches := strings.Split(strings.ToLower(gr.node_search), " ")
 	for _, n := range gr.app.all_nodes {
 		if gr.node_search == "" || OsIsSearchedName(n.Name, searches) {
-			if ui.Comp_buttonMenu(0, y, 1, 1, n.Name, n.Exe, true, n.Selected) > 0 {
+			if ui.Comp_buttonMenu(0, y, 1, 1, n.Name, n.Selected, Comp_buttonProp().Tooltip(n.Exe)) > 0 {
 				n.SelectOnlyThis()
 				gr.autoZoom(true, graphCanvas)
 			}
@@ -702,41 +703,41 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 	//}
 	//y++
 
-	if ui.Comp_buttonLight(x, 0, 1, 1, "←", fmt.Sprintf("%s(%d)", ui.trns.BACKWARD, gr.history_pos), gr.canHistoryBack()) > 0 {
+	if ui.Comp_buttonLight(x, 0, 1, 1, "←", Comp_buttonProp().Enable(gr.canHistoryBack()).Tooltip(fmt.Sprintf("%s(%d)", ui.trns.BACKWARD, gr.history_pos))) > 0 {
 		gr.stepHistoryBack()
 
 	}
 	x++
-	if ui.Comp_buttonLight(x, 0, 1, 1, "→", fmt.Sprintf("%s(%d)", ui.trns.FORWARD, len(gr.history)-gr.history_pos-1), gr.canHistoryForward()) > 0 {
+	if ui.Comp_buttonLight(x, 0, 1, 1, "→", Comp_buttonProp().Enable(gr.canHistoryForward()).Tooltip(fmt.Sprintf("%s(%d)", ui.trns.FORWARD, len(gr.history)-gr.history_pos-1))) > 0 {
 		gr.stepHistoryForward()
 	}
 	x++
 
 	x++ //space
 
-	if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url(path+"home.png"), 0.3, "Zoom all nodes(H)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
+	if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url(path+"home.png"), 0.3, "Zoom all nodes(H)", Comp_buttonProp().Cd(CdPalette_B)) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
 		gr.autoZoom(false, graphCanvas) //zoom to all
 	}
 	x++
 
-	if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url(path+"home_select.png"), 0.2, "Zoom selected nodes(G)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "g")) {
+	if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url(path+"home_select.png"), 0.2, "Zoom selected nodes(G)", Comp_buttonProp().Cd(CdPalette_B)) > 0 || (keyAllow && strings.EqualFold(keys.text, "g")) {
 		gr.autoZoom(true, graphCanvas) //zoom to selected
 	}
 	x++
 
-	//if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy.png"), 0.25, "Reoder all nodes(L)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "l")) {
+	//if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy.png"), 0.25, "Reoder all nodes(L)", Comp_buttonProp().Cd(CdPalette_B)) > 0 || (keyAllow && strings.EqualFold(keys.text, "l")) {
 	//	gr.reorder(false)               //reorder nodes
 	//	gr.autoZoom(false, graphCanvas) //zoom to all
 	//}
 	//y++
 
-	//if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy_select.png"), 0.2, "Reorder selected nodes(K)", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "k")) {
+	//if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy_select.png"), 0.2, "Reorder selected nodes(K)", Comp_buttonProp().Cd(CdPalette_B)) > 0 || (keyAllow && strings.EqualFold(keys.text, "k")) {
 	//	gr.reorder(true)               //reorder only selected nodes
 	//	gr.autoZoom(true, graphCanvas) //zoom to selected
 	//}
 	//y++
 
-	if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url(path+"list.png"), 0.2, "Show/Hide list of all nodes(Ctrl+F)", CdPalette_P, true, gr.showNodeList) > 0 || strings.EqualFold(keys.ctrlChar, "f") {
+	if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url(path+"list.png"), 0.2, "Show/Hide list of all nodes(Ctrl+F)", Comp_buttonProp().DrawBack(gr.showNodeList)) > 0 || strings.EqualFold(keys.ctrlChar, "f") {
 		gr.showNodeList = !gr.showNodeList
 		if gr.showNodeList {
 			gr.showNodeList_justOpen = true

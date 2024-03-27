@@ -141,7 +141,7 @@ func (b *WinPaintBuff) AddCircle(coord OsV4, cd OsCd, width int) {
 	b.win.DrawCicle(p, OsV2{coord.Size.X / 2, coord.Size.Y / 2}, b.depth, cd, width)
 }
 
-func (b *WinPaintBuff) AddImage(path WinMedia, coord OsV4, cd OsCd, alignV int, alignH int, fill bool, background bool) {
+func (b *WinPaintBuff) AddImage(path WinMedia, coord OsV4, cd OsCd, align OsV2, fill bool, background bool) {
 	img, err := b.win.AddImage(path) //2nd thread => black
 	if err != nil {
 		b.AddText(path.GetString()+" has error", InitWinFontPropsDef(b.win), coord, b.win.io.GetPalette().OnE, OsV2{1, 1}, 0, 1)
@@ -165,19 +165,19 @@ func (b *WinPaintBuff) AddImage(path WinMedia, coord OsV4, cd OsCd, alignV int, 
 			q.Size = OsV2_OutRatio(coord.Size, origSize)
 		}
 
-		if alignH == 0 {
+		if align.X == 0 {
 			q.Start.X = coord.Start.X
-		} else if alignH == 1 {
+		} else if align.X == 1 {
 			q.Start.X = OsV4_centerFull(coord, q.Size).Start.X
-		} else if alignH == 2 {
+		} else if align.X == 2 {
 			q.Start.X = coord.End().X - q.Size.X
 		}
 
-		if alignV == 0 {
+		if align.Y == 0 {
 			q.Start.Y = coord.Start.Y
-		} else if alignV == 1 {
+		} else if align.Y == 1 {
 			q.Start.Y = OsV4_centerFull(coord, q.Size).Start.Y
-		} else if alignV == 2 {
+		} else if align.Y == 2 {
 			q.Start.Y = coord.End().Y - q.Size.Y
 		}
 	}

@@ -85,7 +85,7 @@ func (ui *Ui) Paint_textGrid(
 	{
 		coordImage, coordText := ui._compGetTextImageCoord(lv.call.canvas, 1, style.image_alignH, icon != nil, len(value) > 0)
 		if icon != nil {
-			ui._compDrawImage(coordImage, *icon, frontCd, style)
+			ui._compDrawImage(coordImage, *icon, frontCd, style.image_margin, OsV2{int(style.image_alignH), int(style.image_alignV)}, style.image_fill)
 		}
 		if editable || len(value) > 0 {
 			ui._compDrawText(coordText, value, valueOrigEdit, frontCd, prop, selection, editable, style.label_align, multi_line, multi_line_enter_finish)
@@ -158,7 +158,7 @@ func (ui *Ui) _UiPaint_resetKeys(editable bool) {
 func _UiPaint_CursorMoveLR(text string, cursor int, move int, prop WinFontProps) int {
 
 	//skip formating
-	if prop.enableFormating {
+	if prop.formating {
 		if move < 0 {
 			cursor -= _UiPaint_HashFormatingPreSuf_fix(text[:cursor], strings.HasSuffix)
 		}
@@ -430,15 +430,15 @@ func (ui *Ui) _UiPaint_TextSelectKeys(text string, lines []int, editable bool, p
 		}
 		if ui.Dialog_start(dnm) {
 			ui.Div_col(0, 5)
-			if ui.Comp_buttonMenu(0, 0, 1, 1, "Copy", "", true, false) > 0 {
+			if ui.Comp_buttonMenu(0, 0, 1, 1, "Copy", false, Comp_buttonProp()) > 0 {
 				keys.copy = true
 				ui.Dialog_close()
 			}
-			if ui.Comp_buttonMenu(0, 1, 1, 1, "Cut", "", editable, false) > 0 {
+			if ui.Comp_buttonMenu(0, 1, 1, 1, "Cut", false, Comp_buttonProp().Enable(editable)) > 0 {
 				keys.cut = true
 				ui.Dialog_close()
 			}
-			if ui.Comp_buttonMenu(0, 2, 1, 1, "Paste", "", editable, false) > 0 {
+			if ui.Comp_buttonMenu(0, 2, 1, 1, "Paste", false, Comp_buttonProp().Enable(editable)) > 0 {
 				keys.paste = true
 				ui.win.RefreshClipboard()
 				ui.Dialog_close()
@@ -779,7 +779,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 		edit_uid := edit.uid
 		active = (edit_uid != nil && edit_uid == this_uid)
 		//if !editable { //|| !active
-		//	prop.enableFormating = false
+		//	prop.formating = false
 		//}
 
 		//touch
@@ -880,7 +880,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 				ui.buff.AddTextBack(OsV2{curr_sx, curr_ex}, value, prop, coord, ui.win.io.GetPalette().GetGrey(0.5), align, false, 0, 1)
 			}
 
-			if prop.enableFormating {
+			if prop.formating {
 				_UiPaint_CheckSelectionExplode(value, &edit.start, &edit.end)
 			}
 		}

@@ -450,6 +450,8 @@ func (ls *SANodeCode) Execute() {
 							vars, ok := r.(map[string]interface{})
 							if ok {
 								prmNode.copySubs[i], err = prmNode.Copy()
+								prmNode.copySubs[i].DeselectAll()
+								prmNode.copySubs[i].Name = strconv.Itoa(i)
 								prmNode.copySubs[i].Exe = "layout" //copy -> layout
 								if err == nil {
 									for key, attrs := range vars {

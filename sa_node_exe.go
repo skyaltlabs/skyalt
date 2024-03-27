@@ -40,6 +40,7 @@ func UiButton_Attrs(node *SANode) {
 	node.ShowAttrString(&grid, "tooltip", "", false)
 	node.ShowAttrBool(&grid, "enable", true)
 	node.ShowAttrBool(&grid, "clicked", false)
+	node.ShowAttrString(&grid, "confirmation", "", false)
 }
 
 func UiButton_render(node *SANode) {
@@ -47,9 +48,10 @@ func UiButton_render(node *SANode) {
 	label := node.GetAttrString("label", "")
 	tooltip := node.GetAttrString("tooltip", "")
 	enable := node.GetAttrBool("enable", true)
+	confirmation := node.GetAttrString("confirmation", "")
 	//clicked := node.GetAttrBool("clicked", false)
 
-	if node.app.base.ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, tooltip, enable) > 0 {
+	if node.app.base.ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, Comp_buttonProp().Enable(enable).Tooltip(tooltip).Confirmation(confirmation, "confirm_"+node.GetPath())) > 0 {
 		node.Attrs["clicked"] = true
 		node.changed = true
 	}
@@ -340,7 +342,7 @@ func UiTimer_Attrs(node *SANode) {
 	node.ShowAttrBool(&grid, "enable", true)
 	node.ShowAttrBool(&grid, "done", false)
 
-	if ui.Comp_button(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, "Reset", "", true) > 0 {
+	if ui.Comp_button(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, "Reset", Comp_buttonProp()) > 0 {
 		node.Attrs["start_sec"] = OsTime()
 	}
 }
@@ -368,7 +370,7 @@ func UiTimer_render(node *SANode) {
 
 		node.app.base.ui.Comp_progress(0, 0, 1, 1, prc, 1, tooltip, enable)
 
-		if ui.Comp_buttonLight(1, 0, 1, 1, "Reset", "", true) > 0 {
+		if ui.Comp_buttonLight(1, 0, 1, 1, "Reset", Comp_buttonProp()) > 0 {
 			node.Attrs["start_sec"] = OsTime()
 			prc = 0
 		}
@@ -500,7 +502,8 @@ func UiMicrophone_render(node *SANode) {
 		cd = CdPalette_P
 	}
 	ui := node.app.base.ui
-	if ui.Comp_buttonIcon(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, InitWinMedia_url("file:apps/base/resources/mic.png"), 0.15, "Enable/Disable audio recording", cd, enable, rec_active) > 0 {
+	icon := InitWinMedia_url("file:apps/base/resources/mic.png")
+	if ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, "", Comp_buttonProp().Icon(&icon).Tooltip("Enable/Disable audio recording").ImgMargin(0.15).Cd(cd).Enable(enable).DrawBack(rec_active)) > 0 {
 
 		if !rec_active {
 			//start
@@ -718,14 +721,14 @@ func UiSQLite_Attrs(node *SANode) {
 	//init
 	{
 		dnm := "db_init_" + node.Name
-		if ui.Comp_buttonLight(grid.Start.X+1, grid.Start.Y, 1, 1, "Initalization", "", true) > 0 {
+		if ui.Comp_buttonLight(grid.Start.X+1, grid.Start.Y, 1, 1, "Initalization", Comp_buttonProp()) > 0 {
 			ui.Dialog_open(dnm, 1)
 		}
 		grid.Start.Y++
 
 		if ui.Dialog_start(dnm) {
 			ui.Div_colMax(0, 20)
-			if ui.Comp_button(0, 0, 1, 1, "Generate 'init_sql'", "Create SQL structure command from current database.", true) > 0 {
+			if ui.Comp_button(0, 0, 1, 1, "Generate 'init_sql'", Comp_buttonProp().Tooltip("Create SQL structure command from current database.")) > 0 {
 				info, err := db.GetTableInfo()
 				if err != nil {
 					node.SetError(err)
@@ -750,7 +753,7 @@ func UiSQLite_Attrs(node *SANode) {
 
 			gr.Start.Y++ //space
 
-			if ui.Comp_button(0, gr.Start.Y, 1, 1, "Re-initialize", "Create tables & columns structure. Data are kept.", init_sql != "") > 0 {
+			if ui.Comp_button(0, gr.Start.Y, 1, 1, "Re-initialize", Comp_buttonProp().Enable(init_sql != "").Tooltip("Create tables & columns structure. Data are kept.")) > 0 {
 				_, err := db.Write(init_sql)
 				if err != nil {
 					node.SetError(err)
@@ -765,7 +768,7 @@ func UiSQLite_Attrs(node *SANode) {
 	grid.Start.Y++ //space
 
 	//Maintenance
-	if ui.Comp_buttonLight(grid.Start.X+1, grid.Start.Y, 1, 1, "Vacuum", "Run database maintenance", true) > 0 {
+	if ui.Comp_buttonLight(grid.Start.X+1, grid.Start.Y, 1, 1, "Vacuum", Comp_buttonProp().Tooltip("Run database maintenance")) > 0 {
 		db.Vacuum()
 	}
 	grid.Start.Y++
@@ -855,7 +858,7 @@ func UiSQLite_renderEditor(node *SANode) {
 				//add table
 				{
 					dnm := "create_table_" + node.Name
-					if ui.Comp_button(0, 0, 1, 1, "+", "Create table", true) > 0 {
+					if ui.Comp_button(0, 0, 1, 1, "+", Comp_buttonProp().Tooltip("Create table")) > 0 {
 						ui.Dialog_open(dnm, 1)
 						g_table_name = ""
 					}
@@ -865,7 +868,7 @@ func UiSQLite_renderEditor(node *SANode) {
 						//name
 						ui.Comp_editbox(0, 0, 1, 1, &g_table_name, Comp_editboxProp().TempToValue(true))
 						//button
-						if ui.Comp_button(1, 0, 1, 1, "Create Table", "", g_table_name != "") > 0 {
+						if ui.Comp_button(1, 0, 1, 1, "Create Table", Comp_buttonProp().Enable(g_table_name != "")) > 0 {
 							db.Write_unsafe("CREATE TABLE " + g_table_name + "(firstColumn TEXT);")
 							node.Attrs["selected_table"] = g_table_name
 							ui.Dialog_close()
@@ -882,10 +885,11 @@ func UiSQLite_renderEditor(node *SANode) {
 						ui.Div_colMax(0, 100)
 
 						dnm := "detail_table" + t.Name + node.Name
-						if ui.Comp_buttonMenu(0, 0, 1, 1, t.Name, "", true, t.Name == selected_table) > 0 {
+						if ui.Comp_buttonMenu(0, 0, 1, 1, t.Name, t.Name == selected_table, Comp_buttonProp()) > 0 {
 							node.Attrs["selected_table"] = t.Name
 						}
-						if ui.Comp_buttonIcon(1, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/context.png"), 0.3, "", CdPalette_P, true, t.Name == selected_table) > 0 {
+						icon := InitWinMedia_url("file:apps/base/resources/context.png")
+						if ui.Comp_button(1, 0, 1, 1, "", Comp_buttonProp().Icon(&icon).ImgMargin(0.3).DrawBack(t.Name == selected_table)) > 0 {
 							ui.Dialog_open(dnm, 1)
 							g_table_name = t.Name
 						}
@@ -901,7 +905,7 @@ func UiSQLite_renderEditor(node *SANode) {
 								}
 							}
 							//delete
-							if ui.Comp_buttonError(0, 2, 1, 1, "Delete", "", true, true) > 0 {
+							if ui.Comp_button(0, 2, 1, 1, "Delete", Comp_buttonProp().SetError(true).Confirmation("Are you sure?", "confirm_delete_table_"+t.Name)) > 0 {
 								db.Write_unsafe(fmt.Sprintf("DROP TABLE %s;", t.Name))
 
 								//select close table
@@ -938,7 +942,7 @@ func UiSQLite_renderEditor(node *SANode) {
 				//add column
 				{
 					dnm := "create_column" + node.Name
-					if ui.Comp_buttonLight(0, 0, 1, 1, "+", "Create column", true) > 0 {
+					if ui.Comp_buttonLight(0, 0, 1, 1, "+", Comp_buttonProp().Tooltip("Create column")) > 0 {
 						ui.Dialog_open(dnm, 1)
 						g_column_name = ""
 						g_column_type = "TEXT"
@@ -952,7 +956,7 @@ func UiSQLite_renderEditor(node *SANode) {
 						//type
 						ui.Comp_combo(1, 0, 1, 1, &g_column_type, []string{"INTEGER", "REAL", "TEXT", "BLOB", "NUMERIC"}, []string{"INTEGER", "REAL", "TEXT", "BLOB", "NUMERIC"}, "Type", true, false)
 						//button
-						if ui.Comp_button(2, 0, 1, 1, "Create Column", "", g_column_name != "") > 0 {
+						if ui.Comp_button(2, 0, 1, 1, "Create Column", Comp_buttonProp().Enable(g_column_name != "")) > 0 {
 							db.Write_unsafe(fmt.Sprintf("ALTER TABLE %s ADD %s %s;", tinfo.Name, g_column_name, g_column_type))
 							ui.Dialog_close()
 						}
@@ -966,7 +970,7 @@ func UiSQLite_renderEditor(node *SANode) {
 						continue //skip rowid
 					}
 					dnm := "column_detail" + c.Name + node.Name
-					if ui.Comp_buttonLight(i, 0, 1, 1, fmt.Sprintf("%s(%s)", c.Name, c.Type), "", true) > 0 {
+					if ui.Comp_buttonLight(i, 0, 1, 1, fmt.Sprintf("%s(%s)", c.Name, c.Type), Comp_buttonProp()) > 0 {
 						ui.Dialog_open(dnm, 1)
 						g_column_name = c.Name
 					}
@@ -978,7 +982,7 @@ func UiSQLite_renderEditor(node *SANode) {
 							db.Write_unsafe(fmt.Sprintf("ALTER TABLE %s RENAME COLUMN %s TO %s;", tinfo.Name, c.Name, g_column_name))
 						}
 						//delete
-						if ui.Comp_buttonError(0, 2, 1, 1, "Delete", "", true, true) > 0 {
+						if ui.Comp_button(0, 2, 1, 1, "Delete", Comp_buttonProp().SetError(true).Confirmation("Are you sure?", "confirm_delete_column_"+tinfo.Name+"_"+c.Name)) > 0 {
 							db.Write_unsafe(fmt.Sprintf("ALTER TABLE %s DROP COLUMN %s;", tinfo.Name, c.Name))
 						}
 						ui.Dialog_end()
@@ -1023,12 +1027,12 @@ func UiSQLite_renderEditor(node *SANode) {
 						//rowid + detail dialog
 						{
 							dnm := "row_detail_" + node.Name + selected_table + vals[0]
-							if ui.Comp_buttonLight(0, r, 1, 1, vals[0], "", true) > 0 {
+							if ui.Comp_buttonLight(0, r, 1, 1, vals[0], Comp_buttonProp()) > 0 {
 								ui.Dialog_open(dnm, 1)
 							}
 							if ui.Dialog_start(dnm) {
 								ui.Div_colMax(0, 7)
-								if ui.Comp_buttonError(0, 0, 1, 1, "Delete", "", true, true) > 0 {
+								if ui.Comp_button(0, 0, 1, 1, "Delete", Comp_buttonProp().SetError(true).Confirmation("Are you sure?", "confirm_delete_row_"+tinfo.Name+"_"+vals[0])) > 0 {
 									db.Write_unsafe(fmt.Sprintf("DELETE FROM %s WHERE rowid=?", tinfo.Name), vals[0])
 								}
 								ui.Dialog_end()
@@ -1054,7 +1058,7 @@ func UiSQLite_renderEditor(node *SANode) {
 			ui.Div_start(0, y, 1, 1)
 			{
 				ui.Div_colMax(0, 3)
-				if ui.Comp_button(0, 0, 1, 1, "Add row", "", true) > 0 {
+				if ui.Comp_button(0, 0, 1, 1, "Add row", Comp_buttonProp()) > 0 {
 					db.Write_unsafe(fmt.Sprintf("INSERT INTO %s (%s) VALUES(%s);", tinfo.Name, tinfo.ListOfColumnNames(false), tinfo.ListOfColumnValues(false)))
 				}
 			}
@@ -1079,20 +1083,20 @@ func UiCodeGo_AttrChat(node *SANode) {
 	{
 		ui.Div_colMax(1, 100)
 
-		if ui.Comp_buttonLight(0, 0, 1, 1, "X", "", true) > 0 {
+		if ui.Comp_buttonLight(0, 0, 1, 1, "X", Comp_buttonProp()) > 0 {
 			node.ShowCodeChat = false
 		}
 		ui.Comp_text(1, 0, 1, 1, "Code Chat", 1)
 
 		dnm := "chat_" + node.Name
-		if ui.Comp_buttonIcon(2, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/context.png"), 0.3, "", CdPalette_B, true, false) > 0 {
+		if ui.Comp_buttonIcon(2, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/context.png"), 0.3, "", Comp_buttonProp().Cd(CdPalette_B)) > 0 {
 			ui.Dialog_open(dnm, 1)
 		}
 		if ui.Dialog_start(dnm) {
 			ui.Div_colMax(0, 5)
 			y := 0
 
-			if ui.Comp_buttonMenu(0, y, 1, 1, "Clear all", "", true, false) > 0 {
+			if ui.Comp_buttonMenu(0, y, 1, 1, "Clear all", false, Comp_buttonProp()) > 0 {
 				node.Code.Messages = nil
 				node.Code.CheckLastChatEmpty()
 				ui.Dialog_close()
@@ -1133,7 +1137,7 @@ func UiCodeGo_AttrChat(node *SANode) {
 					ui.Comp_text(0, 0, 1, 1, "Bot", 0)
 					ui.Comp_textSelectMulti(1, 0, 2, nlines, str.Assistent, OsV2{0, 0}, true, false, false)
 
-					if ui.Comp_buttonLight(2, nlines, 1, 1, "Use this code", "", true) > 0 {
+					if ui.Comp_buttonLight(2, nlines, 1, 1, "Use this code", Comp_buttonProp()) > 0 {
 						node.Code.UseCodeFromAnswer(str.Assistent)
 					}
 				}
@@ -1150,7 +1154,7 @@ func UiCodeGo_AttrChat(node *SANode) {
 				y += nlines
 
 				//or ctrl+enter ..........
-				if ui.Comp_buttonLight(2, y, 1, 1, "Send", "", true) > 0 {
+				if ui.Comp_buttonLight(2, y, 1, 1, "Send", Comp_buttonProp()) > 0 {
 					node.Code.GetAnswer()
 				}
 
@@ -1203,7 +1207,7 @@ func UiCodeGo_Attrs(node *SANode) {
 		{
 			ui.Div_colMax(1, 100)
 			for i, tr := range node.Code.Triggers {
-				if ui.Comp_buttonLight(0, i, 1, 1, "X", "Un-link", true) > 0 {
+				if ui.Comp_buttonLight(0, i, 1, 1, "X", Comp_buttonProp().Tooltip("Un-link")) > 0 {
 					node.Code.Triggers = append(node.Code.Triggers[:i], node.Code.Triggers[i+1:]...) //remove
 				}
 				ui.Comp_text(1, i, 1, 1, tr, 0)
@@ -1256,7 +1260,7 @@ func UiCodeGo_Attrs(node *SANode) {
 	// Open chat
 	{
 		str := OsTrnString(node.ShowCodeChat, "Close Code chat", "Open Code chat")
-		if ui.Comp_buttonLight(1, y, 1, 1, str, "", true) > 0 {
+		if ui.Comp_buttonLight(1, y, 1, 1, str, Comp_buttonProp()) > 0 {
 			node.ShowCodeChat = !node.ShowCodeChat
 		}
 		y++
@@ -1295,7 +1299,7 @@ func UiCodeGo_Attrs(node *SANode) {
 		y += nlines
 
 		//run button
-		if ui.Comp_button(1, y, 1, 1, "Run", "", true) > 0 {
+		if ui.Comp_button(1, y, 1, 1, "Run", Comp_buttonProp()) > 0 {
 			node.Code.Execute()
 		}
 		y++

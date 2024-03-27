@@ -232,18 +232,18 @@ func (ui *Ui) Comp_Calendar(value *int64, page *int64, maxColSize, maxRowSize fl
 		ui.Div_colMax(0, 2)
 		ui.Div_colMax(1, 100)
 
-		if ui.Comp_buttonLight(0, 0, 1, 1, ui.trns.TODAY, ui.GetTextDate(int64(OsTime())), true) > 0 {
+		if ui.Comp_buttonLight(0, 0, 1, 1, ui.trns.TODAY, Comp_buttonProp().Tooltip(ui.GetTextDate(int64(OsTime())))) > 0 {
 			*page = int64(OsTime())
 			*value = int64(OsTime())
 		}
 
 		ui.Comp_text(1, 0, 1, 1, "##"+ui.UiCalendar_GetMonthYear(*page), 1)
 
-		if ui.Comp_buttonLight(2, 0, 1, 1, "<", "", true) > 0 {
+		if ui.Comp_buttonLight(2, 0, 1, 1, "<", Comp_buttonProp()) > 0 {
 			*page = SA_InfoAddDate(*page, 0, -1, 0)
 		}
 
-		if ui.Comp_buttonLight(3, 0, 1, 1, ">", "", true) > 0 {
+		if ui.Comp_buttonLight(3, 0, 1, 1, ">", Comp_buttonProp()) > 0 {
 			*page = SA_InfoAddDate(*page, 0, 1, 0)
 		}
 	}
@@ -302,9 +302,9 @@ func (ui *Ui) Comp_Calendar(value *int64, page *int64, maxColSize, maxRowSize fl
 
 				clicked := false
 				if isDayToday {
-					clicked = ui.Comp_buttonOutlinedFade(x, 1+y, 1, 1, strconv.Itoa(dtt.Day), "", true, showBack, fade) > 0
+					clicked = ui.Comp_button(x, 1+y, 1, 1, strconv.Itoa(dtt.Day), Comp_buttonProp().DrawBack(showBack).CdFade(fade).DrawBorder(true)) > 0
 				} else {
-					clicked = ui.Comp_buttonTextFade(x, 1+y, 1, 1, strconv.Itoa(dtt.Day), "", "", true, showBack, fade) > 0
+					clicked = ui.Comp_button(x, 1+y, 1, 1, strconv.Itoa(dtt.Day), Comp_buttonProp().DrawBack(showBack).CdFade(fade)) > 0
 				}
 				if clicked {
 					*value = dt
@@ -336,7 +336,7 @@ func (ui *Ui) Comp_CalendarDatePicker(x, y, w, h int, date_unix *int64, show_tim
 	hm_over := *date_unix - UiCalendar_GetStartDay(*date_unix)
 
 	//date
-	if ui.Comp_button(0, 0, 1, 1, ui.GetTextDate(*date_unix), "", enable) > 0 {
+	if ui.Comp_button(0, 0, 1, 1, ui.GetTextDate(*date_unix), Comp_buttonProp().Enable(enable)) > 0 {
 		ui.Dialog_open("DateTimePicker_"+dialogName, 1)
 		ui.date_page = int64(OsTime())
 	}

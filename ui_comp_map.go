@@ -193,7 +193,7 @@ func (ui *Ui) comp_mapLocators(cam_lon, cam_lat, cam_zoom float64, items []UiCom
 			//ui.Paint_file(0, 0, 1, 1, 0, "file:apps/base/resources/locator.png", InitOsCd32(200, 20, 20, 255), 1, 0, false) //red
 
 			dnm := dialogName + "_" + strconv.Itoa(i)
-			if ui.Comp_buttonIcon(0, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/locator.png"), 0, it.Label, CdPalette_P, true, false) > 0 {
+			if ui.Comp_buttonIcon(0, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/locator.png"), 0, it.Label, Comp_buttonProp()) > 0 {
 				ui.Dialog_open(dnm, 1)
 			}
 			if ui.Dialog_start(dnm) {
@@ -347,7 +347,7 @@ func (ui *Ui) comp_map(cam_lon, cam_lat, cam_zoom *float64, file, url, copyright
 
 			if rowid > 0 {
 				//extra margin will fix white spaces during zooming
-				ui.Paint_file(tileCoord_sx, tileCoord_sy, tileW, tileH, OsTrnFloat(isZooming, -0.03, 0), InitWinMedia_url(fmt.Sprintf("db:%s:tiles/file/%d", file, rowid)), InitOsCdWhite(), 0, 0, false, false)
+				ui.Paint_file(tileCoord_sx, tileCoord_sy, tileW, tileH, OsTrnFloat(isZooming, -0.03, 0), InitWinMedia_url(fmt.Sprintf("db:%s:tiles/file/%d", file, rowid)), InitOsCdWhite(), OsV2{0, 0}, false, false)
 			}
 
 		}
@@ -432,7 +432,7 @@ func (ui *Ui) comp_map(cam_lon, cam_lat, cam_zoom *float64, file, url, copyright
 		ui.Div_colMax(0, 100)
 		ui.Div_col(1, 5)
 		ui.Div_row(0, 0.5)
-		ui.Comp_buttonText(1, 0, 1, 1, copyright, copyright_url, "", true, false)
+		ui.Comp_buttonText(1, 0, 1, 1, copyright, Comp_buttonProp().Tooltip(copyright_url))
 		ui.Div_end()
 	}
 

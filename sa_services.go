@@ -484,11 +484,11 @@ func (srv *SAServices) RenderJobs(app *SAApp) {
 			ui.Comp_text(1, 0, 2, 1, fmt.Sprintf("Downloading: %s", job.url), 1)
 			ui.Comp_text(1, 1, 2, 1, job.GetStats(), 1)
 
-			if ui.Comp_button(1, 3, 1, 1, "Stop", "", true) > 0 {
+			if ui.Comp_button(1, 3, 1, 1, "Stop", Comp_buttonProp()) > 0 {
 				job.close = true
 			}
 
-			if ui.Comp_button(2, 3, 1, 1, "Stop & Delete file", "", true) > 0 {
+			if ui.Comp_button(2, 3, 1, 1, "Stop & Delete file", Comp_buttonProp()) > 0 {
 				job.close_and_delete = true
 			}
 		}
@@ -505,7 +505,7 @@ func (srv *SAServices) RenderJobs(app *SAApp) {
 			ui.Comp_text(1, 0, 1, 1, "LLama is answering", 0)
 			ui.Comp_textSelectMulti(1, 1, 1, 1, job.answer, OsV2{0, 0}, true, true, false)
 
-			if ui.Comp_button(1, 2, 1, 1, "Cancel", "", true) > 0 {
+			if ui.Comp_button(1, 2, 1, 1, "Cancel", Comp_buttonProp()) > 0 {
 				job.close = true
 			}
 		}
@@ -522,7 +522,7 @@ func (srv *SAServices) RenderJobs(app *SAApp) {
 			ui.Comp_text(1, 0, 1, 1, "OpenAI is answering ...", 0)
 			ui.Comp_textSelectMulti(1, 1, 1, 1, job.answer, OsV2{0, 0}, true, true, false)
 
-			if ui.Comp_button(1, 2, 1, 1, "Cancel", "", true) > 0 {
+			if ui.Comp_button(1, 2, 1, 1, "Cancel", Comp_buttonProp()) > 0 {
 				job.close = true
 			}
 		}
@@ -538,7 +538,7 @@ func (srv *SAServices) RenderJobs(app *SAApp) {
 
 			ui.Comp_text(1, 0, 1, 1, "Whisper is transcribing ...", 0)
 
-			if ui.Comp_button(1, 2, 1, 1, "Cancel", "", true) > 0 {
+			if ui.Comp_button(1, 2, 1, 1, "Cancel", Comp_buttonProp()) > 0 {
 				job.close = true
 			}
 		}

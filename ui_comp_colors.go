@@ -141,7 +141,7 @@ func (ui *Ui) _colorButton(x, y, w, h int, value string, tooltip string, cd OsCd
 	ui.Paint_rect(0, 0, 1, 1, 0.06, cd, 0) //background
 	ui.Div_end()
 
-	click = ui.Comp_buttonText(x, y, w, h, value, "", tooltip, enable, false) > 0 //transparent, so background is seen
+	click = ui.Comp_buttonText(x, y, w, h, value, Comp_buttonProp().Enable(enable).Tooltip(tooltip)) > 0 //transparent, so background is seen
 
 	return click
 }

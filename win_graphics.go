@@ -37,11 +37,11 @@ type WinFontProps struct {
 
 	italic bool
 
-	enableFormating bool
+	formating bool
 }
 
 // textH & lineH are in <0-1> range
-func InitWinFontProps(weight int, textH, lineH float64, italic bool, enableFormating bool, win *Win) WinFontProps {
+func InitWinFontProps(weight int, textH, lineH float64, italic bool, formating bool, win *Win) WinFontProps {
 	if weight <= 0 {
 		weight = 400
 	}
@@ -56,7 +56,7 @@ func InitWinFontProps(weight int, textH, lineH float64, italic bool, enableForma
 	}
 	lPx := int(float64(win.Cell()) * lineH)
 
-	return WinFontProps{weight: weight, textH: tPx, lineH: lPx, italic: italic, enableFormating: enableFormating}
+	return WinFontProps{weight: weight, textH: tPx, lineH: lPx, italic: italic, formating: formating}
 }
 
 func InitWinFontPropsHeight(textH float64, win *Win) WinFontProps {
@@ -76,7 +76,7 @@ func (a *WinFontProps) Cmp(b *WinFontProps) bool {
 		a.textH == b.textH &&
 		a.lineH == b.lineH &&
 		a.italic == b.italic &&
-		a.enableFormating == b.enableFormating
+		a.formating == b.formating
 }
 
 type WinFontFace struct {
@@ -692,7 +692,7 @@ func (gph *WinGph) GetStringSize(prop WinFontProps, str string) (OsV2, fixed.Int
 	act_prop := prop
 	i := 0
 	for p, ch := range str {
-		if prop.enableFormating && !gph.processLetter(str[p:], &prop, &act_prop, &skip) {
+		if prop.formating && !gph.processLetter(str[p:], &prop, &act_prop, &skip) {
 			i++
 			continue
 		}
@@ -749,7 +749,7 @@ func (gph *WinGph) drawString(prop WinFontProps, str string) *WinGphItemText {
 	act_prop := prop
 	i := 0
 	for p, ch := range str {
-		if prop.enableFormating && !gph.processLetter(str[p:], &prop, &act_prop, &skip) {
+		if prop.formating && !gph.processLetter(str[p:], &prop, &act_prop, &skip) {
 			i++
 			continue
 		}

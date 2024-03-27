@@ -354,21 +354,21 @@ func (node *SANode) RenderAttrs() {
 		//context
 		{
 			dnm := "node_" + node.Name
-			if ui.Comp_buttonIcon(3, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/context.png"), 0.3, "", CdPalette_B, true, false) > 0 {
+			if ui.Comp_buttonIcon(3, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/context.png"), 0.3, "", Comp_buttonProp().Cd(CdPalette_B)) > 0 {
 				ui.Dialog_open(dnm, 1)
 			}
 			if ui.Dialog_start(dnm) {
 				ui.Div_colMax(0, 5)
 				y := 0
 
-				if ui.Comp_buttonMenu(0, y, 1, 1, ui.trns.DUPLICATE, "", true, false) > 0 {
+				if ui.Comp_buttonMenu(0, y, 1, 1, ui.trns.DUPLICATE, false, Comp_buttonProp()) > 0 {
 					nw := node.parent.AddNodeCopy(node)
 					nw.SelectOnlyThis()
 					ui.Dialog_close()
 				}
 				y++
 
-				if ui.Comp_buttonMenu(0, y, 1, 1, ui.trns.REMOVE, "", true, false) > 0 {
+				if ui.Comp_buttonMenu(0, y, 1, 1, ui.trns.REMOVE, false, Comp_buttonProp()) > 0 {
 					node.Remove()
 					ui.Dialog_close()
 				}

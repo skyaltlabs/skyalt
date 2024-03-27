@@ -305,15 +305,15 @@ func (app *SAApp) renderIDE() {
 	gridMax.Y = OsMax(gridMax.Y, SANodeColRow_GetMaxPos(&node.Rows)+1)
 
 	//+
-	if ui.Comp_buttonLight(0, 0, 1, 1, "+", ui.trns.ADD_COLUMNS_ROWS, true) > 0 {
+	if ui.Comp_buttonLight(0, 0, 1, 1, "+", Comp_buttonProp().Tooltip(ui.trns.ADD_COLUMNS_ROWS)) > 0 {
 		ui.Dialog_open("add_cols_rows", 1)
 	}
 	if ui.Dialog_start("add_cols_rows") {
 		ui.Div_colMax(0, 4)
-		if ui.Comp_buttonMenu(0, 0, 1, 1, ui.trns.ADD_NEW_COLUMN, "", true, false) > 0 {
+		if ui.Comp_buttonMenu(0, 0, 1, 1, ui.trns.ADD_NEW_COLUMN, false, Comp_buttonProp()) > 0 {
 			SANodeColRow_Insert(&node.Cols, nil, gridMax.X, true)
 		}
-		if ui.Comp_buttonMenu(0, 1, 1, 1, ui.trns.ADD_NEW_ROW, "", true, false) > 0 {
+		if ui.Comp_buttonMenu(0, 1, 1, 1, ui.trns.ADD_NEW_ROW, false, Comp_buttonProp()) > 0 {
 			SANodeColRow_Insert(&node.Rows, nil, gridMax.Y, true)
 		}
 
@@ -351,9 +351,9 @@ func (app *SAApp) renderIDE() {
 
 			click := false
 			if item != nil {
-				click = ui.Comp_buttonLight(i, 0, 1, 1, fmt.Sprintf("%d", i), "", true) > 0
+				click = ui.Comp_buttonLight(i, 0, 1, 1, fmt.Sprintf("%d", i), Comp_buttonProp()) > 0
 			} else {
-				click = ui.Comp_buttonTextFade(i, 0, 1, 1, fmt.Sprintf("%d", i), "", "", true, false, true) > 0
+				click = ui.Comp_buttonText(i, 0, 1, 1, fmt.Sprintf("%d", i), Comp_buttonProp().CdFade(true)) > 0
 			}
 			if click {
 				if ui.win.io.keys.ctrl {
@@ -399,9 +399,9 @@ func (app *SAApp) renderIDE() {
 
 			click := false
 			if item != nil {
-				click = ui.Comp_buttonLight(0, i, 1, 1, fmt.Sprintf("%d", i), "", true) > 0
+				click = ui.Comp_buttonLight(0, i, 1, 1, fmt.Sprintf("%d", i), Comp_buttonProp()) > 0
 			} else {
-				click = ui.Comp_buttonTextFade(0, i, 1, 1, fmt.Sprintf("%d", i), "", "", true, false, true) > 0
+				click = ui.Comp_buttonText(0, i, 1, 1, fmt.Sprintf("%d", i), Comp_buttonProp().CdFade(true)) > 0
 			}
 			if click {
 				if ui.win.io.keys.ctrl {
@@ -565,7 +565,7 @@ func (app *SAApp) drawCreateNodeGroup(start OsV2, gr *SAGroup, searches []string
 		for _, nd := range gr.nodes {
 			if !only_ui || nd.render != nil {
 				if app.canvas.addnode_search == "" || SAApp_IsSearchedName(nd.name, searches) {
-					if keys.enter || ui.Comp_buttonMenuIcon(0, y, 1, 1, nd.name, gr.icon, 0.2, "", true, false) > 0 {
+					if keys.enter || ui.Comp_buttonMenuIcon(0, y, 1, 1, nd.name, gr.icon, 0.2, false, Comp_buttonProp()) > 0 {
 
 						//add new node
 						parent := app.canvas.addParent.FindPath(app.root)
@@ -646,7 +646,7 @@ func (app *SAApp) drawColsRowsDialog(name string, node *SANode, isCol bool, pos 
 			ui.Div_colMax(1, 100)
 			ui.Div_colMax(2, 100)
 
-			if ui.Comp_buttonLight(0, 0, 1, 1, ui.trns.ADD_BEFORE, "", true) > 0 {
+			if ui.Comp_buttonLight(0, 0, 1, 1, ui.trns.ADD_BEFORE, Comp_buttonProp()) > 0 {
 				SANodeColRow_Insert(items, nil, pos, true)
 				node.MakeGridSpace(OsTrn(isCol, pos, 0), OsTrn(!isCol, pos, 0), OsTrn(isCol, 1, 0), OsTrn(!isCol, 1, 0))
 				ui.Dialog_close()
@@ -655,7 +655,7 @@ func (app *SAApp) drawColsRowsDialog(name string, node *SANode, isCol bool, pos 
 
 			ui.Comp_text(1, 0, 1, 1, strconv.Itoa(pos), 1) //description
 
-			if ui.Comp_buttonLight(2, 0, 1, 1, ui.trns.ADD_AFTER, "", true) > 0 {
+			if ui.Comp_buttonLight(2, 0, 1, 1, ui.trns.ADD_AFTER, Comp_buttonProp()) > 0 {
 				SANodeColRow_Insert(items, nil, pos+1, true)
 				node.MakeGridSpace(OsTrn(isCol, pos+1, 0), OsTrn(!isCol, pos+1, 0), OsTrn(isCol, 1, 0), OsTrn(!isCol, 1, 0))
 				ui.Dialog_close()
@@ -692,7 +692,7 @@ func (app *SAApp) drawColsRowsDialog(name string, node *SANode, isCol bool, pos 
 		ui.Div_end()
 
 		//remove
-		if ui.Comp_button(0, 5, 1, 1, ui.trns.REMOVE, "", item != nil) > 0 {
+		if ui.Comp_button(0, 5, 1, 1, ui.trns.REMOVE, Comp_buttonProp().Enable(item != nil)) > 0 {
 			SANodeColRow_Remove(items, pos)
 			ui.Dialog_close()
 			changed = true

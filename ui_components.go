@@ -84,14 +84,14 @@ func (ui *Ui) _compDrawShape(coord OsV4, shape uint8, cd OsCd, margin float64, b
 	return coord
 }
 
-func (ui *Ui) _compDrawImage(coord OsV4, icon WinMedia, cd OsCd, style *UiComp) {
+func (ui *Ui) _compDrawImage(coord OsV4, icon WinMedia, cd OsCd, margin float64, align OsV2, fill bool) {
 	lv := ui.GetCall()
 
-	m := ui.CellWidth(style.image_margin)
+	m := ui.CellWidth(margin)
 	coord = coord.Inner(m, m, m, m)
 
 	imgRectBackup := ui.buff.AddCrop(lv.call.crop.GetIntersect(coord))
-	ui.buff.AddImage(icon, coord, cd, int(style.image_alignV), int(style.image_alignH), style.image_fill, false)
+	ui.buff.AddImage(icon, coord, cd, align, fill, false)
 	ui.buff.AddCrop(imgRectBackup)
 }
 
@@ -134,24 +134,135 @@ func (ui *Ui) _compDrawText(coord OsV4,
 	ui.buff.AddCrop(imgRectBackup)
 }
 
-func (ui *Ui) _buttonBasicStyle(enable bool, tooltip string) UiComp {
-	var style UiComp
-	style.tooltip = tooltip
-	style.enable = enable
-	style.cd = CdPalette_P
-	style.cd_border = CdPalette_P
-	style.label_align = OsV2{1, 1}
-	style.image_alignH = 0
-	style.image_alignV = 1
-	style.label_formating = true
-	return style
+type Comp_buttonP struct {
+	shape uint8 //0=rect, 1=sphere
+
+	tooltip   string
+	enable    bool
+	formating bool
+
+	cd        uint8
+	cd_border uint8
+	cd_fade   bool
+
+	align      OsV2
+	img_align  OsV2
+	img_fill   bool
+	img_margin float64
+
+	icon *WinMedia
+
+	draw_back   float32
+	draw_border bool
+
+	url              string
+	confirmation     string
+	confirmation_dnm string
 }
 
-func (ui *Ui) Comp_button(x, y, w, h int, label string, tooltip string, enable bool) int {
+func Comp_buttonProp() *Comp_buttonP {
+	var p Comp_buttonP
+
+	p.enable = true
+	p.formating = true
+	p.cd = CdPalette_P
+	p.cd_border = CdPalette_P
+	p.align = OsV2{1, 1}
+	p.img_align = OsV2{0, 1}
+
+	p.draw_back = 4
+
+	return &p
+}
+
+func (p *Comp_buttonP) Shape(v uint8) *Comp_buttonP {
+	p.shape = v
+	return p
+}
+func (p *Comp_buttonP) Tooltip(v string) *Comp_buttonP {
+	p.tooltip = v
+	return p
+}
+func (p *Comp_buttonP) Enable(v bool) *Comp_buttonP {
+	p.enable = v
+	return p
+}
+func (p *Comp_buttonP) Formating(v bool) *Comp_buttonP {
+	p.formating = v
+	return p
+}
+
+func (p *Comp_buttonP) Cd(v uint8) *Comp_buttonP {
+	p.cd = v
+	return p
+}
+func (p *Comp_buttonP) CdBorder(v uint8) *Comp_buttonP {
+	p.cd_border = v
+	return p
+}
+func (p *Comp_buttonP) CdFade(v bool) *Comp_buttonP {
+	p.cd_fade = v
+	return p
+}
+
+func (p *Comp_buttonP) Align(h, v int) *Comp_buttonP {
+	p.align = OsV2{h, v}
+	return p
+}
+func (p *Comp_buttonP) ImgAlign(h, v int) *Comp_buttonP {
+	p.img_align = OsV2{h, v}
+	return p
+}
+func (p *Comp_buttonP) ImgMargin(v float64) *Comp_buttonP {
+	p.img_margin = v
+	return p
+}
+func (p *Comp_buttonP) ImgFill(v bool) *Comp_buttonP {
+	p.img_fill = v
+	return p
+}
+
+func (p *Comp_buttonP) Icon(v *WinMedia) *Comp_buttonP {
+	p.icon = v
+	return p
+}
+
+func (p *Comp_buttonP) DrawBack(v bool) *Comp_buttonP {
+	p.draw_back = float32(OsTrnFloat(v, 1, 0))
+	return p
+}
+func (p *Comp_buttonP) DrawBackLight(v bool) *Comp_buttonP {
+	p.draw_back = float32(OsTrnFloat(v, 0.5, 0))
+	return p
+}
+
+func (p *Comp_buttonP) DrawBorder(v bool) *Comp_buttonP {
+	p.draw_border = v
+	return p
+}
+
+func (p *Comp_buttonP) Confirmation(questionStr string, dialog_name string) *Comp_buttonP {
+	p.confirmation = questionStr
+	p.confirmation_dnm = dialog_name
+	return p
+}
+func (p *Comp_buttonP) Url(v string) *Comp_buttonP {
+	p.url = v
+	return p
+}
+
+func (p *Comp_buttonP) SetError(v bool) *Comp_buttonP {
+	if v {
+		p.cd = CdPalette_E
+		p.cd_border = CdPalette_E
+	}
+	return p
+}
+
+func (ui *Ui) Comp_button(x, y, w, h int, label string, prop *Comp_buttonP) int {
 	ui.Div_start(x, y, w, h)
 
-	style := ui._buttonBasicStyle(enable, tooltip)
-	click, rclick := ui.Comp_button_s(&style, label, nil, "", 1, false)
+	click, rclick := ui.Comp_button_s(label, prop)
 
 	ui.Div_end()
 	if rclick > 0 {
@@ -162,14 +273,11 @@ func (ui *Ui) Comp_button(x, y, w, h int, label string, tooltip string, enable b
 	return 0
 }
 
-func (ui *Ui) Comp_buttonCircle(x, y, w, h int, label string, tooltip string, cd_back uint8, cd_border uint8, enable bool) int {
+func (ui *Ui) Comp_buttonLight(x, y, w, h int, label string, prop *Comp_buttonP) int {
 	ui.Div_start(x, y, w, h)
 
-	style := ui._buttonBasicStyle(enable, tooltip)
-	style.shape = 1
-	style.cd = cd_back
-	style.cd_border = cd_border
-	click, rclick := ui.Comp_button_s(&style, label, nil, "", 2, true)
+	prop.draw_back = 0.5
+	click, rclick := ui.Comp_button_s(label, prop)
 
 	ui.Div_end()
 	if rclick > 0 {
@@ -180,15 +288,11 @@ func (ui *Ui) Comp_buttonCircle(x, y, w, h int, label string, tooltip string, cd
 	return 0
 }
 
-func (ui *Ui) Comp_buttonError(x, y, w, h int, label string, tooltip string, isError bool, enable bool) int {
+func (ui *Ui) Comp_buttonText(x, y, w, h int, label string, prop *Comp_buttonP) int {
 	ui.Div_start(x, y, w, h)
 
-	style := ui._buttonBasicStyle(enable, tooltip)
-	if isError {
-		style.cd = CdPalette_E
-		style.cd_border = CdPalette_E
-	}
-	click, rclick := ui.Comp_button_s(&style, label, nil, "", 1, false)
+	prop.draw_back = 0
+	click, rclick := ui.Comp_button_s(label, prop)
 
 	ui.Div_end()
 	if rclick > 0 {
@@ -199,31 +303,12 @@ func (ui *Ui) Comp_buttonError(x, y, w, h int, label string, tooltip string, isE
 	return 0
 }
 
-func (ui *Ui) Comp_buttonIcon(x, y, w, h int, icon WinMedia, icon_margin float64, tooltip string, cd uint8, enable bool, selected bool) int {
+func (ui *Ui) Comp_buttonOutlined(x, y, w, h int, label string, prop *Comp_buttonP) int {
 	ui.Div_start(x, y, w, h)
 
-	style := ui._buttonBasicStyle(enable, tooltip)
-	style.image_alignH = 1
-	style.image_margin = icon_margin
-	style.cd = cd
-
-	click, rclick := ui.Comp_button_s(&style, "", &icon, "", OsTrnFloat(selected, 1, 0), false)
-
-	ui.Div_end()
-	if rclick > 0 {
-		return 2
-	} else if click > 0 {
-		return 1
-	}
-	return 0
-}
-func (ui *Ui) Comp_buttonCd(x, y, w, h int, label string, tooltip string, cd uint8, enable bool, selected bool) int {
-	ui.Div_start(x, y, w, h)
-
-	style := ui._buttonBasicStyle(enable, tooltip)
-	style.cd = cd
-
-	click, rclick := ui.Comp_button_s(&style, label, nil, "", OsTrnFloat(selected, 1, 0), false)
+	prop.draw_back = 0
+	prop.draw_border = true
+	click, rclick := ui.Comp_button_s(label, prop)
 
 	ui.Div_end()
 	if rclick > 0 {
@@ -234,11 +319,14 @@ func (ui *Ui) Comp_buttonCd(x, y, w, h int, label string, tooltip string, cd uin
 	return 0
 }
 
-func (ui *Ui) Comp_buttonLight(x, y, w, h int, label string, tooltip string, enable bool) int {
+func (ui *Ui) Comp_buttonIcon(x, y, w, h int, icon WinMedia, icon_margin float64, tooltip string, prop *Comp_buttonP) int {
 	ui.Div_start(x, y, w, h)
 
-	style := ui._buttonBasicStyle(enable, tooltip)
-	click, rclick := ui.Comp_button_s(&style, label, nil, "", 0.5, false)
+	prop.icon = &icon
+	prop.img_margin = icon_margin
+	prop.tooltip = tooltip
+	prop.draw_back = 0
+	click, rclick := ui.Comp_button_s("", prop)
 
 	ui.Div_end()
 	if rclick > 0 {
@@ -249,11 +337,17 @@ func (ui *Ui) Comp_buttonLight(x, y, w, h int, label string, tooltip string, ena
 	return 0
 }
 
-func (ui *Ui) Comp_buttonText(x, y, w, h int, label string, url string, tooltip string, enable bool, selected bool) int {
+func (ui *Ui) Comp_buttonMenu(x, y, w, h int, label string, selected bool, prop *Comp_buttonP) int {
 	ui.Div_start(x, y, w, h)
 
-	style := ui._buttonBasicStyle(enable, tooltip)
-	click, rclick := ui.Comp_button_s(&style, label, nil, url, OsTrnFloat(selected, 1, 0), false)
+	prop.draw_back = float32(OsTrn(selected, 1, 0))
+	prop.align.X = 0
+	if !selected && prop.cd != CdPalette_E {
+		prop.cd = CdPalette_B
+		prop.cd_border = CdPalette_B
+	}
+
+	click, rclick := ui.Comp_button_s(label, prop)
 
 	ui.Div_end()
 	if rclick > 0 {
@@ -264,12 +358,19 @@ func (ui *Ui) Comp_buttonText(x, y, w, h int, label string, url string, tooltip 
 	return 0
 }
 
-func (ui *Ui) Comp_buttonTextFade(x, y, w, h int, label string, url string, tooltip string, enable bool, selected bool, fade bool) int {
+func (ui *Ui) Comp_buttonMenuIcon(x, y, w, h int, label string, icon WinMedia, icon_margin float64, selected bool, prop *Comp_buttonP) int {
 	ui.Div_start(x, y, w, h)
 
-	style := ui._buttonBasicStyle(enable, tooltip)
-	style.fade = fade
-	click, rclick := ui.Comp_button_s(&style, label, nil, url, OsTrnFloat(selected, 1, 0), false)
+	prop.icon = &icon
+	prop.img_margin = icon_margin
+	prop.draw_back = float32(OsTrn(selected, 1, 0))
+	prop.align.X = 0
+	if !selected && prop.cd != CdPalette_E {
+		prop.cd = CdPalette_B
+		prop.cd_border = CdPalette_B
+	}
+
+	click, rclick := ui.Comp_button_s(label, prop)
 
 	ui.Div_end()
 	if rclick > 0 {
@@ -280,105 +381,32 @@ func (ui *Ui) Comp_buttonTextFade(x, y, w, h int, label string, url string, tool
 	return 0
 }
 
-func (ui *Ui) Comp_buttonOutlined(x, y, w, h int, label string, tooltip string, enable bool, selected bool) int {
-	ui.Div_start(x, y, w, h)
-
-	style := ui._buttonBasicStyle(enable, tooltip)
-	click, rclick := ui.Comp_button_s(&style, label, nil, "", OsTrnFloat(selected, 1, 0), true)
-
-	ui.Div_end()
-	if rclick > 0 {
-		return 2
-	} else if click > 0 {
-		return 1
-	}
-	return 0
-}
-
-func (ui *Ui) Comp_buttonOutlinedFade(x, y, w, h int, label string, tooltip string, enable bool, selected bool, fade bool) int {
-	ui.Div_start(x, y, w, h)
-
-	style := ui._buttonBasicStyle(enable, tooltip)
-	style.fade = fade
-	click, rclick := ui.Comp_button_s(&style, label, nil, "", OsTrnFloat(selected, 1, 0), true)
-
-	ui.Div_end()
-	if rclick > 0 {
-		return 2
-	} else if click > 0 {
-		return 1
-	}
-	return 0
-}
-
-func (ui *Ui) Comp_buttonMenuIcon(x, y, w, h int, label string, icon WinMedia, iconMargin float64, tooltip string, enable bool, selected bool) int {
-	ui.Div_start(x, y, w, h)
-
-	style := ui._buttonBasicStyle(enable, tooltip)
-	style.label_align = OsV2{0, 1}
-	style.image_margin = iconMargin
-	if !selected {
-		style.cd = CdPalette_B
-		style.cd_border = CdPalette_B
-	}
-
-	click, rclick := ui.Comp_button_s(&style, label, &icon, "", OsTrnFloat(selected, 1, 0), false)
-
-	ui.Div_end()
-	if rclick > 0 {
-		return 2
-	} else if click > 0 {
-		return 1
-	}
-	return 0
-}
-
-func (ui *Ui) Comp_buttonMenu(x, y, w, h int, label string, tooltip string, enable bool, selected bool) int {
-	ui.Div_start(x, y, w, h)
-
-	style := ui._buttonBasicStyle(enable, tooltip)
-	style.label_align = OsV2{0, 1}
-	if !selected {
-		style.cd = CdPalette_B
-		style.cd_border = CdPalette_B
-	}
-
-	click, rclick := ui.Comp_button_s(&style, label, nil, "", OsTrnFloat(selected, 1, 0), false)
-
-	ui.Div_end()
-	if rclick > 0 {
-		return 2
-	} else if click > 0 {
-		return 1
-	}
-	return 0
-}
-
-func (ui *Ui) Comp_button_s(style *UiComp, label string, icon *WinMedia, url string, drawBack float64, drawBorder bool) (int, int) {
+func (ui *Ui) Comp_button_s(label string, prop *Comp_buttonP) (int, int) {
 
 	lv := ui.GetCall()
 
-	click, rclick, inside, active, _ := lv.call.IsClicked(style.enable, ui)
-	if click > 0 && len(url) > 0 {
+	click, rclick, inside, active, _ := lv.call.IsClicked(prop.enable, ui)
+	if click > 0 && len(prop.url) > 0 {
 		//SA_DialogStart() warning which open dialog ...
-		OsUlit_OpenBrowser(url)
+		OsUlit_OpenBrowser(prop.url)
 	}
 
 	pl := ui.win.io.GetPalette()
-	cd, onCd := pl.GetCd(style.cd, style.fade, style.enable, inside, active)
-	cdBorder, _ := pl.GetCd(style.cd_border, style.fade, style.enable, inside, active)
+	cd, onCd := pl.GetCd(prop.cd, prop.cd_fade, prop.enable, inside, active)
+	cdBorder, _ := pl.GetCd(prop.cd_border, prop.cd_fade, prop.enable, inside, active)
 
 	coord := lv.call.canvas
 
+	drawBack := prop.draw_back
 	if drawBack == 0 {
-		if style.cd != CdPalette_B {
+		if prop.cd != CdPalette_B {
 			onCd = cd
 		}
 
-		if style.enable && len(label) > 0 { //no background for icons. For text yes
+		if prop.enable && len(label) > 0 { //no background for icons. For text yes
 			if inside || active {
 				//not same color as background
-				if style.cd == CdPalette_B {
+				if prop.cd == CdPalette_B {
 					cd = pl.GetGrey(0.3)
 				}
 				cd.A = 100
@@ -398,38 +426,59 @@ func (ui *Ui) Comp_button_s(style *UiComp, label string, icon *WinMedia, url str
 			cd.A = 30
 		}
 
-		margin := OsTrnFloat(drawBorder, 0.06, 0)
-		ui._compDrawShape(coord, style.shape, cd, margin, 0)
+		margin := OsTrnFloat(prop.draw_border, 0.06, 0)
+		ui._compDrawShape(coord, prop.shape, cd, margin, 0)
 	}
 
-	if drawBorder {
-		ui._compDrawShape(coord, style.shape, cdBorder, 0, 0.03)
+	if prop.draw_border {
+		ui._compDrawShape(coord, prop.shape, cdBorder, 0, 0.03)
 	}
 
-	if icon != nil && label != "" {
-		style.image_alignH = 0
+	if prop.icon != nil && label != "" {
+		prop.img_align.X = 0
 	}
 
-	coordImage, coordText := ui._compGetTextImageCoord(coord, 1, style.image_alignH, icon != nil, label != "")
-	if icon != nil {
-		ui._compDrawImage(coordImage, *icon, onCd, style)
+	coordImage, coordText := ui._compGetTextImageCoord(coord, 1, uint8(prop.img_align.X), prop.icon != nil, label != "")
+	if prop.icon != nil {
+		ui._compDrawImage(coordImage, *prop.icon, onCd, prop.img_margin, prop.align, prop.img_fill)
 	}
 	if len(label) > 0 {
-		prop := InitWinFontPropsDef(ui.win)
-		prop.enableFormating = style.label_formating
-		ui._compDrawText(coordText, label, "", onCd, prop, false, false, style.label_align, true, false)
+		pr := InitWinFontPropsDef(ui.win)
+		pr.formating = prop.formating
+		ui._compDrawText(coordText, label, "", onCd, pr, false, false, prop.align, true, false)
 	}
 
-	if style.enable {
+	if prop.enable {
 		if inside {
 			ui.Paint_cursor("hand")
 		}
 
-		if len(style.tooltip) > 0 {
-			ui.Paint_tooltip(0, 0, 1, 1, style.tooltip)
-		} else if len(url) > 0 {
-			ui.Paint_tooltip(0, 0, 1, 1, url)
+		if len(prop.tooltip) > 0 {
+			ui.Paint_tooltip(0, 0, 1, 1, prop.tooltip)
+		} else if len(prop.url) > 0 {
+			ui.Paint_tooltip(0, 0, 1, 1, prop.url)
 		}
+	}
+
+	if (click > 0 || rclick > 0) && prop.confirmation != "" {
+		ui.Dialog_open(prop.confirmation_dnm, 1)
+		click = 0
+		rclick = 0
+	}
+	if ui.Dialog_start(prop.confirmation_dnm) {
+
+		sz := OsMaxFloat(4, float64(1+ui.win.GetTextSize(-1, prop.confirmation, InitWinFontPropsDef(ui.win)).X/ui.win.Cell()))
+
+		ui.Div_colMax(0, sz/2)
+		ui.Div_colMax(1, sz/2)
+		ui.Comp_text(0, 0, 2, 1, prop.confirmation, 1)
+		if ui.Comp_button(0, 1, 1, 1, "Yes", Comp_buttonProp().SetError(true)) > 0 {
+			click = 1
+		}
+		if ui.Comp_button(1, 1, 1, 1, "No", Comp_buttonProp()) > 0 {
+			ui.Dialog_close()
+		}
+		ui.Dialog_end()
 	}
 
 	return click, rclick
@@ -542,7 +591,7 @@ func (ui *Ui) Comp_text_s(style *UiComp, value string, icon *WinMedia, selection
 	}
 
 	prop := InitWinFontPropsDef(ui.win)
-	prop.enableFormating = style.label_formating
+	prop.formating = style.label_formating
 
 	ui.Paint_textGrid(onCd, style, value, "", prop, icon, selection, false, multi_line, multi_line_enter_finish)
 }
@@ -738,7 +787,7 @@ func (ui *Ui) Comp_edit_s(style *UiComp, valueIn string, valueInOrig string, ico
 	}
 
 	prop := InitWinFontPropsDef(ui.win)
-	prop.enableFormating = style.label_formating
+	prop.formating = style.label_formating
 	ui.Paint_textGrid(onCd, style, value, valueInOrig, prop, icon, true, true, multi_line, multi_line_enter_finish)
 
 	//ghost
@@ -784,7 +833,7 @@ func (ui *Ui) Comp_progress_s(style *UiComp, value float64, prec int) {
 	//label
 	//ui.Paint_textGrid(coord, onCd, style, strconv.FormatFloat(value*100, 'f', prec, 64)+"%", "", "", true, false)
 	prop := InitWinFontPropsDef(ui.win)
-	prop.enableFormating = style.label_formating
+	prop.formating = style.label_formating
 	ui._compDrawText(coord, strconv.FormatFloat(value*100, 'f', prec, 64)+"%", "", onCd, prop, true, false, style.label_align, false, false)
 
 	if style.enable {
@@ -1073,12 +1122,11 @@ func (ui *Ui) Comp_combo_s(style *UiComp, value string, options_names []string, 
 			}
 		}
 		prop := InitWinFontPropsDef(ui.win)
-		prop.enableFormating = style.label_formating
+		prop.formating = style.label_formating
 		ui._compDrawText(coord, label, "", onCd, prop, false, false, style.label_align, false, false)
 		style.label_align.X = 2
-		prop.enableFormating = true
-		//### aka smaller
-		ui._compDrawText(coord.AddSpaceX(ui.CellWidth(0.1)), "###▼###", "", onCd, prop, false, false, style.label_align, false, false)
+		prop.formating = true
+		ui._compDrawText(coord.AddSpaceX(ui.CellWidth(0.1)), "###▼###", "", onCd, prop, false, false, style.label_align, false, false) //### aka smaller
 	}
 
 	//dialog
@@ -1099,7 +1147,7 @@ func (ui *Ui) Comp_combo_s(style *UiComp, value string, options_names []string, 
 				highlight = (value == strconv.Itoa(i))
 			}
 
-			if ui.Comp_buttonMenu(0, i, 1, 1, opt, "", true, highlight) > 0 {
+			if ui.Comp_buttonMenu(0, i, 1, 1, opt, highlight, Comp_buttonProp()) > 0 {
 				if len(options_values) > 0 {
 					value = options_values[i]
 				} else {
@@ -1223,7 +1271,7 @@ func (ui *Ui) Comp_checkbox_s(style *UiComp, value float64, label string) float6
 
 		//text
 		prop := InitWinFontPropsDef(ui.win)
-		prop.enableFormating = style.label_formating
+		prop.formating = style.label_formating
 		ui._compDrawText(coordText, label, "", onCd, prop, false, false, style.label_align, true, false)
 
 		coord = coordImg
@@ -1363,7 +1411,7 @@ func (ui *Ui) Comp_switch_s(style *UiComp, value bool, label string) bool {
 
 		//text
 		prop := InitWinFontPropsDef(ui.win)
-		prop.enableFormating = style.label_formating
+		prop.formating = style.label_formating
 		ui._compDrawText(coordText, label, "", labelOnCd, prop, false, false, style.label_align, true, false)
 
 		coord = coordImg
@@ -1399,19 +1447,12 @@ func (ui *Ui) Comp_switch_s(style *UiComp, value bool, label string) bool {
 	return value
 }
 
-func (ui *Ui) Comp_image(x, y, w, h int, image WinMedia, cd OsCd, margin float64, alignH, alignV int, fill bool) {
+func (ui *Ui) Comp_image(x, y, w, h int, image WinMedia, cd OsCd, margin float64, align OsV2, fill bool) {
 
 	ui.Div_start(x, y, w, h)
 
-	var style UiComp
-	style.enable = true
-	style.image_alignH = uint8(alignH)
-	style.image_alignV = uint8(alignV)
-	style.image_margin = margin
-	style.image_fill = fill
-
 	lv := ui.GetCall()
-	ui._compDrawImage(lv.call.canvas, image, cd, &style)
+	ui._compDrawImage(lv.call.canvas, image, cd, margin, align, fill)
 
 	ui.Div_end()
 }
