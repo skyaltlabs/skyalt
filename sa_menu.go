@@ -260,8 +260,8 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 		ui.Comp_editbox_desc(ui.trns.DPI, 0, 4, 1, y, 1, 2, &ini.Dpi, Comp_editboxProp().Precision(0))
 		y += 2
 
-		ui.Comp_editbox_desc(ui.trns.THREADS, 0, 4, 1, y, 1, 2, &ini.Threads, Comp_editboxProp().Precision(0))
-		y += 2
+		//ui.Comp_editbox_desc(ui.trns.THREADS, 0, 4, 1, y, 1, 2, &ini.Threads, Comp_editboxProp().Precision(0))
+		//y += 2
 
 		ui.Comp_switch(1, y, 1, 1, &ini.Stats, false, ui.trns.SHOW_STATS, "", true)
 		y++
