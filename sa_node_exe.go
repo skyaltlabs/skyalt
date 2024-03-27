@@ -1446,7 +1446,10 @@ func UiOpenAI_Attrs(node *SANode) {
 	ui.Div_colMax(1, 100)
 
 	grid := InitOsV4(0, 0, 1, 1)
-
 	node.ShowAttrStringCombo(&grid, "model", g_oia_modelList[0], g_oia_modelList, g_oia_modelList)
 	//more ...............
+
+	if node.app.base.ui.win.io.ini.OpenAI_key == "" {
+		node.SetError(fmt.Errorf("openAI API key is not set. Fill it in Menu:Settings"))
+	}
 }

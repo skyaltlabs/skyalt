@@ -173,7 +173,7 @@ func (job *SAServiceOpenAIJob) complete(props *SAServiceOpenAIProps) ([]byte, er
 
 	skey := job.openai.services.ui.win.io.ini.OpenAI_key
 	if skey == "" {
-		return nil, fmt.Errorf("OpenAI API key is empty")
+		return nil, fmt.Errorf("OpenAI API key is not set")
 	}
 
 	js, err := json.Marshal(props)
