@@ -1076,7 +1076,9 @@ func (ui *Ui) Comp_combo_s(style *UiComp, value string, options_names []string, 
 		prop.enableFormating = style.label_formating
 		ui._compDrawText(coord, label, "", onCd, prop, false, false, style.label_align, false, false)
 		style.label_align.X = 2
-		ui._compDrawText(coord.AddSpace(ui.CellWidth(0.1)), "▼", "", onCd, prop, false, false, style.label_align, false, false)
+		prop.enableFormating = true
+		//### aka smaller
+		ui._compDrawText(coord.AddSpaceX(ui.CellWidth(0.1)), "###▼###", "", onCd, prop, false, false, style.label_align, false, false)
 	}
 
 	//dialog
