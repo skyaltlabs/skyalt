@@ -37,6 +37,7 @@ type Button struct {
 	Tooltip string `json:"tooltip"`
 	Enable  bool   `json:"enable"`
 	Clicked bool   `json:"clicked"`
+	Confirmation string   `json:"confirmation"`
 }
 type Checkbox struct {
 	Grid_x  int    `json:"grid_x"`
