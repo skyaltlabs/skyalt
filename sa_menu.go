@@ -298,6 +298,13 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 			y++
 		}
 
+		y++ //space
+
+		//delete Temp
+		if ui.Comp_buttonLight(1, y, 1, 1, "Delete Cache", Comp_buttonProp().SetError(true).Confirmation("Are you sure?", "confirm_delete_cache")) > 0 {
+			OsFolderRemove("temp")
+		}
+
 		ui.Dialog_end()
 	}
 
@@ -395,6 +402,16 @@ func (base *SABase) drawLauncher(app *SAApp, icon_rad float64) {
 					if ui.Comp_button(0, 1, 1, 1, OsTrnString(app.IDE, "**IDE**", "IDE"), Comp_buttonProp().Cd(CdPalette_B).DrawBack(false)) > 0 {
 						app.IDE = !app.IDE
 					}
+				}
+
+				if app.exe_run.Load() {
+					ui.Div_start(0, 0, 1, 1)
+					pl := ui.win.io.GetPalette()
+					ui.Paint_rect(0, 0.47, 1, 0.06, 0.2, pl.OnP, 0)
+
+					progress := 0.5 //............
+					ui.Paint_rect(0, 0.47, progress, 0.06, 0.2, pl.P, 0)
+					ui.Div_end()
 				}
 
 			}
