@@ -21,7 +21,6 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
-	"sync/atomic"
 
 	"github.com/go-audio/audio"
 )
@@ -66,8 +65,6 @@ type SAApp struct {
 	all_triggers_str []string
 
 	last_trigger_ticks int64
-
-	exe_run atomic.Bool
 }
 
 func (a *SAApp) init(base *SABase) {
@@ -227,19 +224,13 @@ func (app *SAApp) TryExecute() {
 	}
 
 	if hasTrigger {
-		app.exe_run.Store(true)
-		go app.exe() //in 2nd thread and keep GUI showing progressrunning
+		app.exe() //in 2nd thread and keep GUI showing progressrunning
 	}
 
 	app.last_trigger_ticks = OsTicks()
 }
 
 func (app *SAApp) exe() {
-
-	for _, nd := range app.all_nodes {
-		nd.ResetTriggers(true)
-	}
-
 	for _, nd := range app.all_nodes {
 		if nd.Code.IsTriggered() && !nd.IsBypassed() {
 			nd.Code.Execute()
@@ -247,13 +238,12 @@ func (app *SAApp) exe() {
 	}
 
 	for _, nd := range app.all_nodes {
-		nd.ResetTriggers(false)
+		nd.ResetTriggers()
 	}
 
 	app.graph.checkAndAddHistory()
 
 	app.last_trigger_ticks = 0 //test for new changes immidiatly
-	app.exe_run.Store(false)
 }
 
 func SAApp_getYellow() OsCd {
@@ -277,7 +267,7 @@ func (app *SAApp) RenderApp() {
 	app.root.renderLayout()
 }
 
-func (app *SAApp) renderIDE() {
+func (app *SAApp) renderAppWithColsRows() {
 
 	ui := app.base.ui
 

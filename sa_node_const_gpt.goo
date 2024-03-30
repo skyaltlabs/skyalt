@@ -74,8 +74,8 @@ type Microphone struct {
 
 type Net struct {
 }
-func (net *Net) DownloadFile(filePath string, url string) error {
-	//TBD
+func (net *Net) DownloadFile(dst_file string, src_addr string) error {
+	//TODO
 	return nil
 }
 
@@ -83,11 +83,11 @@ type Whispercpp struct {
 	Model string
 }
 func (w *Whispercpp) TranscribeBlob(data []byte) (string, error) {
-	//TBD
+	//TODO
 	return text
 }
 func (w *Whispercpp) TranscribeFile(filePath string) (string, error) {
-	//TBD
+	//TODO
 	return text
 }
 
@@ -99,7 +99,7 @@ type Llamacpp struct {
 	Model string
 }
 func (ll *Llamacpp) GetAnswer(messages []LlamaMessage) (string, error) {
-	//TBD
+	//TODO
 	return answer
 }
 
@@ -111,6 +111,6 @@ type Openai struct {
 	Model string
 }
 func (oai *Openai) GetAnswer(messages []OpenaiMessage) (string, error) {
-	//TBD
+	//TODO
 	return answer
 }

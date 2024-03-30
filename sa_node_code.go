@@ -25,7 +25,6 @@ import (
 	"go/parser"
 	"go/token"
 	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 
@@ -61,11 +60,11 @@ type SANodeCode struct {
 
 	output string //terminal
 
-	exeTimeSec float64
-
 	file_err error
 	exe_err  error
 	ans_err  error
+
+	job *SAJobOpenAI
 }
 
 func InitSANodeCode(node *SANode) SANodeCode {
@@ -288,10 +287,10 @@ func (ls *SANodeCode) GetAnswer() {
 		return
 	}
 
+	//build message array
 	messages := []SAServiceMsg{
 		{Role: "system", Content: "You are ChatGPT, an AI assistant. Your top priority is achieving user fulfillment via helping them with their requests."},
 	}
-
 	for i, msg := range ls.Messages {
 		//user
 		user := msg.User
@@ -312,25 +311,7 @@ func (ls *SANodeCode) GetAnswer() {
 
 	props := &SAServiceOpenAIProps{Model: "gpt-4-turbo-preview", Messages: messages}
 
-	oai, err := ls.node.app.base.services.GetOpenAI()
-	if err != nil {
-		ls.ans_err = err
-		return
-	}
-
-	go func() {
-		job := oai.AddJob(ls.node.app, props)
-		defer oai.RemoveJob(job)
-
-		answer, err := job.Run()
-		if err != nil {
-			ls.ans_err = err
-			return
-		}
-
-		//save
-		ls.Messages[len(ls.Messages)-1].Assistent = string(answer)
-	}()
+	ls.job = ls.node.app.base.jobs.AddOpenAI(ls.node.app, NewSANodePath(ls.node), props)
 }
 
 func (ls *SANodeCode) IsTriggered() bool {
@@ -348,139 +329,130 @@ func (ls *SANodeCode) GetFileName() string {
 }
 
 func (ls *SANodeCode) Execute() {
-	st := OsTime()
-
 	ls.exe_err = nil
 
 	//input
-	{
-		vars := make(map[string]interface{})
-		for _, prmNode := range ls.func_depends {
+	vars := make(map[string]interface{})
+	for _, prmNode := range ls.func_depends {
 
-			attrs := prmNode.Attrs
-			if prmNode.HasAttrNode() {
-				attrs = make(map[string]interface{})
-				attrs["node"] = prmNode.GetPathSplit()
+		attrs := prmNode.Attrs
+		if prmNode.HasAttrNode() {
+			attrs = make(map[string]interface{})
+			attrs["node"] = prmNode.GetPathSplit()
+		}
+
+		if prmNode.IsTypeCopy() {
+			//defaults
+			defRows := make(map[string]interface{})
+			for _, it := range prmNode.Subs {
+				defRows[it.Name] = it.Attrs
+			}
+			attrs["defRow"] = defRows
+
+			//rows
+			rows := make([]map[string]interface{}, len(prmNode.copySubs))
+			for i, it := range prmNode.copySubs {
+
+				rws := make(map[string]interface{})
+				for _, it := range it.Subs {
+					rws[it.Name] = it.Attrs
+				}
+				rows[i] = rws
+			}
+			attrs["rows"] = rows
+		}
+
+		vars[prmNode.GetPathSplit()] = attrs
+	}
+
+	inputJs, err := json.Marshal(vars)
+	if err != nil {
+		ls.exe_err = err
+		return
+	}
+
+	//run
+	ls.node.app.base.jobs.AddExe(ls.node.app, NewSANodePath(ls.node), "/temp/go/", ls.GetFileName(), inputJs)
+}
+
+func (ls *SANodeCode) SetOutput(outputJs []byte) {
+
+	var vars map[string]interface{}
+	err := json.Unmarshal(outputJs, &vars)
+	if err != nil {
+		ls.exe_err = err
+		return
+	}
+
+	for key, attrs := range vars {
+		prmNode := ls.node.FindNodeSplit(key)
+		if prmNode != nil {
+			if !prmNode.HasAttrNode() {
+				switch vv := attrs.(type) {
+				case map[string]interface{}:
+					prmNode.Attrs = vv
+				}
 			}
 
 			if prmNode.IsTypeCopy() {
-				//defaults
-				defRows := make(map[string]interface{})
-				for _, it := range prmNode.Subs {
-					defRows[it.Name] = it.Attrs
-				}
-				attrs["defRow"] = defRows
+				rw := prmNode.Attrs["rows"]
+				delete(prmNode.Attrs, "rows")
 
-				//rows
-				rows := make([]map[string]interface{}, len(prmNode.copySubs))
-				for i, it := range prmNode.copySubs {
+				rows, ok := rw.([]interface{})
+				if ok {
+					//alloc
+					copySubs := make([]*SANode, len(rows))
 
-					rws := make(map[string]interface{})
-					for _, it := range it.Subs {
-						rws[it.Name] = it.Attrs
-					}
-					rows[i] = rws
-				}
-				attrs["rows"] = rows
-			}
+					//set
+					for i, r := range rows {
 
-			vars[prmNode.GetPathSplit()] = attrs
-		}
-		inputJs, err := json.Marshal(vars)
-		if err != nil {
-			ls.exe_err = err
-			return
-		}
-
-		ls.node.app.base.services.SetJob(inputJs, ls.node.app)
-	}
-
-	//process
-	{
-		cmd := exec.Command("./temp/go/"+ls.GetFileName(), strconv.Itoa(ls.node.app.base.services.port))
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			ls.exe_err = errors.New(string(output))
-			return
-		}
-		ls.output = string(output)
-	}
-
-	//output
-	{
-		outputJs, outputErr := ls.node.app.base.services.GetResult()
-		if outputErr != nil {
-			ls.exe_err = outputErr
-			return
-		}
-
-		var vars map[string]interface{}
-		err := json.Unmarshal(outputJs, &vars)
-		if err != nil {
-			ls.exe_err = err
-			return
-		}
-
-		for key, attrs := range vars {
-			prmNode := ls.node.FindNodeSplit(key)
-			if prmNode != nil {
-				if !prmNode.HasAttrNode() {
-					switch vv := attrs.(type) {
-					case map[string]interface{}:
-						prmNode.Attrs = vv
-					}
-				}
-
-				if prmNode.IsTypeCopy() {
-					rw := prmNode.Attrs["rows"]
-					delete(prmNode.Attrs, "rows")
-
-					rows, ok := rw.([]interface{})
-					if ok {
-						//alloc
-						prmNode.copySubs = make([]*SANode, len(rows))
-
-						if !prmNode.changed { //compare attrs? ........................
-							prmNode.changed_inner = true
-						}
-
-						//set
-						for i, r := range rows {
-
-							vars, ok := r.(map[string]interface{})
-							if ok {
-								prmNode.copySubs[i], err = prmNode.Copy()
-								prmNode.copySubs[i].DeselectAll()
-								prmNode.copySubs[i].Name = strconv.Itoa(i)
-								prmNode.copySubs[i].Exe = "layout" //copy -> layout
-								if err == nil {
-									for key, attrs := range vars {
-										prmNode2 := prmNode.copySubs[i].FindNodeSplit(key)
-										if prmNode2 != nil {
-											if !prmNode2.HasAttrNode() {
-												switch vv := attrs.(type) {
-												case map[string]interface{}:
-													prmNode2.Attrs = vv
-												}
+						vars, ok := r.(map[string]interface{})
+						if ok {
+							copySubs[i], err = prmNode.Copy()
+							copySubs[i].DeselectAll()
+							copySubs[i].Name = strconv.Itoa(i)
+							copySubs[i].Exe = "layout" //copy -> layout
+							if err == nil {
+								for key, attrs := range vars {
+									prmNode2 := copySubs[i].FindNodeSplit(key)
+									if prmNode2 != nil {
+										if !prmNode2.HasAttrNode() {
+											switch vv := attrs.(type) {
+											case map[string]interface{}:
+												prmNode2.Attrs = vv
 											}
-										} else {
-											fmt.Println("Error: Node not found", key)
 										}
+									} else {
+										fmt.Println("Error: Node not found", key)
 									}
-									//prmNode.copySubs[i].Attrs = vars
 								}
+								//prmNode.copySubs[i].Attrs = vars
 							}
 						}
 					}
+
+					diff := len(prmNode.copySubs) != len(copySubs)
+					if !diff {
+						for i, nd := range prmNode.copySubs {
+							if !nd.CmpCopySub(copySubs[i]) {
+								diff = true
+								break
+							}
+						}
+					}
+
+					prmNode.copySubs = copySubs
+					prmNode.ResetTriggers() //button can be clicked
+
+					if diff {
+						prmNode.changed = true
+					}
 				}
-			} else {
-				fmt.Println("Error: Node not found", key)
 			}
+		} else {
+			fmt.Println("Error: Node not found", key)
 		}
 	}
-
-	ls.exeTimeSec = OsTime() - st
-	fmt.Printf("Executed node '%s' in %.3f\n", ls.node.Name, ls.exeTimeSec)
 }
 
 func (ls *SANodeCode) UseCodeFromAnswer(answer string) {
@@ -576,19 +548,11 @@ func (ls *SANodeCode) UpdateFile() {
 
 	//compile
 	if recompile || !OsFileExists("temp/go/"+fileName) {
-		cmd := exec.Command("go", "build", fileName+".go")
-		cmd.Dir = "temp/go/"
-
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			ls.file_err = errors.New(string(output))
-			return
-		}
+		ls.node.app.base.jobs.AddCompile(ls.node.app, NewSANodePath(ls.node), "temp/go/", fileName+".go")
 	}
 }
 
 func (ls *SANodeCode) buildCode() ([]byte, error) {
-
 	imports, err := ls.extractImports(ls.Code)
 	if err != nil {
 		return nil, err

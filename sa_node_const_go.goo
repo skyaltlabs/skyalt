@@ -275,6 +275,8 @@ func _send(url string, js []byte) ([]byte, error) {
 		return nil, fmt.Errorf("NewRequest() failed: %w", err)
 	}
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+G_JOB)
+
 
 	client := &http.Client{}
 	res, err := client.Do(req)
@@ -296,16 +298,23 @@ func _send(url string, js []byte) ([]byte, error) {
 }
 
 var G_SERVER_ADDR = "http://127.0.0.1:8080/"
+var G_JOB = ""
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Missing <port>")
+	if len(os.Args) < 3 {
+		fmt.Println("Missing <port> <job_id>")
 		return
 	}
 
 	G_PORT, err := strconv.Atoi(os.Args[1])
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Port:", err)
+		return
+	}
+
+	G_JOB = os.Args[2]
+	if G_JOB == "" {
+		fmt.Println("Missing G_JOB")
 		return
 	}
 

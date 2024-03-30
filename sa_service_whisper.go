@@ -95,25 +95,22 @@ func (p *SAServiceWhisperCppProps) Write(w *multipart.Writer) {
 }
 
 type SAServiceWhisperCpp struct {
-	services *SAServices
-	cmd      *exec.Cmd
-	addr     string //http://127.0.0.1:8080/
+	jobs *SAJobs
+	cmd  *exec.Cmd
+	addr string //http://127.0.0.1:8080/
 
-	cache      map[string][]byte //results
-	cache_lock sync.Mutex        //for cache
+	cache map[string][]byte //results
+	lock  sync.Mutex
 
 	last_setModel string
-
-	jobs_lock sync.Mutex
-	jobs      []*SAServiceWhisperCppJob
 }
 
 func SAServiceWhisperCpp_cachePath() string {
 	return "services/whisper.cpp.json"
 }
 
-func NewSAServiceWhisperCpp(services *SAServices, addr string, port string, init_model string) (*SAServiceWhisperCpp, error) {
-	wh := &SAServiceWhisperCpp{services: services}
+func NewSAServiceWhisperCpp(jobs *SAJobs, addr string, port string, init_model string) (*SAServiceWhisperCpp, error) {
+	wh := &SAServiceWhisperCpp{jobs: jobs}
 
 	wh.addr = addr + ":" + port + "/"
 
@@ -174,56 +171,83 @@ func (wh *SAServiceWhisperCpp) Destroy() {
 	}
 }
 
-func (wh *SAServiceWhisperCpp) FindCache(model string, blob OsBlob, propsHash OsHash) ([]byte, bool) {
-	wh.cache_lock.Lock()
-	defer wh.cache_lock.Unlock()
-
+func (wh *SAServiceWhisperCpp) findCache(model string, blob OsBlob, propsHash OsHash) ([]byte, bool) {
 	str, found := wh.cache[model+blob.hash.Hex()+propsHash.Hex()]
 	return str, found
 }
 func (wh *SAServiceWhisperCpp) addCache(model string, blob OsBlob, propsHash OsHash, value []byte) {
-	wh.cache_lock.Lock()
-	defer wh.cache_lock.Unlock()
-
 	wh.cache[model+blob.hash.Hex()+propsHash.Hex()] = value
 }
 
-func (wh *SAServiceWhisperCpp) FindJob(app *SAApp) *SAServiceWhisperCppJob {
-	wh.jobs_lock.Lock()
-	defer wh.jobs_lock.Unlock()
+func (wh *SAServiceWhisperCpp) Transcribe(model string, blob OsBlob, props *SAServiceWhisperCppProps) ([]byte, error) {
+	wh.lock.Lock()
+	defer wh.lock.Unlock()
 
-	for _, jb := range wh.jobs {
-		if jb.app == app {
-			return jb
+	//find
+	propsHash, err := props.Hash()
+	if err != nil {
+		return nil, fmt.Errorf("Hash() failed: %w", err)
+	}
+	str, found := wh.findCache(model, blob, propsHash)
+	if found {
+		return str, nil
+	}
+
+	//set model
+	if model != wh.last_setModel {
+		err := wh.setModel(model)
+		if err != nil {
+			return nil, fmt.Errorf("setModel() failed: %w", err)
 		}
 	}
 
-	return nil
-}
-
-func (wh *SAServiceWhisperCpp) AddJob(app *SAApp, model string, blob OsBlob, props *SAServiceWhisperCppProps) *SAServiceWhisperCppJob {
-	wh.jobs_lock.Lock()
-	defer wh.jobs_lock.Unlock()
-
-	//add
-	job := &SAServiceWhisperCppJob{wh: wh, app: app, model: model, blob: blob, props: props}
-	wh.jobs = append(wh.jobs, job)
-
-	return job
-}
-
-func (wh *SAServiceWhisperCpp) RemoveJob(job *SAServiceWhisperCppJob) bool {
-	wh.jobs_lock.Lock()
-	defer wh.jobs_lock.Unlock()
-
-	for i, jb := range wh.jobs {
-		if jb == job {
-			wh.jobs = append(wh.jobs[:i], wh.jobs[i+1:]...) //remove
-			return true
-		}
+	//translate
+	out, err := wh.transcribe(blob, props)
+	if err != nil {
+		return nil, fmt.Errorf("transcribe() failed: %w", err)
 	}
 
-	return false
+	wh.addCache(model, blob, propsHash, out)
+	return out, nil
+}
+
+func (wh *SAServiceWhisperCpp) transcribe(blob OsBlob, props *SAServiceWhisperCppProps) ([]byte, error) {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	//set parameters
+	{
+		part, err := writer.CreateFormFile("file", "audio.wav")
+		if err != nil {
+			return nil, fmt.Errorf("CreateFormFile() failed: %w", err)
+		}
+		part.Write(blob.data)
+		props.Write(writer)
+	}
+	writer.Close()
+
+	req, err := http.NewRequest(http.MethodPost, wh.addr+"inference", body)
+	if err != nil {
+		return nil, fmt.Errorf("NewRequest() failed: %w", err)
+	}
+	req.Header.Add("Content-Type", writer.FormDataContentType())
+
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("Do() failed: %w", err)
+	}
+
+	resBody, err := io.ReadAll(res.Body) //job.close .......
+	if err != nil {
+		return nil, fmt.Errorf("ReadAll() failed: %w", err)
+	}
+
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("statusCode != 200, response: %s", resBody)
+	}
+
+	return resBody, nil
 }
 
 func (wh *SAServiceWhisperCpp) setModel(model string) error {
@@ -256,84 +280,4 @@ func (wh *SAServiceWhisperCpp) setModel(model string) error {
 
 	wh.last_setModel = model
 	return nil
-}
-
-type SAServiceWhisperCppJob struct {
-	wh  *SAServiceWhisperCpp
-	app *SAApp
-
-	model  string
-	blob   OsBlob
-	props  *SAServiceWhisperCppProps
-	answer []byte
-
-	close bool
-}
-
-func (job *SAServiceWhisperCppJob) Run() ([]byte, error) {
-	//find
-	propsHash, err := job.props.Hash()
-	if err != nil {
-		return nil, fmt.Errorf("Hash() failed: %w", err)
-	}
-	str, found := job.wh.FindCache(job.model, job.blob, propsHash)
-	if found {
-		return str, nil
-	}
-
-	//set model
-	if job.model != job.wh.last_setModel {
-		err := job.wh.setModel(job.model)
-		if err != nil {
-			return nil, fmt.Errorf("setModel() failed: %w", err)
-		}
-	}
-
-	//translate
-	out, err := job.transcribe(job.blob, job.props)
-	if err != nil {
-		return nil, fmt.Errorf("transcribe() failed: %w", err)
-	}
-
-	job.wh.addCache(job.model, job.blob, propsHash, out)
-	return out, nil
-}
-
-func (job *SAServiceWhisperCppJob) transcribe(blob OsBlob, props *SAServiceWhisperCppProps) ([]byte, error) {
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-
-	//set parameters
-	{
-		part, err := writer.CreateFormFile("file", "audio.wav")
-		if err != nil {
-			return nil, fmt.Errorf("CreateFormFile() failed: %w", err)
-		}
-		part.Write(blob.data)
-		props.Write(writer)
-	}
-	writer.Close()
-
-	req, err := http.NewRequest(http.MethodPost, job.wh.addr+"inference", body)
-	if err != nil {
-		return nil, fmt.Errorf("NewRequest() failed: %w", err)
-	}
-	req.Header.Add("Content-Type", writer.FormDataContentType())
-
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("Do() failed: %w", err)
-	}
-
-	resBody, err := io.ReadAll(res.Body) //job.close .......
-	if err != nil {
-		return nil, fmt.Errorf("ReadAll() failed: %w", err)
-	}
-
-	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("statusCode != 200, response: %s", resBody)
-	}
-
-	return resBody, nil
 }

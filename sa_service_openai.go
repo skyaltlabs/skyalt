@@ -50,20 +50,17 @@ func (p *SAServiceOpenAIProps) Hash() (OsHash, error) {
 }
 
 type SAServiceOpenAI struct {
-	services   *SAServices
-	cache      map[string][]byte //results
-	cache_lock sync.Mutex        //for cache
-
-	jobs_lock sync.Mutex
-	jobs      []*SAServiceOpenAIJob
+	jobs  *SAJobs
+	cache map[string][]byte //results
+	lock  sync.Mutex
 }
 
 func SAServiceOpenAI_cachePath() string {
 	return "services/openai.json"
 }
 
-func NewSAServiceOpenAI(services *SAServices) *SAServiceOpenAI {
-	oai := &SAServiceOpenAI{services: services}
+func NewSAServiceOpenAI(jobs *SAJobs) *SAServiceOpenAI {
+	oai := &SAServiceOpenAI{jobs: jobs}
 
 	oai.cache = make(map[string][]byte)
 
@@ -89,89 +86,41 @@ func (oai *SAServiceOpenAI) Destroy() {
 }
 
 func (oai *SAServiceOpenAI) FindCache(propsHash OsHash) ([]byte, bool) {
-	oai.cache_lock.Lock()
-	defer oai.cache_lock.Unlock()
-
 	str, found := oai.cache[propsHash.Hex()]
 	return str, found
 }
 func (oai *SAServiceOpenAI) addCache(propsHash OsHash, value []byte) {
-	oai.cache_lock.Lock()
-	defer oai.cache_lock.Unlock()
-
 	oai.cache[propsHash.Hex()] = value
 }
 
-func (oai *SAServiceOpenAI) FindJob(app *SAApp) *SAServiceOpenAIJob {
-	oai.jobs_lock.Lock()
-	defer oai.jobs_lock.Unlock()
+func (oai *SAServiceOpenAI) Complete(props *SAServiceOpenAIProps, wip_answer *string, stop *bool) ([]byte, error) {
 
-	for _, jb := range oai.jobs {
-		if jb.app == app {
-			return jb
-		}
-	}
+	oai.lock.Lock()
+	defer oai.lock.Unlock()
 
-	return nil
-}
-
-func (oai *SAServiceOpenAI) AddJob(app *SAApp, props *SAServiceOpenAIProps) *SAServiceOpenAIJob {
-	oai.jobs_lock.Lock()
-	defer oai.jobs_lock.Unlock()
-
-	//add
-	job := &SAServiceOpenAIJob{openai: oai, app: app, props: props}
-	oai.jobs = append(oai.jobs, job)
-
-	return job
-}
-
-func (oai *SAServiceOpenAI) RemoveJob(job *SAServiceOpenAIJob) bool {
-	oai.jobs_lock.Lock()
-	defer oai.jobs_lock.Unlock()
-
-	for i, jb := range oai.jobs {
-		if jb == job {
-			oai.jobs = append(oai.jobs[:i], oai.jobs[i+1:]...) //remove
-			return true
-		}
-	}
-
-	return false
-}
-
-type SAServiceOpenAIJob struct {
-	openai *SAServiceOpenAI
-	app    *SAApp
-	props  *SAServiceOpenAIProps
-	answer string
-	close  bool
-}
-
-func (job *SAServiceOpenAIJob) Run() ([]byte, error) {
 	//find
-	propsHash, err := job.props.Hash()
+	propsHash, err := props.Hash()
 	if err != nil {
 		return nil, fmt.Errorf("Hash() failed: %w", err)
 	}
-	str, found := job.openai.FindCache(propsHash)
+	str, found := oai.FindCache(propsHash)
 	if found {
 		return str, nil
 	}
 
-	out, err := job.complete(job.props)
+	out, err := oai.complete(props, wip_answer, stop)
 	if err != nil {
 		return nil, fmt.Errorf("complete() failed: %w", err)
 	}
 
-	job.openai.addCache(propsHash, out)
+	oai.addCache(propsHash, out)
 	return out, nil
 }
 
-func (job *SAServiceOpenAIJob) complete(props *SAServiceOpenAIProps) ([]byte, error) {
+func (oai *SAServiceOpenAI) complete(props *SAServiceOpenAIProps, wip_answer *string, stop *bool) ([]byte, error) {
 	props.Stream = true
 
-	skey := job.openai.services.ui.win.io.ini.OpenAI_key
+	skey := oai.jobs.base.ui.win.io.ini.OpenAI_key
 	if skey == "" {
 		return nil, fmt.Errorf("OpenAI API key is not set")
 	}
@@ -200,7 +149,7 @@ func (job *SAServiceOpenAIJob) complete(props *SAServiceOpenAIProps) ([]byte, er
 	}
 	defer res.Body.Close()
 
-	answer, err := SAService_parseStream(res, &job.answer, &job.close)
+	answer, err := SAService_parseStream(res, wip_answer, stop)
 	if err != nil {
 		return nil, err
 	}

@@ -68,8 +68,7 @@ type SANode struct {
 
 	temp_mic_data audio.IntBuffer
 
-	changed       bool
-	changed_inner bool
+	changed bool
 
 	db_time DiskDbTime
 	//tableCache [][]*SANode
@@ -201,27 +200,23 @@ func (node *SANode) IsTriggered() bool {
 	return false
 }
 
-func (node *SANode) ResetTriggers(inner bool) {
+func (node *SANode) ResetTriggers() {
 
-	if inner {
-		node.changed_inner = false
-	} else {
-		node.changed = node.changed_inner
+	node.changed = false //node.changed_inner
 
-		if strings.EqualFold(node.Exe, "button") {
-			node.Attrs["clicked"] = false
-		}
+	if strings.EqualFold(node.Exe, "button") {
+		node.Attrs["clicked"] = false
 	}
 
 	if node.IsTypeCopy() {
 		for _, nd := range node.copySubs {
-			nd.ResetTriggers(inner)
+			nd.ResetTriggers()
 		}
 	}
 
 	if node.HasNodeSubs() {
 		for _, nd := range node.Subs {
-			nd.ResetTriggers(inner)
+			nd.ResetTriggers()
 		}
 	}
 }
@@ -280,6 +275,36 @@ func (node *SANode) Save(path string) error {
 	}
 
 	return nil
+}
+
+func (a *SANode) CmpCopySub(b *SANode) bool {
+	if a.Name != b.Name || a.Exe != b.Exe {
+		return false
+	}
+
+	if len(a.Attrs) != len(b.Attrs) {
+		return false
+	}
+	for key, itA := range a.Attrs {
+		if strings.HasPrefix(key, "grid_") {
+			continue
+		}
+		//if !reflect.DeepEqual(itA, itB) {
+		if fmt.Sprintf("%v", itA) != fmt.Sprintf("%v", b.Attrs[key]) {
+			return false
+		}
+	}
+
+	if len(a.Subs) != len(b.Subs) {
+		return false
+	}
+	for i, itA := range a.Subs {
+		if !itA.CmpCopySub(b.Subs[i]) {
+			return false
+		}
+	}
+
+	return true
 }
 
 /*func (a *SANode) Cmp(b *SANode) bool {

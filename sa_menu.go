@@ -404,12 +404,12 @@ func (base *SABase) drawLauncher(app *SAApp, icon_rad float64) {
 					}
 				}
 
-				if app.exe_run.Load() {
+				_, progress := base.jobs.FindAppProgress(app)
+				if progress >= 0 {
 					ui.Div_start(0, 0, 1, 1)
 					pl := ui.win.io.GetPalette()
 					ui.Paint_rect(0, 0.47, 1, 0.06, 0.2, pl.OnP, 0)
 
-					progress := 0.5 //............
 					ui.Paint_rect(0, 0.47, progress, 0.06, 0.2, pl.P, 0)
 					ui.Div_end()
 				}

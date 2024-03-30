@@ -26,30 +26,20 @@ import (
 	"net/url"
 	"path/filepath"
 	"strconv"
-	"sync"
+	"strings"
+	"time"
 )
 
 type SAServices struct {
-	ui     *Ui
+	base   *SABase
 	port   int
 	server *http.Server
 
 	online bool
-
-	whisperCpp *SAServiceWhisperCpp
-	llamaCpp   *SAServiceLLamaCpp
-	oai        *SAServiceOpenAI
-	net        *SAServiceNet
-
-	job_str       []byte
-	job_app       *SAApp
-	job_result    []byte
-	job_result_wg sync.WaitGroup
-	job_err       error
 }
 
-func NewSAServices(ui *Ui) *SAServices {
-	srv := &SAServices{ui: ui}
+func NewSAServices(base *SABase) *SAServices {
+	srv := &SAServices{base: base}
 	srv.port = 8080
 
 	srv.Run(srv.port)
@@ -57,127 +47,103 @@ func NewSAServices(ui *Ui) *SAServices {
 }
 
 func (srv *SAServices) Destroy() {
-	if srv.whisperCpp != nil {
-		srv.whisperCpp.Destroy()
-	}
-	if srv.llamaCpp != nil {
-		srv.llamaCpp.Destroy()
-	}
-	if srv.oai != nil {
-		srv.oai.Destroy()
-	}
-	if srv.net != nil {
-		srv.net.Destroy()
-	}
-
 	srv.server.Shutdown(context.Background())
 }
 
-func (srv *SAServices) SetJob(job []byte, app *SAApp) {
-	srv.job_str = job
-	srv.job_app = app
-	srv.job_err = nil
-	srv.job_result_wg.Add(1)
-}
+func _SAServices_getAuthID(r *http.Request) (string, error) {
+	auth := r.Header.Get("Authorization")
 
-func (srv *SAServices) GetResult() ([]byte, error) {
-	srv.job_result_wg.Wait()
-	return srv.job_result, srv.job_err
-}
-
-func (srv *SAServices) GetWhisper(init_model string) (*SAServiceWhisperCpp, error) {
-	var err error
-	if srv.whisperCpp == nil {
-		srv.whisperCpp, err = NewSAServiceWhisperCpp(srv, "http://127.0.0.1", "8090", init_model)
-	}
-	return srv.whisperCpp, err
-}
-
-func (srv *SAServices) GetLLama(init_model string) (*SAServiceLLamaCpp, error) {
-	var err error
-	if srv.llamaCpp == nil {
-		srv.llamaCpp, err = NewSAServiceLLamaCpp(srv, "http://127.0.0.1", "8091", init_model)
-	}
-	return srv.llamaCpp, err
-}
-
-func (srv *SAServices) GetOpenAI() (*SAServiceOpenAI, error) {
-	if !srv.online {
-		return nil, fmt.Errorf("internet is disabled(Menu:Settings:Internet Connection)")
+	var found bool
+	auth, found = strings.CutPrefix(auth, "Bearer ")
+	if !found {
+		return "", fmt.Errorf("must start with 'Bearer'")
 	}
 
-	if srv.oai == nil {
-		srv.oai = NewSAServiceOpenAI(srv)
-	}
-	return srv.oai, nil
+	return auth, nil
 }
 
-func (srv *SAServices) GetDownloader() (*SAServiceNet, error) {
-	if !srv.online {
-		return nil, fmt.Errorf("internet is disabled(Menu:Settings:Internet Connection)")
-	}
-
-	if srv.net == nil {
-		srv.net = NewSAServiceNet(srv)
-	}
-	return srv.net, nil
-}
-
-func (srv *SAServices) Render() {
-	//dialog layout ...
-	//running on/off
-	//how long it's running
-	//number of requests
-	//avg. request time
-}
-
-func (srv *SAServices) Tick() {
-	/*if srv.whisper_cpp != nil {
-		//...
-	}
-	if srv.llamaCpp != nil {
-		//...
-	}*/
-}
+//handler funcs access k 1st thread struct: FindNodeSplit() .......................................
+//- make copies of nodes(whisper, llama, net) into SAJobExe ...
 
 func (srv *SAServices) handlerGetJob(w http.ResponseWriter, r *http.Request) {
-	_, err := io.ReadAll(r.Body)
+	job_id, err := _SAServices_getAuthID(r)
+	if err != nil {
+		http.Error(w, "Auth: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	jb := srv.base.jobs.FindJobExe(job_id)
+	if jb == nil {
+		http.Error(w, "exe job not found", http.StatusInternalServerError)
+		return
+	}
+
+	_, err = io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
 		return
 	}
 
-	w.Write(srv.job_str)
+	w.Write(jb.input)
 }
 
 func (srv *SAServices) handlerReturnResult(w http.ResponseWriter, r *http.Request) {
+	job_id, err := _SAServices_getAuthID(r)
+	if err != nil {
+		http.Error(w, "Auth: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	jb := srv.base.jobs.FindJobExe(job_id)
+	if jb == nil {
+		http.Error(w, "exe job not found", http.StatusInternalServerError)
+		return
+	}
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
 		return
 	}
 
-	srv.job_result = body
-	srv.job_err = nil
-	srv.job_result_wg.Done()
+	jb.output = body
 
 	w.Write([]byte("{}"))
 }
+
 func (srv *SAServices) handlerReturnError(w http.ResponseWriter, r *http.Request) {
+	job_id, err := _SAServices_getAuthID(r)
+	if err != nil {
+		http.Error(w, "Auth: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	jb := srv.base.jobs.FindJobExe(job_id)
+	if jb == nil {
+		http.Error(w, "exe job not found", http.StatusInternalServerError)
+		return
+	}
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
 		return
 	}
 
-	srv.job_result = nil
-	srv.job_err = errors.New(string(body))
-	srv.job_result_wg.Done()
+	jb.outErr = errors.New(string(body))
 
 	w.Write([]byte("{}"))
 }
 
 func (srv *SAServices) handlerWhisper(w http.ResponseWriter, r *http.Request) {
+	job_id, err := _SAServices_getAuthID(r)
+	if err != nil {
+		http.Error(w, "Auth: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	jb := srv.base.jobs.FindJobExe(job_id)
+	if jb == nil {
+		http.Error(w, "exe job not found", http.StatusInternalServerError)
+		return
+	}
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
@@ -198,11 +164,7 @@ func (srv *SAServices) handlerWhisper(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//find node
-	if srv.job_app == nil {
-		http.Error(w, "job_app is nil", http.StatusInternalServerError)
-		return
-	}
-	node := srv.job_app.root.FindNodeSplit(st.Node)
+	node := jb.app.root.FindNodeSplit(st.Node)
 	if node == nil {
 		http.Error(w, "Node not found", http.StatusInternalServerError)
 		return
@@ -225,28 +187,17 @@ func (srv *SAServices) handlerWhisper(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//translate
+	//run & wait
 	model := node.GetAttrString("model", "")
-	wh, err := srv.GetWhisper(model)
-	if err != nil {
-		http.Error(w, "GetWhisper() failed: "+err.Error(), http.StatusInternalServerError)
-		return
+	jbw := srv.base.jobs.AddWhisper(node.app, NewSANodePath(node), model, InitOsBlob(st.Data), &props)
+	for !jbw.done.Load() {
+		time.Sleep(10 * time.Millisecond)
 	}
 
-	job := wh.AddJob(srv.job_app, model, InitOsBlob(st.Data), &props)
-	defer wh.RemoveJob(job)
-
-	answer, err := job.Run()
-	if err != nil {
-		http.Error(w, "Complete() failed: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(answer)
+	w.Write(jbw.output)
 }
 
-func (srv *SAServices) _prepareMessages(body []byte) ([]SAServiceMsg, *SANode, error) {
-
+func (srv *SAServices) _prepareMessages(jb *SAJobExe, body []byte) ([]SAServiceMsg, *SANode, error) {
 	//get base struct
 	type St struct {
 		Node     string         `json:"node"`
@@ -259,10 +210,7 @@ func (srv *SAServices) _prepareMessages(body []byte) ([]SAServiceMsg, *SANode, e
 	}
 
 	//find node
-	if srv.job_app == nil {
-		return nil, nil, fmt.Errorf("job_app failed: %w", err)
-	}
-	node := srv.job_app.root.FindNodeSplit(st.Node)
+	node := jb.app.root.FindNodeSplit(st.Node)
 	if node == nil {
 		return nil, nil, fmt.Errorf("node '%s' not found", st.Node)
 	}
@@ -271,6 +219,17 @@ func (srv *SAServices) _prepareMessages(body []byte) ([]SAServiceMsg, *SANode, e
 }
 
 func (srv *SAServices) handlerLLama(w http.ResponseWriter, r *http.Request) {
+	job_id, err := _SAServices_getAuthID(r)
+	if err != nil {
+		http.Error(w, "Auth: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	jb := srv.base.jobs.FindJobExe(job_id)
+	if jb == nil {
+		http.Error(w, "exe job not found", http.StatusInternalServerError)
+		return
+	}
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
@@ -278,7 +237,7 @@ func (srv *SAServices) handlerLLama(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//extract
-	msgs, node, err := srv._prepareMessages(body)
+	msgs, node, err := srv._prepareMessages(jb, body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -304,26 +263,27 @@ func (srv *SAServices) handlerLLama(w http.ResponseWriter, r *http.Request) {
 	props.Model = node.GetAttrString("model", "")
 	props.Messages = msgs
 
-	//complete
-	lm, err := srv.GetLLama(props.Model)
-	if err != nil {
-		http.Error(w, "GetLLama() failed: "+err.Error(), http.StatusInternalServerError)
-		return
+	//run & wait
+	jbw := srv.base.jobs.AddLLama(node.app, NewSANodePath(node), &props)
+	for !jbw.done.Load() {
+		time.Sleep(10 * time.Millisecond)
 	}
 
-	job := lm.AddJob(srv.job_app, &props)
-	defer lm.RemoveJob(job)
-
-	answer, err := job.Run()
-	if err != nil {
-		http.Error(w, "Complete() failed: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(answer)
+	w.Write(jbw.output)
 }
 
 func (srv *SAServices) handlerOpenAI(w http.ResponseWriter, r *http.Request) {
+	job_id, err := _SAServices_getAuthID(r)
+	if err != nil {
+		http.Error(w, "Auth: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	jb := srv.base.jobs.FindJobExe(job_id)
+	if jb == nil {
+		http.Error(w, "exe job not found", http.StatusInternalServerError)
+		return
+	}
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
@@ -331,7 +291,7 @@ func (srv *SAServices) handlerOpenAI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//extract
-	msgs, node, err := srv._prepareMessages(body)
+	msgs, node, err := srv._prepareMessages(jb, body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -344,26 +304,27 @@ func (srv *SAServices) handlerOpenAI(w http.ResponseWriter, r *http.Request) {
 	props := &SAServiceOpenAIProps{Model: node.GetAttrString("model", "gpt-3.5-turbo"), Messages: msgs}
 	//more properties ..........
 
-	//complete
-	oai, err := srv.GetOpenAI()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	//run & wait
+	jbw := srv.base.jobs.AddOpenAI(node.app, NewSANodePath(node), props)
+	for !jbw.done.Load() {
+		time.Sleep(10 * time.Millisecond)
 	}
 
-	job := oai.AddJob(srv.job_app, props)
-	defer oai.RemoveJob(job)
-
-	answer, err := job.Run() //slots or one at the time => lock ............................
-	if err != nil {
-		http.Error(w, "Complete() failed: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(answer)
+	w.Write(jbw.output)
 }
 
 func (srv *SAServices) handlerNetwork(w http.ResponseWriter, r *http.Request) {
+	job_id, err := _SAServices_getAuthID(r)
+	if err != nil {
+		http.Error(w, "Auth: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	jb := srv.base.jobs.FindJobExe(job_id)
+	if jb == nil {
+		http.Error(w, "exe job not found", http.StatusInternalServerError)
+		return
+	}
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
@@ -385,11 +346,7 @@ func (srv *SAServices) handlerNetwork(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//find node
-	if srv.job_app == nil {
-		http.Error(w, "job_app is nil", http.StatusInternalServerError)
-		return
-	}
-	node := srv.job_app.root.FindNodeSplit(st.Node)
+	node := jb.app.root.FindNodeSplit(st.Node)
 	if node == nil {
 		http.Error(w, "Node not found", http.StatusInternalServerError)
 		return
@@ -400,12 +357,6 @@ func (srv *SAServices) handlerNetwork(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//build properties
-	down, err := srv.GetDownloader()
-	if err != nil {
-		http.Error(w, "GetDownloader() failed: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	u, err := url.Parse(node.GetAttrString("url", ""))
 	if err != nil {
 		http.Error(w, "Parse() failed: "+err.Error(), http.StatusInternalServerError)
@@ -414,20 +365,10 @@ func (srv *SAServices) handlerNetwork(w http.ResponseWriter, r *http.Request) {
 
 	u.Path = filepath.Join(u.Path, st.Url)
 
-	//err := net.DownloadFile(filePath, net.Url+db___model.Label+".bin") .................................
+	//run & wait
+	srv.base.jobs.AddNet(node.app, NewSANodePath(node), st.File_path, u.String())
 
-	job := down.AddJob(srv.job_app, st.File_path, u.String()) //file or RAM? ...
-	defer down.RemoveJob(job)
-
-	//check if file already exist or wait for confirmation? ........ if size is over 10MB? ...
-
-	err = job.Run()
-	if err != nil {
-		http.Error(w, "Complete() failed: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	//w.Write(outJs)	//.....
+	w.Write([]byte("{}"))
 }
 
 func (srv *SAServices) Run(port int) {
@@ -447,100 +388,4 @@ func (srv *SAServices) Run(port int) {
 			return
 		}
 	}()
-}
-
-func (srv *SAServices) IsJobRunning(app *SAApp) bool {
-
-	if srv.net != nil && srv.net.FindJob(app) != nil {
-		return true
-	}
-
-	if srv.llamaCpp != nil && srv.llamaCpp.FindJob(app) != nil {
-		return true
-	}
-
-	if srv.oai != nil && srv.oai.FindJob(app) != nil {
-		return true
-	}
-
-	if srv.whisperCpp != nil && srv.whisperCpp.FindJob(app) != nil {
-		return true
-	}
-
-	return false
-}
-
-func (srv *SAServices) RenderJobs(app *SAApp) {
-	ui := srv.ui
-
-	//net
-	if srv.net != nil {
-		if job := srv.net.FindJob(app); job != nil {
-			ui.Div_colMax(0, 100)
-			ui.Div_colMax(1, 5)
-			ui.Div_colMax(2, 5)
-			ui.Div_colMax(3, 100)
-
-			ui.Comp_text(1, 0, 2, 1, fmt.Sprintf("Downloading: %s", job.url), 1)
-			ui.Comp_text(1, 1, 2, 1, job.GetStats(), 1)
-
-			if ui.Comp_button(1, 3, 1, 1, "Stop", Comp_buttonProp()) > 0 {
-				job.close = true
-			}
-
-			if ui.Comp_button(2, 3, 1, 1, "Stop & Delete file", Comp_buttonProp()) > 0 {
-				job.close_and_delete = true
-			}
-		}
-	}
-
-	//llama
-	if srv.llamaCpp != nil {
-		if job := srv.llamaCpp.FindJob(app); job != nil {
-			ui.Div_colMax(0, 100)
-			ui.Div_colMax(1, 20)
-			ui.Div_colMax(2, 100)
-			ui.Div_rowMax(1, 10)
-
-			ui.Comp_text(1, 0, 1, 1, "LLama is answering", 0)
-			ui.Comp_textSelectMulti(1, 1, 1, 1, job.answer, OsV2{0, 0}, true, true, false)
-
-			if ui.Comp_button(1, 2, 1, 1, "Cancel", Comp_buttonProp()) > 0 {
-				job.close = true
-			}
-		}
-	}
-
-	//openai
-	if srv.oai != nil {
-		if job := srv.oai.FindJob(app); job != nil {
-			ui.Div_colMax(0, 100)
-			ui.Div_colMax(1, 20)
-			ui.Div_colMax(2, 100)
-			ui.Div_rowMax(1, 10)
-
-			ui.Comp_text(1, 0, 1, 1, "OpenAI is answering ...", 0)
-			ui.Comp_textSelectMulti(1, 1, 1, 1, job.answer, OsV2{0, 0}, true, true, false)
-
-			if ui.Comp_button(1, 2, 1, 1, "Cancel", Comp_buttonProp()) > 0 {
-				job.close = true
-			}
-		}
-	}
-
-	//whisper
-	if srv.whisperCpp != nil {
-		if job := srv.whisperCpp.FindJob(app); job != nil {
-			ui.Div_colMax(0, 100)
-			ui.Div_colMax(1, 20)
-			ui.Div_colMax(2, 100)
-			ui.Div_rowMax(1, 10)
-
-			ui.Comp_text(1, 0, 1, 1, "Whisper is transcribing ...", 0)
-
-			if ui.Comp_button(1, 2, 1, 1, "Cancel", Comp_buttonProp()) > 0 {
-				job.close = true
-			}
-		}
-	}
 }

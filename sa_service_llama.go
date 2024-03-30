@@ -70,23 +70,20 @@ func (p *SAServiceLLamaCppProps) Hash() (OsHash, error) {
 }
 
 type SAServiceLLamaCpp struct {
-	services *SAServices
-	cmd      *exec.Cmd
-	addr     string //http://127.0.0.1:8080/
+	jobs *SAJobs
+	cmd  *exec.Cmd
+	addr string //http://127.0.0.1:8080/
 
-	cache      map[string][]byte //results
-	cache_lock sync.Mutex        //for cache
-
-	jobs_lock sync.Mutex
-	jobs      []*SAServiceLLamaCppJob
+	cache map[string][]byte //results
+	lock  sync.Mutex
 }
 
 func SAServiceLLamaCpp_cachePath() string {
 	return "services/llama.cpp.json"
 }
 
-func NewSAServiceLLamaCpp(services *SAServices, addr string, port string, init_model string) (*SAServiceLLamaCpp, error) {
-	llama := &SAServiceLLamaCpp{services: services}
+func NewSAServiceLLamaCpp(jobs *SAJobs, addr string, port string, init_model string) (*SAServiceLLamaCpp, error) {
+	llama := &SAServiceLLamaCpp{jobs: jobs}
 
 	llama.addr = addr + ":" + port + "/"
 
@@ -139,17 +136,11 @@ func (llama *SAServiceLLamaCpp) Destroy() {
 	}
 }
 
-func (llama *SAServiceLLamaCpp) FindCache(propsHash OsHash) ([]byte, bool) {
-	llama.cache_lock.Lock()
-	defer llama.cache_lock.Unlock()
-
+func (llama *SAServiceLLamaCpp) findCache(propsHash OsHash) ([]byte, bool) {
 	str, found := llama.cache[propsHash.Hex()]
 	return str, found
 }
 func (llama *SAServiceLLamaCpp) addCache(propsHash OsHash, value []byte) {
-	llama.cache_lock.Lock()
-	defer llama.cache_lock.Unlock()
-
 	llama.cache[propsHash.Hex()] = value
 }
 
@@ -173,79 +164,35 @@ func (llama *SAServiceLLamaCpp) getHealth() error {
 	return nil
 }
 
-func (llama *SAServiceLLamaCpp) FindJob(app *SAApp) *SAServiceLLamaCppJob {
-	llama.jobs_lock.Lock()
-	defer llama.jobs_lock.Unlock()
-
-	for _, jb := range llama.jobs {
-		if jb.app == app {
-			return jb
-		}
-	}
-
-	return nil
-}
-
-func (llama *SAServiceLLamaCpp) AddJob(app *SAApp, props *SAServiceLLamaCppProps) *SAServiceLLamaCppJob {
-	llama.jobs_lock.Lock()
-	defer llama.jobs_lock.Unlock()
-
-	//add
-	job := &SAServiceLLamaCppJob{llama: llama, app: app, props: props}
-	llama.jobs = append(llama.jobs, job)
-
-	return job
-}
-
-func (llamah *SAServiceLLamaCpp) RemoveJob(job *SAServiceLLamaCppJob) bool {
-	llamah.jobs_lock.Lock()
-	defer llamah.jobs_lock.Unlock()
-
-	for i, jb := range llamah.jobs {
-		if jb == job {
-			llamah.jobs = append(llamah.jobs[:i], llamah.jobs[i+1:]...) //remove
-			return true
-		}
-	}
-
-	return false
-}
-
-type SAServiceLLamaCppJob struct {
-	llama  *SAServiceLLamaCpp
-	app    *SAApp
-	props  *SAServiceLLamaCppProps
-	answer string
-	close  bool
-}
-
-func (job *SAServiceLLamaCppJob) Run() ([]byte, error) {
+func (llama *SAServiceLLamaCpp) Complete(props *SAServiceLLamaCppProps, wip_answer *string, stop *bool) ([]byte, error) {
+	llama.lock.Lock()
+	defer llama.lock.Unlock()
 
 	//add role "system" as node attribute ... same for openai node ..............
 	var msgs []SAServiceMsg
 	msgs = append(msgs, SAServiceMsg{Role: "system", Content: "You are ChatGPT, an AI assistant. Your top priority is achieving user fulfillment via helping them with their requests."})
-	msgs = append(msgs, job.props.Messages...)
-	job.props.Messages = msgs
+	msgs = append(msgs, props.Messages...)
+	props.Messages = msgs
 
 	//find
-	propsHash, err := job.props.Hash()
+	propsHash, err := props.Hash()
 	if err != nil {
 		return nil, fmt.Errorf("Hash() failed: %w", err)
 	}
-	str, found := job.llama.FindCache(propsHash)
+	str, found := llama.findCache(propsHash)
 	if found {
 		return str, nil
 	}
 
-	out, err := job.complete(job.props)
+	out, err := llama.complete(props, wip_answer, stop)
 	if err != nil {
 		return nil, fmt.Errorf("complete() failed: %w", err)
 	}
 
-	job.llama.addCache(propsHash, out)
+	llama.addCache(propsHash, out)
 	return out, nil
 }
-func (job *SAServiceLLamaCppJob) complete(props *SAServiceLLamaCppProps) ([]byte, error) {
+func (llama *SAServiceLLamaCpp) complete(props *SAServiceLLamaCppProps, wip_answer *string, stop *bool) ([]byte, error) {
 	props.Stream = true
 
 	js, err := json.Marshal(props)
@@ -255,7 +202,7 @@ func (job *SAServiceLLamaCppJob) complete(props *SAServiceLLamaCppProps) ([]byte
 
 	body := bytes.NewReader([]byte(js))
 
-	req, err := http.NewRequest(http.MethodPost, job.llama.addr+"v1/chat/completions", body)
+	req, err := http.NewRequest(http.MethodPost, llama.addr+"v1/chat/completions", body)
 	if err != nil {
 		return nil, fmt.Errorf("NewRequest() failed: %w", err)
 	}
@@ -271,7 +218,7 @@ func (job *SAServiceLLamaCppJob) complete(props *SAServiceLLamaCppProps) ([]byte
 	}
 	defer res.Body.Close()
 
-	answer, err := SAService_parseStream(res, &job.answer, &job.close)
+	answer, err := SAService_parseStream(res, wip_answer, stop)
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +230,7 @@ func (job *SAServiceLLamaCppJob) complete(props *SAServiceLLamaCppProps) ([]byte
 	return answer, nil
 }
 
-func SAService_parseStream(res *http.Response, answer *string, close *bool) ([]byte, error) {
+func SAService_parseStream(res *http.Response, answer *string, stop *bool) ([]byte, error) {
 	type STMsg struct {
 		Content string
 	}
@@ -298,7 +245,7 @@ func SAService_parseStream(res *http.Response, answer *string, close *bool) ([]b
 	*answer = ""
 	buff := make([]byte, 0, 1024)
 	buff_last := 0
-	for !*close {
+	for !*stop {
 		var tb [256]byte
 		n, readErr := res.Body.Read(tb[:])
 		if n > 0 {
@@ -344,7 +291,7 @@ func SAService_parseStream(res *http.Response, answer *string, close *bool) ([]b
 		}
 	}
 
-	if *close {
+	if *stop {
 		return nil, fmt.Errorf("user Cancel the job")
 	}
 

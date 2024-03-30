@@ -163,3 +163,10 @@ func (path *SANodePath) FindPath(root *SANode) *SANode {
 	}
 	return node
 }
+func (path *SANodePath) String() string {
+	str := ""
+	for _, nm := range path.names {
+		str += "/" + nm
+	}
+	return str
+}
