@@ -474,6 +474,7 @@ func (ui *Ui) Comp_button_s(label string, prop *Comp_buttonP) (int, int) {
 		ui.Comp_text(0, 0, 2, 1, prop.confirmation, 1)
 		if ui.Comp_button(0, 1, 1, 1, "Yes", Comp_buttonProp().SetError(true)) > 0 {
 			click = 1
+			ui.Dialog_close()
 		}
 		if ui.Comp_button(1, 1, 1, 1, "No", Comp_buttonProp()) > 0 {
 			ui.Dialog_close()
