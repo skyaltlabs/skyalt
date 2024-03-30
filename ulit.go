@@ -564,10 +564,11 @@ func (v OsV4) Cut(x, y, w, h float64) OsV4 {
 
 func (v OsV4) CutEx(x, y, w, h float64, space, spaceX, spaceY int) OsV4 {
 
-	v = v.Cut(x, y, w, h)
 	v = v.AddSpaceX(spaceX)
 	v = v.AddSpaceY(spaceY)
-	return v.AddSpace(space)
+	v = v.AddSpace(space)
+	v = v.Cut(x, y, w, h)
+	return v
 }
 
 type OsCd struct {
