@@ -119,6 +119,7 @@
 },
 "Name": "table_button",
 "Exe": "func_go",
+"Selected": true,
 "Code": {
 "Triggers": [
 "table",
@@ -126,15 +127,15 @@
 ],
 "Messages": [
 {
-"User": "Go through 'table' and check if model + \".bin\" exist in 'dir'.\nIf it exists, set button label to \"Delete\", else \"Download\".\nIf \"Delete\" is clicked, delete the file, else download it from 'net' + model + \".bin\" and save it into 'dir'.",
-"Assistent": "```go\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\nfunc table_button(table *CopyTable, dir *Disk_dir, net *Net) error {\n\tfor _, row := range table.Rows {\n\t\tfilePath := filepath.Join(dir.Path, row.Model.Label+\".bin\")\n\t\tif _, err := os.Stat(filePath); os.IsNotExist(err) {\n\t\t\trow.Button.Label = \"Download\"\n\t\t\tif row.Button.Clicked \u0026\u0026 dir.Write {\n\t\t\t\t// Assuming there's a method in 'net' to download and save the file.\n\t\t\t\t// As the implementation is TBD (To Be Done), the actual method call is skipped.\n\t\t\t\t// net.DownloadFile(filePath, \"URL to the model file\")\n\t\t\t}\n\t\t} else {\n\t\t\trow.Button.Label = \"Delete\"\n\t\t\tif row.Button.Clicked \u0026\u0026 dir.Write {\n\t\t\t\tos.Remove(filePath)\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n```"
+"User": "Go through 'table' and check if model + \".bin\" exist in 'dir'.\nIf it exists, set button label to \"Delete\", else \"Download\".\nIf \"Delete\" is clicked, delete the file, else download it from 'net' with address(model + \".bin)\" and save it into 'dir'.",
+"Assistent": "```go\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\nfunc table_button(table *CopyTable, dir *Disk_dir, net *Net) error {\n\tfor _, row := range table.Rows {\n\t\tfilePath := filepath.Join(dir.Path, row.Model.Label+\".bin\")\n\t\t_, err := os.Stat(filePath)\n\t\tif err == nil {\n\t\t\trow.Button.Label = \"Delete\"\n\t\t\tif row.Button.Clicked \u0026\u0026 dir.Write {\n\t\t\t\tos.Remove(filePath)\n\t\t\t}\n\t\t} else {\n\t\t\trow.Button.Label = \"Download\"\n\t\t\tif row.Button.Clicked {\n\t\t\t\tnet.DownloadFile(filePath, row.Model.Label+\".bin\")\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n```"
 },
 {
 "User": "",
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\nfunc table_button(table *CopyTable, dir *Disk_dir, net *Net) error {\n\tfor _, row := range table.Rows {\n\t\tfilePath := filepath.Join(dir.Path, row.Model.Label+\".bin\")\n\t\tif _, err := os.Stat(filePath); os.IsNotExist(err) {\n\t\t\trow.Button.Label = \"Download\"\n\t\t\tif row.Button.Clicked \u0026\u0026 dir.Write {\n\t\t\t\t// Assuming there's a method in 'net' to download and save the file.\n\t\t\t\t// As the implementation is TBD (To Be Done), the actual method call is skipped.\n\t\t\t\t// net.DownloadFile(filePath, \"URL to the model file\")\n\t\t\t}\n\t\t} else {\n\t\t\trow.Button.Label = \"Delete\"\n\t\t\tif row.Button.Clicked \u0026\u0026 dir.Write {\n\t\t\t\tos.Remove(filePath)\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n"
+"Code": "\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\nfunc table_button(table *CopyTable, dir *Disk_dir, net *Net) error {\n\tfor _, row := range table.Rows {\n\t\tfilePath := filepath.Join(dir.Path, row.Model.Label+\".bin\")\n\t\t_, err := os.Stat(filePath)\n\t\tif err == nil {\n\t\t\trow.Button.Label = \"Delete\"\n\t\t\tif row.Button.Clicked \u0026\u0026 dir.Write {\n\t\t\t\tos.Remove(filePath)\n\t\t\t}\n\t\t} else {\n\t\t\trow.Button.Label = \"Download\"\n\t\t\tif row.Button.Clicked {\n\t\t\t\tnet.DownloadFile(filePath, row.Model.Label+\".bin\")\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n"
 },
 "Attrs": {
 "bypass": false,
@@ -196,6 +197,7 @@
 "defRow": {
 "button": {
 "clicked": false,
+"confirmation": "Are you sure?",
 "enable": true,
 "grid_h": 1,
 "grid_w": 1,
@@ -314,6 +316,7 @@
 },
 "Attrs": {
 "clicked": false,
+"confirmation": "Are you sure?",
 "enable": true,
 "grid_h": 1,
 "grid_w": 1,
@@ -327,7 +330,7 @@
 },
 {
 "Pos": {
-"X": 7.3621445,
+"X": 7.3959284,
 "Y": 2.0003345
 },
 "Name": "size",
@@ -405,8 +408,8 @@
 },
 {
 "Pos": {
-"X": -4.1570835,
-"Y": -3.2529316
+"X": -4.1908674,
+"Y": -3.2867153
 },
 "Name": "db",
 "Exe": "tables",

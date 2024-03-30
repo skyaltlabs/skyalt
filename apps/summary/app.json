@@ -146,13 +146,14 @@
 "Code": ""
 },
 "Attrs": {
-"clicked": false,
+"clicked": true,
+"confirmation": "",
 "enable": true,
 "grid_h": 1,
 "grid_w": 1,
 "grid_x": 1,
 "grid_y": 1,
-"label": "Summary",
+"label": "Summarize",
 "show": true,
 "tooltip": ""
 },

@@ -240,7 +240,6 @@
 },
 "Name": "db",
 "Exe": "tables",
-"Selected": true,
 "Code": {
 "Triggers": null,
 "Messages": null,
@@ -351,7 +350,8 @@
 },
 "Attrs": {
 "clicked": false,
-"enable": true,
+"confirmation": "",
+"enable": false,
 "grid_h": 1,
 "grid_w": 1,
 "grid_x": 3,
