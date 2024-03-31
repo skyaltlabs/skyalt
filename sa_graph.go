@@ -294,17 +294,17 @@ func (gr *SAGraph) drawConnections() {
 
 		//attributtes connection
 		for _, in := range out.Code.func_depends {
-			if in == out {
+			if in.node == out {
 				continue
 			}
 
-			coordIn, selCoordIn, _ := in.nodeToPixelsCoord(lv.call.canvas)
-			if in.Selected {
+			coordIn, selCoordIn, _ := in.node.nodeToPixelsCoord(lv.call.canvas)
+			if in.node.Selected {
 				coordIn = selCoordIn
 			}
 
 			//gr.drawConnectionDirect(OsV2{coordIn.Middle().X, coordIn.End().Y}, OsV2{coordOut.Middle().X, coordOut.Start.Y}, cellr, 0, Node_connectionCd(in.Selected || out.Selected, ui))
-			gr.drawConnectionDirect(coordOut, coordIn, 0, Node_connectionCd(in.Selected || out.Selected, ui), 0)
+			gr.drawConnectionDirect(coordOut, coordIn, 0, Node_connectionCd(in.node.Selected || out.Selected, ui), 0)
 		}
 
 		cellr := gr.app.root.cellZoom(ui)
