@@ -179,6 +179,7 @@ func (node *SANode) ShowAttrV4(grid *OsV4, namePrefix string, defValue OsV4) OsV
 		_, _, _, fnshd4, _ := ui.Comp_editbox(3, 0, 1, 1, &value.Size.Y, Comp_editboxProp().Ghost("h").Precision(0))
 		if fnshd1 || fnshd2 || fnshd3 || fnshd4 {
 			node.SetAttrV4(namePrefix, value)
+			node.SetStructChange()
 		}
 	}
 	ui.Div_end()
@@ -196,6 +197,7 @@ func (node *SANode) ShowAttrCd(grid *OsV4, namePrefix string, defValue OsCd) OsC
 
 	if ui.comp_colorPicker(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, "pick_cd_"+node.Name, "", true) {
 		node.SetAttrCd(namePrefix, value)
+		node.SetStructChange()
 	}
 
 	grid.Start.Y += grid.Size.Y
@@ -211,6 +213,7 @@ func (node *SANode) ShowAttrBool(grid *OsV4, name string, defValue bool) bool {
 
 	if ui.Comp_switch(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, "", "", true) {
 		node.Attrs[name] = value
+		node.SetStructChange()
 	}
 
 	grid.Start.Y += grid.Size.Y
@@ -227,6 +230,7 @@ func (node *SANode) ShowAttrInt(grid *OsV4, name string, defValue int) int {
 	_, _, _, fnshd1, _ := ui.Comp_editbox(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, Comp_editboxProp().Precision(0))
 	if fnshd1 {
 		node.Attrs[name] = value
+		node.SetStructChange()
 	}
 
 	grid.Start.Y += grid.Size.Y
@@ -242,6 +246,7 @@ func (node *SANode) ShowAttrFloat(grid *OsV4, name string, defValue float64, pre
 	_, _, _, fnshd1, _ := ui.Comp_editbox(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, Comp_editboxProp().Precision(prec))
 	if fnshd1 {
 		node.Attrs[name] = value
+		node.SetStructChange()
 	}
 
 	grid.Start.Y += grid.Size.Y
@@ -265,6 +270,7 @@ func (node *SANode) ShowAttrStringEx(grid *OsV4, name string, defValue string, m
 	_, _, _, fnshd, _ := ui.Comp_editbox(grid.Start.X+OsTrn(showName, 1, 0), grid.Start.Y, grid.Size.X, grid.Size.Y, &value, Comp_editboxProp().Align(0, OsTrn(multiLine, 0, 1)).MultiLine(multiLine).Formating(false))
 	if fnshd {
 		node.Attrs[name] = value
+		node.SetStructChange()
 	}
 
 	grid.Start.Y += grid.Size.Y
@@ -286,6 +292,7 @@ func (node *SANode) ShowAttrIntCombo(grid *OsV4, name string, defValue int, opti
 	valueStr := strconv.Itoa(value)
 	if ui.Comp_combo(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &valueStr, options_names, options_values, "", true, false) {
 		node.Attrs[name], _ = strconv.Atoi(valueStr)
+		node.SetStructChange()
 	}
 
 	grid.Start.Y += grid.Size.Y
@@ -300,6 +307,7 @@ func (node *SANode) ShowAttrStringCombo(grid *OsV4, name string, defValue string
 
 	if ui.Comp_combo(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, options_names, options_values, "", true, false) {
 		node.Attrs[name] = value
+		node.SetStructChange()
 	}
 
 	grid.Start.Y += grid.Size.Y
@@ -315,6 +323,7 @@ func (node *SANode) ShowAttrFilePicker(grid *OsV4, name string, defValue string,
 
 	if ui.Comp_dirPicker(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, selectFile, dialogName, true) {
 		node.Attrs[name] = value
+		node.SetStructChange()
 	}
 
 	grid.Start.Y += grid.Size.Y
@@ -345,7 +354,7 @@ func (node *SANode) RenderAttrs() {
 		_, _, _, fnshd, _ := ui.Comp_editbox_desc("Name", 0, 3, 0, 0, 1, 1, &node.Name, Comp_editboxProp())
 		if fnshd {
 			node.CheckUniqueName()
-			node.GetAbsoluteRoot().RenameSubDepends(old_name, node.Name)
+			node.GetParentRoot().RenameSubDepends(old_name, node.Name)
 		}
 
 		//type

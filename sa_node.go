@@ -117,6 +117,21 @@ func (node *SANode) SetError(err error) {
 	node.errExe = err
 }
 
+func (node *SANode) SetChange() {
+	node.changed = true
+}
+func (node *SANode) SetStructChange() {
+	node.SetChange()
+	node.GetParentRoot().ResetDbs()
+}
+
+func (node *SANode) ResetDbs() {
+	node.db_time = DiskDbTime{}
+	for _, nd := range node.Subs {
+		nd.ResetDbs()
+	}
+}
+
 func (node *SANode) SetPosStart() {
 	node.pos_start = node.Pos
 	for _, nd := range node.Subs {
@@ -466,7 +481,7 @@ func (dst *SANode) CopyPoses(src *SANode) {
 }
 
 func (node *SANode) SelectOnlyThis() {
-	node.GetAbsoluteRoot().DeselectAll()
+	node.GetParentRoot().DeselectAll()
 	node.Selected = true
 }
 
@@ -552,8 +567,7 @@ func (node *SANode) RemoveSelectedNodes() {
 }
 
 func (node *SANode) BypassSelectedCodeNodes() {
-
-	if node.IsTypeCode() {
+	if node.IsTypeCode() && node.Selected {
 		node.SetBypass()
 	}
 
@@ -609,7 +623,7 @@ func (node *SANode) NumSubNames(name string) int {
 	return n
 }
 
-func (node *SANode) GetAbsoluteRoot() *SANode {
+func (node *SANode) GetParentRoot() *SANode {
 	for node.parent != nil {
 		node = node.parent
 	}
@@ -624,7 +638,7 @@ func (node *SANode) CheckUniqueName() {
 	node.Name = strings.ReplaceAll(node.Name, ".", "") //remove all '.'
 
 	//set unique
-	for node.GetAbsoluteRoot().NumSubNames(node.Name) >= 2 {
+	for node.GetParentRoot().NumSubNames(node.Name) >= 2 {
 		node.Name += "1"
 	}
 

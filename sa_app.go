@@ -210,7 +210,7 @@ func (app *SAApp) TryExecute() {
 				if !tm.Cmp(&nd.db_time) {
 					fmt.Printf("Db '%s' has changed\n", nd.Name)
 					nd.db_time = tm
-					nd.changed = true
+					nd.SetChange()
 				}
 			}
 		}

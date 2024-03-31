@@ -71,7 +71,7 @@ func (node *SANode) pixelsToNode(touchPos OsV2, lvDiv *UiLayoutDiv) OsV2f {
 func (node *SANode) nodeToPixels(p OsV2f, canvas OsV4) OsV2 {
 	ui := node.app.base.ui
 
-	node = node.GetAbsoluteRoot()
+	node = node.GetParentRoot()
 
 	cell := ui.win.Cell()
 

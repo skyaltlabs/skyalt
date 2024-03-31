@@ -53,7 +53,7 @@ func UiButton_render(node *SANode) {
 
 	if node.app.base.ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, Comp_buttonProp().Enable(enable).Tooltip(tooltip).Confirmation(confirmation, "confirm_"+node.GetPath())) > 0 {
 		node.Attrs["clicked"] = true
-		node.changed = true
+		node.SetChange()
 	}
 }
 
@@ -127,14 +127,18 @@ func UiEditbox_render(node *SANode) {
 		old_changed := node.changed //node.GetAttrBool("changed", false)
 		if !old_changed {
 			//node.Attrs["changed"] = (node.Attrs["value"] != editedValue)
-			node.changed = (node.Attrs["value"] != editedValue)
+			if node.Attrs["value"] != editedValue {
+				node.SetChange()
+			}
 		}
 		node.Attrs["value"] = editedValue
 	}
 
 	if fnshd {
 		//node.Attrs["changed"] = (node.Attrs["value"] != value)
-		node.changed = (node.Attrs["value"] != value)
+		if node.Attrs["value"] != value {
+			node.SetChange()
+		}
 		node.Attrs["value"] = value
 	}
 }
@@ -166,7 +170,7 @@ func UiCheckbox_render(node *SANode) {
 	if node.app.base.ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, label, tooltip, enable) {
 		node.Attrs["value"] = value
 		//node.Attrs["changed"] = true
-		node.changed = true
+		node.SetChange()
 	}
 }
 
@@ -197,7 +201,7 @@ func UiSwitch_render(node *SANode) {
 	if node.app.base.ui.Comp_switch(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, label, tooltip, enable) {
 		node.Attrs["value"] = value
 		//node.Attrs["changed"] = true
-		node.changed = true
+		node.SetChange()
 	}
 }
 
@@ -230,7 +234,7 @@ func UiSlider_render(node *SANode) {
 	if node.app.base.ui.Comp_slider(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, min, max, step, enable) {
 		node.Attrs["value"] = value
 		//node.Attrs["changed"] = true
-		node.changed = true
+		node.SetChange()
 	}
 }
 
@@ -268,7 +272,7 @@ func UiCombo_render(node *SANode) {
 	if node.app.base.ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, options_names, options_values, tooltip, enable, search) {
 		node.Attrs["value"] = value
 		//node.Attrs["changed"] = true
-		node.changed = true
+		node.SetChange()
 	}
 }
 
@@ -298,7 +302,7 @@ func UiColor_render(node *SANode) {
 	if node.app.base.ui.comp_colorPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, "color_picker_"+node.Name, tooltip, enable) {
 		node.SetAttrCd("value", value)
 		//node.Attrs["changed"] = true
-		node.changed = true
+		node.SetChange()
 	}
 }
 
@@ -380,7 +384,7 @@ func UiTimer_render(node *SANode) {
 	if enable && prc >= 1 {
 		if start_sec > 0 { //if repeat==false, set 'done' only once
 			node.Attrs["done"] = true
-			node.changed = true
+			node.SetChange()
 		}
 		if repeat {
 			node.Attrs["start_sec"] = OsTime()
@@ -418,7 +422,7 @@ func UiDate_render(node *SANode) {
 	if node.app.base.ui.Comp_CalendarDatePicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &date, show_time, "date_"+node.Name, tooltip, enable) {
 		node.Attrs["value"] = int(date)
 		//node.Attrs["changed"] = true
-		node.changed = true
+		node.SetChange()
 	}
 }
 
@@ -445,7 +449,7 @@ func UiDiskDir_render(node *SANode) {
 	if node.app.base.ui.Comp_dirPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &path, false, "dir_picker_"+node.Name, enable) {
 		node.Attrs["path"] = path
 		//node.Attrs["changed"] = true
-		node.changed = true
+		node.SetChange()
 	}
 }
 
@@ -472,7 +476,7 @@ func UiDiskFile_render(node *SANode) {
 	if node.app.base.ui.Comp_dirPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &path, true, "dir_picker_"+node.Name, enable) {
 		node.Attrs["path"] = path
 		//node.Attrs["changed"] = true
-		node.changed = true
+		node.SetChange()
 	}
 }
 
@@ -547,7 +551,7 @@ func UiMicrophone_render(node *SANode) {
 
 			//set finished
 			//node.Attrs["changed"] = true
-			node.changed = true
+			node.SetChange()
 		}
 	}
 }
