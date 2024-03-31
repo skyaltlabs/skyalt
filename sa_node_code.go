@@ -56,7 +56,7 @@ type SANodeCode struct {
 	Code string
 
 	func_depends []*SANode
-	msgs_depends []*SANode
+	//msgs_depends []*SANode
 
 	output string //terminal
 
@@ -115,21 +115,21 @@ func (ls *SANodeCode) addFuncDepend(nm string) error {
 	return nil
 }
 
-func (ls *SANodeCode) addMsgDepend(nm string) error {
+func (ls *SANodeCode) addMsgDepend(msgs_depends *[]*SANode, nm string) error {
 	node, err := ls.findNodeName(nm)
 	if err != nil {
 		return err
 	}
 
 	//find
-	for _, dp := range ls.msgs_depends {
+	for _, dp := range *msgs_depends {
 		if dp == node {
 			return nil //already added
 		}
 	}
 
 	//add
-	ls.msgs_depends = append(ls.msgs_depends, node)
+	*msgs_depends = append(*msgs_depends, node)
 
 	return nil
 }
@@ -144,10 +144,10 @@ func (ls *SANodeCode) UpdateLinks(node *SANode) {
 	ls.UpdateFile() //create/update file + (re)compile
 }
 
-func (ls *SANodeCode) buildSqlInfos() (string, error) {
+func (ls *SANodeCode) buildSqlInfos(msgs_depends []*SANode) (string, error) {
 	str := ""
 
-	for _, prmNode := range ls.msgs_depends {
+	for _, prmNode := range msgs_depends {
 		if prmNode.Exe == "tables" {
 			str += fmt.Sprintf("'%s' is SQLite database which includes these tables(columns): ", prmNode.GetPathSplit())
 
@@ -237,7 +237,7 @@ func (ls *SANodeCode) buildCopyStructs(nodes []*SANode, addExtraAttrs bool) stri
 
 func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 
-	err := ls.updateMsgsDepends()
+	msgs_depends, err := ls.buildMsgsDepends()
 	if err != nil {
 		return "", err
 	}
@@ -245,10 +245,10 @@ func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 	str := "I have this golang code:\n\n"
 	str += g_code_const_gpt + "\n"
 
-	str += ls.buildCopyStructs(ls.msgs_depends, false)
+	str += ls.buildCopyStructs(msgs_depends, false)
 
 	params := ""
-	for _, prmNode := range ls.msgs_depends {
+	for _, prmNode := range msgs_depends {
 		StructName := prmNode.getStructName()
 		params += fmt.Sprintf("%s *%s, ", prmNode.GetPathSplit(), StructName)
 	}
@@ -257,7 +257,7 @@ func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 
 	str += fmt.Sprintf("You can change the code only inside '%s' function and output only import(s) and '%s' function code. Don't explain the code.\n", ls.node.Name, ls.node.Name)
 
-	strSQL, err := ls.buildSqlInfos()
+	strSQL, err := ls.buildSqlInfos(msgs_depends)
 	if err != nil {
 		return "", err
 	}
@@ -330,6 +330,9 @@ func (ls *SANodeCode) GetFileName() string {
 
 func (ls *SANodeCode) Execute() {
 	ls.exe_err = nil
+
+	//problém bude že se oboje pouští ve stejný moment .....................
+	//mít vícero features v jenom code ....
 
 	//input
 	vars := make(map[string]interface{})
@@ -445,7 +448,7 @@ func (ls *SANodeCode) SetOutput(outputJs []byte) {
 					prmNode.ResetTriggers() //button can be clicked
 
 					if diff {
-						prmNode.changed = true
+						prmNode.SetChange()
 					}
 				}
 			}
@@ -735,10 +738,9 @@ func (v *visitor) Visit(n ast.Node) ast.Visitor {
 	return v
 }*/
 
-func (ls *SANodeCode) updateMsgsDepends() error {
+func (ls *SANodeCode) buildMsgsDepends() ([]*SANode, error) {
 
-	//reset
-	ls.msgs_depends = nil
+	var msgs_depends []*SANode
 
 	for _, msg := range ls.Messages {
 		ln := msg.User
@@ -753,16 +755,16 @@ func (ls *SANodeCode) updateMsgsDepends() error {
 			if d2 >= 0 {
 				nm := ln[:d2]
 
-				err := ls.addMsgDepend(nm)
+				err := ls.addMsgDepend(&msgs_depends, nm)
 				if err != nil {
-					return err
+					return nil, err
 				}
 			}
 			ln = ln[d2+1:]
 		}
 	}
 
-	return nil
+	return msgs_depends, nil
 }
 
 func IsWordLetter(ch byte) bool {
