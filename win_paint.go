@@ -132,8 +132,21 @@ func (buf *WinPaintBuff) AddBezier(a OsV2, b OsV2, c OsV2, d OsV2, cd OsCd, thic
 	buf.win.DrawBezier(a, b, c, d, buf.depth, thick, cd, dash_len, move)
 }
 
-func (buf *WinPaintBuff) AddPoly(start OsV2, points []OsV2f, cd OsCd, width float64) {
-	buf.win.DrawPoly(start, points, buf.depth, cd, width)
+func (buf *WinPaintBuff) GetBezier(a OsV2, b OsV2, c OsV2, d OsV2, t float64) (OsV2f, OsV2f) {
+	return buf.win.GetBezier(a, b, c, d, t)
+}
+
+func (buf *WinPaintBuff) GetPoly(points []OsV2f, width float64) *WinGphItemPoly {
+	return buf.win.GetPoly(points, width)
+}
+func (buf *WinPaintBuff) AddPolyStart(start OsV2, poly *WinGphItemPoly, cd OsCd) {
+	buf.win.DrawPolyStart(start, poly, buf.depth, cd)
+}
+func (buf *WinPaintBuff) AddPolyRect(rect OsV4, poly *WinGphItemPoly, cd OsCd) {
+	buf.win.DrawPolyRect(rect, poly, buf.depth, cd)
+}
+func (buf *WinPaintBuff) AddPolyQuad(pts [4]OsV2f, uvs [4]OsV2f, poly *WinGphItemPoly, cd OsCd) {
+	buf.win.DrawPolyQuad(pts, uvs, poly, buf.depth, cd)
 }
 
 func (b *WinPaintBuff) AddCircle(coord OsV4, cd OsCd, width int) {

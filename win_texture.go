@@ -122,6 +122,11 @@ func (tex *WinTexture) Destroy() {
 		gl.DeleteTextures(1, &tex.id)
 	}
 }
+
+func (tex *WinTexture) DrawQuad(coord OsV4, depth int, cd OsCd) {
+	tex.DrawQuadUV(coord, depth, cd, OsV2f{}, OsV2f{1, 1})
+}
+
 func _WinTexture_drawQuadNoUVs(coord OsV4, depth int) {
 	s := coord.Start
 	e := coord.End()
@@ -177,6 +182,20 @@ func (tex *WinTexture) DrawQuadUV(coord OsV4, depth int, cd OsCd, sUV, eUV OsV2f
 	gl.BindTexture(gl.TEXTURE_2D, 0) //Unbind
 }
 
-func (tex *WinTexture) DrawQuad(coord OsV4, depth int, cd OsCd) {
-	tex.DrawQuadUV(coord, depth, cd, OsV2f{}, OsV2f{1, 1})
+func (tex *WinTexture) DrawPointsUV(pts [4]OsV2f, uvs [4]OsV2f, depth int, cd OsCd) {
+	gl.Color4ub(cd.R, cd.G, cd.B, cd.A)
+
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, tex.id)
+
+	gl.Begin(gl.QUADS)
+	{
+		for i := 0; i < 4; i++ {
+			gl.TexCoord2f(uvs[i].X, uvs[i].Y)
+			gl.Vertex3f(float32(pts[i].X), float32(pts[i].Y), float32(depth))
+		}
+	}
+	gl.End()
+
+	gl.BindTexture(gl.TEXTURE_2D, 0) //Unbind
 }

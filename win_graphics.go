@@ -204,11 +204,12 @@ func (ft *WinFont) Maintenance() {
 
 type WinGphItem struct {
 	texture      *WinTexture
+	realSize     OsV2
 	lastDrawTick int64
 }
 
-func NewWinGphItemAlpha(alpha *image.Alpha) *WinGphItem {
-	it := &WinGphItem{}
+func NewWinGphItemAlpha(alpha *image.Alpha, realSize OsV2) *WinGphItem {
+	it := &WinGphItem{realSize: realSize}
 
 	var err error
 	it.texture, err = InitWinTextureFromImageAlpha(alpha)
@@ -220,8 +221,8 @@ func NewWinGphItemAlpha(alpha *image.Alpha) *WinGphItem {
 	return it
 }
 
-func NewWinGphItemRGBA(rgba *image.RGBA) *WinGphItem {
-	it := &WinGphItem{}
+func NewWinGphItemRGBA(rgba *image.RGBA, realSize OsV2) *WinGphItem {
+	it := &WinGphItem{realSize: realSize}
 
 	var err error
 	it.texture, err = InitWinTextureFromImageRGBA(rgba)
@@ -233,13 +234,13 @@ func NewWinGphItemRGBA(rgba *image.RGBA) *WinGphItem {
 	return it
 }
 
-func NewWinGphItem(dc *gg.Context) *WinGphItem {
+func NewWinGphItem(dc *gg.Context, realSize OsV2) *WinGphItem {
 	rgba, ok := dc.Image().(*image.RGBA)
 	if !ok {
 		fmt.Printf("Image -> RGBA conversion failed\n")
 		return nil
 	}
-	it := NewWinGphItemRGBA(rgba)
+	it := NewWinGphItemRGBA(rgba, realSize)
 	it.lastDrawTick = OsTicks()
 	return it
 }
@@ -257,6 +258,19 @@ func (it *WinGphItem) UpdateTick() {
 	it.lastDrawTick = OsTicks()
 }
 
+func (it *WinGphItem) DrawPointsUV(pts [4]OsV2f, uvs [4]OsV2f, depth int, cd OsCd) error {
+	if it.texture != nil {
+		norm := OsV2f{float32(it.realSize.X) / float32(it.texture.size.X), float32(it.realSize.Y) / float32(it.texture.size.Y)}
+		for i := 0; i < 4; i++ {
+			uvs[i] = uvs[i].Mul(norm)
+		}
+		it.texture.DrawPointsUV(pts, uvs, depth, cd)
+	}
+
+	it.UpdateTick()
+	return nil
+}
+
 func (it *WinGphItem) DrawCut(coord OsV4, depth int, cd OsCd) error {
 	if it.texture != nil {
 		uv := OsV2f{
@@ -269,11 +283,11 @@ func (it *WinGphItem) DrawCut(coord OsV4, depth int, cd OsCd) error {
 	return nil
 }
 
-func (it *WinGphItem) DrawUV(item_size OsV2, coord OsV4, depth int, cd OsCd, sUV, eUV OsV2f) error {
+func (it *WinGphItem) DrawUV(coord OsV4, depth int, cd OsCd, sUV, eUV OsV2f) error {
 	if it.texture != nil {
 		szUv := OsV2f{
-			float32(item_size.X) / float32(it.texture.size.X),
-			float32(item_size.Y) / float32(it.texture.size.Y)}
+			float32(it.realSize.X) / float32(it.texture.size.X),
+			float32(it.realSize.Y) / float32(it.texture.size.Y)}
 
 		//normalize by item_size
 		sUV = sUV.Mul(szUv)
@@ -514,7 +528,7 @@ func (gph *WinGph) GetCircle(size OsV2, width float64, arc OsV2f) *WinGphItemCir
 
 	//add
 	var circle *WinGphItemCircle
-	it := NewWinGphItemAlpha(dst)
+	it := NewWinGphItemAlpha(dst, size)
 	if it != nil {
 		circle = &WinGphItemCircle{item: it, size: size, width: width, arc: arc}
 		gph.circles = append(gph.circles, circle)
@@ -558,7 +572,7 @@ func (gph *WinGph) GetCircleGrad(size OsV2, arc OsV2f, alpha float64) *WinGphIte
 
 	//add
 	var circle *WinGphItemCircle
-	it := NewWinGphItemAlpha(dst)
+	it := NewWinGphItemAlpha(dst, size)
 	if it != nil {
 		circle = &WinGphItemCircle{item: it, size: size, width: 0, arc: arc, grad: alpha}
 		gph.circles = append(gph.circles, circle)
@@ -619,7 +633,7 @@ func (gph *WinGph) GetPoly(points []OsV2f, width float64) *WinGphItemPoly {
 
 	//add
 	var poly *WinGphItemPoly
-	it := NewWinGphItemAlpha(dst)
+	it := NewWinGphItemAlpha(dst, size)
 	if it != nil {
 		poly = &WinGphItemPoly{item: it, points: points, size: size, width: width}
 		gph.polys = append(gph.polys, poly)
@@ -781,5 +795,5 @@ func (gph *WinGph) drawString(prop WinFontProps, str string) *WinGphItemText {
 		letters = append(letters, int(d.Dot.X>>6))
 	}
 
-	return &WinGphItemText{item: NewWinGphItemAlpha(a), size: size, prop: prop, text: str, letters: letters}
+	return &WinGphItemText{item: NewWinGphItemAlpha(a, size), size: size, prop: prop, text: str, letters: letters}
 }

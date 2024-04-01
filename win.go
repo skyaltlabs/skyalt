@@ -908,10 +908,10 @@ func (win *Win) DrawRectRound(coord OsV4, rad int, depth int, cd OsCd, thick int
 			circle = win.gph.GetCircleGrad(OsV2{rad * 2, rad * 2}, OsV2f{}, 0.5)
 		}
 
-		circle.item.DrawUV(circle.size, InitOsV4(s.X, s.Y, rad, rad), depth, cd, OsV2f{0, 0}, OsV2f{0.5, 0.5})
-		circle.item.DrawUV(circle.size, InitOsV4(e.X-rad, s.Y, rad, rad), depth, cd, OsV2f{0.5, 0}, OsV2f{1, 0.5})
-		circle.item.DrawUV(circle.size, InitOsV4(s.X, e.Y-rad, rad, rad), depth, cd, OsV2f{0, 0.5}, OsV2f{0.5, 1})
-		circle.item.DrawUV(circle.size, InitOsV4(e.X-rad, e.Y-rad, rad, rad), depth, cd, OsV2f{0.5, 0.5}, OsV2f{1, 1})
+		circle.item.DrawUV(InitOsV4(s.X, s.Y, rad, rad), depth, cd, OsV2f{0, 0}, OsV2f{0.5, 0.5})
+		circle.item.DrawUV(InitOsV4(e.X-rad, s.Y, rad, rad), depth, cd, OsV2f{0.5, 0}, OsV2f{1, 0.5})
+		circle.item.DrawUV(InitOsV4(s.X, e.Y-rad, rad, rad), depth, cd, OsV2f{0, 0.5}, OsV2f{0.5, 1})
+		circle.item.DrawUV(InitOsV4(e.X-rad, e.Y-rad, rad, rad), depth, cd, OsV2f{0.5, 0.5}, OsV2f{1, 1})
 	}
 }
 
@@ -1002,12 +1002,31 @@ func (win *Win) DrawBezier(a OsV2, b OsV2, c OsV2, d OsV2, depth int, thick int,
 	gl.End()
 }
 
-func (win *Win) DrawPoly(start OsV2, points []OsV2f, depth int, cd OsCd, width float64) {
+func (win *Win) GetBezier(a OsV2, b OsV2, c OsV2, d OsV2, t float64) (OsV2f, OsV2f) {
+	aa := a.toV2f()
+	bb := b.toV2f()
+	cc := c.toV2f()
+	dd := d.toV2f()
 
-	poly := win.gph.GetPoly(points, width)
-	if poly != nil {
-		poly.item.DrawCut(OsV4{Start: start, Size: poly.size}, depth, cd)
-	}
+	s := _Win_getBezierPoint(t, aa, bb, cc, dd)
+	e := _Win_getBezierPoint(t+0.01, aa, bb, cc, dd)
+
+	return s, e.Sub(s)
+}
+
+func (win *Win) GetPoly(points []OsV2f, width float64) *WinGphItemPoly {
+	return win.gph.GetPoly(points, width)
+}
+
+func (win *Win) DrawPolyQuad(pts [4]OsV2f, uvs [4]OsV2f, poly *WinGphItemPoly, depth int, cd OsCd) {
+	poly.item.DrawPointsUV(pts, uvs, depth, cd)
+}
+
+func (win *Win) DrawPolyRect(rect OsV4, poly *WinGphItemPoly, depth int, cd OsCd) {
+	poly.item.DrawCut(rect, depth, cd)
+}
+func (win *Win) DrawPolyStart(start OsV2, poly *WinGphItemPoly, depth int, cd OsCd) {
+	win.DrawPolyRect(OsV4{Start: start, Size: poly.size}, poly, depth, cd)
 }
 
 func (win *Win) DrawText(ln string, prop WinFontProps, coord OsV4, depth int, align OsV2, frontCd OsCd, yLine, numLines int) {
