@@ -224,19 +224,21 @@ func (app *SAApp) TryExecute() {
 	}
 
 	if hasTrigger {
-		app.exe() //in 2nd thread and keep GUI showing progressrunning
+		app.exe()
 	}
 
 	app.last_trigger_ticks = OsTicks()
 }
 
 func (app *SAApp) exe() {
+	//run
 	for _, nd := range app.all_nodes {
 		if nd.Code.IsTriggered() && !nd.IsBypassed() {
 			nd.Code.Execute()
 		}
 	}
 
+	//reset
 	for _, nd := range app.all_nodes {
 		nd.ResetTriggers()
 	}

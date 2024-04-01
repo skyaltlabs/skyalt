@@ -131,7 +131,7 @@ func (gr *SAGraph) drawCreateNode() {
 	ui.buff.AddPoly(end.Add(OsV2{int(-t / 2), 0}), []OsV2f{{0, 0}, {-t / 2, -t}, {t / 2, -t}}, cd, 0)
 }*/
 
-func (gr *SAGraph) drawConnectionDirect(startRect OsV4, endRect OsV4, dash float32, cd OsCd, move float32) {
+func (gr *SAGraph) drawConnectionDirect(startRect OsV4, endRect OsV4, dash float32, selectedCd bool, move float32, cellr float32, depend_write *bool, name string) {
 
 	//H-H nebo V-V
 
@@ -175,13 +175,71 @@ func (gr *SAGraph) drawConnectionDirect(startRect OsV4, endRect OsV4, dash float
 	ui := gr.app.base.ui
 	wi := ui.CellWidth(0.03)
 
-	mid := start.Aprox(end, 0.5)
+	mm := start.Aprox(end, 0.5)
+	var mS, mE OsV2
 	if isV {
-		ui.buff.AddBezier(start, OsV2{start.X, mid.Y}, OsV2{end.X, mid.Y}, end, cd, wi, dash, move)
+		mS = OsV2{start.X, mm.Y}
+		mE = OsV2{end.X, mm.Y}
 	} else {
-		ui.buff.AddBezier(start, OsV2{mid.X, start.Y}, OsV2{mid.X, end.Y}, end, cd, wi, dash, move)
-
+		mS = OsV2{mm.X, start.Y}
+		mE = OsV2{mm.X, end.Y}
 	}
+
+	cd := Node_connectionCd(selectedCd, ui)
+	ui.buff.AddBezier(start, mS, mE, end, cd, wi, dash, move)
+
+	// arrow
+	{
+		//poly
+		t := cellr * 0.3
+		ppts := []OsV2f{{0, 0}, {-t / 2, t}, {t / 2, t}}
+		poly := ui.buff.GetPoly(ppts, 0)
+
+		//quad
+		top_mid, dir := ui.win.GetBezier(start, mS, mE, end, OsTrnFloat(*depend_write, 0.1, 0.9))
+		dir = dir.MulV(1 / dir.Len() * t) //normalize
+		if !*depend_write {
+			dir = OsV2f{-dir.X, -dir.Y}
+		}
+
+		bot_mid := top_mid.Add(dir)
+		rev := OsV2f{-dir.Y / 2, dir.X / 2}
+
+		pts := [4]OsV2f{top_mid.Add(rev), top_mid.Sub(rev), bot_mid.Sub(rev), bot_mid.Add(rev)}
+		uvs := [4]OsV2f{{0, 0}, {1, 0}, {1, 1}, {0, 1}}
+
+		if *depend_write && !selectedCd {
+			pl := ui.win.io.GetPalette()
+			cd = pl.P
+		}
+
+		ui.buff.AddPolyQuad(pts, uvs, poly, cd)
+		//ui.buff.AddCircle(InitOsV4Mid(top_mid.toV2(), OsV2{int(cellr * 0.2), int(cellr * 0.2)}), cd, 0)
+	}
+
+	//button
+	bck := ui.win.io.ini.Dpi
+	ui.win.io.ini.Dpi = int(float32(ui.win.io.ini.Dpi)*float32(gr.app.Cam_z)) / 2
+	{
+		mid, _ := ui.win.GetBezier(start, mS, mE, end, 0.5)
+
+		sz := int(cellr * 0.6)
+		cq := InitOsV4Mid(mid.toV2(), OsV2{sz, sz})
+
+		ui.Div_startCoord(0, 0, 1, 1, cq, name)
+		ui.Div_col(0, 0.1)
+		ui.Div_row(0, 0.1)
+		ui.Div_colMax(0, 100)
+		ui.Div_rowMax(0, 100)
+
+		ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
+		ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
+		if ui.Comp_button(0, 0, 1, 1, "↔", Comp_buttonProp().Shape(1)) > 0 {
+			*depend_write = !*depend_write
+		}
+		ui.Div_end()
+	}
+	ui.win.io.ini.Dpi = bck
 
 }
 
@@ -283,7 +341,7 @@ func (gr *SAGraph) drawConnections() {
 
 	ui := gr.app.base.ui
 	lv := ui.GetCall()
-	//cellr := gr.app.root.cellZoom(ui)
+	cellr := gr.app.root.cellZoom(ui)
 
 	for _, out := range gr.app.all_nodes {
 
@@ -293,21 +351,21 @@ func (gr *SAGraph) drawConnections() {
 		}
 
 		//attributtes connection
-		for _, in := range out.Code.func_depends {
-			if in.node == out {
+		for i, in := range out.Code.func_depends {
+			if in == out {
 				continue
 			}
 
-			coordIn, selCoordIn, _ := in.node.nodeToPixelsCoord(lv.call.canvas)
-			if in.node.Selected {
+			coordIn, selCoordIn, _ := in.nodeToPixelsCoord(lv.call.canvas)
+			if in.Selected {
 				coordIn = selCoordIn
 			}
 
 			//gr.drawConnectionDirect(OsV2{coordIn.Middle().X, coordIn.End().Y}, OsV2{coordOut.Middle().X, coordOut.Start.Y}, cellr, 0, Node_connectionCd(in.Selected || out.Selected, ui))
-			gr.drawConnectionDirect(coordOut, coordIn, 0, Node_connectionCd(in.node.Selected || out.Selected, ui), 0)
+			gr.drawConnectionDirect(coordOut, coordIn, 0, in.Selected || out.Selected, 0, cellr, &out.Code.GetArg(in.Name).Write, fmt.Sprintf("%s_%d", in.Name, i))
 		}
 
-		cellr := gr.app.root.cellZoom(ui)
+		/*cellr := gr.app.root.cellZoom(ui)
 		for _, inName := range out.Code.Triggers {
 
 			in := out.FindNode(inName)
@@ -326,7 +384,7 @@ func (gr *SAGraph) drawConnections() {
 			//coordOut = selCoordOut //move by button_circle_rad
 			//gr.drawConnectionTrigger(OsV2{selCoordIn.End().X, selCoordIn.Middle().Y}, OsV2{coordOut.Start.X, coordOut.Middle().Y}, cellr, cellr, Node_connectionCd(in.Selected || out.Selected, ui))
 			gr.drawConnectionDirect(coordOut, coordIn, cellr, Node_connectionCd(in.Selected || out.Selected, ui), cellr/10)
-		}
+		}*/
 	}
 }
 

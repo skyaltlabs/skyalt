@@ -47,20 +47,22 @@ type SANodeCodeImport struct {
 	Name string
 	Path string
 }
-type SANodeCodeDepend struct {
-	node  *SANode
-	write bool
+type SANodeCodeArg struct {
+	Node  string
+	Write bool
 }
 
 type SANodeCode struct {
 	node *SANode
 
-	Triggers []string //nodes
+	//Triggers []string //nodes
 	Messages []SANodeCodeChat
 
 	Code string
 
-	func_depends []SANodeCodeDepend
+	ArgsProps []*SANodeCodeArg
+
+	func_depends []*SANode
 	//msgs_depends []*SANode
 
 	output string //terminal
@@ -78,14 +80,14 @@ func InitSANodeCode(node *SANode) SANodeCode {
 	return ls
 }
 
-func (ls *SANodeCode) addTrigger(name string) {
+/*func (ls *SANodeCode) addTrigger(name string) {
 	for _, tr := range ls.Triggers {
 		if tr == name {
 			return
 		}
 	}
 	ls.Triggers = append(ls.Triggers, name)
-}
+}*/
 
 func (ls *SANodeCode) findNodeName(nm string) (*SANode, error) {
 	node := ls.node.FindNodeSplit(nm)
@@ -101,6 +103,21 @@ func (ls *SANodeCode) findNodeName(nm string) (*SANode, error) {
 	return node, nil
 }
 
+func (ls *SANodeCode) GetArg(node string) *SANodeCodeArg {
+
+	//find
+	for _, arg := range ls.ArgsProps {
+		if arg.Node == node {
+			return arg
+		}
+	}
+
+	//add
+	ls.ArgsProps = append(ls.ArgsProps, &SANodeCodeArg{Node: node})
+
+	return ls.ArgsProps[len(ls.ArgsProps)-1]
+}
+
 func (ls *SANodeCode) addFuncDepend(nm string) error {
 	node, err := ls.findNodeName(nm)
 	if err != nil {
@@ -108,33 +125,33 @@ func (ls *SANodeCode) addFuncDepend(nm string) error {
 	}
 
 	//find
-	for _, dp := range ls.func_depends {
-		if dp.node == node {
+	for _, prmNode := range ls.func_depends {
+		if prmNode == node {
 			return nil //already added
 		}
 	}
 
 	//add
-	ls.func_depends = append(ls.func_depends, SANodeCodeDepend{node: node})
+	ls.func_depends = append(ls.func_depends, node)
 
 	return nil
 }
 
-func (ls *SANodeCode) addMsgDepend(msgs_depends *[]SANodeCodeDepend, nm string) error {
+func (ls *SANodeCode) addMsgDepend(msgs_depends *[]*SANode, nm string) error {
 	node, err := ls.findNodeName(nm)
 	if err != nil {
 		return err
 	}
 
 	//find
-	for _, dp := range *msgs_depends {
-		if dp.node == node {
+	for _, prmNode := range *msgs_depends {
+		if prmNode == node {
 			return nil //already added
 		}
 	}
 
 	//add
-	*msgs_depends = append(*msgs_depends, SANodeCodeDepend{node: node})
+	*msgs_depends = append(*msgs_depends, node)
 
 	return nil
 }
@@ -149,15 +166,15 @@ func (ls *SANodeCode) UpdateLinks(node *SANode) {
 	ls.UpdateFile() //create/update file + (re)compile
 }
 
-func (ls *SANodeCode) buildSqlInfos(msgs_depends []SANodeCodeDepend) (string, error) {
+func (ls *SANodeCode) buildSqlInfos(msgs_depends []*SANode) (string, error) {
 	str := ""
 
 	for _, dep := range msgs_depends {
-		if dep.node.IsTypeTables() {
-			str += fmt.Sprintf("'%s' is SQLite database which includes these tables(columns): ", dep.node.GetPathSplit())
+		if dep.IsTypeTables() {
+			str += fmt.Sprintf("'%s' is SQLite database which includes these tables(columns): ", dep.GetPathSplit())
 
 			tablesStr := ""
-			db, _, err := ls.node.app.base.ui.win.disk.OpenDb(dep.node.GetAttrString("path", ""))
+			db, _, err := ls.node.app.base.ui.win.disk.OpenDb(dep.GetAttrString("path", ""))
 			if err == nil {
 				info, err := db.GetTableInfo()
 				if err == nil {
@@ -195,18 +212,18 @@ func (node *SANode) getStructName() string {
 	return strings.ToUpper(node.Exe[0:1]) + node.Exe[1:] //1st letter must be upper
 }
 
-func (ls *SANodeCode) buildCopyStructs(depends []SANodeCodeDepend, addExtraAttrs bool) string {
+func (ls *SANodeCode) buildCopyStructs(depends []*SANode, addExtraAttrs bool) string {
 	str := ""
 	for _, dep := range depends {
-		if !dep.node.IsTypeCopy() {
+		if !dep.IsTypeCopy() {
 			continue
 		}
 
-		StructName := dep.node.getStructName()
+		StructName := dep.getStructName()
 
 		//Copy<name>Row
 		str += fmt.Sprintf("type %sRow struct {\n", StructName)
-		for _, it := range dep.node.Subs {
+		for _, it := range dep.Subs {
 			itVarName := strings.ToUpper(it.Name[0:1]) + it.Name[1:] //1st letter must be upper
 			itStructName := it.getStructName()                       //copy inside copy? .........
 
@@ -253,9 +270,9 @@ func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 	str += ls.buildCopyStructs(msgs_depends, false)
 
 	params := ""
-	for _, dep := range msgs_depends {
-		StructName := dep.node.getStructName()
-		params += fmt.Sprintf("%s *%s, ", dep.node.GetPathSplit(), StructName)
+	for _, prmNode := range msgs_depends {
+		StructName := prmNode.getStructName()
+		params += fmt.Sprintf("%s *%s, ", prmNode.GetPathSplit(), StructName)
 	}
 	params, _ = strings.CutSuffix(params, ", ")
 	str += fmt.Sprintf("\nfunc %s(%s) error {\n\n}\n\n", ls.node.Name, params)
@@ -320,11 +337,14 @@ func (ls *SANodeCode) GetAnswer() {
 }
 
 func (ls *SANodeCode) IsTriggered() bool {
-	for _, nm := range ls.Triggers {
-		nd := ls.node.app.root.FindNode(nm)
-		if nd != nil && nd.IsTriggered() {
+	for _, prmNode := range ls.func_depends {
+		if prmNode.IsTriggered() {
 			return true
 		}
+		/*nd := ls.node.app.root.FindNode(nm)
+		if nd != nil && nd.IsTriggered() {
+			return true
+		}*/
 	}
 	return false
 }
@@ -336,13 +356,9 @@ func (ls *SANodeCode) GetFileName() string {
 func (ls *SANodeCode) Execute() {
 	ls.exe_err = nil
 
-	//problém bude že se oboje pouští ve stejný moment .....................
-	//mít vícero features v jenom code ....
-
 	//input
 	vars := make(map[string]interface{})
-	for _, dep := range ls.func_depends {
-		prmNode := dep.node
+	for _, prmNode := range ls.func_depends {
 
 		attrs := prmNode.Attrs
 		if prmNode.HasAttrNode() {
@@ -603,9 +619,7 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 
 	//struct
 	str += "type MainStruct struct {\n"
-	for _, dep := range ls.func_depends {
-		prmNode := dep.node
-
+	for _, prmNode := range ls.func_depends {
 		prmName := prmNode.GetPathSplit()
 		VarName := strings.ToUpper(prmName[0:1]) + prmName[1:] //1st letter must be upper
 		StructName := prmNode.getStructName()
@@ -626,9 +640,7 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 		}
 		`
 	params := ""
-	for _, dep := range ls.func_depends {
-		prmNode := dep.node
-
+	for _, prmNode := range ls.func_depends {
 		prmName := prmNode.GetPathSplit()
 		VarName := strings.ToUpper(prmName[0:1]) + prmName[1:] //1st letter must be upper
 		params += fmt.Sprintf("&st.%s, ", VarName)
@@ -748,9 +760,9 @@ func (v *visitor) Visit(n ast.Node) ast.Visitor {
 	return v
 }*/
 
-func (ls *SANodeCode) buildMsgsDepends() ([]SANodeCodeDepend, error) {
+func (ls *SANodeCode) buildMsgsDepends() ([]*SANode, error) {
 
-	var msgs_depends []SANodeCodeDepend
+	var msgs_depends []*SANode
 
 	for _, msg := range ls.Messages {
 		ln := msg.User
@@ -812,9 +824,16 @@ func ReplaceWord(str string, oldWord string, newWord string) string {
 func (ls *SANodeCode) RenameNode(old_name string, new_name string) {
 
 	//triggers
-	for i, tr := range ls.Triggers {
+	/*for i, tr := range ls.Triggers {
 		if tr == old_name {
 			ls.Triggers[i] = new_name
+		}
+	}*/
+
+	//arguments
+	for i, arg := range ls.ArgsProps {
+		if arg.Node == old_name {
+			ls.ArgsProps[i].Node = new_name
 		}
 	}
 

@@ -1212,7 +1212,7 @@ func UiCodeGo_Attrs(node *SANode) {
 	y++
 
 	//triggers
-	{
+	/*{
 		ui.Comp_text(0, y, 1, 1, "Triggers", 0)
 		nTrigs := len(node.Code.Triggers)
 		ui.Div_start(1, y, 1, nTrigs+1)
@@ -1246,7 +1246,7 @@ func UiCodeGo_Attrs(node *SANode) {
 	}
 
 	ui.Div_SpacerRow(0, y, 2, 1)
-	y++
+	y++*/
 
 	//Features
 	/*{
