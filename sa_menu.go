@@ -388,14 +388,15 @@ func (base *SABase) drawLauncher(app *SAApp, icon_rad float64) {
 					Div_DropMoveElement(&base.Apps, &base.Apps, src, dst, pos)
 				}
 
-				if app.iconPath != "" {
-					click = ui.Comp_buttonIcon(0, 0, 1, 1, InitWinMedia_url(app.iconPath), 0.4, app.Name, Comp_buttonProp().Cd(CdPalette_B))
+				iconPath := app.GetFolderPath() + "icon.png"
+				if OsFileExists(iconPath) {
+					click = ui.Comp_buttonIcon(0, 0, 1, 1, InitWinMedia_url("file:"+iconPath), 0.4, app.Name, Comp_buttonProp().Cd(CdPalette_B))
 				} else {
 					nm := app.Name
 					if len(nm) > 3 {
 						nm = nm[:3]
 					}
-					click = ui.Comp_buttonText(0, 0, 1, 1, nm, Comp_buttonProp())
+					click = ui.Comp_buttonText(0, 0, 1, 1, nm, Comp_buttonProp().Tooltip(app.Name))
 				}
 				if base.Selected == i {
 					//IDE

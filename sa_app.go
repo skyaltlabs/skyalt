@@ -54,8 +54,6 @@ type SAApp struct {
 	graph  *SAGraph
 	canvas SACanvas
 
-	iconPath string
-
 	mic_nodes []SANodePath
 
 	all_nodes      []*SANode
@@ -71,11 +69,6 @@ func (a *SAApp) init(base *SABase) {
 	a.base = base
 
 	a.graph = NewSAGraph(a)
-
-	ic := a.GetFolderPath() + "icon.png"
-	if OsFileExists(ic) {
-		a.iconPath = "file:" + ic
-	}
 }
 
 func NewSAApp(name string, base *SABase) *SAApp {
