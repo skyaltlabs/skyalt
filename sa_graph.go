@@ -189,7 +189,7 @@ func (gr *SAGraph) drawConnectionDirect(startRect OsV4, endRect OsV4, dash float
 	ui.buff.AddBezier(start, mS, mE, end, cd, wi, dash, move)
 
 	// arrow
-	{
+	/*{
 		//poly
 		t := cellr * 0.3
 		ppts := []OsV2f{{0, 0}, {-t / 2, t}, {t / 2, t}}
@@ -239,7 +239,7 @@ func (gr *SAGraph) drawConnectionDirect(startRect OsV4, endRect OsV4, dash float
 		}
 		ui.Div_end()
 	}
-	ui.win.io.ini.Dpi = bck
+	ui.win.io.ini.Dpi = bck*/
 
 }
 
@@ -685,7 +685,7 @@ func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
 			}
 		}
 
-		if touch.numClicks > 1 {
+		if over && touch.numClicks > 1 {
 			sel := gr.app.root.FindSelected()
 			if sel == nil {
 				gr.app.Selected_canvas = SANodePath{}
