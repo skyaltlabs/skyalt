@@ -6,9 +6,9 @@
 "Name": "root",
 "Exe": "layout",
 "Code": {
-"Triggers": null,
 "Messages": null,
-"Code": ""
+"Code": "",
+"ArgsProps": null
 },
 "Attrs": {
 "grid_h": 0,
@@ -60,26 +60,41 @@
 "Subs": [
 {
 "Pos": {
-"X": 32.940296,
-"Y": 1.5566833
+"X": 32.970325,
+"Y": 1.5266533
 },
 "Name": "Summary",
-"Exe": "func_go",
+"Exe": "code",
 "Code": {
-"Triggers": [
-"button"
-],
 "Messages": [
 {
-"User": "If 'button' is clicked, use 'openai' to create summary of 'editbox'.\nMake a prompt in the form: \"Please summarize this article into a few bullet points: \" + content of 'editbox' on the new line.\nSet answer to 'text'.",
-"Assistent": "```go\nimport (\n\t\"fmt\"\n)\n\nfunc Summary(button *Button, openai *Openai, editbox *Editbox, text *Text) error {\n\tif button.Clicked {\n\t\tprompt := fmt.Sprintf(\"Please summarize this article into a few bullet points:\\n%s\", editbox.Value)\n\t\tanswer, err := openai.GetAnswer([]OpenaiMessage{{Role: \"user\", Content: prompt}})\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\ttext.Label = answer\n\t}\n\treturn nil\n}\n```"
+"User": "If 'button' is triggered, use 'openai' to create summary of 'editbox'.\nMake a prompt in the form: \"Please summarize this article into a few bullet points: \" + content of 'editbox' on the new line.\nSet answer to 'text'.",
+"Assistent": "```go\nimport (\n\t\"fmt\"\n)\n\nfunc Summary(button *Button, openai *Openai, editbox *Editbox, text *Text) error {\n\tif button.Triggered {\n\t\tprompt := fmt.Sprintf(\"Please summarize this article into a few bullet points:\\n%s\", editbox.Value)\n\t\tanswer, err := openai.GetAnswer([]OpenaiMessage{{Role: \"user\", Content: prompt}})\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\ttext.Label = answer\n\t}\n\treturn nil\n}\n```"
 },
 {
 "User": "",
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"fmt\"\n)\n\nfunc Summary(button *Button, openai *Openai, editbox *Editbox, text *Text) error {\n\tif button.Clicked {\n\t\tprompt := fmt.Sprintf(\"Please summarize this article into a few bullet points:\\n%s\", editbox.Value)\n\t\tanswer, err := openai.GetAnswer([]OpenaiMessage{{Role: \"user\", Content: prompt}})\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\ttext.Label = answer\n\t}\n\treturn nil\n}\n"
+"Code": "\nimport (\n\t\"fmt\"\n)\n\nfunc Summary(button *Button, openai *Openai, editbox *Editbox, text *Text) error {\n\tif button.Triggered {\n\t\tprompt := fmt.Sprintf(\"Please summarize this article into a few bullet points:\\n%s\", editbox.Value)\n\t\tanswer, err := openai.GetAnswer([]OpenaiMessage{{Role: \"user\", Content: prompt}})\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\ttext.Label = answer\n\t}\n\treturn nil\n}\n",
+"ArgsProps": [
+{
+"Node": "button",
+"Write": false
+},
+{
+"Node": "openai",
+"Write": false
+},
+{
+"Node": "editbox",
+"Write": false
+},
+{
+"Node": "text",
+"Write": true
+}
+]
 },
 "Attrs": {
 "bypass": false,
@@ -89,15 +104,15 @@
 },
 {
 "Pos": {
-"X": 32.853073,
-"Y": -1.0852087
+"X": 32.957024,
+"Y": -1.4802191
 },
 "Name": "openai",
 "Exe": "openai",
 "Code": {
-"Triggers": null,
 "Messages": null,
-"Code": ""
+"Code": "",
+"ArgsProps": null
 },
 "Attrs": {
 "model": "gpt-3.5-turbo",
@@ -107,16 +122,15 @@
 },
 {
 "Pos": {
-"X": 25.641022,
-"Y": 4.0655837
+"X": 33.000687,
+"Y": 4.793235
 },
 "Name": "text",
 "Exe": "text",
-"Selected": true,
 "Code": {
-"Triggers": null,
 "Messages": null,
-"Code": ""
+"Code": "",
+"ArgsProps": null
 },
 "Attrs": {
 "align_h": 0,
@@ -135,18 +149,17 @@
 },
 {
 "Pos": {
-"X": 25.522957,
-"Y": 1.5490556
+"X": 25.730858,
+"Y": 3.1290972
 },
 "Name": "button",
 "Exe": "button",
 "Code": {
-"Triggers": null,
 "Messages": null,
-"Code": ""
+"Code": "",
+"ArgsProps": null
 },
 "Attrs": {
-"clicked": true,
 "confirmation": "",
 "enable": true,
 "grid_h": 1,
@@ -161,15 +174,15 @@
 },
 {
 "Pos": {
-"X": 25.369095,
-"Y": -0.882856
+"X": 25.556206,
+"Y": -0.36310548
 },
 "Name": "editbox",
 "Exe": "editbox",
 "Code": {
-"Triggers": null,
 "Messages": null,
-"Code": ""
+"Code": "",
+"ArgsProps": null
 },
 "Attrs": {
 "align_h": 0,

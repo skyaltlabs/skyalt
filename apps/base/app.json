@@ -3,44 +3,44 @@
 {
 "Name": "counter",
 "IDE": true,
-"Cam_x": 28.698780059814453,
-"Cam_y": -10.893903732299805,
-"Cam_z": 0.8,
+"Cam_x": 30.080692291259766,
+"Cam_y": -14.236196517944336,
+"Cam_z": 1,
 "EnableExecution": true,
 "Selected_canvas": {}
 },
 {
 "Name": "summary",
 "IDE": true,
-"Cam_x": 32.08562469482422,
-"Cam_y": 2.095292806625366,
-"Cam_z": 0.9,
+"Cam_x": 29.278446197509766,
+"Cam_y": 1.6565078496932983,
+"Cam_z": 1,
 "EnableExecution": true,
 "Selected_canvas": {}
 },
 {
 "Name": "srt",
 "IDE": true,
-"Cam_x": 7.361915588378906,
-"Cam_y": 2.177370548248291,
-"Cam_z": 0.9,
+"Cam_x": 5.407234191894531,
+"Cam_y": 1.4258009195327759,
+"Cam_z": 0.8,
 "EnableExecution": true,
 "Selected_canvas": {}
 },
 {
 "Name": "chat",
 "IDE": true,
-"Cam_x": 13.204099655151367,
-"Cam_y": 9.40457820892334,
-"Cam_z": 0.7000000000000001,
+"Cam_x": 19.431211471557617,
+"Cam_y": 7.321982383728027,
+"Cam_z": 0.6999999999999993,
 "EnableExecution": true,
 "Selected_canvas": {}
 },
 {
 "Name": "download_whisper_models",
 "IDE": true,
-"Cam_x": 5.616757392883301,
-"Cam_y": 2.187056541442871,
+"Cam_x": 6.567731857299805,
+"Cam_y": 2.943347692489624,
 "Cam_z": 0.7,
 "EnableExecution": true,
 "Selected_canvas": {}

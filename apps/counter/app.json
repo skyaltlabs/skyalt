@@ -6,9 +6,9 @@
 "Name": "root",
 "Exe": "layout",
 "Code": {
-"Triggers": null,
 "Messages": null,
-"Code": ""
+"Code": "",
+"ArgsProps": null
 },
 "Attrs": {
 "grid_h": 0,
@@ -72,46 +72,57 @@
 "Subs": [
 {
 "Pos": {
-"X": 28.563646,
-"Y": -10.664175
+"X": 30.189955,
+"Y": -14.00721
 },
-"Name": "func_go",
-"Exe": "func_go",
+"Name": "code",
+"Exe": "code",
 "Selected": true,
 "Code": {
-"Triggers": [
-"add_one",
-"sub_one"
-],
 "Messages": [
 {
-"User": "If 'add_one' is clicked, then increment the 'counter'.\nIf 'sub_one' is clicked, then decrement the 'counter' .",
-"Assistent": "```go\nimport (\n\t\"strconv\"\n)\n\nfunc func_go(add_one *Button, counter *Text, sub_one *Button) error {\n\tif add_one.Clicked {\n\t\tc, _ := strconv.Atoi(counter.Label)\n\t\tc++\n\t\tcounter.Label = strconv.Itoa(c)\n\t\tadd_one.Clicked = false // Reset the button clicked state\n\t}\n\tif sub_one.Clicked {\n\t\tc, _ := strconv.Atoi(counter.Label)\n\t\tc--\n\t\tcounter.Label = strconv.Itoa(c)\n\t\tsub_one.Clicked = false // Reset the button clicked state\n\t}\n\treturn nil\n}\n```"
+"User": "If 'add_one' is triggered, then increment the 'counter'.\nIf 'sub_one' is triggered, then decrement the 'counter' .",
+"Assistent": "```go\nimport (\n\t\"strconv\"\n)\n\nfunc code(add_one *Button, counter *Text, sub_one *Button) error {\n\tif add_one.Triggered {\n\t\tc, _ := strconv.Atoi(counter.Label)\n\t\tc++\n\t\tcounter.Label = strconv.Itoa(c)\n\t\tadd_one.Triggered = false // Reset the button triggered state\n\t}\n\tif sub_one.Triggered {\n\t\tc, _ := strconv.Atoi(counter.Label)\n\t\tc--\n\t\tcounter.Label = strconv.Itoa(c)\n\t\tsub_one.Triggered = false // Reset the button triggered state\n\t}\n\treturn nil\n}\n```"
 },
 {
 "User": "",
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"strconv\"\n)\n\nfunc func_go(add_one *Button, counter *Text, sub_one *Button) error {\n\tif add_one.Clicked {\n\t\tc, _ := strconv.Atoi(counter.Label)\n\t\tc++\n\t\tcounter.Label = strconv.Itoa(c)\n\t\tadd_one.Clicked = false // Reset the button clicked state\n\t}\n\tif sub_one.Clicked {\n\t\tc, _ := strconv.Atoi(counter.Label)\n\t\tc--\n\t\tcounter.Label = strconv.Itoa(c)\n\t\tsub_one.Clicked = false // Reset the button clicked state\n\t}\n\treturn nil\n}\n"
+"Code": "\nimport (\n\t\"strconv\"\n)\n\nfunc code(add_one *Button, counter *Text, sub_one *Button) error {\n\tif add_one.Triggered {\n\t\tc, _ := strconv.Atoi(counter.Label)\n\t\tc++\n\t\tcounter.Label = strconv.Itoa(c)\n\t\tadd_one.Triggered = false // Reset the button triggered state\n\t}\n\tif sub_one.Triggered {\n\t\tc, _ := strconv.Atoi(counter.Label)\n\t\tc--\n\t\tcounter.Label = strconv.Itoa(c)\n\t\tsub_one.Triggered = false // Reset the button triggered state\n\t}\n\treturn nil\n}\n",
+"ArgsProps": [
+{
+"Node": "add_one",
+"Write": false
+},
+{
+"Node": "counter",
+"Write": true
+},
+{
+"Node": "sub_one",
+"Write": false
+}
+]
 },
 "Attrs": {
 "bypass": false,
+"language": "go",
 "show": true
 },
 "ShowCodeChat": false
 },
 {
 "Pos": {
-"X": 28.389923,
-"Y": -14.368408
+"X": 38.21232,
+"Y": -13.980434
 },
 "Name": "counter",
 "Exe": "text",
 "Code": {
-"Triggers": null,
 "Messages": null,
-"Code": ""
+"Code": "",
+"ArgsProps": null
 },
 "Attrs": {
 "align_h": 1,
@@ -130,18 +141,17 @@
 },
 {
 "Pos": {
-"X": 21.238564,
-"Y": -9.624395
+"X": 22.311457,
+"Y": -11.665346
 },
 "Name": "sub_one",
 "Exe": "button",
 "Code": {
-"Triggers": null,
 "Messages": null,
-"Code": ""
+"Code": "",
+"ArgsProps": null
 },
 "Attrs": {
-"clicked": false,
 "confirmation": "",
 "enable": true,
 "grid_h": 1,
@@ -156,18 +166,17 @@
 },
 {
 "Pos": {
-"X": 21.160183,
-"Y": -11.846926
+"X": 21.949068,
+"Y": -16.807047
 },
 "Name": "add_one",
 "Exe": "button",
 "Code": {
-"Triggers": null,
 "Messages": null,
-"Code": ""
+"Code": "",
+"ArgsProps": null
 },
 "Attrs": {
-"clicked": false,
 "confirmation": "",
 "enable": true,
 "grid_h": 1,
