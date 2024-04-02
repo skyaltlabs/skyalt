@@ -583,7 +583,11 @@ func (ui *Ui) Comp_textSelectMulti(x, y, w, h int, label string, align OsV2, sel
 func (ui *Ui) Comp_text_s(style *UiComp, value string, icon *WinMedia, selection bool, multi_line bool, multi_line_enter_finish bool) {
 
 	pl := ui.win.io.GetPalette()
-	_, onCd := pl.GetCd(style.cd, style.fade, style.enable, false, false)
+	cd, onCd := pl.GetCd(style.cd, style.fade, style.enable, false, false)
+
+	if style.cd == CdPalette_E {
+		onCd = cd //swap
+	}
 
 	if style.enable {
 		if len(style.tooltip) > 0 {
