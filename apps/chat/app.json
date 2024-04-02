@@ -214,6 +214,7 @@
 "grid_w": 1,
 "grid_x": 0,
 "grid_y": 0,
+"language": "go",
 "show": true
 },
 "ShowCodeChat": true
@@ -225,10 +226,11 @@
 },
 "Name": "Chat",
 "Exe": "code",
+"Selected": true,
 "Code": {
 "Messages": [
 {
-"User": "If 'button' is triggered, build messages from 'db'. Add 'user_msg' to messages and send it to 'llamacpp' to get answer.\nSave answer and 'user_msg' into 'db'. Reset 'user_msg' editbox.",
+"User": "If 'button' is clicked, build messages from 'db'. Add 'user_msg' to messages and send it to 'llamacpp' to get answer.\nSave answer and 'user_msg' into 'db'. Reset 'user_msg' editbox.",
 "Assistent": "```go\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc Chat(button *Button, db *Tables, user_msg *Editbox, llamacpp *Llamacpp) error {\n\tif button.Triggered {\n\t\tdatabase, err := sql.Open(\"sqlite3\", db.Path)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer database.Close()\n\n\t\trows, err := database.Query(\"SELECT role, content FROM chat\")\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer rows.Close()\n\n\t\tvar messages []LlamaMessage\n\t\tfor rows.Next() {\n\t\t\tvar role, content string\n\t\t\tif err := rows.Scan(\u0026role, \u0026content); err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t\tmessages = append(messages, LlamaMessage{Role: role, Content: content})\n\t\t}\n\t\tif err := rows.Err(); err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\tuserMessage := LlamaMessage{Role: \"user\", Content: user_msg.Value}\n\t\tmessages = append(messages, userMessage)\n\n\t\tanswer, err := llamacpp.GetAnswer(messages)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\ttx, err := database.Begin()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tstmt, err := tx.Prepare(\"INSERT INTO chat(role, content) VALUES(?, ?)\")\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer stmt.Close()\n\n\t\t_, err = stmt.Exec(\"user\", user_msg.Value)\n\t\tif err != nil {\n\t\t\ttx.Rollback()\n\t\t\treturn err\n\t\t}\n\n\t\t_, err = stmt.Exec(\"assistant\", answer)\n\t\tif err != nil {\n\t\t\ttx.Rollback()\n\t\t\treturn err\n\t\t}\n\n\t\terr = tx.Commit()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\tuser_msg.Value = \"\" // Reset user message editbox after sending\n\n\t\tfmt.Printf(\"The assistant's answer is: %s\\n\", answer)\n\t}\n\treturn nil\n}\n```"
 },
 {
@@ -392,7 +394,7 @@
 },
 "Attrs": {
 "confirmation": "",
-"enable": true,
+"enable": false,
 "grid_h": 1,
 "grid_w": 1,
 "grid_x": 3,
@@ -428,7 +430,7 @@
 "multi_line_enter_finish": true,
 "show": true,
 "temp_to_value": true,
-"value": " j"
+"value": " "
 },
 "ShowCodeChat": false
 },

@@ -5,7 +5,7 @@
 "IDE": true,
 "Cam_x": 30.080692291259766,
 "Cam_y": -14.236196517944336,
-"Cam_z": 1,
+"Cam_z": 0.6000000000000001,
 "EnableExecution": true,
 "Selected_canvas": {}
 },
@@ -30,9 +30,9 @@
 {
 "Name": "chat",
 "IDE": true,
-"Cam_x": 19.431211471557617,
-"Cam_y": 7.321982383728027,
-"Cam_z": 0.6999999999999993,
+"Cam_x": 18.018085479736328,
+"Cam_y": 5.7544145584106445,
+"Cam_z": 0.49999999999999933,
 "EnableExecution": true,
 "Selected_canvas": {}
 },

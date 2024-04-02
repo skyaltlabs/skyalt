@@ -77,18 +77,19 @@
 },
 "Name": "code",
 "Exe": "code",
+"Selected": true,
 "Code": {
 "Messages": [
 {
-"User": "If 'button' is triggered, use 'whispercpp' to translate all .wav files in 'disk_dir'.\nSave translations as files with same name + \".srt\".",
-"Assistent": "```go\nimport (\n\t\"io/ioutil\"\n\t\"path/filepath\"\n\t\"strings\"\n)\n\nfunc code(button *Button, whispercpp *Whispercpp, disk_dir *Disk_dir) error {\n\tif !button.Triggered {\n\t\treturn nil\n\t}\n\n\tfiles, err := ioutil.ReadDir(disk_dir.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\tfor _, file := range files {\n\t\tif filepath.Ext(file.Name()) == \".wav\" {\n\t\t\taudioData, err := ioutil.ReadFile(filepath.Join(disk_dir.Path, file.Name()))\n\t\t\tif err != nil {\n\t\t\t\tcontinue\n\t\t\t}\n\n\t\t\ttranslation, err := whispercpp.TranscribeBlob(audioData)\n\t\t\tif err != nil {\n\t\t\t\tcontinue\n\t\t\t}\n\n\t\t\tsrtFileName := strings.TrimSuffix(file.Name(), filepath.Ext(file.Name())) + \".srt\"\n\t\t\terr = ioutil.WriteFile(filepath.Join(disk_dir.Path, srtFileName), []byte(translation), 0644)\n\t\t\tif err != nil {\n\t\t\t\tcontinue\n\t\t\t}\n\t\t}\n\t}\n\n\treturn nil\n}\n```"
+"User": "If 'button' is clicked, use 'whispercpp' to translate all .wav files in 'disk_dir'.\nSave translations as files with same name + \".srt\".",
+"Assistent": "```go\nimport (\n\t\"io/ioutil\"\n\t\"path/filepath\"\n\t\"strings\"\n)\n\nfunc code(button *Button, whispercpp *Whispercpp, disk_dir *Disk_dir) error {\n\tif !button.Triggered {\n\t\treturn nil\n\t}\n\n\tfiles, err := ioutil.ReadDir(disk_dir.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\tfor _, file := range files {\n\t\tif file.IsDir() {\n\t\t\tcontinue\n\t\t}\n\n\t\tif filepath.Ext(file.Name()) == \".wav\" {\n\t\t\tfPath := filepath.Join(disk_dir.Path, file.Name())\n\t\t\tdata, err := ioutil.ReadFile(fPath)\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\n\t\t\ttranslation, err := whispercpp.TranscribeBlob(data)\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\n\t\t\tsrtPath := fPath + \".srt\"\n\t\t\terr = ioutil.WriteFile(srtPath, []byte(translation), 0644)\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t}\n\t}\n\n\treturn nil\n}\n```"
 },
 {
 "User": "",
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"io/ioutil\"\n\t\"path/filepath\"\n\t\"strings\"\n)\n\nfunc code(button *Button, whispercpp *Whispercpp, disk_dir *Disk_dir) error {\n\tif !button.Triggered {\n\t\treturn nil\n\t}\n\n\tfiles, err := ioutil.ReadDir(disk_dir.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\tfor _, file := range files {\n\t\tif filepath.Ext(file.Name()) == \".wav\" {\n\t\t\taudioData, err := ioutil.ReadFile(filepath.Join(disk_dir.Path, file.Name()))\n\t\t\tif err != nil {\n\t\t\t\tcontinue\n\t\t\t}\n\n\t\t\ttranslation, err := whispercpp.TranscribeBlob(audioData)\n\t\t\tif err != nil {\n\t\t\t\tcontinue\n\t\t\t}\n\n\t\t\tsrtFileName := strings.TrimSuffix(file.Name(), filepath.Ext(file.Name())) + \".srt\"\n\t\t\terr = ioutil.WriteFile(filepath.Join(disk_dir.Path, srtFileName), []byte(translation), 0644)\n\t\t\tif err != nil {\n\t\t\t\tcontinue\n\t\t\t}\n\t\t}\n\t}\n\n\treturn nil\n}\n",
+"Code": "\nimport (\n\t\"io/ioutil\"\n\t\"path/filepath\"\n\t\"strings\"\n)\n\nfunc code(button *Button, whispercpp *Whispercpp, disk_dir *Disk_dir) error {\n\tif !button.Triggered {\n\t\treturn nil\n\t}\n\n\tfiles, err := ioutil.ReadDir(disk_dir.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\tfor _, file := range files {\n\t\tif file.IsDir() {\n\t\t\tcontinue\n\t\t}\n\n\t\tif filepath.Ext(file.Name()) == \".wav\" {\n\t\t\tfPath := filepath.Join(disk_dir.Path, file.Name())\n\t\t\tdata, err := ioutil.ReadFile(fPath)\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\n\t\t\ttranslation, err := whispercpp.TranscribeBlob(data)\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\n\t\t\tsrtPath := fPath + \".srt\"\n\t\t\terr = ioutil.WriteFile(srtPath, []byte(translation), 0644)\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t}\n\t}\n\n\treturn nil\n}\n",
 "ArgsProps": [
 {
 "Node": "button",
@@ -106,6 +107,7 @@
 },
 "Attrs": {
 "bypass": false,
+"language": "go",
 "show": true
 },
 "ShowCodeChat": true

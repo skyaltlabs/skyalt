@@ -60,23 +60,23 @@
 "Subs": [
 {
 "Pos": {
-"X": 32.970325,
-"Y": 1.5266533
+"X": 33.02438,
+"Y": 1.4996263
 },
 "Name": "Summary",
 "Exe": "code",
 "Code": {
 "Messages": [
 {
-"User": "If 'button' is triggered, use 'openai' to create summary of 'editbox'.\nMake a prompt in the form: \"Please summarize this article into a few bullet points: \" + content of 'editbox' on the new line.\nSet answer to 'text'.",
-"Assistent": "```go\nimport (\n\t\"fmt\"\n)\n\nfunc Summary(button *Button, openai *Openai, editbox *Editbox, text *Text) error {\n\tif button.Triggered {\n\t\tprompt := fmt.Sprintf(\"Please summarize this article into a few bullet points:\\n%s\", editbox.Value)\n\t\tanswer, err := openai.GetAnswer([]OpenaiMessage{{Role: \"user\", Content: prompt}})\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\ttext.Label = answer\n\t}\n\treturn nil\n}\n```"
+"User": "If 'button' is clicked, use 'openai' to create summary of 'editbox'.\nMake a prompt in the form: \"Please summarize this article into a few bullet points: \" + content of 'editbox' on the new line.\nSet answer to 'text'.",
+"Assistent": "```go\nimport \"fmt\"\n\nfunc Summary(button *Button, openai *Openai, editbox *Editbox, text *Text) error {\n\tif button.Triggered {\n\t\tprompt := fmt.Sprintf(\"Please summarize this article into a few bullet points:\\n%s\", editbox.Value)\n\t\tanswer, err := openai.GetAnswer([]OpenaiMessage{\n\t\t\t{Role: \"user\", Content: prompt},\n\t\t})\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\ttext.Label = answer\n\t}\n\treturn nil\n}\n```"
 },
 {
 "User": "",
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"fmt\"\n)\n\nfunc Summary(button *Button, openai *Openai, editbox *Editbox, text *Text) error {\n\tif button.Triggered {\n\t\tprompt := fmt.Sprintf(\"Please summarize this article into a few bullet points:\\n%s\", editbox.Value)\n\t\tanswer, err := openai.GetAnswer([]OpenaiMessage{{Role: \"user\", Content: prompt}})\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\ttext.Label = answer\n\t}\n\treturn nil\n}\n",
+"Code": "\nimport \"fmt\"\n\nfunc Summary(button *Button, openai *Openai, editbox *Editbox, text *Text) error {\n\tif button.Triggered {\n\t\tprompt := fmt.Sprintf(\"Please summarize this article into a few bullet points:\\n%s\", editbox.Value)\n\t\tanswer, err := openai.GetAnswer([]OpenaiMessage{\n\t\t\t{Role: \"user\", Content: prompt},\n\t\t})\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\ttext.Label = answer\n\t}\n\treturn nil\n}\n",
 "ArgsProps": [
 {
 "Node": "button",
@@ -98,6 +98,7 @@
 },
 "Attrs": {
 "bypass": false,
+"language": "go",
 "show": true
 },
 "ShowCodeChat": true

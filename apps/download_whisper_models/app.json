@@ -65,10 +65,11 @@
 },
 "Name": "update_table",
 "Exe": "code",
+"Selected": true,
 "Code": {
 "Messages": [
 {
-"User": "Go through 'table' and check if model + \".bin\" exist in 'dir'.\nIf it exists, set button label to \"Delete\", else \"Download\".\nIf \"Delete\" is triggered, delete the file, else download it from 'net' with address(model + \".bin)\" and save it into 'dir'.",
+"User": "Go through 'table' and check if model + \".bin\" exist in 'dir'.\nIf it exists, set button label to \"Delete\", else \"Download\".\nIf \"Delete\" is clicked, delete the file, else download it from 'net' with address(model + \".bin)\" and save it into 'dir'.",
 "Assistent": "```go\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\nfunc table_button(table *CopyTable, dir *Disk_dir, net *Net) error {\n\tfor _, row := range table.Rows {\n\t\tfilePath := filepath.Join(dir.Path, row.Model.Label+\".bin\")\n\t\t_, err := os.Stat(filePath)\n\t\tif err == nil {\n\t\t\trow.Button.Label = \"Delete\"\n\t\t\tif row.Button.Triggered \u0026\u0026 dir.Write {\n\t\t\t\tos.Remove(filePath)\n\t\t\t}\n\t\t} else {\n\t\t\trow.Button.Label = \"Download\"\n\t\t\tif row.Button.Triggered {\n\t\t\t\tnet.DownloadFile(filePath, row.Model.Label+\".bin\")\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n```"
 },
 {
@@ -101,7 +102,7 @@
 "language": "go",
 "show": true
 },
-"ShowCodeChat": false
+"ShowCodeChat": true
 },
 {
 "Pos": {
@@ -110,7 +111,6 @@
 },
 "Name": "table",
 "Exe": "copy",
-"Selected": true,
 "Code": {
 "Messages": [
 {
@@ -131,7 +131,6 @@
 ]
 },
 "Attrs": {
-"bypass": false,
 "changed": false,
 "defRow": {
 "button": {
@@ -179,12 +178,10 @@
 "grid_w": 1,
 "grid_x": 1,
 "grid_y": 2,
-"language": "go",
 "max_height": 1,
 "max_width": 100,
 "show": true,
-"show_border": true,
-"write": false
+"show_border": true
 },
 "Cols": [
 {
