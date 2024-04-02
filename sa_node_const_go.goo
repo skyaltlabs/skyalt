@@ -36,7 +36,7 @@ type Button struct {
 	Label   string `json:"label"`
 	Tooltip string `json:"tooltip"`
 	Enable  bool   `json:"enable"`
-	Clicked bool   `json:"clicked"`
+	Triggered bool   `json:"triggered"`
 	Confirmation string   `json:"confirmation"`
 }
 type Checkbox struct {
@@ -164,7 +164,7 @@ type Microphone struct {
 	Enable    bool   `json:"enable"`
 	//Changed   bool   `json:"changed"`
 	Path      string `json:"path"`
-	Clicked bool   `json:"clicked"`
+	Triggered bool   `json:"triggered"`
 }
 
 

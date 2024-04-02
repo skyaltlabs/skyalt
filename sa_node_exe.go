@@ -39,7 +39,7 @@ func UiButton_Attrs(node *SANode) {
 	node.ShowAttrString(&grid, "label", "", false)
 	node.ShowAttrString(&grid, "tooltip", "", false)
 	node.ShowAttrBool(&grid, "enable", true)
-	//node.ShowAttrBool(&grid, "clicked", false)
+	//node.ShowAttrBool(&grid, "triggered", false)
 	node.ShowAttrString(&grid, "confirmation", "", false)
 }
 
@@ -49,12 +49,12 @@ func UiButton_render(node *SANode) {
 	tooltip := node.GetAttrString("tooltip", "")
 	enable := node.GetAttrBool("enable", true)
 	confirmation := node.GetAttrString("confirmation", "")
-	//clicked := node.GetAttrBool("clicked", false)
+	//triggered := node.GetAttrBool("triggered", false)
 
 	if node.app.base.ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, Comp_buttonProp().Enable(enable).Tooltip(tooltip).Confirmation(confirmation, "confirm_"+node.GetPath())) > 0 {
-		//node.Attrs["clicked"] = true
+		//node.Attrs["triggered"] = true
 
-		node.SetChange([]SANodeCodeExePrm{{Node: node.Name, Attr: "clicked", Value: true}})
+		node.SetChange([]SANodeCodeExePrm{{Node: node.Name, Attr: "triggered", Value: true}})
 	}
 }
 
@@ -345,7 +345,7 @@ func UiTimer_Attrs(node *SANode) {
 	node.ShowAttrBool(&grid, "repeat", false)
 	node.ShowAttrString(&grid, "tooltip", "", false)
 	node.ShowAttrBool(&grid, "enable", true)
-	//node.ShowAttrBool(&grid, "clicked", false)
+	//node.ShowAttrBool(&grid, "triggered", false)
 
 	if ui.Comp_button(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, "Reset", Comp_buttonProp()) > 0 {
 		node.Attrs["start_sec"] = OsTime()
@@ -361,7 +361,7 @@ func UiTimer_render(node *SANode) {
 	repeat := node.GetAttrBool("repeat", false)
 	tooltip := node.GetAttrString("tooltip", "")
 	enable := node.GetAttrBool("enable", true) //also STOP!
-	//clicked := node.GetAttrBool("clicked", false)
+	//triggered := node.GetAttrBool("triggered", false)
 
 	dt := OsTime() - start_sec
 	prc := OsTrnFloat(enable, dt/time_secs, 0)
@@ -386,7 +386,7 @@ func UiTimer_render(node *SANode) {
 		if start_sec > 0 { //if repeat==false, set 'done' only once
 			//node.Attrs["done"] = true
 
-			node.SetChange([]SANodeCodeExePrm{{Node: node.Name, Attr: "clicked", Value: true}})
+			node.SetChange([]SANodeCodeExePrm{{Node: node.Name, Attr: "triggered", Value: true}})
 		}
 		if repeat {
 			node.Attrs["start_sec"] = OsTime()
@@ -554,7 +554,7 @@ func UiMicrophone_render(node *SANode) {
 			//set finished
 			//node.Attrs["changed"] = true
 
-			node.SetChange([]SANodeCodeExePrm{{Node: node.Name, Attr: "clicked", Value: true}})
+			node.SetChange([]SANodeCodeExePrm{{Node: node.Name, Attr: "triggered", Value: true}})
 		}
 	}
 }
@@ -1251,7 +1251,7 @@ func _UiCode_attrs(node *SANode, grid *OsV4) {
 		y += nTrigs + 1
 
 		if len(node.Code.Triggers) == 0 {
-			node.SetError(fmt.Errorf("no trigger(s)"))
+			node.SetError(fmt.Errorf("no triggered(s)"))
 		}
 	}
 

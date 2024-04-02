@@ -382,7 +382,7 @@ func (ls *SANodeCode) Execute(exe_prms []SANodeCodeExePrm) {
 			}
 		}
 
-		//add params(clicked=true, etc.)
+		//add params(triggered=true, etc.)
 		for _, prm := range exe_prms {
 			if prmNode.Name == prm.Node {
 				if prm.CopyNode == "" {
@@ -411,7 +411,7 @@ func (ls *SANodeCode) Execute(exe_prms []SANodeCodeExePrm) {
 						itAttrs[k] = v
 					}
 
-					//add params(clicked=true, etc.)
+					//add params(triggered=true, etc.)
 					for _, prm := range exe_prms {
 						if prm.CopyPos == i && prmNode.Name == prm.Node && it.Name == prm.CopyNode {
 							itAttrs[prm.Attr] = prm.Value
@@ -453,7 +453,7 @@ func (ls *SANodeCode) SetOutput(outputJs []byte) {
 			if !prmNode.HasAttrNode() {
 				switch vv := attrs.(type) {
 				case map[string]interface{}:
-					delete(vv, "clicked")
+					delete(vv, "triggered")
 					prmNode.Attrs = vv
 				}
 			}
@@ -484,7 +484,7 @@ func (ls *SANodeCode) SetOutput(outputJs []byte) {
 										if !prmNode2.HasAttrNode() {
 											switch vv := attrs.(type) {
 											case map[string]interface{}:
-												delete(vv, "clicked")
+												delete(vv, "triggered")
 												prmNode2.Attrs = vv
 											}
 										}

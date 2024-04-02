@@ -10,7 +10,7 @@ type Editbox struct {
 type Button struct {
 	Label   string
 	Enable  bool
-	Clicked bool	//read-only, never set it!
+	Triggered bool	//true, when button is clicked
 }
 
 type Checkbox struct {
@@ -69,7 +69,7 @@ type Tables struct {
 
 type Microphone struct {
 	Path  string	//path to the file with recorded audio
-	Clicked bool
+	Triggered bool	//true, when recording is done
 	Enable  bool
 }
 
