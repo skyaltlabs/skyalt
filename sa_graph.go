@@ -743,11 +743,10 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 	ui.DivInfo_set(SA_DIV_SET_scrollVnarrow, 1, 0)
 	ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
 
-	ui.Div_colMax(2, 100)
+	ui.Div_colMax(3, 100)
 
 	path := "file:apps/base/resources/"
 
-	x := 0
 	//if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+OsTrnString(gr.app.EnableExecution, "pause.png", "play.png")), 0.25, "Enable/Disable nodes execution", uint8(OsTrn(gr.app.EnableExecution, int(CdPalette_B), int(CdPalette_E))), true, false) > 0 {
 	//	gr.app.EnableExecution = !gr.app.EnableExecution
 	//	if gr.app.EnableExecution {
@@ -761,27 +760,47 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 	//}
 	//y++
 
-	if ui.Comp_buttonLight(x, 0, 1, 1, "←", Comp_buttonProp().Enable(gr.canHistoryBack()).Tooltip(fmt.Sprintf("%s(%d)", ui.trns.BACKWARD, gr.history_pos))) > 0 {
+	if ui.Comp_buttonLight(0, 0, 1, 1, "←", Comp_buttonProp().Enable(gr.canHistoryBack()).Tooltip(fmt.Sprintf("%s(%d)", ui.trns.BACKWARD, gr.history_pos))) > 0 {
 		gr.stepHistoryBack()
 
 	}
-	x++
-	if ui.Comp_buttonLight(x, 0, 1, 1, "→", Comp_buttonProp().Enable(gr.canHistoryForward()).Tooltip(fmt.Sprintf("%s(%d)", ui.trns.FORWARD, len(gr.history)-gr.history_pos-1))) > 0 {
+
+	if ui.Comp_buttonLight(1, 0, 1, 1, "→", Comp_buttonProp().Enable(gr.canHistoryForward()).Tooltip(fmt.Sprintf("%s(%d)", ui.trns.FORWARD, len(gr.history)-gr.history_pos-1))) > 0 {
 		gr.stepHistoryForward()
 	}
-	x++
 
-	x++ //space
+	//progress
+	{
+		progressStr, progressProc := gr.app.base.jobs.FindAppProgress(gr.app)
+		if progressProc >= 0 {
+			ui.Div_start(3, 0, 1, 1)
+			{
+				dnm := "progress"
+				ui.Div_colMax(0, 100)
+				if ui.Comp_button(0, 0, 1, 1, fmt.Sprintf("%s ... %.1f%%", progressStr, progressProc*100), Comp_buttonProp()) > 0 {
+					ui.Dialog_open(dnm, 0)
+				}
+				if ui.Dialog_start(dnm) {
+					if !gr.app.base.jobs.RenderAppProgress(gr.app) {
+						ui.Dialog_close()
+					}
+					ui.Dialog_end()
+				}
 
-	if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url(path+"home.png"), 0.3, "Zoom all nodes(H)", Comp_buttonProp().Cd(CdPalette_B)) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
+				ui.win.SetRedraw()
+				//time.Sleep(500 * time.Millisecond)	//.....
+			}
+			ui.Div_end()
+		}
+	}
+
+	if ui.Comp_buttonIcon(5, 0, 1, 1, InitWinMedia_url(path+"home.png"), 0.3, "Zoom all nodes(H)", Comp_buttonProp().Cd(CdPalette_B)) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
 		gr.autoZoom(false, graphCanvas) //zoom to all
 	}
-	x++
 
-	if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url(path+"home_select.png"), 0.2, "Zoom selected nodes(G)", Comp_buttonProp().Cd(CdPalette_B)) > 0 || (keyAllow && strings.EqualFold(keys.text, "g")) {
+	if ui.Comp_buttonIcon(6, 0, 1, 1, InitWinMedia_url(path+"home_select.png"), 0.2, "Zoom selected nodes(G)", Comp_buttonProp().Cd(CdPalette_B)) > 0 || (keyAllow && strings.EqualFold(keys.text, "g")) {
 		gr.autoZoom(true, graphCanvas) //zoom to selected
 	}
-	x++
 
 	//if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy.png"), 0.25, "Reoder all nodes(L)", Comp_buttonProp().Cd(CdPalette_B)) > 0 || (keyAllow && strings.EqualFold(keys.text, "l")) {
 	//	gr.reorder(false)               //reorder nodes
@@ -795,13 +814,12 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 	//}
 	//y++
 
-	if ui.Comp_buttonIcon(x, 0, 1, 1, InitWinMedia_url(path+"list.png"), 0.2, "Show/Hide list of all nodes(Ctrl+F)", Comp_buttonProp().DrawBack(gr.showNodeList)) > 0 || strings.EqualFold(keys.ctrlChar, "f") {
+	if ui.Comp_buttonIcon(7, 0, 1, 1, InitWinMedia_url(path+"list.png"), 0.2, "Show/Hide list of all nodes(Ctrl+F)", Comp_buttonProp().DrawBack(gr.showNodeList)) > 0 || strings.EqualFold(keys.ctrlChar, "f") {
 		gr.showNodeList = !gr.showNodeList
 		if gr.showNodeList {
 			gr.showNodeList_justOpen = true
 		}
 	}
-	x++
 
 }
 

@@ -258,30 +258,6 @@ func (base *SABase) Render() bool {
 			}
 		}
 		ui.Div_end()
-
-		//progress
-		progressStr, progressProc := base.jobs.FindAppProgress(app)
-		if progressProc >= 0 {
-			ui.Div_start(1, 1, 1, 1)
-			{
-				dnm := "progress"
-				ui.Div_colMax(0, 100)
-				if ui.Comp_button(0, 0, 1, 1, fmt.Sprintf("%s ... %.1f%%", progressStr, progressProc*100), Comp_buttonProp()) > 0 {
-					ui.Dialog_open(dnm, 0)
-				}
-				if ui.Dialog_start(dnm) {
-					if !base.jobs.RenderAppProgress(app) {
-						ui.Dialog_close()
-					}
-					ui.Dialog_end()
-				}
-
-				ui.win.SetRedraw()
-				//time.Sleep(500 * time.Millisecond)	//.....
-			}
-			ui.Div_end()
-		}
-
 	}
 
 	if app.IDE {
