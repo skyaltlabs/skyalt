@@ -69,6 +69,7 @@ type Tables struct {
 
 type Microphone struct {
 	Path  string	//path to the file with recorded audio
+	Clicked bool
 	Enable  bool
 }
 

@@ -164,6 +164,7 @@ type Microphone struct {
 	Enable    bool   `json:"enable"`
 	//Changed   bool   `json:"changed"`
 	Path      string `json:"path"`
+	Clicked bool   `json:"clicked"`
 }
 
 
