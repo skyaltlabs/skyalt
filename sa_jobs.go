@@ -391,8 +391,8 @@ type SAJobNet struct {
 	path string
 	url  string
 
-	stop            bool //atomic ...
-	stop_and_delete bool //atomic ...
+	stop            atomic.Bool
+	stop_and_delete atomic.Bool
 
 	recv_bytes  int64
 	final_bytes int64
@@ -478,7 +478,7 @@ func (jb *SAJobNet) Run() {
 
 	// Loop
 	data := make([]byte, 1024*64)
-	for jb.jobs.base.services.online && !jb.stop && !jb.stop_and_delete {
+	for jb.jobs.base.services.online && !jb.stop.Load() && !jb.stop_and_delete.Load() {
 
 		//download
 		n, err := resp.Body.Read(data)
@@ -503,12 +503,12 @@ func (jb *SAJobNet) Run() {
 	if jb.recv_bytes == jb.final_bytes {
 		OsFileRename(path, jb.path) //<name>.temp -> <name>
 	} else {
-		if jb.stop_and_delete {
+		if jb.stop_and_delete.Load() {
 			OsFileRemove(path)
 		}
 	}
 
-	if jb.stop || jb.stop_and_delete {
+	if jb.stop.Load() || jb.stop_and_delete.Load() {
 		jb.outErr = fmt.Errorf("downloading canceled")
 	}
 
@@ -561,11 +561,11 @@ func (jb *SAJobNet) RenderProgress(y *int) bool {
 		ui.Div_colMax(0, 100)
 		ui.Div_colMax(1, 100)
 		if ui.Comp_button(0, 0, 1, 1, "Stop", Comp_buttonProp().SetError(true)) > 0 {
-			jb.stop = true
+			jb.stop.Store(true)
 			ok = false
 		}
 		if ui.Comp_button(1, 0, 1, 1, "Stop & Delete file", Comp_buttonProp().SetError(true)) > 0 {
-			jb.stop_and_delete = true
+			jb.stop_and_delete.Store(true)
 			ok = false
 		}
 	}
