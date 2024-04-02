@@ -52,6 +52,17 @@ type SANodeCodeArg struct {
 	Write bool
 }
 
+type SANodeCodeExePrm struct {
+	Node     string
+	CopyPos  int
+	CopyNode string
+	Attr     string
+	Value    interface{}
+}
+type SANodeCodeExe struct {
+	prms []SANodeCodeExePrm
+}
+
 type SANodeCode struct {
 	node *SANode
 
@@ -71,6 +82,8 @@ type SANodeCode struct {
 	exe_err  error
 	ans_err  error
 
+	exes []SANodeCodeExe
+
 	job *SAJobOpenAI
 }
 
@@ -80,27 +93,40 @@ func InitSANodeCode(node *SANode) SANodeCode {
 	return ls
 }
 
-/*func (ls *SANodeCode) addTrigger(name string) {
-	for _, tr := range ls.Triggers {
-		if tr == name {
-			return
-		}
-	}
-	ls.Triggers = append(ls.Triggers, name)
-}*/
-
 func (ls *SANodeCode) findNodeName(nm string) (*SANode, error) {
-	node := ls.node.FindNodeSplit(nm)
-	if node == nil {
+	found := ls.node.FindNodeSplit(nm)
+	if found == nil {
 		return nil, fmt.Errorf("node '%s' not found", nm)
 	}
-	if node == ls.node {
+	if found == ls.node && !found.IsTypeCopy() {
 		return nil, fmt.Errorf("can't connect to it self")
 	}
-	if node.IsTypeCode() {
+	if found.IsTypeCode() && !found.IsTypeCopy() {
 		return nil, fmt.Errorf("can't connect to node(%s) which is type code", nm)
 	}
-	return node, nil
+	return found, nil
+}
+
+func (ls *SANodeCode) AddExe(prms []SANodeCodeExePrm) {
+
+	if !ls.node.IsTypeCode() != ls.node.IsBypassed() {
+		return
+	}
+
+	if len(prms) == 0 && len(ls.exes) > 0 && len(ls.exes[len(ls.exes)-1].prms) == 0 {
+		return //already added
+	}
+
+	ls.exes = append(ls.exes, SANodeCodeExe{prms: prms})
+}
+
+func (ls *SANodeCode) findFuncDepend(node *SANode) bool {
+	for _, prmNode := range ls.func_depends {
+		if prmNode == node {
+			return true
+		}
+	}
+	return false
 }
 
 func (ls *SANodeCode) GetArg(node string) *SANodeCodeArg {
@@ -336,34 +362,33 @@ func (ls *SANodeCode) GetAnswer() {
 	ls.job = ls.node.app.base.jobs.AddOpenAI(ls.node.app, NewSANodePath(ls.node), props)
 }
 
-func (ls *SANodeCode) IsTriggered() bool {
-	for _, prmNode := range ls.func_depends {
-		if prmNode.IsTriggered() {
-			return true
-		}
-		/*nd := ls.node.app.root.FindNode(nm)
-		if nd != nil && nd.IsTriggered() {
-			return true
-		}*/
-	}
-	return false
-}
-
 func (ls *SANodeCode) GetFileName() string {
 	return ls.node.app.Name + "_" + ls.node.Name
 }
 
-func (ls *SANodeCode) Execute() {
+func (ls *SANodeCode) Execute(exe_prms []SANodeCodeExePrm) {
 	ls.exe_err = nil
 
 	//input
 	vars := make(map[string]interface{})
 	for _, prmNode := range ls.func_depends {
 
-		attrs := prmNode.Attrs
+		attrs := make(map[string]interface{})
 		if prmNode.HasAttrNode() {
-			attrs = make(map[string]interface{})
 			attrs["node"] = prmNode.GetPathSplit()
+		} else {
+			for k, v := range prmNode.Attrs {
+				attrs[k] = v
+			}
+		}
+
+		//add params(clicked=true, etc.)
+		for _, prm := range exe_prms {
+			if prmNode.Name == prm.Node {
+				if prm.CopyNode == "" {
+					attrs[prm.Attr] = prm.Value
+				}
+			}
 		}
 
 		if prmNode.IsTypeCopy() {
@@ -380,7 +405,20 @@ func (ls *SANodeCode) Execute() {
 
 				rws := make(map[string]interface{})
 				for _, it := range it.Subs {
-					rws[it.Name] = it.Attrs
+
+					itAttrs := make(map[string]interface{})
+					for k, v := range it.Attrs {
+						itAttrs[k] = v
+					}
+
+					//add params(clicked=true, etc.)
+					for _, prm := range exe_prms {
+						if prm.CopyPos == i && prmNode.Name == prm.Node && it.Name == prm.CopyNode {
+							itAttrs[prm.Attr] = prm.Value
+						}
+					}
+
+					rws[it.Name] = itAttrs
 				}
 				rows[i] = rws
 			}
@@ -415,6 +453,7 @@ func (ls *SANodeCode) SetOutput(outputJs []byte) {
 			if !prmNode.HasAttrNode() {
 				switch vv := attrs.(type) {
 				case map[string]interface{}:
+					delete(vv, "clicked")
 					prmNode.Attrs = vv
 				}
 			}
@@ -437,6 +476,7 @@ func (ls *SANodeCode) SetOutput(outputJs []byte) {
 							copySubs[i].DeselectAll()
 							copySubs[i].Name = strconv.Itoa(i)
 							copySubs[i].Exe = "layout" //copy -> layout
+							copySubs[i].parent = prmNode
 							if err == nil {
 								for key, attrs := range vars {
 									prmNode2 := copySubs[i].FindNodeSplit(key)
@@ -444,6 +484,7 @@ func (ls *SANodeCode) SetOutput(outputJs []byte) {
 										if !prmNode2.HasAttrNode() {
 											switch vv := attrs.(type) {
 											case map[string]interface{}:
+												delete(vv, "clicked")
 												prmNode2.Attrs = vv
 											}
 										}
@@ -467,10 +508,10 @@ func (ls *SANodeCode) SetOutput(outputJs []byte) {
 					}
 
 					prmNode.copySubs = copySubs
-					prmNode.ResetTriggers() //button can be clicked
+					//prmNode.ResetTriggers() //reset sub-buttons clicks
 
 					if diff {
-						prmNode.SetChange()
+						prmNode.SetChange(nil)
 					}
 				}
 			}
@@ -822,13 +863,6 @@ func ReplaceWord(str string, oldWord string, newWord string) string {
 }
 
 func (ls *SANodeCode) RenameNode(old_name string, new_name string) {
-
-	//triggers
-	/*for i, tr := range ls.Triggers {
-		if tr == old_name {
-			ls.Triggers[i] = new_name
-		}
-	}*/
 
 	//arguments
 	for i, arg := range ls.ArgsProps {

@@ -171,7 +171,13 @@ func (node *SANode) drawHeader() bool {
 	ui.Div_col(0, 0.5)
 	ui.Div_colMax(1, 100)
 	ui.Div_col(2, 0.5)
-	if node.IsTypeCode() || node.HasNodeSubs() {
+
+	if node.IsTypeCopy() {
+		//chat+subs icon
+		ui.Div_col(2, 1)
+		ui.Div_col(3, 1)
+		ui.Div_col(4, 0.5)
+	} else if node.IsTypeCode() {
 		//chat icon
 		ui.Div_col(2, 1)
 		ui.Div_col(3, 0.5)
@@ -207,7 +213,7 @@ func (node *SANode) drawHeader() bool {
 		}
 	}
 
-	if node.HasNodeSubs() {
+	if node.IsTypeCopy() {
 		cd := CdPalette_B
 
 		isCanvasSelected := (node.app.checkSelectedCanvas() == node)
@@ -217,7 +223,7 @@ func (node *SANode) drawHeader() bool {
 			cd = CdPalette_P
 			file = "layout_full.png"
 		}
-		if ui.Comp_buttonIcon(2, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/"+file), 0.2, "Code Chat", Comp_buttonProp().Cd(cd)) > 0 {
+		if ui.Comp_buttonIcon(3, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/"+file), 0.2, "Code Chat", Comp_buttonProp().Cd(cd)) > 0 {
 			if isCanvasSelected {
 				node.app.Selected_canvas = SANodePath{}
 			} else {

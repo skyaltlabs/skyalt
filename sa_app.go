@@ -191,61 +191,54 @@ func (app *SAApp) TryExecute() {
 		return
 	}
 
+	_, progressProc := app.base.jobs.FindAppProgress(app)
+	if progressProc >= 0 {
+		return //running
+	}
+
 	//update "changed" for sqlite dbs
 	for _, nd := range app.all_nodes {
-
-		/*if nd.IsTypeCode() {
-			if len(nd.Code.Triggers) == 0 {
-				nd.SetError(fmt.Errorf("no trigger(s)"))
-			}
-		}*/
-
 		if nd.IsTypeTables() {
-
 			path := nd.GetAttrString("path", "")
-
 			db, _, err := app.base.ui.win.disk.OpenDb(path)
 			if err == nil {
 				tm := db.GetTime()
 				if !tm.Cmp(&nd.db_time) {
 					fmt.Printf("Db '%s' has changed\n", nd.Name)
 					nd.db_time = tm
-					nd.SetChange()
+					nd.SetChange(nil)
 				}
 			}
 		}
 	}
 
-	hasTrigger := false
+	//exe "copy" nodes first
 	for _, nd := range app.all_nodes {
-		if nd.Code.IsTriggered() && !nd.IsBypassed() {
-			hasTrigger = true
+
+		if nd.IsTypeCopy() {
+			if len(nd.Code.exes) > 0 {
+				nd.Code.Execute(nd.Code.exes[0].prms)
+
+				nd.Code.exes = nd.Code.exes[1:] //remove
+
+				app.last_trigger_ticks = 0 //test for new changes immidiatly
+				return
+			}
 		}
 	}
 
-	if hasTrigger {
-		app.exe()
-	}
-
-	app.last_trigger_ticks = OsTicks()
-}
-
-func (app *SAApp) exe() {
-	//run
+	//exe other nodes
 	for _, nd := range app.all_nodes {
-		if nd.Code.IsTriggered() && !nd.IsBypassed() {
-			nd.Code.Execute()
+		if len(nd.Code.exes) > 0 {
+
+			nd.Code.Execute(nd.Code.exes[0].prms)
+
+			nd.Code.exes = nd.Code.exes[1:] //remove
+
+			app.last_trigger_ticks = 0 //test for new changes immidiatly
+			return
 		}
 	}
-
-	//reset
-	for _, nd := range app.all_nodes {
-		nd.ResetTriggers()
-	}
-
-	app.graph.checkAndAddHistory()
-
-	app.last_trigger_ticks = 0 //test for new changes immidiatly
 }
 
 func SAApp_getYellow() OsCd {

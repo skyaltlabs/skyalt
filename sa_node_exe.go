@@ -39,7 +39,7 @@ func UiButton_Attrs(node *SANode) {
 	node.ShowAttrString(&grid, "label", "", false)
 	node.ShowAttrString(&grid, "tooltip", "", false)
 	node.ShowAttrBool(&grid, "enable", true)
-	node.ShowAttrBool(&grid, "clicked", false)
+	//node.ShowAttrBool(&grid, "clicked", false)
 	node.ShowAttrString(&grid, "confirmation", "", false)
 }
 
@@ -52,8 +52,9 @@ func UiButton_render(node *SANode) {
 	//clicked := node.GetAttrBool("clicked", false)
 
 	if node.app.base.ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, Comp_buttonProp().Enable(enable).Tooltip(tooltip).Confirmation(confirmation, "confirm_"+node.GetPath())) > 0 {
-		node.Attrs["clicked"] = true
-		node.SetChange()
+		//node.Attrs["clicked"] = true
+
+		node.SetChange([]SANodeCodeExePrm{{Node: node.Name, Attr: "clicked", Value: true}})
 	}
 }
 
@@ -124,20 +125,20 @@ func UiEditbox_render(node *SANode) {
 	editedValue, active, _, fnshd, _ := node.app.base.ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, Comp_editboxProp().Ghost(ghost).MultiLine(multi_line).MultiLineEnterFinish(multi_line_enter_finish).Enable(enable).Align(align_h, align_v))
 
 	if temp_to_value && active {
-		old_changed := node.changed //node.GetAttrBool("changed", false)
-		if !old_changed {
-			//node.Attrs["changed"] = (node.Attrs["value"] != editedValue)
-			if node.Attrs["value"] != editedValue {
-				node.SetChange()
-			}
+		//old_changed := node.changed //node.GetAttrBool("changed", false)
+		//if !old_changed {
+		//node.Attrs["changed"] = (node.Attrs["value"] != editedValue)
+		if node.Attrs["value"] != editedValue {
+			node.SetChange(nil)
 		}
+		//}
 		node.Attrs["value"] = editedValue
 	}
 
 	if fnshd {
 		//node.Attrs["changed"] = (node.Attrs["value"] != value)
 		if node.Attrs["value"] != value {
-			node.SetChange()
+			node.SetChange(nil)
 		}
 		node.Attrs["value"] = value
 	}
@@ -170,7 +171,7 @@ func UiCheckbox_render(node *SANode) {
 	if node.app.base.ui.Comp_checkbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, label, tooltip, enable) {
 		node.Attrs["value"] = value
 		//node.Attrs["changed"] = true
-		node.SetChange()
+		node.SetChange(nil)
 	}
 }
 
@@ -201,7 +202,7 @@ func UiSwitch_render(node *SANode) {
 	if node.app.base.ui.Comp_switch(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, false, label, tooltip, enable) {
 		node.Attrs["value"] = value
 		//node.Attrs["changed"] = true
-		node.SetChange()
+		node.SetChange(nil)
 	}
 }
 
@@ -234,7 +235,7 @@ func UiSlider_render(node *SANode) {
 	if node.app.base.ui.Comp_slider(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, min, max, step, enable) {
 		node.Attrs["value"] = value
 		//node.Attrs["changed"] = true
-		node.SetChange()
+		node.SetChange(nil)
 	}
 }
 
@@ -272,7 +273,7 @@ func UiCombo_render(node *SANode) {
 	if node.app.base.ui.Comp_combo(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, options_names, options_values, tooltip, enable, search) {
 		node.Attrs["value"] = value
 		//node.Attrs["changed"] = true
-		node.SetChange()
+		node.SetChange(nil)
 	}
 }
 
@@ -302,7 +303,7 @@ func UiColor_render(node *SANode) {
 	if node.app.base.ui.comp_colorPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, "color_picker_"+node.Name, tooltip, enable) {
 		node.SetAttrCd("value", value)
 		//node.Attrs["changed"] = true
-		node.SetChange()
+		node.SetChange(nil)
 	}
 }
 
@@ -344,7 +345,7 @@ func UiTimer_Attrs(node *SANode) {
 	node.ShowAttrBool(&grid, "repeat", false)
 	node.ShowAttrString(&grid, "tooltip", "", false)
 	node.ShowAttrBool(&grid, "enable", true)
-	node.ShowAttrBool(&grid, "done", false)
+	//node.ShowAttrBool(&grid, "clicked", false)
 
 	if ui.Comp_button(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, "Reset", Comp_buttonProp()) > 0 {
 		node.Attrs["start_sec"] = OsTime()
@@ -360,7 +361,7 @@ func UiTimer_render(node *SANode) {
 	repeat := node.GetAttrBool("repeat", false)
 	tooltip := node.GetAttrString("tooltip", "")
 	enable := node.GetAttrBool("enable", true) //also STOP!
-	//done := node.GetAttrBool("done", false)
+	//clicked := node.GetAttrBool("clicked", false)
 
 	dt := OsTime() - start_sec
 	prc := OsTrnFloat(enable, dt/time_secs, 0)
@@ -383,8 +384,9 @@ func UiTimer_render(node *SANode) {
 
 	if enable && prc >= 1 {
 		if start_sec > 0 { //if repeat==false, set 'done' only once
-			node.Attrs["done"] = true
-			node.SetChange()
+			//node.Attrs["done"] = true
+
+			node.SetChange([]SANodeCodeExePrm{{Node: node.Name, Attr: "clicked", Value: true}})
 		}
 		if repeat {
 			node.Attrs["start_sec"] = OsTime()
@@ -422,7 +424,7 @@ func UiDate_render(node *SANode) {
 	if node.app.base.ui.Comp_CalendarDatePicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &date, show_time, "date_"+node.Name, tooltip, enable) {
 		node.Attrs["value"] = int(date)
 		//node.Attrs["changed"] = true
-		node.SetChange()
+		node.SetChange(nil)
 	}
 }
 
@@ -449,7 +451,7 @@ func UiDiskDir_render(node *SANode) {
 	if node.app.base.ui.Comp_dirPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &path, false, "dir_picker_"+node.Name, enable) {
 		node.Attrs["path"] = path
 		//node.Attrs["changed"] = true
-		node.SetChange()
+		node.SetChange(nil)
 	}
 }
 
@@ -476,7 +478,7 @@ func UiDiskFile_render(node *SANode) {
 	if node.app.base.ui.Comp_dirPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &path, true, "dir_picker_"+node.Name, enable) {
 		node.Attrs["path"] = path
 		//node.Attrs["changed"] = true
-		node.SetChange()
+		node.SetChange(nil)
 	}
 }
 
@@ -551,7 +553,8 @@ func UiMicrophone_render(node *SANode) {
 
 			//set finished
 			//node.Attrs["changed"] = true
-			node.SetChange()
+
+			node.SetChange([]SANodeCodeExePrm{{Node: node.Name, Attr: "clicked", Value: true}})
 		}
 	}
 }
@@ -605,6 +608,11 @@ func UiCopy_Attrs(node *SANode) {
 	node.ShowAttrFloat(&grid, "max_height", 1, 1)
 	node.ShowAttrBool(&grid, "show_border", true)
 	//node.ShowAttrBool(&grid, "changed", false) //...
+
+	ui.Div_SpacerRow(0, grid.Start.Y, 2, 1)
+	grid.Start.Y++
+
+	_UiCode_attrs(node, &grid)
 }
 
 func UiCopy_render(node *SANode) {
@@ -1178,38 +1186,40 @@ func UiCodeGo_AttrChat(node *SANode) {
 	ui.Div_end()
 }
 
-func UiCodeGo_Attrs(node *SANode) {
+func UiCode_Attrs(node *SANode) {
 	ui := node.app.base.ui
 	ui.Div_colMax(0, 3)
 	ui.Div_colMax(1, 100)
 
-	y := 0
+	grid := InitOsV4(0, 0, 1, 1)
+	_UiCode_attrs(node, &grid)
+
+}
+func _UiCode_attrs(node *SANode, grid *OsV4) {
+	ui := node.app.base.ui
 
 	if node.Code.ans_err != nil {
-		ui.Comp_textCd(0, y, 2, 1, "Answer Error: "+node.Code.ans_err.Error(), 0, CdPalette_E)
-		y++
+		ui.Comp_textCd(0, grid.Start.Y, 2, 1, "Answer Error: "+node.Code.ans_err.Error(), 0, CdPalette_E)
+		grid.Start.Y++
 		node.SetError(fmt.Errorf("Answer"))
 	}
 	if node.Code.file_err != nil {
-		ui.Comp_textCd(0, y, 2, 1, "File Error: "+node.Code.file_err.Error(), 0, CdPalette_E)
-		y++
+		ui.Comp_textCd(0, grid.Start.Y, 2, 1, "File Error: "+node.Code.file_err.Error(), 0, CdPalette_E)
+		grid.Start.Y++
 		node.SetError(fmt.Errorf("File"))
 	}
 	if node.Code.exe_err != nil {
-		ui.Comp_textCd(0, y, 2, 1, "Execute Error: "+node.Code.exe_err.Error(), 0, CdPalette_E)
-		y++
+		ui.Comp_textCd(0, grid.Start.Y, 2, 1, "Execute Error: "+node.Code.exe_err.Error(), 0, CdPalette_E)
+		grid.Start.Y++
 		node.SetError(fmt.Errorf("Execute"))
 	}
 
 	//bypass
-	{
-		gr := InitOsV4(0, y, 1, 1)
-		node.ShowAttrBool(&gr, "bypass", false)
-		y += 1
-	}
+	node.ShowAttrBool(grid, "bypass", false)
 
-	ui.Div_SpacerRow(0, y, 2, 1)
-	y++
+	//language
+	node.ShowAttrStringCombo(grid, "language", "go", []string{"go"}, []string{"go"})
+	grid.Start.Y++
 
 	//triggers
 	/*{
@@ -1272,10 +1282,10 @@ func UiCodeGo_Attrs(node *SANode) {
 	// Open chat
 	{
 		str := OsTrnString(node.ShowCodeChat, "Close Code chat", "Open Code chat")
-		if ui.Comp_buttonLight(1, y, 1, 1, str, Comp_buttonProp()) > 0 {
+		if ui.Comp_buttonLight(1, grid.Start.Y, 1, 1, str, Comp_buttonProp()) > 0 {
 			node.ShowCodeChat = !node.ShowCodeChat
 		}
-		y++
+		grid.Start.Y++
 	}
 
 	//Imports
@@ -1301,31 +1311,31 @@ func UiCodeGo_Attrs(node *SANode) {
 
 	//Code
 	{
-		ui.Comp_text(0, y, 1, 1, "Code", 0)
+		ui.Comp_text(0, grid.Start.Y, 1, 1, "Code", 0)
 
 		nlines := WinFontProps_NumRows(node.Code.Code)
-		_, _, _, fnshd, _ := ui.Comp_editbox(1, y, 1, nlines, &node.Code.Code, Comp_editboxProp().Align(0, 0).MultiLine(true).Formating(false))
+		_, _, _, fnshd, _ := ui.Comp_editbox(1, grid.Start.Y, 1, nlines, &node.Code.Code, Comp_editboxProp().Align(0, 0).MultiLine(true).Formating(false))
 		if fnshd {
 			node.Code.UpdateFile()
 		}
-		y += nlines
+		grid.Start.Y += nlines
 
 		//run button
-		if ui.Comp_button(1, y, 1, 1, "Run", Comp_buttonProp()) > 0 {
-			node.Code.Execute()
+		if ui.Comp_button(1, grid.Start.Y, 1, 1, "Run", Comp_buttonProp()) > 0 {
+			node.Code.Execute(nil)
 		}
-		y++
+		grid.Start.Y++
 	}
 
-	ui.Div_SpacerRow(0, y, 2, 1)
-	y++
+	ui.Div_SpacerRow(0, grid.Start.Y, 2, 1)
+	grid.Start.Y++
 
 	//output
 	{
-		ui.Comp_text(0, y, 1, 1, "Output", 0)
+		ui.Comp_text(0, grid.Start.Y, 1, 1, "Output", 0)
 		nlines := OsClamp(WinFontProps_NumRows(node.Code.output), 2, 5)
-		ui.Comp_textSelectMulti(1, y, 1, nlines, node.Code.output, OsV2{0, 0}, true, true, false)
-		y += nlines
+		ui.Comp_textSelectMulti(1, grid.Start.Y, 1, nlines, node.Code.output, OsV2{0, 0}, true, true, false)
+		grid.Start.Y += nlines
 	}
 }
 

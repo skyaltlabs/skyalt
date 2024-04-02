@@ -59,19 +59,15 @@ type SANode struct {
 
 	ShowCodeChat bool
 
-	//state         int //0=SANode_STATE_WAITING, 1=SANode_STATE_RUNNING, 2=SANode_STATE_DONE
 	errExe        error
-	progress      float64
-	progress_desc string
+	progress      float64 //? ......
+	progress_desc string  //? ......
 
 	z_depth float64
 
 	temp_mic_data audio.IntBuffer
 
-	changed bool
-
 	db_time DiskDbTime
-	//tableCache [][]*SANode
 }
 
 func NewSANode(app *SAApp, parent *SANode, name string, exe string, grid OsV4, pos OsV2f) *SANode {
@@ -117,12 +113,49 @@ func (node *SANode) SetError(err error) {
 	node.errExe = err
 }
 
-func (node *SANode) SetChange() {
-	node.changed = true
+func (node *SANode) addIntoDependedCodes(changedNode *SANode, prms []SANodeCodeExePrm) {
+	for _, nd := range node.Subs {
+		if nd.IsTypeCode() && !nd.IsBypassed() && nd != changedNode {
+			if nd.Code.findFuncDepend(changedNode) {
+				nd.Code.AddExe(prms)
+			}
+		}
+	}
 }
+
+func (node *SANode) SetChange(prms []SANodeCodeExePrm) {
+
+	//convert copySubs
+	if node.parent != nil && node.parent.parent != nil && node.parent.parent.IsTypeCopy() {
+		for i := range prms {
+			prms[i].Node = node.parent.parent.Name //Copy
+			prms[i].CopyNode = node.Name
+			prms[i].CopyPos = node.parent.parent.FindCopyPos(node.parent) //'node.parent' = layout
+		}
+	}
+
+	//from sub -> copy node(aka base)
+	for node.parent != nil && node.parent.parent != nil {
+		node = node.parent
+	}
+
+	node.GetParentRoot().addIntoDependedCodes(node, prms)
+}
+
 func (node *SANode) SetStructChange() {
-	node.SetChange()
-	node.GetParentRoot().ResetDbs()
+	for node != nil {
+		node.Code.AddExe(nil)
+		node = node.parent
+	}
+}
+
+func (node *SANode) FindCopyPos(find *SANode) int {
+	for i, nd := range node.copySubs {
+		if nd == find {
+			return i
+		}
+	}
+	return -1
 }
 
 func (node *SANode) ResetDbs() {
@@ -162,16 +195,16 @@ func (node *SANode) IsTypeNet() bool {
 	return node.Exe == "net"
 }
 
-func (node *SANode) IsTypeCode() bool {
-	return strings.EqualFold(node.Exe, "func_go")
-}
-
 func (node *SANode) IsTypeTables() bool {
 	return strings.EqualFold(node.Exe, "tables")
 }
 
 func (node *SANode) IsTypeCopy() bool {
 	return strings.EqualFold(node.Exe, "copy")
+}
+
+func (node *SANode) IsTypeCode() bool {
+	return strings.EqualFold(node.Exe, "code") || node.IsTypeCopy()
 }
 
 func (node *SANode) HasNodeSubs() bool {
@@ -189,51 +222,6 @@ func (node *SANode) IsTypeTrigger() bool {
 
 func (node *SANode) IsTypeWithAttrLabel() bool {
 	return strings.EqualFold(node.Exe, "text") || strings.EqualFold(node.Exe, "button") //|| strings.EqualFold(node.Exe, "checkbox") || strings.EqualFold(node.Exe, "switch")
-}
-
-func (node *SANode) IsTriggered() bool {
-	if node.changed {
-		return true
-	}
-
-	if node.IsTypeCopy() {
-		for _, nd := range node.copySubs {
-			if nd.IsTriggered() {
-				return true
-			}
-		}
-	}
-
-	if node.HasNodeSubs() {
-		for _, nd := range node.Subs {
-			if nd.IsTriggered() {
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
-func (node *SANode) ResetTriggers() {
-
-	node.changed = false //node.changed_inner
-
-	if strings.EqualFold(node.Exe, "button") {
-		node.Attrs["clicked"] = false
-	}
-
-	if node.IsTypeCopy() {
-		for _, nd := range node.copySubs {
-			nd.ResetTriggers()
-		}
-	}
-
-	if node.HasNodeSubs() {
-		for _, nd := range node.Subs {
-			nd.ResetTriggers()
-		}
-	}
 }
 
 func (node *SANode) IsBypassed() bool {
