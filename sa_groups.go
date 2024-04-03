@@ -67,7 +67,7 @@ func InitSAGroups() SAGroups {
 		{name: "map", render: UiMap_render, attrs: UiMap_Attrs},
 
 		{name: "layout", render: UiLayout_render, attrs: UiLayout_Attrs},
-		{name: "copy", render: UiCopy_render, attrs: UiCopy_Attrs},
+		{name: "list", render: UiList_render, attrs: UiList_Attrs},
 
 		/*	{name: "image", render: SAExe_Render_Image},
 			{name: "list", render: SAExe_Render_List},

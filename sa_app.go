@@ -173,10 +173,10 @@ func (app *SAApp) TryExecute() {
 		}
 	}
 
-	//exe "copy" nodes first
+	//exe "list" nodes first
 	for _, nd := range app.all_nodes {
 
-		if nd.IsTypeCopy() {
+		if nd.IsTypeList() {
 			if len(nd.Code.exes) > 0 {
 				nd.Code.Execute(nd.Code.exes[0].prms)
 

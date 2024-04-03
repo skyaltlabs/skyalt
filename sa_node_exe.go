@@ -18,6 +18,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -36,6 +37,8 @@ func UiButton_Attrs(node *SANode) {
 
 	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
 	node.ShowAttrBool(&grid, "show", true)
+	node.ShowAttrIntCombo(&grid, "background", 1, []string{"Transparent", "Full", "Light"}, []string{"0", "1", "2"})
+
 	node.ShowAttrString(&grid, "label", "", false)
 	node.ShowAttrString(&grid, "tooltip", "", false)
 	node.ShowAttrBool(&grid, "enable", true)
@@ -45,13 +48,23 @@ func UiButton_Attrs(node *SANode) {
 
 func UiButton_render(node *SANode) {
 	grid := node.GetGrid()
+	background := node.GetAttrInt("background", 1)
 	label := node.GetAttrString("label", "")
 	tooltip := node.GetAttrString("tooltip", "")
 	enable := node.GetAttrBool("enable", true)
 	confirmation := node.GetAttrString("confirmation", "")
 	//triggered := node.GetAttrBool("triggered", false)
 
-	if node.app.base.ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, Comp_buttonProp().Enable(enable).Tooltip(tooltip).Confirmation(confirmation, "confirm_"+node.GetPath())) > 0 {
+	props := Comp_buttonProp().Enable(enable).Tooltip(tooltip).Confirmation(confirmation, "confirm_"+node.GetPath())
+	switch background {
+	case 0:
+		props.DrawBack(false)
+	case 1:
+		props.DrawBack(true)
+	case 2:
+		props.DrawBackLight(true)
+	}
+	if node.app.base.ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, props) > 0 {
 		//node.Attrs["triggered"] = true
 
 		node.SetChange([]SANodeCodeExePrm{{Node: node.Name, Attr: "triggered", Value: true}})
@@ -593,7 +606,7 @@ func UiLayout_render(node *SANode) {
 	ui.Div_end()
 }
 
-func UiCopy_Attrs(node *SANode) {
+func UiList_Attrs(node *SANode) {
 	ui := node.app.base.ui
 	ui.Div_colMax(0, 3)
 	ui.Div_colMax(1, 100)
@@ -607,6 +620,7 @@ func UiCopy_Attrs(node *SANode) {
 	node.ShowAttrFloat(&grid, "max_width", 100, 1)
 	node.ShowAttrFloat(&grid, "max_height", 1, 1)
 	node.ShowAttrBool(&grid, "show_border", true)
+	node.ShowAttrString(&grid, "selected", "", false)
 	//node.ShowAttrBool(&grid, "changed", false) //...
 
 	ui.Div_SpacerRow(0, grid.Start.Y, 2, 1)
@@ -615,7 +629,7 @@ func UiCopy_Attrs(node *SANode) {
 	_UiCode_attrs(node, &grid)
 }
 
-func UiCopy_render(node *SANode) {
+func UiList_render(node *SANode) {
 	grid := node.GetGrid()
 
 	direction := node.GetAttrInt("direction", 0)
@@ -627,7 +641,7 @@ func UiCopy_render(node *SANode) {
 
 	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 	{
-		num_rows := len(node.copySubs)
+		num_rows := len(node.listSubs)
 
 		if direction == 0 {
 			//vertical
@@ -646,7 +660,7 @@ func UiCopy_render(node *SANode) {
 
 			//draw items
 			for i := row_st; i < row_en; i++ {
-				it := node.copySubs[i]
+				it := node.listSubs[i]
 				gr := node.app.base.node_groups.FindNode(it.Exe)
 
 				it.Cols = node.Cols
@@ -672,7 +686,7 @@ func UiCopy_render(node *SANode) {
 
 			//draw items
 			for i := row_st; i < row_en; i++ {
-				it := node.copySubs[i]
+				it := node.listSubs[i]
 				gr := node.app.base.node_groups.FindNode(it.Exe)
 
 				it.Cols = node.Cols
@@ -1497,10 +1511,13 @@ func UiMap_Attrs(node *SANode) {
 	node.ShowAttrFloat(&grid, "lat", 50.0852013259, -1)
 	node.ShowAttrFloat(&grid, "zoom", 5, -1)
 
-	node.ShowAttrString(&grid, "file", "maps/osm.sqlite", false)
+	node.ShowAttrString(&grid, "file", "temp/maps/osm.sqlite", false)
 	node.ShowAttrString(&grid, "url", "https://tile.openstreetmap.org/{z}/{x}/{y}.png", false)
 	node.ShowAttrString(&grid, "copyright", "(c)OpenStreetMap contributors", false)
 	node.ShowAttrString(&grid, "copyright_url", "https://www.openstreetmap.org/copyright", false)
+
+	node.ShowAttrString(&grid, "locators", "", true)
+	node.ShowAttrString(&grid, "segments", "", true)
 }
 
 func UiMap_render(node *SANode) {
@@ -1513,29 +1530,24 @@ func UiMap_render(node *SANode) {
 	lat := node.GetAttrFloat("lat", 50.0852013259)
 	zoom := node.GetAttrFloat("zoom", 5)
 
-	file := node.GetAttrString("file", "maps/osm.sqlite")
+	file := node.GetAttrString("file", "temp/maps/osm.sqlite")
 	url := node.GetAttrString("url", "https://tile.openstreetmap.org/{z}/{x}/{y}.png")
 	copyright := node.GetAttrString("copyright", "(c)OpenStreetMap contributors")
 	copyright_url := node.GetAttrString("copyright_url", "https://www.openstreetmap.org/copyright")
 
-	//locators
-	//locatorsAttr := w.GetAttr("locators", []byte(`[{"label":"1", "lon":14.4071117049, "lat":50.0852013259}, {"label":"2", "lon":14, "lat":50}]`))
-
-	//segments
-	//segmentsAttr := w.GetAttr("segments", []byte(`[{"label":"ABC", "Trkpt":[{"lat":50,"lon":16,"ele":400,"time":"2020-04-15T09:05:20Z"},{"lat":50.4,"lon":16.1,"ele":400,"time":"2020-04-15T09:05:23Z"}]}]`))
+	locators := node.GetAttrString("locators", "") //`[{"label":"Example Title", "lon":14.4071117049, "lat":50.0852013259}, {"label":"2", "lon":14, "lat":50}]`
+	segments := node.GetAttrString("segments", "") //`[{"label":"Example Title", "Trkpt":[{"lat":50,"lon":16,"ele":400,"time":"2020-04-15T09:05:20Z"},{"lat":50.4,"lon":16.1,"ele":400,"time":"2020-04-15T09:05:23Z"}]}]`
 
 	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 	{
 		ui.Div_colMax(0, 100)
 		ui.Div_rowMax(0, 100)
 
-		file = "disk/" + file
-
+		//map
 		changed, err := ui.comp_map(&lon, &lat, &zoom, file, url, copyright, copyright_url)
 		if err != nil {
 			node.SetError(err)
 		}
-
 		if changed {
 			//set back
 			node.Attrs["lon"] = lon
@@ -1543,37 +1555,33 @@ func UiMap_render(node *SANode) {
 			node.Attrs["zoom"] = zoom
 		}
 
-		//locators ...........
-		/*locatorsBlob := locatorsAttr.GetBlob()
-		if locatorsBlob.Len() > 0 {
-			var locators []UiCompMapLocator
-			err := json.Unmarshal(locatorsBlob.data, &locators)
+		//locators
+		if locators != "" {
+			var items []UiCompMapLocator
+			err := json.Unmarshal([]byte(locators), &items)
 			if err == nil {
-				err = ui.comp_mapLocators(cam_lon, cam_lat, cam_zoom, locators, w.getPath())
+				err = ui.comp_mapLocators(lon, lat, zoom, items, "map_"+node.Name)
 				if err != nil {
-					locatorsAttr.SetError(fmt.Errorf("comp_mapLocators() failed: %w", err))
+					node.SetError(fmt.Errorf("comp_mapLocators() failed: %w", err))
 				}
 			} else {
-				locatorsAttr.SetError(fmt.Errorf("Unmarshal() failed: %w", err))
+				node.SetError(fmt.Errorf("locators Unmarshal() failed: %w", err))
 			}
-		}*/
+		}
 
-		//paths ...........
-		/*segmentsBlob := segmentsAttr.GetBlob()
-		if segmentsBlob.Len() > 0 {
-			var segments []UiCompMapSegments
-			err := json.Unmarshal(segmentsBlob.data, &segments)
+		//segments
+		if segments != "" {
+			var items []UiCompMapSegments
+			err := json.Unmarshal([]byte(segments), &items)
 			if err == nil {
-				err = ui.comp_mapSegments(cam_lon, cam_lat, cam_zoom, segments)
+				err = ui.comp_mapSegments(lon, lat, zoom, items)
 				if err != nil {
-					segmentsAttr.SetError(fmt.Errorf("comp_mapSegments() failed: %w", err))
+					node.SetError(fmt.Errorf("comp_mapSegments() failed: %w", err))
 				}
 			} else {
-				segmentsAttr.SetError(fmt.Errorf("Unmarshal() failed: %w", err))
+				node.SetError(fmt.Errorf("segments Unmarshal() failed: %w", err))
 			}
-		}*/
-
-		//w.app.flamingo.tryAddItemFromAttr(valueAttr)	? //add every item alone = attr + index .......
+		}
 	}
 	ui.Div_end()
 }

@@ -55,7 +55,7 @@ type SANode struct {
 	Rows []*SANodeColRow `json:",omitempty"`
 	Subs []*SANode       `json:",omitempty"`
 
-	copySubs []*SANode
+	listSubs []*SANode
 
 	ShowCodeChat bool
 
@@ -126,11 +126,11 @@ func (node *SANode) addIntoDependedCodes(changedNode *SANode, prms []SANodeCodeE
 func (node *SANode) SetChange(prms []SANodeCodeExePrm) {
 
 	//convert copySubs
-	if node.parent != nil && node.parent.parent != nil && node.parent.parent.IsTypeCopy() {
+	if node.parent != nil && node.parent.parent != nil && node.parent.parent.IsTypeList() {
 		for i := range prms {
 			prms[i].Node = node.parent.parent.Name //Copy
-			prms[i].CopyNode = node.Name
-			prms[i].CopyPos = node.parent.parent.FindCopyPos(node.parent) //'node.parent' = layout
+			prms[i].ListNode = node.Name
+			prms[i].ListPos = node.parent.parent.FindCopyPos(node.parent) //'node.parent' = layout
 		}
 	}
 
@@ -143,14 +143,17 @@ func (node *SANode) SetChange(prms []SANodeCodeExePrm) {
 }
 
 func (node *SANode) SetStructChange() {
+
+	node.SetChange(nil) //exe depending
+
 	for node != nil {
-		node.Code.AddExe(nil)
+		node.Code.AddExe(nil) //exe this and parents
 		node = node.parent
 	}
 }
 
 func (node *SANode) FindCopyPos(find *SANode) int {
-	for i, nd := range node.copySubs {
+	for i, nd := range node.listSubs {
 		if nd == find {
 			return i
 		}
@@ -199,16 +202,16 @@ func (node *SANode) IsTypeTables() bool {
 	return strings.EqualFold(node.Exe, "tables")
 }
 
-func (node *SANode) IsTypeCopy() bool {
-	return strings.EqualFold(node.Exe, "copy")
+func (node *SANode) IsTypeList() bool {
+	return strings.EqualFold(node.Exe, "list")
 }
 
 func (node *SANode) IsTypeCode() bool {
-	return strings.EqualFold(node.Exe, "code") || node.IsTypeCopy()
+	return strings.EqualFold(node.Exe, "code") || node.IsTypeList()
 }
 
 func (node *SANode) HasNodeSubs() bool {
-	return strings.EqualFold(node.Exe, "layout") || strings.EqualFold(node.Exe, "dialog") || node.IsTypeCopy()
+	return strings.EqualFold(node.Exe, "layout") || strings.EqualFold(node.Exe, "dialog") || node.IsTypeList()
 }
 
 func (node *SANode) HasAttrNode() bool {
@@ -275,7 +278,7 @@ func (node *SANode) Save(path string) error {
 	return nil
 }
 
-func (a *SANode) CmpCopySub(b *SANode) bool {
+func (a *SANode) CmpListSub(b *SANode) bool {
 	if a.Name != b.Name || a.Exe != b.Exe {
 		return false
 	}
@@ -297,7 +300,7 @@ func (a *SANode) CmpCopySub(b *SANode) bool {
 		return false
 	}
 	for i, itA := range a.Subs {
-		if !itA.CmpCopySub(b.Subs[i]) {
+		if !itA.CmpListSub(b.Subs[i]) {
 			return false
 		}
 	}
@@ -432,7 +435,7 @@ func (node *SANode) updateCodeLinks() {
 	}
 }
 
-func (node *SANode) Copy() (*SANode, error) {
+func (node *SANode) Copy(updateCode bool) (*SANode, error) {
 	js, err := json.Marshal(node)
 	if err != nil {
 		return nil, err
@@ -444,7 +447,9 @@ func (node *SANode) Copy() (*SANode, error) {
 		return nil, err
 	}
 	dst.updateLinks(nil, node.app)
-	dst.updateCodeLinks()
+	if updateCode {
+		dst.updateCodeLinks()
+	}
 
 	return dst, nil
 }
@@ -639,7 +644,7 @@ func (node *SANode) AddNode(grid OsV4, pos OsV2f, name string, exe string) *SANo
 }
 
 func (node *SANode) AddNodeCopy(src *SANode) *SANode { // note: 'w' can be root graph
-	nw, _ := src.Copy() //err ...
+	nw, _ := src.Copy(true) //err ...
 	nw.updateLinks(node, node.app)
 	nw.updateCodeLinks()
 

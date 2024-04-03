@@ -54,8 +54,8 @@ type SANodeCodeArg struct {
 
 type SANodeCodeExePrm struct {
 	Node     string
-	CopyPos  int
-	CopyNode string
+	ListPos  int
+	ListNode string
 	Attr     string
 	Value    interface{}
 }
@@ -98,10 +98,10 @@ func (ls *SANodeCode) findNodeName(nm string) (*SANode, error) {
 	if found == nil {
 		return nil, fmt.Errorf("node '%s' not found", nm)
 	}
-	if found == ls.node && !found.IsTypeCopy() {
+	if found == ls.node && !found.IsTypeList() {
 		return nil, fmt.Errorf("can't connect to it self")
 	}
-	if found.IsTypeCode() && !found.IsTypeCopy() {
+	if found.IsTypeCode() && !found.IsTypeList() {
 		return nil, fmt.Errorf("can't connect to node(%s) which is type code", nm)
 	}
 	return found, nil
@@ -231,33 +231,33 @@ func (ls *SANodeCode) buildSqlInfos(msgs_depends []*SANode) (string, error) {
 
 func (node *SANode) getStructName() string {
 
-	if node.IsTypeCopy() {
-		return "Copy" + strings.ToUpper(node.Name[0:1]) + node.Name[1:] //Copy<name>
+	if node.IsTypeList() {
+		return "List" + strings.ToUpper(node.Name[0:1]) + node.Name[1:] //List<name>
 	}
 
 	return strings.ToUpper(node.Exe[0:1]) + node.Exe[1:] //1st letter must be upper
 }
 
-func (ls *SANodeCode) buildCopyStructs(depends []*SANode, addExtraAttrs bool) string {
+func (ls *SANodeCode) buildListStructs(depends []*SANode, addExtraAttrs bool) string {
 	str := ""
 	for _, dep := range depends {
-		if !dep.IsTypeCopy() {
+		if !dep.IsTypeList() {
 			continue
 		}
 
 		StructName := dep.getStructName()
 
-		//Copy<name>Row
+		//List<name>Row
 		str += fmt.Sprintf("type %sRow struct {\n", StructName)
 		for _, it := range dep.Subs {
 			itVarName := strings.ToUpper(it.Name[0:1]) + it.Name[1:] //1st letter must be upper
-			itStructName := it.getStructName()                       //copy inside copy? .........
+			itStructName := it.getStructName()                       //list inside list? .........
 
 			str += fmt.Sprintf("\t%s %s `json:\"%s\"`\n", itVarName, itStructName, it.Name)
 		}
 		str += "}\n"
 
-		//Copy<name>
+		//List<name>
 		extraAttrs := "\tGrid_x  int     `json:\"grid_x\"`\n" +
 			"\tGrid_y  int     `json:\"grid_y\"`\n" +
 			"\tGrid_w int      `json:\"grid_w\"`\n" +
@@ -274,10 +274,9 @@ func (ls *SANodeCode) buildCopyStructs(depends []*SANode, addExtraAttrs bool) st
 			extraAttrs = ""
 		}
 
-		str += fmt.Sprintf("type %s struct {\n%s\tDefRow %sRow `json:\"defRow\"`\n\tRows []*%sRow `json:\"rows\"`\n}\n", StructName, extraAttrs, StructName, StructName)
+		str += fmt.Sprintf("type %s struct {\n%s\tDefRow %sRow `json:\"defRow\"`\n\tRows []*%sRow `json:\"rows\"`\n\tSelected string `json:\"selected\"`\n}\n", StructName, extraAttrs, StructName, StructName)
 
 		//Funcs
-		str += fmt.Sprintf("func (tb *%s) ClearRows() {\n\ttb.Rows = nil\n}\n", StructName)
 		str += fmt.Sprintf("func (tb *%s) AddRow() * %sRow {\n\tr := &%sRow{}\n\t*r = tb.DefRow\n\ttb.Rows = append(tb.Rows, r)\n\treturn r\n}\n", StructName, StructName, StructName)
 	}
 	return str
@@ -293,7 +292,7 @@ func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 	str := "I have this golang code:\n\n"
 	str += g_code_const_gpt + "\n"
 
-	str += ls.buildCopyStructs(msgs_depends, false)
+	str += ls.buildListStructs(msgs_depends, false)
 
 	params := ""
 	for _, prmNode := range msgs_depends {
@@ -369,6 +368,11 @@ func (ls *SANodeCode) GetFileName() string {
 func (ls *SANodeCode) Execute(exe_prms []SANodeCodeExePrm) {
 	ls.exe_err = nil
 
+	//reset
+	if ls.node.IsTypeList() {
+		ls.node.listSubs = nil
+	}
+
 	//input
 	vars := make(map[string]interface{})
 	for _, prmNode := range ls.func_depends {
@@ -385,13 +389,13 @@ func (ls *SANodeCode) Execute(exe_prms []SANodeCodeExePrm) {
 		//add params(triggered=true, etc.)
 		for _, prm := range exe_prms {
 			if prmNode.Name == prm.Node {
-				if prm.CopyNode == "" {
+				if prm.ListNode == "" {
 					attrs[prm.Attr] = prm.Value
 				}
 			}
 		}
 
-		if prmNode.IsTypeCopy() {
+		if prmNode.IsTypeList() {
 			//defaults
 			defRows := make(map[string]interface{})
 			for _, it := range prmNode.Subs {
@@ -400,8 +404,8 @@ func (ls *SANodeCode) Execute(exe_prms []SANodeCodeExePrm) {
 			attrs["defRow"] = defRows
 
 			//rows
-			rows := make([]map[string]interface{}, len(prmNode.copySubs))
-			for i, it := range prmNode.copySubs {
+			rows := make([]map[string]interface{}, len(prmNode.listSubs))
+			for i, it := range prmNode.listSubs {
 
 				rws := make(map[string]interface{})
 				for _, it := range it.Subs {
@@ -413,7 +417,7 @@ func (ls *SANodeCode) Execute(exe_prms []SANodeCodeExePrm) {
 
 					//add params(triggered=true, etc.)
 					for _, prm := range exe_prms {
-						if prm.CopyPos == i && prmNode.Name == prm.Node && it.Name == prm.CopyNode {
+						if prm.ListPos == i && prmNode.Name == prm.Node && it.Name == prm.ListNode {
 							itAttrs[prm.Attr] = prm.Value
 						}
 					}
@@ -458,28 +462,28 @@ func (ls *SANodeCode) SetOutput(outputJs []byte) {
 				}
 			}
 
-			if prmNode.IsTypeCopy() {
+			if prmNode.IsTypeList() {
 				rw := prmNode.Attrs["rows"]
 				delete(prmNode.Attrs, "rows")
 
 				rows, ok := rw.([]interface{})
 				if ok {
 					//alloc
-					copySubs := make([]*SANode, len(rows))
+					listSubs := make([]*SANode, len(rows))
 
 					//set
 					for i, r := range rows {
 
 						vars, ok := r.(map[string]interface{})
 						if ok {
-							copySubs[i], err = prmNode.Copy()
-							copySubs[i].DeselectAll()
-							copySubs[i].Name = strconv.Itoa(i)
-							copySubs[i].Exe = "layout" //copy -> layout
-							copySubs[i].parent = prmNode
+							listSubs[i], err = prmNode.Copy(false)
+							listSubs[i].DeselectAll()
+							listSubs[i].Name = strconv.Itoa(i)
+							listSubs[i].Exe = "layout" //list -> layout
+							listSubs[i].parent = prmNode
 							if err == nil {
 								for key, attrs := range vars {
-									prmNode2 := copySubs[i].FindNodeSplit(key)
+									prmNode2 := listSubs[i].FindNodeSplit(key)
 									if prmNode2 != nil {
 										if !prmNode2.HasAttrNode() {
 											switch vv := attrs.(type) {
@@ -497,17 +501,17 @@ func (ls *SANodeCode) SetOutput(outputJs []byte) {
 						}
 					}
 
-					diff := len(prmNode.copySubs) != len(copySubs)
+					diff := len(prmNode.listSubs) != len(listSubs)
 					if !diff {
-						for i, nd := range prmNode.copySubs {
-							if !nd.CmpCopySub(copySubs[i]) {
+						for i, nd := range prmNode.listSubs {
+							if !nd.CmpListSub(listSubs[i]) {
 								diff = true
 								break
 							}
 						}
 					}
 
-					prmNode.copySubs = copySubs
+					prmNode.listSubs = listSubs
 					//prmNode.ResetTriggers() //reset sub-buttons clicks
 
 					if diff {
@@ -703,7 +707,7 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 
 	//tables
 	str += "\n"
-	str += ls.buildCopyStructs(ls.func_depends, true)
+	str += ls.buildListStructs(ls.func_depends, true)
 
 	//rest
 	str += "\n" + g_code_const_go

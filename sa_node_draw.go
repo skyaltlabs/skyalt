@@ -172,7 +172,7 @@ func (node *SANode) drawHeader() bool {
 	ui.Div_colMax(1, 100)
 	ui.Div_col(2, 0.5)
 
-	if node.IsTypeCopy() {
+	if node.IsTypeList() {
 		//chat+subs icon
 		ui.Div_col(2, 1)
 		ui.Div_col(3, 1)
@@ -213,7 +213,7 @@ func (node *SANode) drawHeader() bool {
 		}
 	}
 
-	if node.IsTypeCopy() {
+	if node.IsTypeList() {
 		cd := CdPalette_B
 
 		isCanvasSelected := (node.app.checkSelectedCanvas() == node)
