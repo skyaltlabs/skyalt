@@ -90,7 +90,12 @@ func (jb *SAJobCompile) Run() {
 	cmd := exec.Command("go", "build", jb.fileName)
 	cmd.Dir = jb.dirPath
 
-	jb.output, jb.outErr = cmd.CombinedOutput()
+	var err error
+	jb.output, err = cmd.CombinedOutput()
+	if err != nil {
+		jb.outErr = errors.New(string(jb.output))
+		jb.output = nil
+	}
 
 	jb.dt_time = OsTime() - jb.st_time
 }
