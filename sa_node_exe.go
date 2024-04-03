@@ -1481,3 +1481,99 @@ func UiOpenAI_Attrs(node *SANode) {
 		node.SetError(fmt.Errorf("openAI API key is not set. Fill it in Menu:Settings"))
 	}
 }
+
+func UiMap_Attrs(node *SANode) {
+	ui := node.app.base.ui
+	ui.Div_colMax(0, 3)
+	ui.Div_colMax(1, 100)
+
+	grid := InitOsV4(0, 0, 1, 1)
+
+	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
+	node.ShowAttrBool(&grid, "show", true)
+	node.ShowAttrBool(&grid, "enable", true)
+
+	node.ShowAttrFloat(&grid, "lon", 14.4071117049, -1)
+	node.ShowAttrFloat(&grid, "lat", 50.0852013259, -1)
+	node.ShowAttrFloat(&grid, "zoom", 5, -1)
+
+	node.ShowAttrString(&grid, "file", "maps/osm.sqlite", false)
+	node.ShowAttrString(&grid, "url", "https://tile.openstreetmap.org/{z}/{x}/{y}.png", false)
+	node.ShowAttrString(&grid, "copyright", "(c)OpenStreetMap contributors", false)
+	node.ShowAttrString(&grid, "copyright_url", "https://www.openstreetmap.org/copyright", false)
+}
+
+func UiMap_render(node *SANode) {
+	ui := node.app.base.ui
+
+	grid := node.GetGrid()
+	//enable := node.GetAttrBool("enable", true)	//......
+
+	lon := node.GetAttrFloat("lon", 14.4071117049)
+	lat := node.GetAttrFloat("lat", 50.0852013259)
+	zoom := node.GetAttrFloat("zoom", 5)
+
+	file := node.GetAttrString("file", "maps/osm.sqlite")
+	url := node.GetAttrString("url", "https://tile.openstreetmap.org/{z}/{x}/{y}.png")
+	copyright := node.GetAttrString("copyright", "(c)OpenStreetMap contributors")
+	copyright_url := node.GetAttrString("copyright_url", "https://www.openstreetmap.org/copyright")
+
+	//locators
+	//locatorsAttr := w.GetAttr("locators", []byte(`[{"label":"1", "lon":14.4071117049, "lat":50.0852013259}, {"label":"2", "lon":14, "lat":50}]`))
+
+	//segments
+	//segmentsAttr := w.GetAttr("segments", []byte(`[{"label":"ABC", "Trkpt":[{"lat":50,"lon":16,"ele":400,"time":"2020-04-15T09:05:20Z"},{"lat":50.4,"lon":16.1,"ele":400,"time":"2020-04-15T09:05:23Z"}]}]`))
+
+	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
+	{
+		ui.Div_colMax(0, 100)
+		ui.Div_rowMax(0, 100)
+
+		file = "disk/" + file
+
+		changed, err := ui.comp_map(&lon, &lat, &zoom, file, url, copyright, copyright_url)
+		if err != nil {
+			node.SetError(err)
+		}
+
+		if changed {
+			//set back
+			node.Attrs["lon"] = lon
+			node.Attrs["lat"] = lat
+			node.Attrs["zoom"] = zoom
+		}
+
+		//locators ...........
+		/*locatorsBlob := locatorsAttr.GetBlob()
+		if locatorsBlob.Len() > 0 {
+			var locators []UiCompMapLocator
+			err := json.Unmarshal(locatorsBlob.data, &locators)
+			if err == nil {
+				err = ui.comp_mapLocators(cam_lon, cam_lat, cam_zoom, locators, w.getPath())
+				if err != nil {
+					locatorsAttr.SetError(fmt.Errorf("comp_mapLocators() failed: %w", err))
+				}
+			} else {
+				locatorsAttr.SetError(fmt.Errorf("Unmarshal() failed: %w", err))
+			}
+		}*/
+
+		//paths ...........
+		/*segmentsBlob := segmentsAttr.GetBlob()
+		if segmentsBlob.Len() > 0 {
+			var segments []UiCompMapSegments
+			err := json.Unmarshal(segmentsBlob.data, &segments)
+			if err == nil {
+				err = ui.comp_mapSegments(cam_lon, cam_lat, cam_zoom, segments)
+				if err != nil {
+					segmentsAttr.SetError(fmt.Errorf("comp_mapSegments() failed: %w", err))
+				}
+			} else {
+				segmentsAttr.SetError(fmt.Errorf("Unmarshal() failed: %w", err))
+			}
+		}*/
+
+		//w.app.flamingo.tryAddItemFromAttr(valueAttr)	? //add every item alone = attr + index .......
+	}
+	ui.Div_end()
+}
