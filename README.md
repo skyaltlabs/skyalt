@@ -24,11 +24,10 @@ In Unix, everything is a file. In SkyAlt, everything is a node.
 
 
 ## LLM-powered
-SkyAlt is not about AI research, but **interface research and development**. LLM is the new programming paradigm that can make human-computer interactions way more efficient, natural and frictionless.
-
-SkyAlt goal is to offer a holistic and frictionless experience. Building an app means 2 things:
+SkyAlt is not about AI research, but **interface research and development**. LLM is the new programming paradigm that can make human-computer interactions way more efficient, natural and frictionless. Building an app means only 2 things:
 - Put GUIs on layout
 - Write a list of features in natural language
+
 
 
 ## Local-first
