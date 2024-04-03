@@ -215,11 +215,6 @@ func (node *SANode) HasAttrNode() bool {
 	return node.Exe == "whispercpp" || node.Exe == "llamacpp" || node.Exe == "openai" || node.Exe == "net"
 }
 
-func (node *SANode) IsTypeTrigger() bool {
-	grnd := node.app.base.node_groups.FindNode(node.Exe)
-	return grnd != nil && grnd.changedAttr
-}
-
 func (node *SANode) IsTypeWithAttrLabel() bool {
 	return strings.EqualFold(node.Exe, "text") || strings.EqualFold(node.Exe, "button") //|| strings.EqualFold(node.Exe, "checkbox") || strings.EqualFold(node.Exe, "switch")
 }

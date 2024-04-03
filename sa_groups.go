@@ -21,10 +21,10 @@ import (
 )
 
 type SAGroupNode struct {
-	name        string
-	render      func(node *SANode)
-	attrs       func(node *SANode)
-	changedAttr bool
+	name   string
+	render func(node *SANode)
+	attrs  func(node *SANode)
+	//changedAttr bool
 }
 
 type SAGroup struct {
@@ -52,33 +52,33 @@ func InitSAGroups() SAGroups {
 	path := "file:apps/base/resources/"
 
 	grs.groups = append(grs.groups, &SAGroup{name: "UI", icon: InitWinMedia_url(path + "node_ui.png"), nodes: []*SAGroupNode{
-		{name: "button", render: UiButton_render, attrs: UiButton_Attrs, changedAttr: true},
-		{name: "text", render: UiText_render, attrs: UiText_Attrs, changedAttr: true},
-		{name: "editbox", render: UiEditbox_render, attrs: UiEditbox_Attrs, changedAttr: true},
-		{name: "checkbox", render: UiCheckbox_render, attrs: UiCheckbox_Attrs, changedAttr: true},
-		{name: "switch", render: UiSwitch_render, attrs: UiSwitch_Attrs, changedAttr: true},
-		{name: "slider", render: UiSlider_render, attrs: UiSlider_Attrs, changedAttr: true},
-		{name: "color", render: UiColor_render, attrs: UiColor_Attrs, changedAttr: true},
-		{name: "combo", render: UiCombo_render, attrs: UiCombo_Attrs, changedAttr: true},
+		{name: "button", render: UiButton_render, attrs: UiButton_Attrs},
+		{name: "text", render: UiText_render, attrs: UiText_Attrs},
+		{name: "editbox", render: UiEditbox_render, attrs: UiEditbox_Attrs},
+		{name: "checkbox", render: UiCheckbox_render, attrs: UiCheckbox_Attrs},
+		{name: "switch", render: UiSwitch_render, attrs: UiSwitch_Attrs},
+		{name: "slider", render: UiSlider_render, attrs: UiSlider_Attrs},
+		{name: "color", render: UiColor_render, attrs: UiColor_Attrs},
+		{name: "combo", render: UiCombo_render, attrs: UiCombo_Attrs},
 		{name: "divider", render: UiDivider_render, attrs: UiDivider_Attrs},
-		{name: "timer", render: UiTimer_render, attrs: UiTimer_Attrs, changedAttr: true},
-		{name: "date", render: UiDate_render, attrs: UiDate_Attrs, changedAttr: true},
-		{name: "microphone", render: UiMicrophone_render, attrs: UiMicrophone_Attrs, changedAttr: true},
+		{name: "timer", render: UiTimer_render, attrs: UiTimer_Attrs},
+		{name: "date", render: UiDate_render, attrs: UiDate_Attrs},
+		{name: "microphone", render: UiMicrophone_render, attrs: UiMicrophone_Attrs},
+		{name: "map", render: UiMap_render, attrs: UiMap_Attrs},
 
 		{name: "layout", render: UiLayout_render, attrs: UiLayout_Attrs},
-		{name: "copy", render: UiCopy_render, attrs: UiCopy_Attrs, changedAttr: true},
+		{name: "copy", render: UiCopy_render, attrs: UiCopy_Attrs},
 
-		/*	{name: "map", render: SAExe_Render_Map},
-			{name: "image", render: SAExe_Render_Image},
+		/*	{name: "image", render: SAExe_Render_Image},
 			{name: "list", render: SAExe_Render_List},
 			{name: "layout", render: SAExe_Render_Layout},
 			{name: "dialog", render: SAExe_Render_Dialog},*/
 	}})
 
 	grs.groups = append(grs.groups, &SAGroup{name: "Access", icon: InitWinMedia_url(path + "node_file.png"), nodes: []*SAGroupNode{
-		{name: "disk_dir", render: UiDiskDir_render, attrs: UiDiskDir_Attrs, changedAttr: true},
-		{name: "disk_file", render: UiDiskFile_render, attrs: UiDiskFile_Attrs, changedAttr: true},
-		{name: "tables", render: UiSQLite_render, attrs: UiSQLite_Attrs, changedAttr: true},
+		{name: "disk_dir", render: UiDiskDir_render, attrs: UiDiskDir_Attrs},
+		{name: "disk_file", render: UiDiskFile_render, attrs: UiDiskFile_Attrs},
+		{name: "tables", render: UiSQLite_render, attrs: UiSQLite_Attrs},
 		{name: "net", attrs: UiNet_Attrs},
 	}})
 
