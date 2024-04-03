@@ -1018,7 +1018,7 @@ func UiSQLite_renderEditor(node *SANode) {
 					}
 
 					//prepare for scan()
-					vals := make([]string, len(tinfo.Columns))
+					vals := make([][]byte, len(tinfo.Columns))
 					valsPtrs := make([]interface{}, len(vals))
 					for i := range vals {
 						valsPtrs[i] = &vals[i]
@@ -1037,25 +1037,31 @@ func UiSQLite_renderEditor(node *SANode) {
 						}
 
 						//rowid + detail dialog
+						rowid := string(vals[0])
 						{
-							dnm := "row_detail_" + node.Name + selected_table + vals[0]
-							if ui.Comp_buttonLight(0, r, 1, 1, vals[0], Comp_buttonProp()) > 0 {
+							dnm := "row_detail_" + node.Name + selected_table + rowid
+							if ui.Comp_buttonLight(0, r, 1, 1, rowid, Comp_buttonProp()) > 0 {
 								ui.Dialog_open(dnm, 1)
 							}
 							if ui.Dialog_start(dnm) {
 								ui.Div_colMax(0, 7)
-								if ui.Comp_button(0, 0, 1, 1, "Delete", Comp_buttonProp().SetError(true).Confirmation("Are you sure?", "confirm_delete_row_"+tinfo.Name+"_"+vals[0])) > 0 {
-									db.Write_unsafe(fmt.Sprintf("DELETE FROM %s WHERE rowid=?", tinfo.Name), vals[0])
+								if ui.Comp_button(0, 0, 1, 1, "Delete", Comp_buttonProp().SetError(true).Confirmation("Are you sure?", "confirm_delete_row_"+tinfo.Name+"_"+rowid)) > 0 {
+									db.Write_unsafe(fmt.Sprintf("DELETE FROM %s WHERE rowid=?", tinfo.Name), rowid)
 								}
 								ui.Dialog_end()
 							}
 						}
 
 						//cells
-						for i := 1; i < len(vals); i++ {
-							_, _, _, fnshd, _ := ui.Comp_editbox(i, r, 1, 1, &vals[i], Comp_editboxProp())
-							if fnshd {
-								db.Write_unsafe(fmt.Sprintf("UPDATE %s SET %s=? WHERE rowid=?", tinfo.Name, tinfo.Columns[i].Name), vals[i], vals[0])
+						for c := 1; c < len(vals); c++ {
+							if strings.EqualFold(tinfo.Columns[c].Type, "blob") {
+								ui.Comp_text(c, r, 1, 1, "<blob>", 1)
+								//image ......
+							} else {
+								_, _, _, fnshd, _ := ui.Comp_editbox(c, r, 1, 1, &vals[c], Comp_editboxProp())
+								if fnshd {
+									db.Write_unsafe(fmt.Sprintf("UPDATE %s SET %s=? WHERE rowid=?", tinfo.Name, tinfo.Columns[c].Name), string(vals[c]), rowid)
+								}
 							}
 						}
 						r++
