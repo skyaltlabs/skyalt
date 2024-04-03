@@ -393,6 +393,7 @@
 "ArgsProps": null
 },
 "Attrs": {
+"background": 1,
 "confirmation": "",
 "enable": false,
 "grid_h": 1,

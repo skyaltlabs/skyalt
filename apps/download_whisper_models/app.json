@@ -65,19 +65,18 @@
 },
 "Name": "update_table",
 "Exe": "code",
-"Selected": true,
 "Code": {
 "Messages": [
 {
 "User": "Go through 'table' and check if model + \".bin\" exist in 'dir'.\nIf it exists, set button label to \"Delete\", else \"Download\".\nIf \"Delete\" is clicked, delete the file, else download it from 'net' with address(model + \".bin)\" and save it into 'dir'.",
-"Assistent": "```go\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\nfunc table_button(table *CopyTable, dir *Disk_dir, net *Net) error {\n\tfor _, row := range table.Rows {\n\t\tfilePath := filepath.Join(dir.Path, row.Model.Label+\".bin\")\n\t\t_, err := os.Stat(filePath)\n\t\tif err == nil {\n\t\t\trow.Button.Label = \"Delete\"\n\t\t\tif row.Button.Triggered \u0026\u0026 dir.Write {\n\t\t\t\tos.Remove(filePath)\n\t\t\t}\n\t\t} else {\n\t\t\trow.Button.Label = \"Download\"\n\t\t\tif row.Button.Triggered {\n\t\t\t\tnet.DownloadFile(filePath, row.Model.Label+\".bin\")\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n```"
+"Assistent": "```go\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\nfunc table_button(table *ListTable, dir *Disk_dir, net *Net) error {\n\tfor _, row := range table.Rows {\n\t\tfilePath := filepath.Join(dir.Path, row.Model.Label+\".bin\")\n\t\t_, err := os.Stat(filePath)\n\t\tif err == nil {\n\t\t\trow.Button.Label = \"Delete\"\n\t\t\tif row.Button.Triggered \u0026\u0026 dir.Write {\n\t\t\t\tos.Remove(filePath)\n\t\t\t}\n\t\t} else {\n\t\t\trow.Button.Label = \"Download\"\n\t\t\tif row.Button.Triggered {\n\t\t\t\tnet.DownloadFile(filePath, row.Model.Label+\".bin\")\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n```"
 },
 {
 "User": "",
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\nfunc update_table(table *CopyTable, dir *Disk_dir, net *Net) error {\n\tfor _, row := range table.Rows {\n\t\tfilePath := filepath.Join(dir.Path, row.Model.Label+\".bin\")\n\t\t_, err := os.Stat(filePath)\n\t\tif err == nil {\n\t\t\trow.Button.Label = \"Delete\"\n\t\t\tif row.Button.Triggered \u0026\u0026 dir.Write {\n\t\t\t\tos.Remove(filePath)\n\t\t\t}\n\t\t} else {\n\t\t\trow.Button.Label = \"Download\"\n\t\t\tif row.Button.Triggered {\n\t\t\t\tnet.DownloadFile(filePath, row.Model.Label+\".bin\")\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n",
+"Code": "\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\nfunc update_table(table *ListTable, dir *Disk_dir, net *Net) error {\n\tfor _, row := range table.Rows {\n\t\tfilePath := filepath.Join(dir.Path, row.Model.Label+\".bin\")\n\t\t_, err := os.Stat(filePath)\n\t\tif err == nil {\n\t\t\trow.Button.Label = \"Delete\"\n\t\t\tif row.Button.Triggered \u0026\u0026 dir.Write {\n\t\t\t\tos.Remove(filePath)\n\t\t\t}\n\t\t} else {\n\t\t\trow.Button.Label = \"Download\"\n\t\t\tif row.Button.Triggered {\n\t\t\t\tnet.DownloadFile(filePath, row.Model.Label+\".bin\")\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n",
 "ArgsProps": [
 {
 "Node": "table",
@@ -106,23 +105,23 @@
 },
 {
 "Pos": {
-"X": 4.0151215,
-"Y": 2.0912704
+"X": 4.645752,
+"Y": 1.8210002
 },
 "Name": "table",
-"Exe": "copy",
+"Exe": "list",
 "Code": {
 "Messages": [
 {
 "User": "Clear 'table' and copy table \"Link\" from 'db' into 'table'.\nSet \"size\" column as \u003cvalue\u003e+\"MB\".",
-"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc table(table *CopyTable, db *Tables) error {\n\ttable.ClearRows()\n\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\trows, err := conn.Query(\"SELECT model, size FROM links\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tvar size int\n\t\t\n\t\terr = rows.Scan(\u0026model, \u0026size)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\trow := table.AddRow()\n\t\trow.Model.Label = model\n\t\trow.Size.Label = fmt.Sprintf(\"%dMB\", size)\n\t}\n\n\treturn nil\n}\n```"
+"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc table(table *ListTable, db *Tables) error {\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\trows, err := conn.Query(\"SELECT model, size FROM links\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tvar size int\n\t\t\n\t\terr = rows.Scan(\u0026model, \u0026size)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\trow := table.AddRow()\n\t\trow.Model.Label = model\n\t\trow.Size.Label = fmt.Sprintf(\"%dMB\", size)\n\t}\n\n\treturn nil\n}\n```"
 },
 {
 "User": "",
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc table(table *CopyTable, db *Tables) error {\n\ttable.ClearRows()\n\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\trows, err := conn.Query(\"SELECT model, size FROM links\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tvar size int\n\t\t\n\t\terr = rows.Scan(\u0026model, \u0026size)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\trow := table.AddRow()\n\t\trow.Model.Label = model\n\t\trow.Size.Label = fmt.Sprintf(\"%dMB\", size)\n\t}\n\n\treturn nil\n}\n",
+"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc table(table *ListTable, db *Tables) error {\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\trows, err := conn.Query(\"SELECT model, size FROM links\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tvar size int\n\t\t\n\t\terr = rows.Scan(\u0026model, \u0026size)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\trow := table.AddRow()\n\t\trow.Model.Label = model\n\t\trow.Size.Label = fmt.Sprintf(\"%dMB\", size)\n\t}\n\n\treturn nil\n}\n",
 "ArgsProps": [
 {
 "Node": "db",
@@ -134,6 +133,7 @@
 "changed": false,
 "defRow": {
 "button": {
+"background": 1,
 "confirmation": "Are you sure?",
 "enable": true,
 "grid_h": 1,
@@ -214,8 +214,8 @@
 "Subs": [
 {
 "Pos": {
-"X": 2.9898114,
-"Y": 1.4525955
+"X": 3.620442,
+"Y": 1.1823252
 },
 "Name": "model",
 "Exe": "text",
@@ -242,8 +242,8 @@
 },
 {
 "Pos": {
-"X": 11.825611,
-"Y": 1.4954958
+"X": 12.546331,
+"Y": 1.2252256
 },
 "Name": "button",
 "Exe": "button",
@@ -253,6 +253,7 @@
 "ArgsProps": null
 },
 "Attrs": {
+"background": 1,
 "confirmation": "Are you sure?",
 "enable": true,
 "grid_h": 1,
@@ -268,8 +269,8 @@
 },
 {
 "Pos": {
-"X": 7.4297123,
-"Y": 1.4954009
+"X": 8.060343,
+"Y": 1.2251307
 },
 "Name": "size",
 "Exe": "text",
@@ -294,7 +295,7 @@
 "ShowCodeChat": false
 }
 ],
-"ShowCodeChat": false
+"ShowCodeChat": true
 },
 {
 "Pos": {

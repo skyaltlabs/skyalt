@@ -39,13 +39,22 @@
 {
 "Name": "download_whisper_models",
 "IDE": true,
-"Cam_x": 6.567731857299805,
-"Cam_y": 2.943347692489624,
-"Cam_z": 0.7,
+"Cam_x": 6.072236061096191,
+"Cam_y": 3.4088134765625,
+"Cam_z": 0.6,
+"EnableExecution": true,
+"Selected_canvas": {}
+},
+{
+"Name": "running",
+"IDE": true,
+"Cam_x": 9.793006896972656,
+"Cam_y": -0.9927072525024414,
+"Cam_z": 0.7000000000000001,
 "EnableExecution": true,
 "Selected_canvas": {}
 }
 ],
-"Selected": 4,
+"Selected": 5,
 "NewAppName": ""
 }
