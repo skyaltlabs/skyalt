@@ -707,6 +707,10 @@ func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, prop *Comp_editb
 		if v != nil {
 			value = strconv.Itoa(*v)
 		}
+	case *[]byte:
+		if v != nil {
+			value = string(*v)
+		}
 	case *string:
 		if v != nil {
 			value = *v
@@ -736,6 +740,11 @@ func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, prop *Comp_editb
 		case *int:
 			if v != nil {
 				*v, _ = strconv.Atoi(editedValue)
+			}
+		case *[]byte:
+			if v != nil {
+				*v = []byte(editedValue)
+				//int8/16/32, uint8, byte, etc ...
 			}
 		case *string:
 			if v != nil {
