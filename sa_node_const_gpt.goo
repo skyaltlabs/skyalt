@@ -10,6 +10,7 @@ type Editbox struct {
 type Button struct {
 	Label   string
 	Enable  bool
+	Background  int	//0=transparent, 1=full, 2=light
 	Triggered bool	//true, when button is clicked
 }
 
@@ -70,6 +71,13 @@ type Tables struct {
 type Microphone struct {
 	Path  string	//path to the file with recorded audio
 	Triggered bool	//true, when recording is done
+	Enable  bool
+}
+
+type Map struct {
+	Locators string	//JSON format: [{"label":"LocatorA", "lon":14.4, "lat":50.0}, {"label":"LocatorB", "lon":14.5, "lat":50.1}]
+	Segments string	//JSON format: [{"label":"SegmentA", "Trkpt":[{"lat":50,"lon":16,"ele":400,"time":"2020-04-15T09:05:20Z"},{"lat":50.4,"lon":16.1,"ele":400,"time":"2020-04-15T09:05:23Z"}]}]
+
 	Enable  bool
 }
 

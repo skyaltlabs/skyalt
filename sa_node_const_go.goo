@@ -33,6 +33,7 @@ type Button struct {
 	Grid_w  int    `json:"grid_w"`
 	Grid_h  int    `json:"grid_h"`
 	Show    bool   `json:"show"`
+	Background int  `json:"background"`
 	Label   string `json:"label"`
 	Tooltip string `json:"tooltip"`
 	Enable  bool   `json:"enable"`
@@ -165,6 +166,28 @@ type Microphone struct {
 	//Changed   bool   `json:"changed"`
 	Path      string `json:"path"`
 	Triggered bool   `json:"triggered"`
+}
+
+type Map struct {
+	Grid_x    int    `json:"grid_x"`
+	Grid_y    int    `json:"grid_y"`
+	Grid_w    int    `json:"grid_w"`
+	Grid_h    int    `json:"grid_h"`
+	Show      bool   `json:"show"`
+	Enable    bool   `json:"enable"`
+	//Changed   bool   `json:"changed"`
+
+	Lon    float64    `json:"lon"`
+	Lat    float64    `json:"lat"`
+	Zoom   float64    `json:"zoom"`
+
+	File   string    `json:"file"`
+	Url    string    `json:"url"`
+	copyright       string    `json:"copyright"`
+	copyright_url   string    `json:"copyright_url"`
+
+	Locators   string    `json:"locators"`
+	Segments   string    `json:"segments"`
 }
 
 
