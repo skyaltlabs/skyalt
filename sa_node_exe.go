@@ -1540,8 +1540,20 @@ func UiMap_render(node *SANode) {
 	copyright := node.GetAttrString("copyright", "(c)OpenStreetMap contributors")
 	copyright_url := node.GetAttrString("copyright_url", "https://www.openstreetmap.org/copyright")
 
-	locators := node.GetAttrString("locators", "") //`[{"label":"Example Title", "lon":14.4071117049, "lat":50.0852013259}, {"label":"2", "lon":14, "lat":50}]`
-	segments := node.GetAttrString("segments", "") //`[{"label":"Example Title", "Trkpt":[{"lat":50,"lon":16,"ele":400,"time":"2020-04-15T09:05:20Z"},{"lat":50.4,"lon":16.1,"ele":400,"time":"2020-04-15T09:05:23Z"}]}]`
+	locators := node.GetAttrString("locators", "")   //`[{"label":"Example Title", "lon":14.4071117049, "lat":50.0852013259}, {"label":"2", "lon":14, "lat":50}]`
+	segmentsIn := node.GetAttrString("segments", "") //`[{"label":"Example Title", "Trkpt":[{"lat":50,"lon":16,"ele":400,"time":"2020-04-15T09:05:20Z"},{"lat":50.4,"lon":16.1,"ele":400,"time":"2020-04-15T09:05:23Z"}]}]`
+
+	segmentsIn = strings.TrimSpace(segmentsIn)
+	var segments []byte
+	if strings.HasPrefix(segmentsIn, "<?xml") {
+		var err error
+		segments, err = UiMap_GpxToJson([]byte(segmentsIn))
+		if err != nil {
+			node.SetError(fmt.Errorf("UiMap_GpxToJson() failed: %w", err))
+		}
+	} else {
+		segments = []byte(segmentsIn) //json
+	}
 
 	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 	{
@@ -1575,9 +1587,9 @@ func UiMap_render(node *SANode) {
 		}
 
 		//segments
-		if segments != "" {
+		if segments != nil {
 			var items []UiCompMapSegments
-			err := json.Unmarshal([]byte(segments), &items)
+			err := json.Unmarshal(segments, &items)
 			if err == nil {
 				err = ui.comp_mapSegments(lon, lat, zoom, items)
 				if err != nil {
