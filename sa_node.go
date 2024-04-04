@@ -411,40 +411,18 @@ func (node *SANode) _findNodeInner(name string) *SANode {
 func (node *SANode) FindNodeSubs(name string) *SANode {
 	nd := node._findNodeInner(name)
 	if nd == nil {
-		fmt.Println(name, "node not found")
+		fmt.Printf("Node '%s' not found ", name)
 	}
 	return nd
 }
 
 func (node *SANode) FindNode(name string) *SANode {
 	nd := node.GetParentRoot()._findNodeInner(name)
-	//nd := node._findNodeInner(name)
 	if nd == nil {
-		fmt.Println(name, "node not found")
+		fmt.Printf("Node '%s' not found ", name)
 	}
-
-	nd2 := node.FindNodeOrig(name)
-
-	if nd != nd2 {
-		fmt.Println("this is it.")
-	}
-
 	return nd
 }
-
-/*func (node *SANode) FindNodeSplit(name string) *SANode {
-
-	parts := strings.Split(name, "___")
-
-	for _, nm := range parts {
-		node = node.FindNode(nm)
-		if node == nil {
-			break
-		}
-	}
-
-	return node
-}*/
 
 func (node *SANode) FindParent(parent *SANode) bool {
 	for node != nil {
