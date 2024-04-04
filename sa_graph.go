@@ -777,7 +777,7 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 			{
 				dnm := "progress"
 				ui.Div_colMax(0, 100)
-				if ui.Comp_button(0, 0, 1, 1, fmt.Sprintf("%s ... %.1f%%", progressStr, progressProc*100), Comp_buttonProp().SetError(true)) > 0 {
+				if ui.Comp_buttonLight(0, 0, 1, 1, fmt.Sprintf("%s ... %.1f%%", progressStr, progressProc*100), Comp_buttonProp().Tooltip("Open Dialog")) > 0 {
 					ui.Dialog_open(dnm, 0)
 				}
 				if ui.Dialog_start(dnm) {
