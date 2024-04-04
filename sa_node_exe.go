@@ -55,7 +55,12 @@ func UiButton_render(node *SANode) {
 	confirmation := node.GetAttrString("confirmation", "")
 	//triggered := node.GetAttrBool("triggered", false)
 
-	props := Comp_buttonProp().Enable(enable).Tooltip(tooltip).Confirmation(confirmation, "confirm_"+node.GetPath())
+	props := Comp_buttonProp().Enable(enable).Tooltip(tooltip)
+	if confirmation != "" {
+		path := NewSANodePath(node)
+		props.Confirmation(confirmation, "confirm_"+path.String())
+	}
+
 	switch background {
 	case 0:
 		props.DrawBack(false)
@@ -1353,8 +1358,8 @@ func _UiCode_attrs(node *SANode, grid *OsV4) {
 	//output
 	{
 		ui.Comp_text(0, grid.Start.Y, 1, 1, "Output", 0)
-		nlines := OsClamp(WinFontProps_NumRows(node.Code.output), 2, 5)
-		ui.Comp_textSelectMulti(1, grid.Start.Y, 1, nlines, node.Code.output, OsV2{0, 0}, true, true, false)
+		nlines := OsClamp(WinFontProps_NumRows(node.Code.cmd_output), 2, 5)
+		ui.Comp_textSelectMulti(1, grid.Start.Y, 1, nlines, node.Code.cmd_output, OsV2{0, 0}, true, true, false)
 		grid.Start.Y += nlines
 	}
 }

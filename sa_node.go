@@ -377,7 +377,7 @@ func (node *SANode) CanBeRenderOnCanvas() bool {
 	return false
 }
 
-func (node *SANode) FindNode(name string) *SANode {
+func (node *SANode) FindNodeOrig(name string) *SANode {
 	for _, it := range node.Subs {
 		if it.Name == name {
 			return it
@@ -386,13 +386,61 @@ func (node *SANode) FindNode(name string) *SANode {
 
 	//parent only, never deeper
 	if node.parent != nil {
-		return node.parent.FindNode(name)
+		return node.parent.FindNodeOrig(name)
 	}
 
 	return nil
 }
 
-func (node *SANode) FindNodeSplit(name string) *SANode {
+func (node *SANode) _findNodeInner(name string) *SANode {
+	if node.Name == name {
+		return node
+	}
+
+	//subs
+	for _, it := range node.Subs {
+		nd := it._findNodeInner(name)
+		if nd != nil {
+			return nd
+		}
+	}
+
+	return nil
+}
+
+func (node *SANode) FindNodeSubs(name string) *SANode {
+	nd := node._findNodeInner(name)
+	//nd := node._findNodeInner(name)
+	if nd == nil {
+		fmt.Println(name, "node not found")
+	}
+
+	nd2 := node.FindNodeOrig(name)
+
+	if nd != nd2 {
+		fmt.Println("this is it.")
+	}
+
+	return nd
+}
+
+func (node *SANode) FindNode(name string) *SANode {
+	nd := node.GetParentRoot()._findNodeInner(name)
+	//nd := node._findNodeInner(name)
+	if nd == nil {
+		fmt.Println(name, "node not found")
+	}
+
+	nd2 := node.FindNodeOrig(name)
+
+	if nd != nd2 {
+		fmt.Println("this is it.")
+	}
+
+	return nd
+}
+
+/*func (node *SANode) FindNodeSplit(name string) *SANode {
 
 	parts := strings.Split(name, "___")
 
@@ -404,7 +452,7 @@ func (node *SANode) FindNodeSplit(name string) *SANode {
 	}
 
 	return node
-}
+}*/
 
 func (node *SANode) FindParent(parent *SANode) bool {
 	for node != nil {
@@ -564,7 +612,7 @@ func (node *SANode) BypassSelectedCodeNodes() {
 	}
 }
 
-func (node *SANode) GetPath() string {
+/*func (node *SANode) GetPath() string {
 
 	var path string
 
@@ -575,9 +623,9 @@ func (node *SANode) GetPath() string {
 	path += node.Name + "/"
 
 	return path
-}
+}*/
 
-func (node *SANode) GetPathSplit() string {
+/*func (node *SANode) GetPathSplit() string {
 
 	var path string
 
@@ -588,7 +636,7 @@ func (node *SANode) GetPathSplit() string {
 	path += node.Name
 
 	return path
-}
+}*/
 
 func (node *SANode) NumAttrNames(name string) int {
 	n := 0

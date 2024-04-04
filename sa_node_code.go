@@ -66,7 +66,6 @@ type SANodeCodeExe struct {
 type SANodeCode struct {
 	node *SANode
 
-	//Triggers []string //nodes
 	Messages []SANodeCodeChat
 
 	Code string
@@ -74,9 +73,8 @@ type SANodeCode struct {
 	ArgsProps []*SANodeCodeArg
 
 	func_depends []*SANode
-	//msgs_depends []*SANode
 
-	output string //terminal
+	cmd_output string //terminal
 
 	file_err error
 	exe_err  error
@@ -94,7 +92,7 @@ func InitSANodeCode(node *SANode) SANodeCode {
 }
 
 func (ls *SANodeCode) findNodeName(nm string) (*SANode, error) {
-	found := ls.node.FindNodeSplit(nm)
+	found := ls.node.FindNode(nm)
 	if found == nil {
 		return nil, fmt.Errorf("node '%s' not found", nm)
 	}
@@ -197,7 +195,7 @@ func (ls *SANodeCode) buildSqlInfos(msgs_depends []*SANode) (string, error) {
 
 	for _, dep := range msgs_depends {
 		if dep.IsTypeTables() {
-			str += fmt.Sprintf("'%s' is SQLite database which includes these tables(columns): ", dep.GetPathSplit())
+			str += fmt.Sprintf("'%s' is SQLite database which includes these tables(columns): ", dep.Name)
 
 			tablesStr := ""
 			db, _, err := ls.node.app.base.ui.win.disk.OpenDb(dep.GetAttrString("path", ""))
@@ -297,7 +295,7 @@ func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 	params := ""
 	for _, prmNode := range msgs_depends {
 		StructName := prmNode.getStructName()
-		params += fmt.Sprintf("%s *%s, ", prmNode.GetPathSplit(), StructName)
+		params += fmt.Sprintf("%s *%s, ", prmNode.Name, StructName)
 	}
 	params, _ = strings.CutSuffix(params, ", ")
 	str += fmt.Sprintf("\nfunc %s(%s) error {\n\n}\n\n", ls.node.Name, params)
@@ -379,7 +377,7 @@ func (ls *SANodeCode) Execute(exe_prms []SANodeCodeExePrm) {
 
 		attrs := make(map[string]interface{})
 		if prmNode.HasAttrNode() {
-			attrs["node"] = prmNode.GetPathSplit()
+			attrs["node"] = prmNode.Name
 		} else {
 			for k, v := range prmNode.Attrs {
 				attrs[k] = v
@@ -429,7 +427,7 @@ func (ls *SANodeCode) Execute(exe_prms []SANodeCodeExePrm) {
 			attrs["rows"] = rows
 		}
 
-		vars[prmNode.GetPathSplit()] = attrs
+		vars[prmNode.Name] = attrs
 	}
 
 	inputJs, err := json.Marshal(vars)
@@ -452,7 +450,7 @@ func (ls *SANodeCode) SetOutput(outputJs []byte) {
 	}
 
 	for key, attrs := range vars {
-		prmNode := ls.node.FindNodeSplit(key)
+		prmNode := ls.node.FindNode(key)
 		if prmNode != nil {
 			if !prmNode.HasAttrNode() {
 				switch vv := attrs.(type) {
@@ -483,7 +481,7 @@ func (ls *SANodeCode) SetOutput(outputJs []byte) {
 							listSubs[i].parent = prmNode
 							if err == nil {
 								for key, attrs := range vars {
-									prmNode2 := listSubs[i].FindNodeSplit(key)
+									prmNode2 := listSubs[i].FindNodeSubs(key)
 									if prmNode2 != nil {
 										if !prmNode2.HasAttrNode() {
 											switch vv := attrs.(type) {
@@ -665,7 +663,7 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 	//struct
 	str += "type MainStruct struct {\n"
 	for _, prmNode := range ls.func_depends {
-		prmName := prmNode.GetPathSplit()
+		prmName := prmNode.Name
 		VarName := strings.ToUpper(prmName[0:1]) + prmName[1:] //1st letter must be upper
 		StructName := prmNode.getStructName()
 
@@ -686,7 +684,7 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 		`
 	params := ""
 	for _, prmNode := range ls.func_depends {
-		prmName := prmNode.GetPathSplit()
+		prmName := prmNode.Name
 		VarName := strings.ToUpper(prmName[0:1]) + prmName[1:] //1st letter must be upper
 		params += fmt.Sprintf("&st.%s, ", VarName)
 
