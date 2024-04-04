@@ -138,7 +138,8 @@ type SAJobExe struct {
 
 	input []byte
 
-	output []byte
+	outJs  []byte
+	outCmd []byte
 	outErr error
 
 	dt_time float64
@@ -169,6 +170,7 @@ func (jb *SAJobExe) Run() {
 		jb.outErr = errors.New(err.Error() + ": " + string(cmd_out))
 	}
 
+	jb.outCmd = cmd_out
 	jb.dt_time = OsTime() - jb.st_time
 }
 
@@ -195,7 +197,8 @@ func (jb *SAJobExe) PostRun() {
 		return
 	}
 
-	node.Code.SetOutput(jb.output)
+	node.Code.cmd_output = string(jb.outCmd)
+	node.Code.SetOutput(jb.outJs)
 
 	fmt.Printf("SAJobExe '%s' finished in %f\n", jb.programName, jb.dt_time)
 }
