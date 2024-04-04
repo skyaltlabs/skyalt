@@ -988,7 +988,15 @@ func UiSQLite_renderEditor(node *SANode) {
 						ui.Comp_combo(1, 0, 1, 1, &g_column_type, []string{"INTEGER", "REAL", "TEXT", "BLOB", "NUMERIC"}, []string{"INTEGER", "REAL", "TEXT", "BLOB", "NUMERIC"}, "Type", true, false)
 						//button
 						if ui.Comp_button(2, 0, 1, 1, "Create Column", Comp_buttonProp().Enable(g_column_name != "")) > 0 {
-							db.Write_unsafe(fmt.Sprintf("ALTER TABLE %s ADD %s %s;", tinfo.Name, g_column_name, g_column_type))
+
+							def := "" //blob
+							if strings.EqualFold(g_column_type, "TEXT") {
+								def = "NOT NULL DEFAULT \"\"" //text
+							} else if !strings.EqualFold(g_column_type, "BLOB") {
+								def = "NOT NULL DEFAULT 0" //number
+							}
+
+							db.Write_unsafe(fmt.Sprintf("ALTER TABLE %s ADD %s %s %s;", tinfo.Name, g_column_name, g_column_type, def))
 							ui.Dialog_close()
 						}
 						ui.Dialog_end()
