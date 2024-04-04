@@ -17,6 +17,8 @@ limitations under the License.
 package main
 
 import (
+	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"math"
 	"strconv"
@@ -437,4 +439,35 @@ func (ui *Ui) comp_map(cam_lon, cam_lat, cam_zoom *float64, file, url, copyright
 	}
 
 	return (old_cam_lon != *cam_lon || old_cam_lat != *cam_lat || old_cam_zoom != *cam_zoom), nil
+}
+
+type UiMapConvertGPX struct {
+	Trkseg []UiMapConvertTrkseg `xml:"trk>trkseg" json:"segments"`
+}
+
+type UiMapConvertTrkseg struct {
+	Trkpt []struct {
+		Lat  float32 `xml:"lat,attr" json:"lat"`
+		Lon  float32 `xml:"lon,attr" json:"lon"`
+		Ele  float32 `xml:"ele" json:"ele,omitempty"`
+		Time string  `xml:"time" json:"time,omitempty"`
+	} `xml:"trkpt"`
+}
+
+func UiMap_GpxToJson(gpx []byte) ([]byte, error) {
+
+	//gpx -> struct
+	var g UiMapConvertGPX
+	err := xml.Unmarshal(gpx, &g)
+	if err != nil {
+		return nil, fmt.Errorf("Unmarshal() failed: %w", err)
+	}
+
+	//struct -> json
+	js, err := json.Marshal(g.Trkseg)
+	if err != nil {
+		return nil, fmt.Errorf("Marshal() failed: %w", err)
+	}
+
+	return js, nil
 }
