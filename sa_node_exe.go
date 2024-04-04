@@ -127,6 +127,8 @@ func UiEditbox_Attrs(node *SANode) {
 	//node.ShowAttrBool(&grid, "changed", false)
 	node.ShowAttrBool(&grid, "temp_to_value", false)
 
+	node.ShowAttrBool(&grid, "db_value", false)
+
 }
 
 func UiEditbox_render(node *SANode) {
@@ -140,25 +142,71 @@ func UiEditbox_render(node *SANode) {
 	multi_line_enter_finish := node.GetAttrBool("multi_line_enter_finish", false)
 	temp_to_value := node.GetAttrBool("temp_to_value", false)
 
+	db_value := node.GetAttrBool("db_value", false)
+	if db_value {
+		db_path := node.GetAttrString("db_path", "")
+		table := node.GetAttrString("table", "")
+		column := node.GetAttrString("column", "")
+		rowid := node.GetAttrInt("rowid", 0)
+
+		//open
+		db, _, err := node.app.base.ui.win.disk.OpenDb(db_path)
+		if err != nil {
+			node.SetError(err)
+			return
+		}
+
+		//read
+		db.Lock()
+		err = db.ReadRow_unsafe(fmt.Sprintf("SELECT %s FROM %s WHERE rowid=?", column, table), rowid).Scan(&value)
+		db.Unlock()
+		if err != nil {
+			node.SetError(err)
+			return
+		}
+	}
+
+	origValue := value
 	editedValue, active, _, fnshd, _ := node.app.base.ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, Comp_editboxProp().Ghost(ghost).MultiLine(multi_line).MultiLineEnterFinish(multi_line_enter_finish).Enable(enable).Align(align_h, align_v))
 
 	if temp_to_value && active {
-		//old_changed := node.changed //node.GetAttrBool("changed", false)
-		//if !old_changed {
-		//node.Attrs["changed"] = (node.Attrs["value"] != editedValue)
+
+		//db ................
+
 		if node.Attrs["value"] != editedValue {
 			node.SetChange(nil)
 		}
-		//}
 		node.Attrs["value"] = editedValue
 	}
 
-	if fnshd {
-		//node.Attrs["changed"] = (node.Attrs["value"] != value)
-		if node.Attrs["value"] != value {
-			node.SetChange(nil)
+	if fnshd && origValue != value {
+
+		if db_value {
+			db_path := node.GetAttrString("db_path", "")
+			table := node.GetAttrString("table", "")
+			column := node.GetAttrString("column", "")
+			rowid := node.GetAttrInt("rowid", 0)
+
+			//open
+			db, _, err := node.app.base.ui.win.disk.OpenDb(db_path)
+			if err != nil {
+				node.SetError(err)
+				return
+			}
+
+			//write
+			db.Lock()
+			_, err = db.Write_unsafe(fmt.Sprintf("UPDATE %s SET %s=? WHERE rowid=?", table, column), value, rowid)
+			db.Unlock()
+			if err != nil {
+				node.SetError(err)
+				return
+			}
+		} else {
+			node.Attrs["value"] = value
 		}
-		node.Attrs["value"] = value
+
+		node.SetChange(nil)
 	}
 }
 
@@ -625,6 +673,8 @@ func UiList_Attrs(node *SANode) {
 	node.ShowAttrFloat(&grid, "max_width", 100, 1)
 	node.ShowAttrFloat(&grid, "max_height", 1, 1)
 	node.ShowAttrBool(&grid, "show_border", true)
+
+	node.ShowAttrBool(&grid, "selection", false)
 	node.ShowAttrString(&grid, "selected", "", false)
 	//node.ShowAttrBool(&grid, "changed", false) //...
 

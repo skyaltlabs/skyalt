@@ -233,7 +233,12 @@ func (node *SANode) getStructName() string {
 		return "List" + strings.ToUpper(node.Name[0:1]) + node.Name[1:] //List<name>
 	}
 
-	return strings.ToUpper(node.Exe[0:1]) + node.Exe[1:] //1st letter must be upper
+	exe := node.Exe
+	if node.IsAttrDBValue() {
+		exe += "DB" //Editbox -> EditboxDB
+	}
+
+	return strings.ToUpper(exe[0:1]) + exe[1:] //1st letter must be upper
 }
 
 func (ls *SANodeCode) buildListStructs(depends []*SANode, addExtraAttrs bool) string {
@@ -266,7 +271,8 @@ func (ls *SANodeCode) buildListStructs(depends []*SANode, addExtraAttrs bool) st
 			"\tDirection int   `json:\"direction\"`\n" +
 			"\tMax_width float64  `json:\"max_width\"`\n" +
 			"\tMax_height float64 `json:\"max_height\"`\n" +
-			"\tShow_border bool `json:\"show_border\"`\n"
+			"\tShow_border bool `json:\"show_border\"`\n" +
+			"\tSelection bool `json:\"selection\"`\n"
 
 		if !addExtraAttrs {
 			extraAttrs = ""

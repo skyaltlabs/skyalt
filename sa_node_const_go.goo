@@ -16,7 +16,7 @@ type Editbox struct {
 	Grid_y                  int    `json:"grid_y"`
 	Grid_w                  int    `json:"grid_w"`
 	Grid_h                  int    `json:"grid_h"`
-	Show               bool   `json:"show"`
+	Show                    bool   `json:"show"`
 	Value                   string `json:"value"`
 	Ghost                   string `json:"ghost"`
 	Align_h                 int    `json:"align_h"`
@@ -26,7 +26,39 @@ type Editbox struct {
 	Multi_line_enter_finish bool   `json:"multi_line_enter_finish"`
 	Temp_to_value           bool   `json:"temp_to_value"`
 	//Changed 				bool   `json:"changed"`
+	Db_value 				bool   `json:"db_value"`
 }
+type EditboxDB struct {
+	Grid_x int    `json:"grid_x"`
+	Grid_y int    `json:"grid_y"`
+	Grid_w int    `json:"grid_w"`
+	Grid_h int    `json:"grid_h"`
+	Show   bool   `json:"show"`
+
+	//Value string `json:"value"`
+	Db_path string  `json:"db_path"`
+	Table string   `json:"table"`
+	Column string  `json:"column"`
+	Rowid int      `json:"rowid"`
+
+	Ghost                   string `json:"ghost"`
+	Align_h                 int    `json:"align_h"`
+	Align_v                 int    `json:"align_v"`
+	Enable                  bool   `json:"enable"`
+	Multi_line              bool   `json:"multi_line"`
+	Multi_line_enter_finish bool   `json:"multi_line_enter_finish"`
+	Temp_to_value           bool   `json:"temp_to_value"`
+	//Changed 				bool   `json:"changed"`
+	Db_value 				bool   `json:"db_value"`
+}
+func (edit *EditboxDB) SetValue(db_path string, table string, column string, rowid int) {
+	edit.Db_path = db_path
+	edit.Table = table
+	edit.Column = column
+	edit.Rowid = rowid
+}
+
+
 type Button struct {
 	Grid_x  int    `json:"grid_x"`
 	Grid_y  int    `json:"grid_y"`

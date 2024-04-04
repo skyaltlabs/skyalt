@@ -7,6 +7,22 @@ type Editbox struct {
 	Enable   bool
 }
 
+type EditboxDB struct {
+	Db_path string
+	Table string
+	Column string
+	Rowid int
+
+	Enable   bool
+}
+//EditboxDB doesn't have 'Value string' attribute. Instead use this function to set path to database, where value can be read/write.
+func (edit *EditboxDB) SetValue(db_path string, table string, column string, rowid int) {
+	edit.Db_path = db_path
+	edit.Table = table
+	edit.Column = column
+	edit.Rowid = rowid
+}
+
 type Button struct {
 	Label   string
 	Enable  bool

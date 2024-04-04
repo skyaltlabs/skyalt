@@ -185,6 +185,14 @@ func (node *SANode) AddPos(r OsV2f) {
 	}
 }
 
+func (node *SANode) IsAttrDBValue() bool {
+	_, found := node.Attrs["db_value"]
+	if found {
+		return node.GetAttrBool("db_value", false)
+	}
+	return false
+}
+
 func (node *SANode) IsTypeWhispercpp() bool {
 	return node.Exe == "whispercpp"
 }

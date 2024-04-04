@@ -24,7 +24,6 @@ type SAGroupNode struct {
 	name   string
 	render func(node *SANode)
 	attrs  func(node *SANode)
-	//changedAttr bool
 }
 
 type SAGroup struct {
