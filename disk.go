@@ -66,6 +66,10 @@ func (disk *Disk) Destroy() {
 }
 
 func (disk *Disk) OpenDb(path string) (*DiskDb, bool, error) {
+	if path == "" {
+		return nil, false, fmt.Errorf("path is empty")
+	}
+
 	disk.lock.Lock()
 	defer disk.lock.Unlock()
 
