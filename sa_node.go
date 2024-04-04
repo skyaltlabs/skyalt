@@ -410,17 +410,9 @@ func (node *SANode) _findNodeInner(name string) *SANode {
 
 func (node *SANode) FindNodeSubs(name string) *SANode {
 	nd := node._findNodeInner(name)
-	//nd := node._findNodeInner(name)
 	if nd == nil {
 		fmt.Println(name, "node not found")
 	}
-
-	nd2 := node.FindNodeOrig(name)
-
-	if nd != nd2 {
-		fmt.Println("this is it.")
-	}
-
 	return nd
 }
 
