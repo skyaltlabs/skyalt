@@ -46,6 +46,7 @@ type SAApp struct {
 
 	Cam_x, Cam_y, Cam_z float64 `json:",omitempty"`
 	EnableExecution     bool
+	ExePos              int
 
 	Selected_canvas SANodePath
 
@@ -149,7 +150,24 @@ func (app *SAApp) rebuildLists() {
 func (app *SAApp) TryExecute() {
 	ui := app.base.ui
 
+	if !app.EnableExecution {
+		app.ExePos = -1
+		return
+	}
+
 	if !ui.win.io.touch.end && (ui.edit.IsActive() || !ui.win.io.keys.hasChanged) && (app.last_trigger_ticks > 0 && OsIsTicksIn(app.last_trigger_ticks, 500)) {
+		return
+	}
+
+	if app.ExePos < 0 {
+		for _, nd := range app.exe.Subs {
+			if len(nd.Code.exes) > 0 {
+				app.ExePos = 0
+				break
+			}
+		}
+	}
+	if app.ExePos < 0 {
 		return
 	}
 
@@ -174,32 +192,30 @@ func (app *SAApp) TryExecute() {
 		}
 	}
 
-	//exe "list" nodes first
-	for _, nd := range app.all_nodes {
-
-		if nd.IsTypeList() {
-			if len(nd.Code.exes) > 0 {
-				nd.Code.Execute(nd.Code.exes[0].prms)
-
-				nd.Code.exes = nd.Code.exes[1:] //remove
-
-				app.last_trigger_ticks = 0 //test for new changes immidiatly
-				return
+	//reset
+	if app.ExePos == 0 {
+		for _, nd := range app.all_nodes {
+			if nd.IsTypeList() {
+				nd.listSubs = nil
 			}
 		}
 	}
 
-	//exe other nodes
-	for _, nd := range app.all_nodes {
+	if app.ExePos < len(app.exe.Subs) {
+		nd := app.exe.Subs[app.ExePos]
+
+		var prms []SANodeCodeExePrm
 		if len(nd.Code.exes) > 0 {
-
-			nd.Code.Execute(nd.Code.exes[0].prms)
-
+			prms = nd.Code.exes[0].prms
 			nd.Code.exes = nd.Code.exes[1:] //remove
-
-			app.last_trigger_ticks = 0 //test for new changes immidiatly
-			return
 		}
+
+		nd.Code.Execute(prms)
+		app.last_trigger_ticks = 0 //test for new changes immidiatly
+
+		app.ExePos++
+	} else {
+		app.ExePos = -1 //off
 	}
 }
 

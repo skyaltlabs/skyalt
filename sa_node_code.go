@@ -106,6 +106,9 @@ func (ls *SANodeCode) findNodeName(nm string) (*SANode, error) {
 }
 
 func (ls *SANodeCode) AddExe(prms []SANodeCodeExePrm) {
+	if !ls.node.app.EnableExecution {
+		return
+	}
 
 	if !ls.node.IsTypeCode() != ls.node.IsBypassed() {
 		return
@@ -373,9 +376,9 @@ func (ls *SANodeCode) Execute(exe_prms []SANodeCodeExePrm) {
 	ls.exe_err = nil
 
 	//reset
-	if ls.node.IsTypeList() {
-		ls.node.listSubs = nil
-	}
+	//if ls.node.IsTypeList() {
+	//	ls.node.listSubs = nil
+	//}
 
 	//input
 	vars := make(map[string]interface{})
@@ -518,9 +521,9 @@ func (ls *SANodeCode) SetOutput(outputJs []byte) {
 					prmNode.listSubs = listSubs
 					//prmNode.ResetTriggers() //reset sub-buttons clicks
 
-					if diff {
-						prmNode.SetChange(nil)
-					}
+					//if diff {
+					//	prmNode.SetChange(nil)
+					//}
 				}
 			}
 		} else {

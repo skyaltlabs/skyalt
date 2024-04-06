@@ -119,7 +119,7 @@ func (node *SANode) SetError(err error) {
 }
 
 func (node *SANode) addIntoDependedCodes(changedNode *SANode, prms []SANodeCodeExePrm) {
-	for _, nd := range node.Subs {
+	for _, nd := range node.app.exe.Subs {
 		if nd.IsTypeCode() && !nd.IsBypassed() && nd != changedNode {
 			if nd.Code.findFuncDepend(changedNode) {
 				nd.Code.AddExe(prms)

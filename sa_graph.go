@@ -728,11 +728,11 @@ func (gr *SAGraph) drawGraph() (OsV4, bool) {
 		gr.node_select = false
 	}
 
-	//if gr.app.exeState == SANode_STATE_RUNNING {
-	//	ui.Paint_rect(0, 0, 1, 1, 0, pl.P, 0.06) //exe rect
-	//} else if !gr.app.EnableExecution {
-	//	ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0.03)
-	//}
+	if gr.app.ExePos > 0 {
+		ui.Paint_rect(0, 0, 1, 1, 0, pl.P, 0.06) //exe rect
+	} else if !gr.app.EnableExecution {
+		ui.Paint_rect(0, 0, 1, 1, 0, pl.E, 0.03)
+	}
 
 	return graphCanvas, keyAllow
 }
@@ -776,19 +776,6 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 
 	path := "file:apps/base/resources/"
 
-	//if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+OsTrnString(gr.app.EnableExecution, "pause.png", "play.png")), 0.25, "Enable/Disable nodes execution", uint8(OsTrn(gr.app.EnableExecution, int(CdPalette_B), int(CdPalette_E))), true, false) > 0 {
-	//	gr.app.EnableExecution = !gr.app.EnableExecution
-	//	if gr.app.EnableExecution {
-	//		gr.app.SetExecute()
-	//	}
-	//}
-	//y++
-
-	//if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"update.png"), 0.25, "Recompute all nodes", CdPalette_B, true, false) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
-	//	gr.app.SetExecute()
-	//}
-	//y++
-
 	if ui.Comp_buttonLight(0, 0, 1, 1, "←", Comp_buttonProp().Enable(gr.canHistoryBack()).Tooltip(fmt.Sprintf("%s(%d)", ui.trns.BACKWARD, gr.history_pos))) > 0 {
 		gr.stepHistoryBack()
 
@@ -826,9 +813,18 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 	if ui.Comp_buttonIcon(5, 0, 1, 1, InitWinMedia_url(path+"home.png"), 0.3, "Zoom all nodes(H)", Comp_buttonProp().Cd(CdPalette_B)) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
 		gr.autoZoom(false, graphCanvas) //zoom to all
 	}
-
 	if ui.Comp_buttonIcon(6, 0, 1, 1, InitWinMedia_url(path+"home_select.png"), 0.2, "Zoom selected nodes(G)", Comp_buttonProp().Cd(CdPalette_B)) > 0 || (keyAllow && strings.EqualFold(keys.text, "g")) {
 		gr.autoZoom(true, graphCanvas) //zoom to selected
+	}
+
+	if ui.Comp_buttonIcon(8, 0, 1, 1, InitWinMedia_url(path+OsTrnString(gr.app.EnableExecution, "pause.png", "play.png")), 0.25, "Enable/Disable nodes execution", Comp_buttonProp().Cd(uint8(OsTrn(gr.app.EnableExecution, int(CdPalette_B), int(CdPalette_E))))) > 0 {
+		gr.app.EnableExecution = !gr.app.EnableExecution
+
+	}
+	if ui.Comp_buttonIcon(9, 0, 1, 1, InitWinMedia_url(path+"update.png"), 0.25, "Recompute all nodes", Comp_buttonProp().Cd(CdPalette_B)) > 0 || (keyAllow && strings.EqualFold(keys.text, "h")) {
+		if gr.app.ExePos < 0 {
+			gr.app.ExePos = 0 //re-execute
+		}
 	}
 
 	//if ui.Comp_buttonIcon(0, y, 1, 1, InitWinMedia_url(path+"hierarchy.png"), 0.25, "Reoder all nodes(L)", Comp_buttonProp().Cd(CdPalette_B)) > 0 || (keyAllow && strings.EqualFold(keys.text, "l")) {
@@ -843,7 +839,7 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 	//}
 	//y++
 
-	if ui.Comp_buttonIcon(7, 0, 1, 1, InitWinMedia_url(path+"list.png"), 0.2, "Show/Hide list of all nodes(Ctrl+F)", Comp_buttonProp().DrawBack(gr.showNodeList)) > 0 || strings.EqualFold(keys.ctrlChar, "f") {
+	if ui.Comp_buttonIcon(11, 0, 1, 1, InitWinMedia_url(path+"list.png"), 0.2, "Show/Hide list of all nodes(Ctrl+F)", Comp_buttonProp().DrawBack(gr.showNodeList)) > 0 || strings.EqualFold(keys.ctrlChar, "f") {
 		gr.showNodeList = !gr.showNodeList
 		if gr.showNodeList {
 			gr.showNodeList_justOpen = true
