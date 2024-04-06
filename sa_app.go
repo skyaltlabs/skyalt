@@ -50,6 +50,7 @@ type SAApp struct {
 	Selected_canvas SANodePath
 
 	root *SANode
+	exe  *SANode //root.exe
 
 	graph  *SAGraph
 	canvas SACanvas

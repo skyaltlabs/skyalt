@@ -71,42 +71,47 @@ type SANode struct {
 }
 
 func NewSANode(app *SAApp, parent *SANode, name string, exe string, grid OsV4, pos OsV2f) *SANode {
-	w := &SANode{}
-	w.parent = parent
-	w.app = app
-	w.Name = name
-	w.Exe = exe
-	w.Pos = pos
+	node := &SANode{}
+	node.parent = parent
+	node.app = app
+	node.Name = name
+	node.Exe = exe
+	node.Pos = pos
 
-	w.Attrs = make(map[string]interface{})
+	node.Attrs = make(map[string]interface{})
 
-	if w.CanBeRenderOnCanvas() {
-		w.SetGrid(grid)
+	if node.CanBeRenderOnCanvas() {
+		node.SetGrid(grid)
 	}
 
-	w.Code = InitSANodeCode(w)
+	node.Code = InitSANodeCode(node)
 
-	return w
+	return node
 }
 
-func NewSANodeRoot(path string, app *SAApp) (*SANode, error) {
-	w := NewSANode(app, nil, "root", "layout", OsV4{}, OsV2f{})
-	w.Exe = "layout"
+func NewSANodeRoot(path string, app *SAApp) (*SANode, *SANode, error) {
+	node := NewSANode(app, nil, "root", "layout", OsV4{}, OsV2f{})
+	node.Exe = "layout"
 
 	//load
 	if path != "" {
 		js, err := os.ReadFile(path)
 		if err == nil {
-			err = json.Unmarshal([]byte(js), w)
+			err = json.Unmarshal([]byte(js), node)
 			if err != nil {
 				fmt.Printf("Unmarshal(%s) failed: %v\n", path, err)
 			}
 		}
-		w.updateLinks(nil, app)
-		w.updateCodeLinks()
+		node.updateLinks(nil, app)
+		node.updateCodeLinks()
 	}
 
-	return w, nil
+	exe := node.FindNode("exe")
+	if exe == nil {
+		exe = node.AddNode(OsV4{}, OsV2f{}, "exe", "exe")
+	}
+
+	return node, exe, nil
 }
 
 func (node *SANode) SetError(err error) {
@@ -219,7 +224,7 @@ func (node *SANode) IsTypeCode() bool {
 }
 
 func (node *SANode) HasNodeSubs() bool {
-	return strings.EqualFold(node.Exe, "layout") || strings.EqualFold(node.Exe, "dialog") || node.IsTypeList()
+	return strings.EqualFold(node.Exe, "layout") || strings.EqualFold(node.Exe, "dialog") || strings.EqualFold(node.Exe, "exe") || node.IsTypeList()
 }
 
 func (node *SANode) HasAttrNode() bool {

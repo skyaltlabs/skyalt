@@ -312,7 +312,7 @@ func (base *SABase) Render() bool {
 					//graph
 					ui.Div_start(0, 1, 1, 1)
 					var keyAllow bool
-					graphCanvas, keyAllow = app.graph.drawGraph(app.root)
+					graphCanvas, keyAllow = app.graph.drawGraph()
 					ui.Div_end()
 
 					//panel
@@ -353,7 +353,7 @@ func (base *SABase) Render() bool {
 func (base *SABase) GetApp() *SAApp {
 	app := base.Apps[base.Selected]
 	if app.root == nil {
-		app.root, _ = NewSANodeRoot(app.GetJsonPath(), app) //err ...
+		app.root, app.exe, _ = NewSANodeRoot(app.GetJsonPath(), app) //err ...
 	}
 	return app
 }

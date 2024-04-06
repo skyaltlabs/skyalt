@@ -89,6 +89,16 @@ func (node *SANode) GetNodeLabel() string {
 	return node.Name + "(" + node.Exe + ")"
 }
 
+func (node *SANode) WidthCells() float32 {
+	ui := node.app.base.ui
+	w := float32(ui.win.GetTextSize(-1, node.GetNodeLabel(), InitWinFontPropsDef(ui.win)).X) / float32(ui.win.Cell())
+	w = OsMaxFloat32(w+1, 4) //1=extra space, minimum 4
+	if node.IsTypeCode() {
+		w += 1 //chat icon
+	}
+	return w
+}
+
 func (node *SANode) nodeToPixelsCoord(canvas OsV4) (OsV4, OsV4, OsV4) {
 	ui := node.app.base.ui
 
@@ -98,11 +108,7 @@ func (node *SANode) nodeToPixelsCoord(canvas OsV4) (OsV4, OsV4, OsV4) {
 
 	mid := node.nodeToPixels(node.Pos, canvas) //.parent, because it has Cam
 
-	w := float32(ui.win.GetTextSize(-1, node.GetNodeLabel(), InitWinFontPropsDef(ui.win)).X) / float32(ui.win.Cell())
-	w = OsMaxFloat32(w+1, 4) //1=extra space, minimum 4
-	if node.IsTypeCode() {
-		w += 1 //chat icon
-	}
+	w := node.WidthCells()
 	h := float32(1) //+ node.NumVisibleAndCheck()
 
 	if node.HasNodeSubs() {

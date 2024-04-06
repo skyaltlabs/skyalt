@@ -410,7 +410,36 @@ func (gr *SAGraph) drawNodes(rects bool, classic bool) *SANode {
 	return touchInsideNode
 }
 
-func (gr *SAGraph) drawGraph(root *SANode) (OsV4, bool) {
+func (gr *SAGraph) organizeExe() {
+
+	exe := gr.app.exe
+
+	//sort
+	for i := range exe.Subs {
+		for j := i; j > 0; j-- {
+			if exe.Subs[j-1].Pos.X > exe.Subs[j].Pos.X {
+				exe.Subs[j-1], exe.Subs[j] = exe.Subs[j], exe.Subs[j-1] //swap
+			}
+		}
+	}
+
+	//round positions
+	pos := exe.Pos //use parent pos as start
+	for _, it := range exe.Subs {
+
+		space := it.WidthCells() + 2
+		if !gr.node_move || !it.Selected {
+			it.Pos = pos
+		}
+		pos.X += space
+	}
+}
+
+func (gr *SAGraph) drawGraph() (OsV4, bool) {
+
+	gr.organizeExe()
+
+	root := gr.app.root
 	ui := gr.app.base.ui
 	pl := ui.win.io.GetPalette()
 
@@ -873,14 +902,15 @@ func (gr *SAGraph) checkAndAddHistory() {
 }
 
 func (gr *SAGraph) recoverHistory() {
-	dst, _ := NewSANodeRoot("", gr.app)
-	err := json.Unmarshal(gr.history[gr.history_pos], dst)
+	root, exe, _ := NewSANodeRoot("", gr.app)
+	err := json.Unmarshal(gr.history[gr.history_pos], root)
 	if err != nil {
 		return
 	}
-	dst.updateLinks(nil, gr.app)
-	dst.updateCodeLinks()
-	gr.app.root = dst
+	root.updateLinks(nil, gr.app)
+	root.updateCodeLinks()
+	gr.app.root = root
+	gr.app.exe = exe
 }
 
 func (gr *SAGraph) canHistoryBack() bool {
