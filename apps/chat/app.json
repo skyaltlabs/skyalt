@@ -78,49 +78,8 @@
 "Subs": [
 {
 "Pos": {
-"X": 4.5465503,
-"Y": 2.4361105
-},
-"Name": "transcribe_mic",
-"Exe": "code",
-"Code": {
-"Messages": [
-{
-"User": "Transcribe 'microphone' with 'whispercpp'. Save result into 'user_msg'.",
-"Assistent": "```go\nimport (\n\t\"io/ioutil\"\n)\n\nfunc transcribe_mic(microphone *Microphone, whispercpp *Whispercpp, user_msg *Editbox) error {\n\tif !microphone.Enable || !microphone.Triggered {\n\t\treturn nil // Do nothing if microphone is not enabled and triggered\n\t}\n\taudioBytes, err := ioutil.ReadFile(microphone.Path)\n\tif err != nil {\n\t\treturn err // Return the error if reading file fails\n\t}\n\ttranscribedText, err := whispercpp.TranscribeBlob(audioBytes)\n\tif err != nil {\n\t\treturn err // Return the error if transcription fails\n\t}\n\tuser_msg.Value = transcribedText // Update user_msg with the transcribed text\n\treturn nil\n}\n```"
-},
-{
-"User": "",
-"Assistent": ""
-}
-],
-"Code": "\nimport (\n\t\"io/ioutil\"\n)\n\nfunc transcribe_mic(microphone *Microphone, whispercpp *Whispercpp, user_msg *Editbox) error {\n\tif !microphone.Enable || !microphone.Triggered {\n\t\treturn nil // Do nothing if microphone is not enabled and triggered\n\t}\n\taudioBytes, err := ioutil.ReadFile(microphone.Path)\n\tif err != nil {\n\t\treturn err // Return the error if reading file fails\n\t}\n\ttranscribedText, err := whispercpp.TranscribeBlob(audioBytes)\n\tif err != nil {\n\t\treturn err // Return the error if transcription fails\n\t}\n\tuser_msg.Value = transcribedText // Update user_msg with the transcribed text\n\treturn nil\n}\n",
-"ArgsProps": [
-{
-"Node": "microphone",
-"Write": false
-},
-{
-"Node": "whispercpp",
-"Write": false
-},
-{
-"Node": "user_msg",
-"Write": true
-}
-]
-},
-"Attrs": {
-"bypass": false,
-"language": "go",
-"show": true
-},
-"ShowCodeChat": true
-},
-{
-"Pos": {
-"X": 7.3141065,
-"Y": -0.79633355
+"X": -2.8113258,
+"Y": 18.248018
 },
 "Name": "whispercpp",
 "Exe": "whispercpp",
@@ -157,8 +116,8 @@
 },
 {
 "Pos": {
-"X": 1.6442522,
-"Y": -0.75605947
+"X": -6.1928916,
+"Y": 16.657661
 },
 "Name": "microphone",
 "Exe": "microphone",
@@ -180,99 +139,8 @@
 },
 {
 "Pos": {
-"X": 20.059744,
-"Y": 12.347651
-},
-"Name": "BuildTextChat",
-"Exe": "code",
-"Code": {
-"Messages": [
-{
-"User": "From 'db' create text in form: \u003crole\u003e: \u003ccontent\u003e\\n.  Save text into 'text'.",
-"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t_ \"github.com/mattn/go-sqlite3\"\n\t\"log\"\n)\n\nfunc BuildTextChat(db *Tables, text *Text) error {\n\tdatabase, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\tlog.Fatal(err)\n\t\treturn err\n\t}\n\tdefer database.Close()\n\n\trows, err := database.Query(\"SELECT role, content FROM chat\")\n\tif err != nil {\n\t\tlog.Fatal(err)\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tvar chatText string\n\tfor rows.Next() {\n\t\tvar role string\n\t\tvar content string\n\t\terr = rows.Scan(\u0026role, \u0026content)\n\t\tif err != nil {\n\t\t\tlog.Fatal(err)\n\t\t\treturn err\n\t\t}\n\t\tchatText += role + \": \" + content + \"\\n\"\n\t}\n\terr = rows.Err()\n\tif err != nil {\n\t\tlog.Fatal(err)\n\t\treturn err\n\t}\n\n\ttext.Label = chatText\n\treturn nil\n}\n```"
-},
-{
-"User": "",
-"Assistent": ""
-}
-],
-"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc BuildTextChat(db *Tables, text *Text) error {\n\tdatabase, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer database.Close()\n\n\trows, err := database.Query(\"SELECT role, content FROM chat\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tvar chatText string\n\tfor rows.Next() {\n\t\tvar role string\n\t\tvar content string\n\t\terr = rows.Scan(\u0026role, \u0026content)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tchatText += fmt.Sprintf(\"%s: %s\\n\", role, content)\n\t}\n\tif err = rows.Err(); err != nil {\n\t\treturn err\n\t}\n\n\ttext.Label = chatText\n\treturn nil\n}\n",
-"ArgsProps": [
-{
-"Node": "db",
-"Write": false
-},
-{
-"Node": "text",
-"Write": false
-}
-]
-},
-"Attrs": {
-"bypass": false,
-"grid_h": 1,
-"grid_w": 1,
-"grid_x": 0,
-"grid_y": 0,
-"language": "go",
-"show": true
-},
-"ShowCodeChat": true
-},
-{
-"Pos": {
-"X": 12.419673,
-"Y": 8.505952
-},
-"Name": "Chat",
-"Exe": "code",
-"Selected": true,
-"Code": {
-"Messages": [
-{
-"User": "If 'button' is clicked, build messages from 'db'. Add 'user_msg' to messages and send it to 'llamacpp' to get answer.\nSave answer and 'user_msg' into 'db'. Reset 'user_msg' editbox.",
-"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc Chat(button *Button, db *Tables, user_msg *Editbox, llamacpp *Llamacpp) error {\n\tif button.Triggered {\n\t\tdatabase, err := sql.Open(\"sqlite3\", db.Path)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer database.Close()\n\n\t\trows, err := database.Query(\"SELECT role, content FROM chat\")\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer rows.Close()\n\n\t\tvar messages []LlamaMessage\n\t\tfor rows.Next() {\n\t\t\tvar role, content string\n\t\t\tif err := rows.Scan(\u0026role, \u0026content); err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t\tmessages = append(messages, LlamaMessage{Role: role, Content: content})\n\t\t}\n\t\tif err := rows.Err(); err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\tuserMessage := LlamaMessage{Role: \"user\", Content: user_msg.Value}\n\t\tmessages = append(messages, userMessage)\n\n\t\tanswer, err := llamacpp.GetAnswer(messages)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\ttx, err := database.Begin()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tstmt, err := tx.Prepare(\"INSERT INTO chat(role, content) VALUES(?, ?)\")\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer stmt.Close()\n\n\t\t_, err = stmt.Exec(\"user\", user_msg.Value)\n\t\tif err != nil {\n\t\t\ttx.Rollback()\n\t\t\treturn err\n\t\t}\n\n\t\t_, err = stmt.Exec(\"assistant\", answer)\n\t\tif err != nil {\n\t\t\ttx.Rollback()\n\t\t\treturn err\n\t\t}\n\n\t\terr = tx.Commit()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\tuser_msg.Value = \"\" // Reset user message editbox after sending\n\n\t\tfmt.Printf(\"The assistant's answer is: %s\\n\", answer)\n\t}\n\treturn nil\n}\n```"
-},
-{
-"User": "",
-"Assistent": ""
-}
-],
-"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc Chat(button *Button, db *Tables, user_msg *Editbox, llamacpp *Llamacpp) error {\n\tif button.Triggered {\n\t\tdatabase, err := sql.Open(\"sqlite3\", db.Path)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer database.Close()\n\n\t\trows, err := database.Query(\"SELECT role, content FROM chat\")\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer rows.Close()\n\n\t\tvar messages []LlamaMessage\n\t\tfor rows.Next() {\n\t\t\tvar role, content string\n\t\t\tif err := rows.Scan(\u0026role, \u0026content); err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t\tmessages = append(messages, LlamaMessage{Role: role, Content: content})\n\t\t}\n\t\tif err := rows.Err(); err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\tuserMessage := LlamaMessage{Role: \"user\", Content: user_msg.Value}\n\t\tmessages = append(messages, userMessage)\n\n\t\tanswer, err := llamacpp.GetAnswer(messages)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\ttx, err := database.Begin()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tstmt, err := tx.Prepare(\"INSERT INTO chat(role, content) VALUES(?, ?)\")\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer stmt.Close()\n\n\t\t_, err = stmt.Exec(\"user\", user_msg.Value)\n\t\tif err != nil {\n\t\t\ttx.Rollback()\n\t\t\treturn err\n\t\t}\n\n\t\t_, err = stmt.Exec(\"assistant\", answer)\n\t\tif err != nil {\n\t\t\ttx.Rollback()\n\t\t\treturn err\n\t\t}\n\n\t\terr = tx.Commit()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\tuser_msg.Value = \"\" // Reset user message editbox after sending\n\n\t\tfmt.Printf(\"The assistant's answer is: %s\\n\", answer)\n\t}\n\treturn nil\n}\n",
-"ArgsProps": [
-{
-"Node": "button",
-"Write": false
-},
-{
-"Node": "db",
-"Write": true
-},
-{
-"Node": "user_msg",
-"Write": false
-},
-{
-"Node": "llamacpp",
-"Write": false
-}
-]
-},
-"Attrs": {
-"bypass": false,
-"grid_h": 1,
-"grid_w": 1,
-"grid_x": 0,
-"grid_y": 0,
-"language": "go",
-"show": true
-},
-"ShowCodeChat": true
-},
-{
-"Pos": {
-"X": 12.410117,
-"Y": 12.483566
+"X": 22.915314,
+"Y": 18.077469
 },
 "Name": "db",
 "Exe": "tables",
@@ -299,8 +167,8 @@
 },
 {
 "Pos": {
-"X": 4.563815,
-"Y": 8.445891
+"X": 17.402346,
+"Y": 18.111866
 },
 "Name": "llamacpp",
 "Exe": "llamacpp",
@@ -341,49 +209,8 @@
 },
 {
 "Pos": {
-"X": 12.326151,
-"Y": 5.304322
-},
-"Name": "disabled",
-"Exe": "code",
-"Code": {
-"Messages": [
-{
-"User": "If 'user_msg' is empty, disable 'button'. Otherwise button is enabled.",
-"Assistent": "```go\nimport (\n\t\"strings\"\n)\n\nfunc code(user_msg *Editbox, button *Button) error {\n\tbutton.Enable = strings.TrimSpace(user_msg.Value) != \"\"\n\treturn nil\n}\n```"
-},
-{
-"User": "",
-"Assistent": ""
-}
-],
-"Code": "\nimport (\n\t\"strings\"\n)\n\nfunc disabled(user_msg *Editbox, button *Button) error {\n\tbutton.Enable = strings.TrimSpace(user_msg.Value) != \"\"\n\treturn nil\n}\n",
-"ArgsProps": [
-{
-"Node": "user_msg",
-"Write": false
-},
-{
-"Node": "button",
-"Write": false
-}
-]
-},
-"Attrs": {
-"bypass": false,
-"grid_h": 1,
-"grid_w": 1,
-"grid_x": 0,
-"grid_y": 0,
-"language": "go",
-"show": true
-},
-"ShowCodeChat": true
-},
-{
-"Pos": {
-"X": 19.816908,
-"Y": 5.3681235
+"X": 11.666904,
+"Y": 16.598389
 },
 "Name": "button",
 "Exe": "button",
@@ -408,8 +235,8 @@
 },
 {
 "Pos": {
-"X": 4.4346848,
-"Y": 5.248507
+"X": 4.6560984,
+"Y": 16.70277
 },
 "Name": "user_msg",
 "Exe": "editbox",
@@ -421,6 +248,7 @@
 "Attrs": {
 "align_h": 0,
 "align_v": 0,
+"db_value": false,
 "enable": true,
 "ghost": "",
 "grid_h": 1,
@@ -431,14 +259,14 @@
 "multi_line_enter_finish": true,
 "show": true,
 "temp_to_value": true,
-"value": " "
+"value": ""
 },
 "ShowCodeChat": false
 },
 {
 "Pos": {
-"X": 19.933933,
-"Y": 8.44237
+"X": 26.89859,
+"Y": 16.540775
 },
 "Name": "text",
 "Exe": "text",
@@ -460,6 +288,185 @@
 "show": true,
 "show_border": true
 },
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": 1.2612612,
+"Y": 24.774773
+},
+"Name": "exe",
+"Exe": "exe",
+"Code": {
+"Messages": null,
+"Code": "",
+"ArgsProps": null
+},
+"Attrs": {
+"show": true
+},
+"Subs": [
+{
+"Pos": {
+"X": 1.2612612,
+"Y": 24.774773
+},
+"Name": "transcribe_mic",
+"Exe": "code",
+"Code": {
+"Messages": [
+{
+"User": "Transcribe 'microphone' with 'whispercpp'. Save result into 'user_msg'.",
+"Assistent": "```go\nimport (\n\t\"errors\"\n\t\"io/ioutil\"\n)\n\nfunc transcribe_mic(microphone *Microphone, whispercpp *Whispercpp, user_msg *Editbox) error {\n\tif !microphone.Enable || !microphone.Triggered {\n\t\treturn errors.New(\"microphone is not enabled or not triggered\")\n\t}\n\n\tdata, err := ioutil.ReadFile(microphone.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\tresult, err := whispercpp.TranscribeBlob(data)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\tuser_msg.Value = result\n\tuser_msg.Enable = true\n\treturn nil\n}\n```"
+},
+{
+"User": "",
+"Assistent": ""
+}
+],
+"Code": "\nimport (\n\t\"io/ioutil\"\n)\n\nfunc transcribe_mic(microphone *Microphone, whispercpp *Whispercpp, user_msg *Editbox) error {\n\tif !microphone.Enable || !microphone.Triggered {\n\t\treturn nil // Do nothing if microphone is not enabled and triggered\n\t}\n\taudioBytes, err := ioutil.ReadFile(microphone.Path)\n\tif err != nil {\n\t\treturn err // Return the error if reading file fails\n\t}\n\ttranscribedText, err := whispercpp.TranscribeBlob(audioBytes)\n\tif err != nil {\n\t\treturn err // Return the error if transcription fails\n\t}\n\tuser_msg.Value = transcribedText // Update user_msg with the transcribed text\n\treturn nil\n}\n",
+"ArgsProps": [
+{
+"Node": "microphone",
+"Write": false
+},
+{
+"Node": "whispercpp",
+"Write": false
+},
+{
+"Node": "user_msg",
+"Write": false
+}
+]
+},
+"Attrs": {
+"bypass": false,
+"language": "go",
+"show": true
+},
+"ShowCodeChat": true
+},
+{
+"Pos": {
+"X": 8.774775,
+"Y": 24.774773
+},
+"Name": "disable",
+"Exe": "code",
+"Code": {
+"Messages": [
+{
+"User": "If 'user_msg' is empty, disable 'button'. Otherwise button is enabled.",
+"Assistent": "```go\nimport (\n\t\"errors\"\n)\n\nfunc disable(user_msg *Editbox, button *Button) error {\n\tif user_msg == nil || button == nil {\n\t\treturn errors.New(\"nil argument\")\n\t}\n\tif user_msg.Value == \"\" {\n\t\tbutton.Enable = false\n\t} else {\n\t\tbutton.Enable = true\n\t}\n\treturn nil\n}\n```"
+},
+{
+"User": "",
+"Assistent": ""
+}
+],
+"Code": "\nimport (\n\t\"errors\"\n)\n\nfunc disable(user_msg *Editbox, button *Button) error {\n\tif user_msg == nil || button == nil {\n\t\treturn errors.New(\"nil argument\")\n\t}\n\tif user_msg.Value == \"\" {\n\t\tbutton.Enable = false\n\t} else {\n\t\tbutton.Enable = true\n\t}\n\treturn nil\n}\n",
+"ArgsProps": [
+{
+"Node": "user_msg",
+"Write": false
+},
+{
+"Node": "button",
+"Write": false
+}
+]
+},
+"Attrs": {
+"bypass": false,
+"language": "go",
+"show": true
+},
+"ShowCodeChat": true
+},
+{
+"Pos": {
+"X": 15.774775,
+"Y": 24.774773
+},
+"Name": "chat",
+"Exe": "code",
+"Code": {
+"Messages": [
+{
+"User": "If 'button' is clicked, build messages from 'db'. Add 'user_msg' to messages and send it to 'llamacpp' to get answer.\nSave answer and 'user_msg' into 'db'. Reset 'user_msg' editbox.",
+"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc chat(button *Button, db *Tables, user_msg *Editbox, llamacpp *Llamacpp) error {\n\tif button.Triggered {\n\t\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer conn.Close()\n\n\t\tmessages := []string{}\n\t\trows, err := conn.Query(\"SELECT content FROM chat\")\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer rows.Close()\n\n\t\tfor rows.Next() {\n\t\t\tvar message string\n\t\t\tif err := rows.Scan(\u0026message); err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t\tmessages = append(messages, message)\n\t\t}\n\n\t\tmessages = append(messages, user_msg.Value)\n\t\tanswer := llamacpp.Send(messages)\n\t\tuser_msg.Value = \"\"\n\n\t\ttx, err := conn.Begin()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\t_, err = tx.Exec(\"INSERT INTO chat (role, content) VALUES (?, ?)\", \"user\", user_msg.Value)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\t_, err = tx.Exec(\"INSERT INTO chat (role, content) VALUES (?, ?)\", \"llama\", answer)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\terr = tx.Commit()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tbutton.Triggered = false\n\t}\n\treturn nil\n}\n```"
+},
+{
+"User": "",
+"Assistent": ""
+}
+],
+"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc chat(button *Button, db *Tables, user_msg *Editbox, llamacpp *Llamacpp) error {\n\tif button.Triggered {\n\t\tdatabase, err := sql.Open(\"sqlite3\", db.Path)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer database.Close()\n\n\t\trows, err := database.Query(\"SELECT role, content FROM chat\")\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer rows.Close()\n\n\t\tvar messages []LlamaMessage\n\t\tfor rows.Next() {\n\t\t\tvar role, content string\n\t\t\tif err := rows.Scan(\u0026role, \u0026content); err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t\tmessages = append(messages, LlamaMessage{Role: role, Content: content})\n\t\t}\n\t\tif err := rows.Err(); err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\tuserMessage := LlamaMessage{Role: \"user\", Content: user_msg.Value}\n\t\tmessages = append(messages, userMessage)\n\n\t\tanswer, err := llamacpp.GetAnswer(messages)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\ttx, err := database.Begin()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tstmt, err := tx.Prepare(\"INSERT INTO chat(role, content) VALUES(?, ?)\")\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer stmt.Close()\n\n\t\t_, err = stmt.Exec(\"user\", user_msg.Value)\n\t\tif err != nil {\n\t\t\ttx.Rollback()\n\t\t\treturn err\n\t\t}\n\n\t\t_, err = stmt.Exec(\"assistant\", answer)\n\t\tif err != nil {\n\t\t\ttx.Rollback()\n\t\t\treturn err\n\t\t}\n\n\t\terr = tx.Commit()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\tuser_msg.Value = \"\" // Reset user message editbox after sending\n\n\t\tfmt.Printf(\"The assistant's answer is: %s\\n\", answer)\n\t}\n\treturn nil\n}\n",
+"ArgsProps": [
+{
+"Node": "button",
+"Write": false
+},
+{
+"Node": "db",
+"Write": false
+},
+{
+"Node": "user_msg",
+"Write": false
+},
+{
+"Node": "llamacpp",
+"Write": false
+}
+]
+},
+"Attrs": {
+"bypass": false,
+"language": "go",
+"show": true
+},
+"ShowCodeChat": true
+},
+{
+"Pos": {
+"X": 22.774775,
+"Y": 24.774773
+},
+"Name": "build_output",
+"Exe": "code",
+"Code": {
+"Messages": [
+{
+"User": "From 'db' create text in form: \u003crole\u003e: \u003ccontent\u003e\\n.  Save text into 'text'.",
+"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc build_output(db *Tables, text *Text) error {\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\trows, err := conn.Query(\"SELECT role, content FROM chat\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tresult := \"\"\n\tfor rows.Next() {\n\t\tvar role, content string\n\t\tif err := rows.Scan(\u0026role, \u0026content); err != nil {\n\t\t\treturn err\n\t\t}\n\t\tresult += fmt.Sprintf(\"%s: %s\\n\", role, content)\n\t}\n\n\tif err := rows.Err(); err != nil {\n\t\treturn err\n\t}\n\n\ttext.Label = result\n\treturn nil\n}\n```"
+},
+{
+"User": "",
+"Assistent": ""
+}
+],
+"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc build_output(db *Tables, text *Text) error {\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\trows, err := conn.Query(\"SELECT role, content FROM chat\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tresult := \"\"\n\tfor rows.Next() {\n\t\tvar role, content string\n\t\tif err := rows.Scan(\u0026role, \u0026content); err != nil {\n\t\t\treturn err\n\t\t}\n\t\tresult += fmt.Sprintf(\"%s: %s\\n\", role, content)\n\t}\n\n\tif err := rows.Err(); err != nil {\n\t\treturn err\n\t}\n\n\ttext.Label = result\n\treturn nil\n}\n",
+"ArgsProps": [
+{
+"Node": "db",
+"Write": false
+},
+{
+"Node": "text",
+"Write": false
+}
+]
+},
+"Attrs": {
+"bypass": false,
+"language": "go",
+"show": true
+},
+"ShowCodeChat": true
+}
+],
 "ShowCodeChat": false
 }
 ],

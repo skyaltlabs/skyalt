@@ -72,49 +72,8 @@
 "Subs": [
 {
 "Pos": {
-"X": 30.189955,
-"Y": -14.00721
-},
-"Name": "code",
-"Exe": "code",
-"Code": {
-"Messages": [
-{
-"User": "If 'add_one' is clicked, then increment the 'counter'.\nIf 'sub_one' is clicked, then decrement the 'counter' .",
-"Assistent": "```go\nimport (\n\t\"strconv\"\n)\n\nfunc code(add_one *Button, counter *Text, sub_one *Button) error {\n\tcurrentValue, err := strconv.Atoi(counter.Label)\n\tif err != nil {\n\t\treturn err\n\t}\n\tif add_one.Triggered {\n\t\tcurrentValue++\n\t}\n\tif sub_one.Triggered {\n\t\tcurrentValue--\n\t}\n\tcounter.Label = strconv.Itoa(currentValue)\n\treturn nil\n}\n```"
-},
-{
-"User": "",
-"Assistent": ""
-}
-],
-"Code": "\nimport (\n\t\"strconv\"\n)\n\nfunc code(add_one *Button, counter *Text, sub_one *Button) error {\n\tcurrentValue, err := strconv.Atoi(counter.Label)\n\tif err != nil {\n\t\treturn err\n\t}\n\tif add_one.Triggered {\n\t\tcurrentValue++\n\t}\n\tif sub_one.Triggered {\n\t\tcurrentValue--\n\t}\n\tcounter.Label = strconv.Itoa(currentValue)\n\treturn nil\n}\n",
-"ArgsProps": [
-{
-"Node": "add_one",
-"Write": false
-},
-{
-"Node": "counter",
-"Write": true
-},
-{
-"Node": "sub_one",
-"Write": false
-}
-]
-},
-"Attrs": {
-"bypass": false,
-"language": "go",
-"show": true
-},
-"ShowCodeChat": true
-},
-{
-"Pos": {
-"X": 38.21232,
-"Y": -13.980434
+"X": 30.315031,
+"Y": -12.825932
 },
 "Name": "counter",
 "Exe": "text",
@@ -130,7 +89,7 @@
 "grid_w": 1,
 "grid_x": 2,
 "grid_y": 1,
-"label": "20",
+"label": "21",
 "multi_line": false,
 "selection": true,
 "show": true,
@@ -140,8 +99,8 @@
 },
 {
 "Pos": {
-"X": 22.311457,
-"Y": -11.665346
+"X": 25.751482,
+"Y": -12.812021
 },
 "Name": "sub_one",
 "Exe": "button",
@@ -166,8 +125,8 @@
 },
 {
 "Pos": {
-"X": 21.949068,
-"Y": -16.807047
+"X": 21.145483,
+"Y": -12.818995
 },
 "Name": "add_one",
 "Exe": "button",
@@ -188,6 +147,66 @@
 "show": true,
 "tooltip": ""
 },
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": 25.794613,
+"Y": -7.6699243
+},
+"Name": "exe",
+"Exe": "exe",
+"Code": {
+"Messages": null,
+"Code": "",
+"ArgsProps": null
+},
+"Attrs": {
+"show": true
+},
+"Subs": [
+{
+"Pos": {
+"X": 25.794613,
+"Y": -7.6699243
+},
+"Name": "clicks",
+"Exe": "code",
+"Code": {
+"Messages": [
+{
+"User": "If 'add_one' is clicked, then increment the 'counter'.\nIf 'sub_one' is clicked, then decrement the 'counter' .",
+"Assistent": "```go\nimport (\n\t\"strconv\"\n)\n\nfunc clicks(add_one *Button, counter *Text, sub_one *Button) error {\n\tif add_one.Triggered {\n\t\tval, err := strconv.Atoi(counter.Label)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tcounter.Label = strconv.Itoa(val + 1)\n\t\tadd_one.Triggered = false\n\t}\n\n\tif sub_one.Triggered {\n\t\tval, err := strconv.Atoi(counter.Label)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tcounter.Label = strconv.Itoa(val - 1)\n\t\tsub_one.Triggered = false\n\t}\n\treturn nil\n}\n```"
+},
+{
+"User": "",
+"Assistent": ""
+}
+],
+"Code": "\nimport (\n\t\"strconv\"\n)\n\nfunc clicks(add_one *Button, counter *Text, sub_one *Button) error {\n\tif add_one.Triggered {\n\t\tval, err := strconv.Atoi(counter.Label)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tcounter.Label = strconv.Itoa(val + 1)\n\t\tadd_one.Triggered = false\n\t}\n\n\tif sub_one.Triggered {\n\t\tval, err := strconv.Atoi(counter.Label)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tcounter.Label = strconv.Itoa(val - 1)\n\t\tsub_one.Triggered = false\n\t}\n\treturn nil\n}\n",
+"ArgsProps": [
+{
+"Node": "add_one",
+"Write": false
+},
+{
+"Node": "counter",
+"Write": false
+},
+{
+"Node": "sub_one",
+"Write": false
+}
+]
+},
+"Attrs": {
+"bypass": false,
+"language": "go",
+"show": true
+},
+"ShowCodeChat": true
+}
+],
 "ShowCodeChat": false
 }
 ],

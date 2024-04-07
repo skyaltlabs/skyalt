@@ -60,53 +60,8 @@
 "Subs": [
 {
 "Pos": {
-"X": 33.02438,
-"Y": 1.4996263
-},
-"Name": "Summary",
-"Exe": "code",
-"Code": {
-"Messages": [
-{
-"User": "If 'button' is clicked, use 'openai' to create summary of 'editbox'.\nMake a prompt in the form: \"Please summarize this article into a few bullet points: \" + content of 'editbox' on the new line.\nSet answer to 'text'.",
-"Assistent": "```go\nimport \"fmt\"\n\nfunc Summary(button *Button, openai *Openai, editbox *Editbox, text *Text) error {\n\tif button.Triggered {\n\t\tprompt := fmt.Sprintf(\"Please summarize this article into a few bullet points:\\n%s\", editbox.Value)\n\t\tanswer, err := openai.GetAnswer([]OpenaiMessage{\n\t\t\t{Role: \"user\", Content: prompt},\n\t\t})\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\ttext.Label = answer\n\t}\n\treturn nil\n}\n```"
-},
-{
-"User": "",
-"Assistent": ""
-}
-],
-"Code": "\nimport \"fmt\"\n\nfunc Summary(button *Button, openai *Openai, editbox *Editbox, text *Text) error {\n\tif button.Triggered {\n\t\tprompt := fmt.Sprintf(\"Please summarize this article into a few bullet points:\\n%s\", editbox.Value)\n\t\tanswer, err := openai.GetAnswer([]OpenaiMessage{\n\t\t\t{Role: \"user\", Content: prompt},\n\t\t})\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\ttext.Label = answer\n\t}\n\treturn nil\n}\n",
-"ArgsProps": [
-{
-"Node": "button",
-"Write": false
-},
-{
-"Node": "openai",
-"Write": false
-},
-{
-"Node": "editbox",
-"Write": false
-},
-{
-"Node": "text",
-"Write": true
-}
-]
-},
-"Attrs": {
-"bypass": false,
-"language": "go",
-"show": true
-},
-"ShowCodeChat": true
-},
-{
-"Pos": {
-"X": 32.957024,
-"Y": -1.4802191
+"X": 41.887203,
+"Y": -4.014003
 },
 "Name": "openai",
 "Exe": "openai",
@@ -123,8 +78,8 @@
 },
 {
 "Pos": {
-"X": 33.000687,
-"Y": 4.793235
+"X": 36.919605,
+"Y": -4.0806384
 },
 "Name": "text",
 "Exe": "text",
@@ -150,8 +105,8 @@
 },
 {
 "Pos": {
-"X": 25.730858,
-"Y": 3.1290972
+"X": 25.865993,
+"Y": -4.0555882
 },
 "Name": "button",
 "Exe": "button",
@@ -176,8 +131,8 @@
 },
 {
 "Pos": {
-"X": 25.556206,
-"Y": -0.36310548
+"X": 31.547195,
+"Y": -4.101844
 },
 "Name": "editbox",
 "Exe": "editbox",
@@ -189,6 +144,7 @@
 "Attrs": {
 "align_h": 0,
 "align_v": 0,
+"db_value": false,
 "enable": true,
 "ghost": "",
 "grid_h": 1,
@@ -201,6 +157,71 @@
 "temp_to_value": false,
 "value": "The Velvet Revolution (Czech: Sametová revoluce) or Gentle Revolution (Slovak: Nežná revolúcia) was a non-violent transition of power in what was then Czechoslovakia, occurring from 17 November to 28 November 1989. Popular demonstrations against the one-party government of the Communist Party of Czechoslovakia included students and older dissidents. The result was the end of 41 years of one-party rule in Czechoslovakia, and the subsequent dismantling of the command economy and conversion to a parliamentary republic.[3]\n\nOn 17 November 1989 (International Students' Day), riot police suppressed a student demonstration in Prague.[4] The event marked the 50th anniversary of a violently suppressed demonstration against the Nazi storming of Prague University in 1939 where 1,200 students were arrested and 9 killed (see Origin of International Students' Day). The 1989 event sparked a series of demonstrations from 17 November to late December and turned into an anti-communist demonstration. On 20 November, the number of protesters assembled in Prague grew from 200,000 the previous day to an estimated 500,000. The entire top leadership of the Communist Party, including General Secretary Miloš Jakeš, resigned on 24 November. On 27 November, a two-hour general strike involving all citizens of Czechoslovakia was held."
 },
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": 34.002575,
+"Y": 5.476191
+},
+"Name": "exe",
+"Exe": "exe",
+"Code": {
+"Messages": null,
+"Code": "",
+"ArgsProps": null
+},
+"Attrs": {
+"show": true
+},
+"Subs": [
+{
+"Pos": {
+"X": 34.002575,
+"Y": 5.476191
+},
+"Name": "summarize",
+"Exe": "code",
+"Selected": true,
+"Code": {
+"Messages": [
+{
+"User": "If 'button' is clicked, use 'openai' to create summary of 'editbox'.\nMake a prompt in the form: \"Please summarize this article into a few bullet points: \" + content of 'editbox' on the new line.\nSet answer to 'text'.",
+"Assistent": "```go\nimport (\n\t\"errors\"\n)\n\nfunc summarize(button *Button, openai *Openai, editbox *Editbox, text *Text) error {\n\tif !button.Triggered || !editbox.Enable || !button.Enable {\n\t\treturn errors.New(\"Button not clicked or Editbox/Button not enabled\")\n\t}\n\t\n\tprompt := \"Please summarize this article into a few bullet points:\\n\" + editbox.Value\n\tanswer, err := openai.GetAnswer([]OpenaiMessage{\n\t\t{\n\t\t\tRole:    \"user\",\n\t\t\tContent: prompt,\n\t\t},\n\t})\n\tif err != nil {\n\t\treturn err\n\t}\n\t\n\ttext.Label = answer\n\treturn nil\n}\n```"
+},
+{
+"User": "",
+"Assistent": ""
+}
+],
+"Code": "\nimport (\n\t\"errors\"\n)\n\nfunc summarize(button *Button, openai *Openai, editbox *Editbox, text *Text) error {\n\tif !button.Triggered || !editbox.Enable || !button.Enable {\n\t\treturn errors.New(\"Button not clicked or Editbox/Button not enabled\")\n\t}\n\t\n\tprompt := \"Please summarize this article into a few bullet points:\\n\" + editbox.Value\n\tanswer, err := openai.GetAnswer([]OpenaiMessage{\n\t\t{\n\t\t\tRole:    \"user\",\n\t\t\tContent: prompt,\n\t\t},\n\t})\n\tif err != nil {\n\t\treturn err\n\t}\n\t\n\ttext.Label = answer\n\treturn nil\n}\n",
+"ArgsProps": [
+{
+"Node": "button",
+"Write": false
+},
+{
+"Node": "openai",
+"Write": false
+},
+{
+"Node": "editbox",
+"Write": false
+},
+{
+"Node": "text",
+"Write": false
+}
+]
+},
+"Attrs": {
+"bypass": false,
+"language": "go",
+"show": true
+},
+"ShowCodeChat": true
+}
+],
 "ShowCodeChat": false
 }
 ],

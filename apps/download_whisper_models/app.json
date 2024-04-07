@@ -60,53 +60,8 @@
 "Subs": [
 {
 "Pos": {
-"X": 7.4053073,
-"Y": 5.6536984
-},
-"Name": "update_table",
-"Exe": "code",
-"Code": {
-"Messages": [
-{
-"User": "Go through 'table' and check if model + \".bin\" exist in 'dir'.\nIf it exists, set button label to \"Delete\", else \"Download\".\nIf \"Delete\" is clicked, delete the file, else download it from 'net' with address(model + \".bin)\" and save it into 'dir'.",
-"Assistent": "```go\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\nfunc table_button(table *ListTable, dir *Disk_dir, net *Net) error {\n\tfor _, row := range table.Rows {\n\t\tfilePath := filepath.Join(dir.Path, row.Model.Label+\".bin\")\n\t\t_, err := os.Stat(filePath)\n\t\tif err == nil {\n\t\t\trow.Button.Label = \"Delete\"\n\t\t\tif row.Button.Triggered \u0026\u0026 dir.Write {\n\t\t\t\tos.Remove(filePath)\n\t\t\t}\n\t\t} else {\n\t\t\trow.Button.Label = \"Download\"\n\t\t\tif row.Button.Triggered {\n\t\t\t\tnet.DownloadFile(filePath, row.Model.Label+\".bin\")\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n```"
-},
-{
-"User": "",
-"Assistent": ""
-}
-],
-"Code": "\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\nfunc update_table(table *ListTable, dir *Disk_dir, net *Net) error {\n\tfor _, row := range table.Rows {\n\t\tfilePath := filepath.Join(dir.Path, row.Model.Label+\".bin\")\n\t\t_, err := os.Stat(filePath)\n\t\tif err == nil {\n\t\t\trow.Button.Label = \"Delete\"\n\t\t\tif row.Button.Triggered \u0026\u0026 dir.Write {\n\t\t\t\tos.Remove(filePath)\n\t\t\t}\n\t\t} else {\n\t\t\trow.Button.Label = \"Download\"\n\t\t\tif row.Button.Triggered {\n\t\t\t\tnet.DownloadFile(filePath, row.Model.Label+\".bin\")\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n",
-"ArgsProps": [
-{
-"Node": "table",
-"Write": true
-},
-{
-"Node": "dir",
-"Write": false
-},
-{
-"Node": "net",
-"Write": false
-}
-]
-},
-"Attrs": {
-"bypass": false,
-"grid_h": 1,
-"grid_w": 1,
-"grid_x": 0,
-"grid_y": 0,
-"language": "go",
-"show": true
-},
-"ShowCodeChat": true
-},
-{
-"Pos": {
-"X": 4.645752,
-"Y": 1.8210002
+"X": -3.7866805,
+"Y": 7.3052344
 },
 "Name": "table",
 "Exe": "list",
@@ -121,7 +76,7 @@
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc table(table *ListTable, db *Tables) error {\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\trows, err := conn.Query(\"SELECT model, size FROM links\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tvar size int\n\t\t\n\t\terr = rows.Scan(\u0026model, \u0026size)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\trow := table.AddRow()\n\t\trow.Model.Label = model\n\t\trow.Size.Label = fmt.Sprintf(\"%dMB\", size)\n\t}\n\n\treturn nil\n}\n",
+"Code": "func table() error {\n\treturn nil\n}",
 "ArgsProps": [
 {
 "Node": "db",
@@ -134,13 +89,13 @@
 "defRow": {
 "button": {
 "background": 1,
-"confirmation": "Are you sure?",
+"confirmation": "",
 "enable": true,
 "grid_h": 1,
 "grid_w": 1,
 "grid_x": 2,
 "grid_y": 0,
-"label": "button",
+"label": "Download",
 "show": true,
 "tooltip": "",
 "triggered": false
@@ -180,6 +135,8 @@
 "grid_y": 2,
 "max_height": 1,
 "max_width": 100,
+"selected": "",
+"selection": false,
 "show": true,
 "show_border": true
 },
@@ -214,8 +171,8 @@
 "Subs": [
 {
 "Pos": {
-"X": 3.620442,
-"Y": 1.1823252
+"X": -5.08226,
+"Y": 6.713856
 },
 "Name": "model",
 "Exe": "text",
@@ -227,7 +184,6 @@
 "Attrs": {
 "align_h": 0,
 "align_v": 1,
-"changed": false,
 "grid_h": 1,
 "grid_w": 1,
 "grid_x": 0,
@@ -242,8 +198,8 @@
 },
 {
 "Pos": {
-"X": 12.546331,
-"Y": 1.2252256
+"X": 3.9658945,
+"Y": 6.74807
 },
 "Name": "button",
 "Exe": "button",
@@ -254,23 +210,22 @@
 },
 "Attrs": {
 "background": 1,
-"confirmation": "Are you sure?",
+"confirmation": "",
 "enable": true,
 "grid_h": 1,
 "grid_w": 1,
 "grid_x": 2,
 "grid_y": 0,
-"label": "button",
+"label": "Download",
 "show": true,
-"tooltip": "",
-"triggered": false
+"tooltip": ""
 },
 "ShowCodeChat": false
 },
 {
 "Pos": {
-"X": 8.060343,
-"Y": 1.2251307
+"X": -0.64718664,
+"Y": 6.6707544
 },
 "Name": "size",
 "Exe": "text",
@@ -299,8 +254,8 @@
 },
 {
 "Pos": {
-"X": -3.9028304,
-"Y": 7.011476
+"X": 9.599422,
+"Y": 5.88535
 },
 "Name": "net",
 "Exe": "net",
@@ -323,8 +278,8 @@
 },
 {
 "Pos": {
-"X": -4.028314,
-"Y": 3.986488
+"X": 12.075288,
+"Y": 7.680182
 },
 "Name": "dir",
 "Exe": "disk_dir",
@@ -335,8 +290,8 @@
 },
 "Attrs": {
 "enable": false,
-"grid_h": 0,
-"grid_w": 0,
+"grid_h": 1,
+"grid_w": 1,
 "grid_x": 0,
 "grid_y": 0,
 "path": "services/whisper.cpp/models/",
@@ -347,8 +302,8 @@
 },
 {
 "Pos": {
-"X": -3.9849472,
-"Y": 0.6965537
+"X": -6.029992,
+"Y": 9.849707
 },
 "Name": "db",
 "Exe": "tables",
@@ -371,6 +326,103 @@
 "show_table_list": true,
 "write": false
 },
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": -1.644144,
+"Y": 14.864865
+},
+"Name": "exe",
+"Exe": "exe",
+"Code": {
+"Messages": null,
+"Code": "",
+"ArgsProps": null
+},
+"Attrs": {
+"show": true
+},
+"Subs": [
+{
+"Pos": {
+"X": -1.644144,
+"Y": 14.864865
+},
+"Name": "init_table",
+"Exe": "code",
+"Code": {
+"Messages": [
+{
+"User": "Clear 'table' and copy table \"Link\" from 'db' into 'table'.\nSet \"size\" column as \u003cvalue\u003e+\"MB\".",
+"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc init_table(table *ListTable, db *Tables) error {\n\ttable.Rows = nil // Clearing the existing table\n\n\t// Open the SQLite database\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\t// Execute a query to get all the links\n\trows, err := conn.Query(\"SELECT model, size FROM links\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tvar size int\n\t\terr = rows.Scan(\u0026model, \u0026size)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\t// Append each row to the table\n\t\tnewRow := table.AddRow()\n\t\tnewRow.Model.Label = model\n\t\tnewRow.Size.Label = fmt.Sprintf(\"%dMB\", size)\n\t}\n\n\treturn rows.Err() // In case of any iteration error\n}\n```"
+},
+{
+"User": "",
+"Assistent": ""
+}
+],
+"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc init_table(table *ListTable, db *Tables) error {\n\ttable.Rows = nil // Clearing the existing table\n\n\t// Open the SQLite database\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\t// Execute a query to get all the links\n\trows, err := conn.Query(\"SELECT model, size FROM links\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tvar size int\n\t\terr = rows.Scan(\u0026model, \u0026size)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\t// Append each row to the table\n\t\tnewRow := table.AddRow()\n\t\tnewRow.Model.Label = model\n\t\tnewRow.Size.Label = fmt.Sprintf(\"%dMB\", size)\n\t}\n\n\treturn rows.Err() // In case of any iteration error\n}\n",
+"ArgsProps": [
+{
+"Node": "table",
+"Write": false
+},
+{
+"Node": "db",
+"Write": false
+}
+]
+},
+"Attrs": {
+"bypass": false,
+"language": "go",
+"show": true
+},
+"ShowCodeChat": true
+},
+{
+"Pos": {
+"X": 5.355856,
+"Y": 14.864865
+},
+"Name": "update_table",
+"Exe": "code",
+"Code": {
+"Messages": [
+{
+"User": "Go through 'table' and check if model + \".bin\" exist in 'dir'.\nIf it exists, set button label to \"Delete\", else \"Download\".\nIf it exists, set button confirmation to \"Are you sure?\".\nIf \"Delete\" is clicked, delete the file, else download it from 'net' with address(model + \".bin)\" and save it into 'dir'.",
+"Assistent": "```go\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\nfunc update_table(table *ListTable, dir *Disk_dir, net *Net) error {\n\tfor _, row := range table.Rows {\n\t\tfilePath := filepath.Join(dir.Path, row.Model.Label+\".bin\")\n\t\tif _, err := os.Stat(filePath); err == nil {\n\t\t\trow.Button.Label = \"Delete\"\n\t\t\trow.Button.Confirmation = \"Are you sure?\"\n\t\t\tif row.Button.Triggered {\n\t\t\t\terr := os.Remove(filePath)\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t\trow.Button.Triggered = false\n\t\t\t}\n\t\t} else {\n\t\t\trow.Button.Label = \"Download\"\n\t\t\tif row.Button.Triggered {\n\t\t\t\terr := net.DownloadFile(filePath, row.Model.Label+\".bin\")\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t\trow.Button.Triggered = false\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n```"
+},
+{
+"User": "",
+"Assistent": ""
+}
+],
+"Code": "\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\nfunc update_table(table *ListTable, dir *Disk_dir, net *Net) error {\n\tfor _, row := range table.Rows {\n\t\tfilePath := filepath.Join(dir.Path, row.Model.Label+\".bin\")\n\t\tif _, err := os.Stat(filePath); err == nil {\n\t\t\trow.Button.Label = \"Delete\"\n\t\t\trow.Button.Confirmation = \"Are you sure?\"\n\t\t\tif row.Button.Triggered {\n\t\t\t\terr := os.Remove(filePath)\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t\trow.Button.Triggered = false\n\t\t\t}\n\t\t} else {\n\t\t\trow.Button.Label = \"Download\"\n\t\t\tif row.Button.Triggered {\n\t\t\t\terr := net.DownloadFile(filePath, row.Model.Label+\".bin\")\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t\trow.Button.Triggered = false\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n",
+"ArgsProps": [
+{
+"Node": "table",
+"Write": false
+},
+{
+"Node": "dir",
+"Write": false
+},
+{
+"Node": "net",
+"Write": false
+}
+]
+},
+"Attrs": {
+"bypass": false,
+"language": "go",
+"show": true
+},
+"ShowCodeChat": true
+}
+],
 "ShowCodeChat": false
 }
 ],
