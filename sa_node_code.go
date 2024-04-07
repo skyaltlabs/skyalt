@@ -110,11 +110,7 @@ func (ls *SANodeCode) findNodeName(nm string) (*SANode, error) {
 }
 
 func (ls *SANodeCode) AddExe(prms []SANodeCodeExePrm) {
-	if !ls.node.app.EnableExecution {
-		return
-	}
-
-	if !ls.node.IsTypeCode() != ls.node.IsBypassed() {
+	if !ls.node.app.EnableExecution || !ls.node.IsTypeCode() || ls.node.IsBypassed() {
 		return
 	}
 
@@ -288,7 +284,7 @@ func (ls *SANodeCode) buildListStructs(depends []*SANodeCodeFn, addExtraAttrs bo
 		str += fmt.Sprintf("type %s struct {\n%s\tDefRow %sRow `json:\"defRow\"`\n\tRows []*%sRow `json:\"rows\"`\n\tSelected string `json:\"selected\"`\n}\n", StructName, extraAttrs, StructName, StructName)
 
 		//Funcs
-		str += fmt.Sprintf("func (tb *%s) AddRow() * %sRow {\n\tr := &%sRow{}\n\t*r = tb.DefRow\n\ttb.Rows = append(tb.Rows, r)\n\treturn r\n}\n", StructName, StructName, StructName)
+		str += fmt.Sprintf("func (tb *%s) AddRow() * %sRow {\t//Use this instead of Rows = append()\n\tr := &%sRow{}\n\t*r = tb.DefRow\n\ttb.Rows = append(tb.Rows, r)\n\treturn r\n}\n", StructName, StructName, StructName)
 	}
 	return str
 }
@@ -331,6 +327,7 @@ func (edit *EditboxDB) SetValue(db_path string, table string, column string, row
 type Button struct {
 	Label   string
 	Enable  bool
+	Confirmation string
 	Background  int	//0=transparent, 1=full, 2=light
 	Triggered bool	//true, when button is clicked
 }`
@@ -481,6 +478,18 @@ func (oai *Openai) GetAnswer(messages []OpenaiMessage) (string, error) {
 	return ""
 }
 
+func (ls *SANodeCode) addDependStruct(depends_structs *[]string, nm string) {
+	//find
+	for _, st := range *depends_structs {
+		if st == nm {
+			return
+		}
+	}
+
+	//add
+	*depends_structs = append(*depends_structs, nm)
+}
+
 func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 
 	msgs_depends, err := ls.buildMsgsDepends()
@@ -491,23 +500,27 @@ func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 	str := "I have this golang code:\n\n"
 
 	//str += g_code_const_gpt + "\n"
-	for i, fn := range msgs_depends {
-		StructName := fn.node.getStructName()
+	var depends_structs []string
+	for _, fn := range msgs_depends {
 
-		found := false
-		for j := 0; j < i; j++ {
-			if msgs_depends[j].node.getStructName() == StructName {
-				found = true
-				break
+		if fn.node.IsTypeList() {
+			for _, nd := range fn.node.Subs {
+				StructName := nd.getStructName()
+				ls.addDependStruct(&depends_structs, StructName)
 			}
 		}
 
-		if !found {
-			str += ls.getStructCode(StructName)
-		}
+		StructName := fn.node.getStructName()
+		ls.addDependStruct(&depends_structs, StructName)
+	}
+
+	//add structs
+	for _, st := range depends_structs {
+		str += ls.getStructCode(st)
 	}
 	str += "\n"
 
+	//add list structs
 	str += ls.buildListStructs(msgs_depends, false)
 
 	params := ""
@@ -584,6 +597,11 @@ func (ls *SANodeCode) GetFileName() string {
 }
 
 func (ls *SANodeCode) Execute(exe_prms []SANodeCodeExePrm) {
+
+	if ls.node.IsBypassed() {
+		return
+	}
+
 	ls.exe_err = nil
 
 	//reset
