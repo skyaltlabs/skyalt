@@ -158,7 +158,7 @@ func (gr *SAGraph) drawArrow(a, b, c, d OsV2, tt float64, reverse bool, cd OsCd)
 	//ui.buff.AddCircle(InitOsV4Mid(top_mid.toV2(), OsV2{int(cellr * 0.2), int(cellr * 0.2)}), cd, 0)
 }
 
-func (gr *SAGraph) drawConnectionDirect(startRect OsV4, endRect OsV4, dash float32, selectedCd bool, move float32, startArrow bool, endArrow bool) {
+func (gr *SAGraph) drawConnectionDirect(startRect OsV4, endRect OsV4, dash float32, selectedCd bool, move float32, arrow_t float64, arrow_reverse bool) {
 
 	//H-H nebo V-V
 
@@ -216,11 +216,8 @@ func (gr *SAGraph) drawConnectionDirect(startRect OsV4, endRect OsV4, dash float
 	ui.buff.AddBezier(start, mS, mE, end, cd, wi, dash, move)
 
 	//arrows
-	if startArrow {
-		gr.drawArrow(start, mS, mE, end, 0, true, cd)
-	}
-	if endArrow {
-		gr.drawArrow(start, mS, mE, end, 1, false, cd)
+	if arrow_t >= 0 {
+		gr.drawArrow(start, mS, mE, end, arrow_t, arrow_reverse, cd)
 	}
 
 	// arrow
@@ -387,21 +384,19 @@ func (gr *SAGraph) drawConnections() {
 
 		//attributtes connection
 		for _, in := range out.Code.func_depends {
-			if in == out {
+			if in.node == out {
 				continue
 			}
 
-			coordIn, selCoordIn, _ := in.nodeToPixelsCoord(lv.call.canvas)
-			if in.Selected {
+			coordIn, selCoordIn, _ := in.node.nodeToPixelsCoord(lv.call.canvas)
+			if in.node.Selected {
 				coordIn = selCoordIn
 			}
 
-			//gr.drawConnectionDirect(OsV2{coordIn.Middle().X, coordIn.End().Y}, OsV2{coordOut.Middle().X, coordOut.Start.Y}, cellr, 0, Node_connectionCd(in.Selected || out.Selected, ui))
-			gr.drawConnectionDirect(coordOut, coordIn, 0, in.Selected || out.Selected, 0, false, false)
+			gr.drawConnectionDirect(coordOut, coordIn, 0, in.node.Selected || out.Selected, 0, OsTrnFloat(in.updated && in.write, 0.5, -1), true)
 		}
 
-		/*cellr := gr.app.root.cellZoom(ui)
-		for _, inName := range out.Code.Triggers {
+		/*for _, inName := range out.Code.Triggers {
 
 			in := out.FindNode(inName)
 			if in == nil {
@@ -437,7 +432,7 @@ func (gr *SAGraph) drawConnections() {
 			coordOut = selCoordOut
 		}
 
-		gr.drawConnectionDirect(coordOut, coordIn, 0, false, 0, false, true)
+		gr.drawConnectionDirect(coordOut, coordIn, 0, false, 0, 1, false)
 	}
 
 }

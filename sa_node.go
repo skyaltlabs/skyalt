@@ -121,7 +121,7 @@ func (node *SANode) SetError(err error) {
 func (node *SANode) addIntoDependedCodes(changedNode *SANode, prms []SANodeCodeExePrm) {
 	for _, nd := range node.app.exe.Subs {
 		if nd.IsTypeCode() && !nd.IsBypassed() && nd != changedNode {
-			if nd.Code.findFuncDepend(changedNode) {
+			if nd.Code.findFuncDepend(changedNode) != nil {
 				nd.Code.AddExe(prms)
 			}
 		}
@@ -291,12 +291,33 @@ func (node *SANode) Save(path string) error {
 	return nil
 }
 
+func (a *SANode) CmpAttrs(attrs map[string]interface{}) bool {
+
+	if len(a.Attrs) != len(attrs) {
+		return false
+	}
+	for key, itA := range a.Attrs {
+		if strings.HasPrefix(key, "grid_") {
+			continue
+		}
+		//if !reflect.DeepEqual(itA, itB) {
+		if fmt.Sprintf("%v", itA) != fmt.Sprintf("%v", attrs[key]) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (a *SANode) CmpListSub(b *SANode) bool {
 	if a.Name != b.Name || a.Exe != b.Exe {
 		return false
 	}
 
-	if len(a.Attrs) != len(b.Attrs) {
+	if !a.CmpAttrs(b.Attrs) {
+		return false
+	}
+	/*if len(a.Attrs) != len(b.Attrs) {
 		return false
 	}
 	for key, itA := range a.Attrs {
@@ -307,7 +328,7 @@ func (a *SANode) CmpListSub(b *SANode) bool {
 		if fmt.Sprintf("%v", itA) != fmt.Sprintf("%v", b.Attrs[key]) {
 			return false
 		}
-	}
+	}*/
 
 	if len(a.Subs) != len(b.Subs) {
 		return false
