@@ -1299,8 +1299,8 @@ func _UiCode_attrs(node *SANode, grid *OsV4) {
 	node.ShowAttrBool(grid, "bypass", false)
 
 	//language
-	node.ShowAttrStringCombo(grid, "language", "go", []string{"go"}, []string{"go"})
-	grid.Start.Y++
+	//node.ShowAttrStringCombo(grid, "language", "go", []string{"go"}, []string{"go"})
+	//grid.Start.Y++
 
 	//triggers
 	/*{
