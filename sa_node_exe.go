@@ -680,8 +680,6 @@ func UiList_Attrs(node *SANode) {
 
 	ui.Div_SpacerRow(0, grid.Start.Y, 2, 1)
 	grid.Start.Y++
-
-	_UiCode_attrs(node, &grid)
 }
 
 func UiList_render(node *SANode) {

@@ -220,7 +220,7 @@ func (node *SANode) IsTypeList() bool {
 }
 
 func (node *SANode) IsTypeCode() bool {
-	return strings.EqualFold(node.Exe, "code") || node.IsTypeList()
+	return strings.EqualFold(node.Exe, "code")
 }
 
 func (node *SANode) HasNodeSubs() bool {
