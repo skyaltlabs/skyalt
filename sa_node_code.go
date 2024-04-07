@@ -34,9 +34,6 @@ import (
 //go:embed sa_node_const_go.goo
 var g_code_const_go string
 
-//go:embed sa_node_const_gpt.goo
-var g_code_const_gpt string
-
 var g_str_imports = []string{"\"bytes\"", "\"encoding/json\"", "\"fmt\"", "\"io\"", "\"net/http\"", "\"os\"", "\"strconv\""}
 
 type SANodeCodeChat struct {
@@ -296,6 +293,194 @@ func (ls *SANodeCode) buildListStructs(depends []*SANodeCodeFn, addExtraAttrs bo
 	return str
 }
 
+func (ls *SANodeCode) getStructCode(st string) string {
+
+	switch st {
+	case "Text":
+		return `
+type Text struct {
+	Label string
+}`
+
+	case "Editbox":
+		return `
+type Editbox struct {
+	Value    string
+	Enable   bool
+}`
+
+	case "EditboxDB":
+		return `
+type EditboxDB struct {
+	Db_path string
+	Table string
+	Column string
+	Rowid int
+	Enable   bool
+}
+//EditboxDB doesn't have 'Value string' attribute. Instead use this function to set path to database, where value can be read/write.
+func (edit *EditboxDB) SetValue(db_path string, table string, column string, rowid int) {
+	edit.Db_path = db_path
+	edit.Table = table
+	edit.Column = column
+	edit.Rowid = rowid
+}`
+
+	case "Button":
+		return `
+type Button struct {
+	Label   string
+	Enable  bool
+	Background  int	//0=transparent, 1=full, 2=light
+	Triggered bool	//true, when button is clicked
+}`
+
+	case "Checkbox":
+		return `
+type Checkbox struct {
+	Value   bool
+	Label   string
+	Enable  bool
+}`
+
+	case "Switch":
+		return `
+type Switch struct {
+	Value   bool
+	Label   string
+	Enable  bool
+}`
+
+	case "Slider":
+		return `
+type Slider struct {
+	Value   float64
+	Min     float64
+	Max     float64
+	Step    float64
+	Enable  bool
+}`
+
+	case "Combo":
+		return `
+type Combo struct {
+	Value          string
+	Options_names  string //separated by ';'
+	Options_values string //separated by ';'
+	Enable         bool
+}`
+
+	case "Date":
+		return `
+type Date struct {
+	Value   int //Unix time
+	Enable  bool
+}`
+
+	case "Color":
+		return `
+type Color struct {
+	Value_r int //<0-255>
+	Value_g int //<0-255>
+	Value_b int //<0-255>
+	Value_a int //<0-255>
+	Enable  bool
+}`
+
+	case "Disk_dir":
+		return `
+type Disk_dir struct {
+	Path  string
+	Write bool
+}`
+
+	case "Disk_file":
+		return `
+type Disk_file struct {
+	Path  string
+	Write bool
+}`
+
+	case "Tables":
+		return `
+type Tables struct {
+	Path  string
+	Write bool
+}`
+
+	case "Microphone":
+		return `
+type Microphone struct {
+	Path  string	//path to the file with recorded audio
+	Triggered bool	//true, when recording is done
+	Enable  bool
+}`
+
+	case "Map":
+		return `
+type Map struct {
+	Locators string	//XML(GPX) or JSON format: [{"label":"LocatorA", "lon":14.4, "lat":50.0}, {"label":"LocatorB", "lon":14.5, "lat":50.1}]
+	Segments string	//XML(GPX) or JSON format: [{"label":"SegmentA", "Trkpt":[{"lat":50,"lon":16,"ele":400,"time":"2020-04-15T09:05:20Z"},{"lat":50.4,"lon":16.1,"ele":400,"time":"2020-04-15T09:05:23Z"}]}]
+
+	Enable  bool
+}`
+
+	case "Net":
+		return `
+type Net struct {
+}
+func (net *Net) DownloadFile(dst_file string, src_addr string) error {
+	//TODO
+	return nil
+}`
+
+	case "Whispercpp":
+		return `
+type Whispercpp struct {
+	Model string
+}
+func (w *Whispercpp) TranscribeBlob(data []byte) (string, error) {
+	//TODO
+	return text
+}
+func (w *Whispercpp) TranscribeFile(filePath string) (string, error) {
+	//TODO
+	return text
+}`
+
+	case "LlamaMessage":
+		return `
+type LlamaMessage struct {
+	Role    string	//"system", "user", "assistant"
+	Content string
+}
+type Llamacpp struct {
+	Model string
+}
+func (ll *Llamacpp) GetAnswer(messages []LlamaMessage) (string, error) {
+	//TODO
+	return answer
+}`
+
+	case "Openai":
+		return `
+type OpenaiMessage struct {
+	Role    string	//"system", "user", "assistant"
+	Content string
+}
+type Openai struct {
+	Model string
+}
+func (oai *Openai) GetAnswer(messages []OpenaiMessage) (string, error) {
+	//TODO
+	return answer
+}`
+	}
+
+	fmt.Println("Warning: struct", st, "not found")
+	return ""
+}
+
 func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 
 	msgs_depends, err := ls.buildMsgsDepends()
@@ -304,7 +489,24 @@ func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 	}
 
 	str := "I have this golang code:\n\n"
-	str += g_code_const_gpt + "\n"
+
+	//str += g_code_const_gpt + "\n"
+	for i, fn := range msgs_depends {
+		StructName := fn.node.getStructName()
+
+		found := false
+		for j := 0; j < i; j++ {
+			if msgs_depends[j].node.getStructName() == StructName {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			str += ls.getStructCode(StructName)
+		}
+	}
+	str += "\n"
 
 	str += ls.buildListStructs(msgs_depends, false)
 
@@ -326,7 +528,9 @@ func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 
 	str += "Your job: " + userCommand
 
-	fmt.Println(str) //remove ............
+	//remove ............
+	fmt.Println(str)
+	fmt.Println("Size:", len(str))
 
 	return str, nil
 }
