@@ -274,16 +274,15 @@ func (ls *SANodeCode) buildListStructs(depends []*SANodeCodeFn, addExtraAttrs bo
 			"\tDirection int   `json:\"direction\"`\n" +
 			"\tMax_width float64  `json:\"max_width\"`\n" +
 			"\tMax_height float64 `json:\"max_height\"`\n" +
-			"\tShow_border bool `json:\"show_border\"`\n" +
-			"\tSelection bool `json:\"selection\"`\n"
-
+			"\tShow_border bool `json:\"show_border\"`\n"
 		if !addExtraAttrs {
 			extraAttrs = ""
 		}
 
-		str += fmt.Sprintf("type %s struct {\n%s\tDefRow %sRow `json:\"defRow\"`\n\tRows []*%sRow `json:\"rows\"`\n\tSelected string `json:\"selected\"`\n}\n", StructName, extraAttrs, StructName, StructName)
+		str += fmt.Sprintf("type %s struct {\n%s\tDefRow %sRow `json:\"defRow\"`\n\tRows []*%sRow `json:\"rows\"`\n\tSelected_button string `json:\"selected_button\"`\n\tSelected_index int `json:\"selected_index\"`\n}\n", StructName, extraAttrs, StructName, StructName)
 
 		//Funcs
+		str += fmt.Sprintf("func (tb *%s) GetSelectedRow() * %sRow {\t//Can return nil\n\tif tb.Selected_index >= 0 && tb.Selected_index < len(tb.Rows) {\n\t\treturn tb.Rows[tb.Selected_index]\n\t}\n\treturn nil\n}\n", StructName, StructName)
 		str += fmt.Sprintf("func (tb *%s) AddRow() * %sRow {\t//Use this instead of Rows = append()\n\tr := &%sRow{}\n\t*r = tb.DefRow\n\ttb.Rows = append(tb.Rows, r)\n\treturn r\n}\n", StructName, StructName, StructName)
 	}
 	return str
@@ -726,7 +725,8 @@ func (ls *SANodeCode) SetOutput(outputJs []byte) {
 							listSubs[i].DeselectAll()
 							listSubs[i].Name = strconv.Itoa(i)
 							listSubs[i].Exe = "layout" //list -> layout
-							listSubs[i].parent = prmNode
+							//listSubs[i].parent = prmNode
+							listSubs[i].updateLinks(prmNode, prmNode.app) //set parent
 							if err == nil {
 								for key, attrs := range vars {
 									prmNode2 := listSubs[i].FindNodeSubs(key)
@@ -747,13 +747,22 @@ func (ls *SANodeCode) SetOutput(outputJs []byte) {
 						}
 					}
 
-					diff := len(prmNode.listSubs) != len(listSubs)
+					/*diff := len(prmNode.listSubs) != len(listSubs)
 					if !diff {
 						for i, nd := range prmNode.listSubs {
 							if !nd.CmpListSub(listSubs[i]) {
 								diff = true
 								break
 							}
+						}
+					}*/
+
+					selected_button := prmNode.GetAttrString("selected_button", "")
+					selected_index := prmNode.GetAttrInt("selected_index", -1)
+					if selected_button != "" && selected_index >= 0 && selected_index < len(listSubs) {
+						selBut := listSubs[selected_index].FindNodeSubs(selected_button)
+						if selBut != nil {
+							selBut.Attrs["background"] = 1 //full
 						}
 					}
 

@@ -73,6 +73,19 @@ func UiButton_render(node *SANode) {
 		//node.Attrs["triggered"] = true
 
 		node.SetChange([]SANodeCodeExePrm{{Node: node.Name, Attr: "triggered", Value: true}})
+
+		if node.parent != nil && node.parent.parent != nil && node.parent.parent.IsTypeList() {
+			list := node.parent.parent
+
+			selected_button := list.GetAttrString("selected_button", "")
+			if selected_button == node.Name {
+				found_i := list.FindListSubNodePos(node.parent)
+				if found_i >= 0 {
+					list.Attrs["selected_index"] = found_i
+				}
+			}
+		}
+
 	}
 }
 
@@ -674,12 +687,14 @@ func UiList_Attrs(node *SANode) {
 	node.ShowAttrFloat(&grid, "max_height", 1, 1)
 	node.ShowAttrBool(&grid, "show_border", true)
 
-	node.ShowAttrBool(&grid, "selection", false)
-	node.ShowAttrString(&grid, "selected", "", false)
-	//node.ShowAttrBool(&grid, "changed", false) //...
-
-	ui.Div_SpacerRow(0, grid.Start.Y, 2, 1)
-	grid.Start.Y++
+	options := []string{""} //1st is empty
+	for _, nd := range node.Subs {
+		if nd.IsTypeButton() {
+			options = append(options, nd.Name)
+		}
+	}
+	node.ShowAttrStringCombo(&grid, "selected_button", "", options, options)
+	node.ShowAttrInt(&grid, "selected_index", -1)
 }
 
 func UiList_render(node *SANode) {
@@ -689,13 +704,15 @@ func UiList_render(node *SANode) {
 	max_width := node.GetAttrFloat("max_width", 100)
 	max_height := node.GetAttrFloat("max_height", 1)
 	show_border := node.GetAttrBool("show_border", true)
+	//selected_button := node.GetAttrString("selected_button", "")
+	//selected_index := node.GetAttrInt("selected_index", -1)
+
+	num_rows := len(node.listSubs)
 
 	ui := node.app.base.ui
 
 	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 	{
-		num_rows := len(node.listSubs)
-
 		if direction == 0 {
 			//vertical
 			ui.Div_colMax(0, max_width)
