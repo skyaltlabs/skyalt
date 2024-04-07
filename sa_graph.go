@@ -131,7 +131,34 @@ func (gr *SAGraph) drawCreateNode() {
 	ui.buff.AddPoly(end.Add(OsV2{int(-t / 2), 0}), []OsV2f{{0, 0}, {-t / 2, -t}, {t / 2, -t}}, cd, 0)
 }*/
 
-func (gr *SAGraph) drawConnectionDirect(startRect OsV4, endRect OsV4, dash float32, selectedCd bool, move float32, cellr float32, depend_write *bool, name string) {
+func (gr *SAGraph) drawArrow(a, b, c, d OsV2, tt float64, reverse bool, cd OsCd) {
+
+	ui := gr.app.base.ui
+
+	//poly
+	cellr := gr.app.root.cellZoom(ui)
+	t := cellr * 0.3
+	ppts := []OsV2f{{0, 0}, {-t / 2, t}, {t / 2, t}}
+	poly := ui.buff.GetPoly(ppts, 0)
+
+	//quad
+	top_mid, dir := ui.win.GetBezier(a, b, c, d, tt)
+	dir = dir.MulV(1 / dir.Len() * t) //normalize
+	if !reverse {
+		dir = OsV2f{-dir.X, -dir.Y}
+	}
+
+	bot_mid := top_mid.Add(dir)
+	rev := OsV2f{-dir.Y / 2, dir.X / 2}
+
+	pts := [4]OsV2f{top_mid.Add(rev), top_mid.Sub(rev), bot_mid.Sub(rev), bot_mid.Add(rev)}
+	uvs := [4]OsV2f{{0, 0}, {1, 0}, {1, 1}, {0, 1}}
+
+	ui.buff.AddPolyQuad(pts, uvs, poly, cd)
+	//ui.buff.AddCircle(InitOsV4Mid(top_mid.toV2(), OsV2{int(cellr * 0.2), int(cellr * 0.2)}), cd, 0)
+}
+
+func (gr *SAGraph) drawConnectionDirect(startRect OsV4, endRect OsV4, dash float32, selectedCd bool, move float32, startArrow bool, endArrow bool) {
 
 	//H-H nebo V-V
 
@@ -187,6 +214,14 @@ func (gr *SAGraph) drawConnectionDirect(startRect OsV4, endRect OsV4, dash float
 
 	cd := Node_connectionCd(selectedCd, ui)
 	ui.buff.AddBezier(start, mS, mE, end, cd, wi, dash, move)
+
+	//arrows
+	if startArrow {
+		gr.drawArrow(start, mS, mE, end, 0, true, cd)
+	}
+	if endArrow {
+		gr.drawArrow(start, mS, mE, end, 1, false, cd)
+	}
 
 	// arrow
 	/*{
@@ -341,8 +376,8 @@ func (gr *SAGraph) drawConnections() {
 
 	ui := gr.app.base.ui
 	lv := ui.GetCall()
-	cellr := gr.app.root.cellZoom(ui)
 
+	//exe depends
 	for _, out := range gr.app.all_nodes {
 
 		coordOut, selCoordOut, _ := out.nodeToPixelsCoord(lv.call.canvas)
@@ -351,7 +386,7 @@ func (gr *SAGraph) drawConnections() {
 		}
 
 		//attributtes connection
-		for i, in := range out.Code.func_depends {
+		for _, in := range out.Code.func_depends {
 			if in == out {
 				continue
 			}
@@ -362,7 +397,7 @@ func (gr *SAGraph) drawConnections() {
 			}
 
 			//gr.drawConnectionDirect(OsV2{coordIn.Middle().X, coordIn.End().Y}, OsV2{coordOut.Middle().X, coordOut.Start.Y}, cellr, 0, Node_connectionCd(in.Selected || out.Selected, ui))
-			gr.drawConnectionDirect(coordOut, coordIn, 0, in.Selected || out.Selected, 0, cellr, &out.Code.GetArg(in.Name).Write, fmt.Sprintf("%s_%d", in.Name, i))
+			gr.drawConnectionDirect(coordOut, coordIn, 0, in.Selected || out.Selected, 0, false, false)
 		}
 
 		/*cellr := gr.app.root.cellZoom(ui)
@@ -386,6 +421,25 @@ func (gr *SAGraph) drawConnections() {
 			gr.drawConnectionDirect(coordOut, coordIn, cellr, Node_connectionCd(in.Selected || out.Selected, ui), cellr/10)
 		}*/
 	}
+
+	for i := 1; i < len(gr.app.exe.Subs); i++ {
+
+		in := gr.app.exe.Subs[i-1]
+		out := gr.app.exe.Subs[i]
+
+		coordIn, selCoordIn, _ := in.nodeToPixelsCoord(lv.call.canvas)
+		if in.Selected {
+			coordIn = selCoordIn
+		}
+
+		coordOut, selCoordOut, _ := out.nodeToPixelsCoord(lv.call.canvas)
+		if out.Selected {
+			coordOut = selCoordOut
+		}
+
+		gr.drawConnectionDirect(coordOut, coordIn, 0, false, 0, false, true)
+	}
+
 }
 
 func (gr *SAGraph) drawNodes(rects bool, classic bool) *SANode {
