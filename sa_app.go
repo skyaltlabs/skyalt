@@ -167,9 +167,6 @@ func (app *SAApp) TryExecute() {
 			}
 		}
 	}
-	if app.ExePos < 0 {
-		return
-	}
 
 	_, progressProc := app.base.jobs.FindAppProgress(app)
 	if progressProc >= 0 {
@@ -190,6 +187,10 @@ func (app *SAApp) TryExecute() {
 				}
 			}
 		}
+	}
+
+	if app.ExePos < 0 {
+		return
 	}
 
 	//reset
