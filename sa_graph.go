@@ -86,12 +86,14 @@ func (gr *SAGraph) drawCreateNode() {
 
 	if !ui.edit.IsActive() {
 		if ui.win.io.keys.tab && lvBaseDiv.IsOver(ui) {
+			insideNode := gr.app.root.FindInsideParent(ui.win.io.touch.pos, lvBaseDiv.canvas)
+
 			gr.app.canvas.addGrid = InitOsV4(0, 0, 1, 1)
 			gr.app.canvas.addPos = gr.app.root.pixelsToNode(ui.win.io.touch.pos, lvBaseDiv)
 			gr.app.canvas.addnode_search = ""
-			gr.app.canvas.addParent = NewSANodePath(gr.app.root.FindInsideParent(ui.win.io.touch.pos, lvBaseDiv.canvas))
+			gr.app.canvas.addParent = NewSANodePath(insideNode)
 
-			ui.Dialog_open("nodes_list", 2)
+			ui.Dialog_open(OsTrnString(insideNode == gr.app.exe, "nodes_list_exe", "nodes_list_graph"), 2)
 		}
 	}
 }

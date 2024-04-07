@@ -554,8 +554,11 @@ func (app *SAApp) drawCreateNodeGroup(start OsV2, gr *SAGroup, searches []string
 func (app *SAApp) drawCreateNode() {
 	ui := app.base.ui
 
-	only_ui := ui.Dialog_start("nodes_list_ui")
-	if only_ui || ui.Dialog_start("nodes_list") {
+	mode_ui := ui.Dialog_start("nodes_list_ui")
+	mode_graph := ui.Dialog_start("nodes_list_graph")
+	mode_exe := ui.Dialog_start("nodes_list_exe")
+
+	if mode_ui || mode_graph || mode_exe {
 		ui.Div_colMax(0, 5)
 		ui.Div_colMax(1, 5)
 
@@ -565,20 +568,25 @@ func (app *SAApp) drawCreateNode() {
 		searches := strings.Split(strings.ToLower(app.canvas.addnode_search), " ")
 
 		//group: UI
-		gr := app.base.node_groups.groups[0]
-		app.drawCreateNodeGroup(OsV2{0, 1}, gr, searches, only_ui)
+		if mode_ui || mode_graph {
+			app.drawCreateNodeGroup(OsV2{0, 1}, app.base.node_groups.groups[0], searches, mode_ui)
+		}
 
 		//group: Disk
-		gr = app.base.node_groups.groups[1]
-		p := app.drawCreateNodeGroup(OsV2{1, 1}, gr, searches, only_ui)
+		p := OsV2{1, 1}
+		if mode_ui || mode_graph {
+			p = app.drawCreateNodeGroup(p, app.base.node_groups.groups[1], searches, mode_ui)
+		}
 
 		//group: NN
-		gr = app.base.node_groups.groups[2]
-		p = app.drawCreateNodeGroup(p, gr, searches, only_ui)
+		if mode_ui || mode_graph {
+			app.drawCreateNodeGroup(p, app.base.node_groups.groups[2], searches, mode_ui)
+		}
 
 		//group: code
-		gr = app.base.node_groups.groups[3]
-		app.drawCreateNodeGroup(p, gr, searches, only_ui)
+		if mode_exe {
+			app.drawCreateNodeGroup(OsV2{0, 1}, app.base.node_groups.groups[3], searches, mode_ui)
+		}
 
 		if ui.win.io.keys.tab {
 			ui.edit.uid = nil //non-standard(not save src) end of editbox
