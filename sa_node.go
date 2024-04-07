@@ -211,6 +211,10 @@ func (node *SANode) IsTypeNet() bool {
 	return node.Exe == "net"
 }
 
+func (node *SANode) IsTypeButton() bool {
+	return strings.EqualFold(node.Exe, "button")
+}
+
 func (node *SANode) IsTypeTables() bool {
 	return strings.EqualFold(node.Exe, "tables")
 }
@@ -571,6 +575,15 @@ func (node *SANode) BuildListOfSelected() []*SANode {
 	var list []*SANode
 	node._buildListOfSelected(&list)
 	return list
+}
+
+func (node *SANode) FindListSubNodePos(lay *SANode) int {
+	for i, nd := range node.listSubs {
+		if nd == lay {
+			return i
+		}
+	}
+	return -1
 }
 
 func (node *SANode) FindSelected() *SANode {
