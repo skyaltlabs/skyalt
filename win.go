@@ -1044,6 +1044,9 @@ func (win *Win) DrawText(ln string, prop WinFontProps, coord OsV4, depth int, al
 func (win *Win) GetTextSize(cur_pos int, ln string, prop WinFontProps) OsV2 {
 	return win.gph.GetTextSize(prop, cur_pos, ln)
 }
+func (win *Win) GetTextSizeMax(text string, prop WinFontProps) (int, int) {
+	return win.gph.GetTextSizeMax(prop, text)
+}
 
 func (win *Win) GetTextPos(touchPx int, ln string, prop WinFontProps, coord OsV4, align OsV2) int {
 	start := win.GetTextStart(ln, prop, coord, align, 1)

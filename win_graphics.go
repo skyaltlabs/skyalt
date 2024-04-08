@@ -310,6 +310,13 @@ type WinGphItemText struct {
 	letters []int //aggregated!
 }
 
+type WinGphItemTextMax struct {
+	max_size_x int
+	num_lines  int
+	prop       WinFontProps
+	text       string
+}
+
 type WinGphItemCircle struct {
 	item  *WinGphItem
 	size  OsV2
@@ -340,9 +347,10 @@ func (poly *WinGphItemPoly) CmpPoints(points []OsV2f) bool {
 type WinGph struct {
 	fonts []*WinFont //array index = textH
 
-	texts   []*WinGphItemText
-	circles []*WinGphItemCircle
-	polys   []*WinGphItemPoly
+	texts    []*WinGphItemText
+	textMaxs []*WinGphItemTextMax
+	circles  []*WinGphItemCircle
+	polys    []*WinGphItemPoly
 
 	texts_num_created int
 	texts_num_remove  int
@@ -396,7 +404,6 @@ func (gph *WinGph) Maintenance() {
 			gph.texts_num_remove++
 		}
 	}
-
 }
 
 func (gph *WinGph) GetFont(prop *WinFontProps) *WinFont {
@@ -433,6 +440,15 @@ func (gph *WinGph) GetTextSize(prop WinFontProps, max_len int, text string) OsV2
 	}
 
 	return OsV2{it.letters[i], it.size.Y}
+}
+
+func (gph *WinGph) GetTextSizeMax(prop WinFontProps, text string) (int, int) {
+	tx := gph.GetTextMax(prop, text)
+	if tx == nil {
+		return 0, 1
+	}
+
+	return tx.max_size_x, tx.num_lines
 }
 
 func (gph *WinGph) GetTextPos(prop WinFontProps, px int, text string) int {
@@ -477,6 +493,34 @@ func (gph *WinGph) GetText(prop WinFontProps, text string) *WinGphItemText {
 		gph.texts = append(gph.texts, it)
 		gph.texts_num_created++
 	}
+	return it
+}
+
+func (gph *WinGph) GetTextMax(prop WinFontProps, text string) *WinGphItemTextMax {
+	if text == "" {
+		return nil
+	}
+
+	//find
+	for _, it := range gph.textMaxs {
+		if it.prop.Cmp(&prop) && it.text == text {
+			//it.item.UpdateTick()
+			return it
+		}
+	}
+
+	//create
+	lines := strings.Split(text, "\n")
+	mx := 0
+	for _, ln := range lines {
+		sz, _ := gph.GetStringSize(prop, ln)
+		mx = OsMax(mx, sz.X)
+	}
+	my := OsMax(1, len(lines))
+
+	it := &WinGphItemTextMax{text: text, prop: prop, max_size_x: mx, num_lines: my}
+	gph.textMaxs = append(gph.textMaxs, it)
+
 	return it
 }
 
