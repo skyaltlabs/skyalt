@@ -911,9 +911,13 @@ func (ls *SANodeCode) UpdateFile() {
 		}
 		recompile = true
 	}
-
 	//compile
-	if recompile || !OsFileExists("temp/go/"+fileName) {
+	exePath := "temp/go/" + fileName
+	exeExist := OsFileExists(exePath)
+	if recompile || !exeExist {
+		if exeExist {
+			OsFileRemove(exePath)
+		}
 		ls.node.app.base.jobs.AddCompile(ls.node.app, NewSANodePath(ls.node), "temp/go/", fileName+".go")
 	}
 }
