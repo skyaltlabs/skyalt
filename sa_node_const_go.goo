@@ -25,7 +25,6 @@ type Editbox struct {
 	Multi_line              bool   `json:"multi_line"`
 	Multi_line_enter_finish bool   `json:"multi_line_enter_finish"`
 	Temp_to_value           bool   `json:"temp_to_value"`
-	//Changed 				bool   `json:"changed"`
 	Db_value 				bool   `json:"db_value"`
 }
 type EditboxDB struct {
@@ -34,13 +33,7 @@ type EditboxDB struct {
 	Grid_w int    `json:"grid_w"`
 	Grid_h int    `json:"grid_h"`
 	Show   bool   `json:"show"`
-
-	//Value string `json:"value"`
-	Db_path string  `json:"db_path"`
-	Table string   `json:"table"`
-	Column string  `json:"column"`
-	Rowid int      `json:"rowid"`
-
+	Value                   string `json:"value"`
 	Ghost                   string `json:"ghost"`
 	Align_h                 int    `json:"align_h"`
 	Align_v                 int    `json:"align_v"`
@@ -48,16 +41,11 @@ type EditboxDB struct {
 	Multi_line              bool   `json:"multi_line"`
 	Multi_line_enter_finish bool   `json:"multi_line_enter_finish"`
 	Temp_to_value           bool   `json:"temp_to_value"`
-	//Changed 				bool   `json:"changed"`
 	Db_value 				bool   `json:"db_value"`
 }
-func (edit *EditboxDB) SetValue(db_path string, table string, column string, rowid int) {
-	edit.Db_path = db_path
-	edit.Table = table
-	edit.Column = column
-	edit.Rowid = rowid
+func (db *EditboxDB) SetValue(db_path, table, column string, rowid int) {
+	db.Value = fmt.Sprintf("%s:%s:%s:%d", db_path, table, column, rowid)
 }
-
 
 type Button struct {
 	Grid_x  int    `json:"grid_x"`
@@ -82,8 +70,23 @@ type Checkbox struct {
 	Label   string `json:"label"`
 	Tooltip string `json:"tooltip"`
 	Enable  bool   `json:"enable"`
-	//Changed bool   `json:"changed"`
 }
+type CheckboxDB struct {
+	Grid_x  int    `json:"grid_x"`
+	Grid_y  int    `json:"grid_y"`
+	Grid_w  int    `json:"grid_w"`
+	Grid_h  int    `json:"grid_h"`
+	Show    bool   `json:"show"`
+	Value   string `json:"value"`
+	Label   string `json:"label"`
+	Tooltip string `json:"tooltip"`
+	Enable  bool   `json:"enable"`
+	Db_value bool   `json:"db_value"`
+}
+func (db *CheckboxDB) SetValue(db_path, table, column string, rowid int) {
+	db.Value = fmt.Sprintf("%s:%s:%s:%d", db_path, table, column, rowid)
+}
+
 type Switch struct {
 	Grid_x  int    `json:"grid_x"`
 	Grid_y  int    `json:"grid_y"`
@@ -94,8 +97,23 @@ type Switch struct {
 	Label   string `json:"label"`
 	Tooltip string `json:"tooltip"`
 	Enable  bool   `json:"enable"`
-	//Changed bool   `json:"changed"`
 }
+type SwitchDB struct {
+	Grid_x  int    `json:"grid_x"`
+	Grid_y  int    `json:"grid_y"`
+	Grid_w  int    `json:"grid_w"`
+	Grid_h  int    `json:"grid_h"`
+	Show    bool   `json:"show"`
+	Value   string  `json:"value"`
+	Label   string `json:"label"`
+	Tooltip string `json:"tooltip"`
+	Enable  bool   `json:"enable"`
+	Db_value bool   `json:"db_value"`
+}
+func (db *SwitchDB) SetValue(db_path, table, column string, rowid int) {
+	db.Value = fmt.Sprintf("%s:%s:%s:%d", db_path, table, column, rowid)
+}
+
 type Slider struct {
 	Grid_x  int     `json:"grid_x"`
 	Grid_y  int     `json:"grid_y"`
@@ -108,8 +126,25 @@ type Slider struct {
 	Step    float64 `json:"step"`
 	Tooltip string  `json:"tooltip"`
 	Enable  bool    `json:"enable"`
-	//Changed bool    `json:"changed"`
 }
+type SliderDB struct {
+	Grid_x  int     `json:"grid_x"`
+	Grid_y  int     `json:"grid_y"`
+	Grid_w  int     `json:"grid_w"`
+	Grid_h  int     `json:"grid_h"`
+	Show    bool    `json:"show"`
+	Value   string  `json:"value"`
+	Min     float64 `json:"min"`
+	Max     float64 `json:"max"`
+	Step    float64 `json:"step"`
+	Tooltip string  `json:"tooltip"`
+	Enable  bool    `json:"enable"`
+	Db_value bool   `json:"db_value"`
+}
+func (db *SliderDB) SetValue(db_path, table, column string, rowid int) {
+	db.Value = fmt.Sprintf("%s:%s:%s:%d", db_path, table, column, rowid)
+}
+
 type Combo struct {
 	Grid_x         int    `json:"grid_x"`
 	Grid_y         int    `json:"grid_y"`
@@ -121,8 +156,24 @@ type Combo struct {
 	Options_values string `json:"options_values"` //separated by ';'
 	Tooltip        string `json:"tooltip"`
 	Enable         bool   `json:"enable"`
-	//Changed        bool   `json:"changed"`
 }
+type ComboDB struct {
+	Grid_x         int    `json:"grid_x"`
+	Grid_y         int    `json:"grid_y"`
+	Grid_w         int    `json:"grid_w"`
+	Grid_h         int    `json:"grid_h"`
+	Show           bool   `json:"show"`
+	Value          string `json:"value"`
+	Options_names  string `json:"options_names"` //separated by ';'
+	Options_values string `json:"options_values"` //separated by ';'
+	Tooltip        string `json:"tooltip"`
+	Enable         bool   `json:"enable"`
+	Db_value bool   `json:"db_value"`
+}
+func (db *ComboDB) SetValue(db_path, table, column string, rowid int) {
+	db.Value = fmt.Sprintf("%s:%s:%s:%d", db_path, table, column, rowid)
+}
+
 type Date struct {
 	Grid_x  int    `json:"grid_x"`
 	Grid_y  int    `json:"grid_y"`
@@ -132,8 +183,23 @@ type Date struct {
 	Value   int    `json:"value"` //Unix time
 	Tooltip string `json:"tooltip"`
 	Enable  bool   `json:"enable"`
-	//Changed bool   `json:"changed"`
 }
+
+type DateDB struct {
+	Grid_x  int    `json:"grid_x"`
+	Grid_y  int    `json:"grid_y"`
+	Grid_w  int    `json:"grid_w"`
+	Grid_h  int    `json:"grid_h"`
+	Show    bool   `json:"show"`
+	Value   string    `json:"value"`
+	Tooltip string `json:"tooltip"`
+	Enable  bool   `json:"enable"`
+	Db_value bool   `json:"db_value"`
+}
+func (db *DateDB) SetValue(db_path, table, column string, rowid int) {
+	db.Value = fmt.Sprintf("%s:%s:%s:%d", db_path, table, column, rowid)
+}
+
 type Color struct {
 	Grid_x  int  `json:"grid_x"`
 	Grid_y  int  `json:"grid_y"`
@@ -145,7 +211,6 @@ type Color struct {
 	Value_b int  `json:"value_b"` //<0-255>
 	Value_a int  `json:"value_a"` //<0-255>
 	Enable  bool `json:"enable"`
-	//Changed bool `json:"changed"`
 }
 
 type Disk_dir struct {
@@ -157,7 +222,6 @@ type Disk_dir struct {
 	Path      string `json:"path"`
 	Write     bool   `json:"write"`
 	Enable    bool   `json:"enable"`
-	//Changed   bool   `json:"changed"`
 }
 
 type Disk_file struct {
@@ -169,7 +233,6 @@ type Disk_file struct {
 	Path      string `json:"path"`
 	Write     bool   `json:"write"`
 	Enable    bool   `json:"enable"`
-	//Changed   bool   `json:"changed"`
 }
 
 type Tables struct {
@@ -181,7 +244,6 @@ type Tables struct {
 	Path      string `json:"path"`
 	Write     bool   `json:"write"`
 	Enable    bool   `json:"enable"`
-	//Changed   bool   `json:"changed"`
 	Init_sql  string `json:"init_sql"`
 	Show_path        bool   `json:"show_path"`
 	Show_table_list  bool   `json:"show_table_list"`
@@ -195,7 +257,6 @@ type Microphone struct {
 	Grid_h    int    `json:"grid_h"`
 	Show      bool   `json:"show"`
 	Enable    bool   `json:"enable"`
-	//Changed   bool   `json:"changed"`
 	Path      string `json:"path"`
 	Triggered bool   `json:"triggered"`
 }
@@ -207,7 +268,6 @@ type Map struct {
 	Grid_h    int    `json:"grid_h"`
 	Show      bool   `json:"show"`
 	Enable    bool   `json:"enable"`
-	//Changed   bool   `json:"changed"`
 
 	Lon    float64    `json:"lon"`
 	Lat    float64    `json:"lat"`

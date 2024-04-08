@@ -307,18 +307,11 @@ type Editbox struct {
 	case "EditboxDB":
 		return `
 type EditboxDB struct {
-	Db_path string
-	Table string
-	Column string
-	Rowid int
+	Value string	//never set directly, always use SetValue()
 	Enable   bool
 }
-//EditboxDB doesn't have 'Value string' attribute. Instead use this function to set path to database, where value can be read/write.
-func (edit *EditboxDB) SetValue(db_path string, table string, column string, rowid int) {
-	edit.Db_path = db_path
-	edit.Table = table
-	edit.Column = column
-	edit.Rowid = rowid
+func (db *EditboxDB) SetValue(db_path, table, column string, rowid int) {
+	db.Value = fmt.Sprintf("%s:%s:%s:%d", db_path, table, column, rowid)
 }`
 
 	case "Button":
@@ -338,6 +331,15 @@ type Checkbox struct {
 	Label   string
 	Enable  bool
 }`
+	case "CheckboxDB":
+		return `
+type CheckboxDB struct {
+	Value string	//never set directly, always use SetValue()
+	Label   string
+	Enable  bool
+func (db *EditboxDB) SetValue(db_path, table, column string, rowid int) {
+	db.Value = fmt.Sprintf("%s:%s:%s:%d", db_path, table, column, rowid)
+}`
 
 	case "Switch":
 		return `
@@ -345,6 +347,15 @@ type Switch struct {
 	Value   bool
 	Label   string
 	Enable  bool
+}`
+	case "SwitchDB":
+		return `
+type SwitchDB struct {
+	Value string	//never set directly, always use SetValue()
+	Label   string
+	Enable  bool
+func (db *EditboxDB) SetValue(db_path, table, column string, rowid int) {
+	db.Value = fmt.Sprintf("%s:%s:%s:%d", db_path, table, column, rowid)
 }`
 
 	case "Slider":
@@ -356,6 +367,17 @@ type Slider struct {
 	Step    float64
 	Enable  bool
 }`
+	case "SliderDB":
+		return `
+type SliderDB struct {
+	Value string	//never set directly, always use SetValue()
+	Min     float64
+	Max     float64
+	Step    float64
+	Enable  bool
+func (db *EditboxDB) SetValue(db_path, table, column string, rowid int) {
+	db.Value = fmt.Sprintf("%s:%s:%s:%d", db_path, table, column, rowid)
+}`
 
 	case "Combo":
 		return `
@@ -365,12 +387,31 @@ type Combo struct {
 	Options_values string //separated by ';'
 	Enable         bool
 }`
+	case "ComboDB":
+		return `
+type ComboDB struct {
+	Value string	//never set directly, always use SetValue()
+	Options_names  string //separated by ';'
+	Options_values string //separated by ';'
+	Enable         bool
+func (db *EditboxDB) SetValue(db_path, table, column string, rowid int) {
+	db.Value = fmt.Sprintf("%s:%s:%s:%d", db_path, table, column, rowid)
+}`
 
 	case "Date":
 		return `
 type Date struct {
 	Value   int //Unix time
 	Enable  bool
+}`
+
+	case "DateDB":
+		return `
+type DateDB struct {
+	Value string	//never set directly, always use SetValue()
+	Enable         bool
+func (db *EditboxDB) SetValue(db_path, table, column string, rowid int) {
+	db.Value = fmt.Sprintf("%s:%s:%s:%d", db_path, table, column, rowid)
 }`
 
 	case "Color":
