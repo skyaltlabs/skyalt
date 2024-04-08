@@ -403,7 +403,15 @@ func (a *SANode) CmpListSub(b *SANode) bool {
 }*/
 
 func (node *SANode) HasError() bool {
-	return node.errExe != nil
+	if node.errExe != nil {
+		return true
+	}
+	if node.IsTypeCode() {
+		if node.Code.file_err != nil || node.Code.exe_err != nil || node.Code.ans_err != nil {
+			return true
+		}
+	}
+	return false
 }
 
 func (node *SANode) CanBeRenderOnCanvas() bool {

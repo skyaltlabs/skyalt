@@ -1350,22 +1350,6 @@ func UiCode_Attrs(node *SANode) {
 func _UiCode_attrs(node *SANode, grid *OsV4) {
 	ui := node.app.base.ui
 
-	if node.Code.ans_err != nil {
-		ui.Comp_textCd(0, grid.Start.Y, 2, 1, "Answer Error: "+node.Code.ans_err.Error(), 0, CdPalette_E)
-		grid.Start.Y++
-		node.SetError(fmt.Errorf("Answer"))
-	}
-	if node.Code.file_err != nil {
-		ui.Comp_textCd(0, grid.Start.Y, 2, 1, "File Error: "+node.Code.file_err.Error(), 0, CdPalette_E)
-		grid.Start.Y++
-		node.SetError(fmt.Errorf("File"))
-	}
-	if node.Code.exe_err != nil {
-		ui.Comp_textCd(0, grid.Start.Y, 2, 1, "Execute Error: "+node.Code.exe_err.Error(), 0, CdPalette_E)
-		grid.Start.Y++
-		node.SetError(fmt.Errorf("Execute"))
-	}
-
 	//bypass
 	node.ShowAttrBool(grid, "bypass", false)
 

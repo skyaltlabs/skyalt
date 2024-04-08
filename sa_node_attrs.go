@@ -336,7 +336,21 @@ func (node *SANode) RenderAttrs() {
 
 	attr_start_y := 1
 	if node.HasError() {
-		attr_start_y = 2
+		if node.errExe != nil {
+			attr_start_y++
+		}
+
+		if node.IsTypeCode() {
+			if node.Code.ans_err != nil {
+				attr_start_y++
+			}
+			if node.Code.file_err != nil {
+				attr_start_y++
+			}
+			if node.Code.exe_err != nil {
+				attr_start_y++
+			}
+		}
 	}
 
 	ui.Div_colMax(0, 100)
@@ -391,7 +405,25 @@ func (node *SANode) RenderAttrs() {
 
 	//error
 	if node.HasError() {
-		ui.Comp_textCd(0, 1, 1, 1, "Error: "+node.errExe.Error(), 0, CdPalette_E)
+		attr_y := 1
+
+		if node.errExe != nil {
+			ui.Comp_textCd(0, attr_y, 1, 1, "Error: "+node.errExe.Error(), 0, CdPalette_E)
+			attr_y++
+		}
+
+		if node.Code.ans_err != nil {
+			ui.Comp_textCd(0, attr_y, 2, 1, "Answer Error: "+node.Code.ans_err.Error(), 0, CdPalette_E)
+			attr_y++
+		}
+		if node.Code.file_err != nil {
+			ui.Comp_textCd(0, attr_y, 2, 1, "File Error: "+node.Code.file_err.Error(), 0, CdPalette_E)
+			attr_y++
+		}
+		if node.Code.exe_err != nil {
+			ui.Comp_textCd(0, attr_y, 2, 1, "Execute Error: "+node.Code.exe_err.Error(), 0, CdPalette_E)
+			attr_y++
+		}
 	}
 
 	gnd := node.app.base.node_groups.FindNode(node.Exe)
