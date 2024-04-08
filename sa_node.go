@@ -760,7 +760,7 @@ func (node *SANode) RenderCanvas() {
 			//rect
 			div := ui.Div_startName(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, ".err.")
 			div.touch_enabled = false
-			ui.Paint_rect(0, 0, 1, 1, 0.06, pl.OnE, 0.06)
+			ui.Paint_rect(0, 0, 1, 1, 0.06, pl.E, 0.06)
 			ui.Div_end()
 		}
 

@@ -344,7 +344,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool) bool {
 		}
 
 		if node.HasError() {
-			backCd = pl.OnE
+			backCd = pl.E
 		}
 
 		// shadow
