@@ -157,7 +157,7 @@ func (b *WinPaintBuff) AddCircle(coord OsV4, cd OsCd, width int) {
 func (b *WinPaintBuff) AddImage(path WinMedia, coord OsV4, cd OsCd, align OsV2, fill bool, background bool) {
 	img, err := b.win.AddImage(path) //2nd thread => black
 	if err != nil {
-		b.AddText(path.GetString()+" has error", InitWinFontPropsDef(b.win), coord, b.win.io.GetPalette().OnE, OsV2{1, 1}, 0, 1)
+		b.AddText(path.GetString()+" has error", InitWinFontPropsDef(b.win), coord, b.win.io.GetPalette().E, OsV2{1, 1}, 0, 1)
 		return
 	}
 
