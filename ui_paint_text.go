@@ -461,7 +461,11 @@ func (ui *Ui) _UiPaint_TextSelectKeys(text string, lines []int, editable bool, p
 			firstCur := OsTrn(*s < *e, *s, *e)
 			lastCur := OsTrn(*s > *e, *s, *e)
 
+			if firstCur == lastCur {
+				firstCur, lastCur = _UiPaint_CursorLineRange(lines, firstCur) //select whole line
+			}
 			keys.clipboard = text[firstCur:lastCur]
+
 		}
 	}
 
