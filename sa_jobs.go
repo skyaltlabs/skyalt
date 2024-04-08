@@ -198,7 +198,11 @@ func (jb *SAJobExe) PostRun() {
 	}
 
 	node.Code.cmd_output = string(jb.outCmd)
-	node.Code.SetOutput(jb.outJs)
+	if jb.outErr == nil {
+		node.Code.SetOutput(jb.outJs)
+	} else {
+		node.Code.exe_err = jb.outErr
+	}
 
 	fmt.Printf("SAJobExe '%s' finished in %f\n", jb.programName, jb.dt_time)
 }
