@@ -1655,16 +1655,6 @@ func UiMap_render(node *SANode) {
 	segmentsIn := node.GetAttrString("segments", "") //`[{"label":"Example Title", "Trkpt":[{"lat":50,"lon":16,"ele":400,"time":"2020-04-15T09:05:20Z"},{"lat":50.4,"lon":16.1,"ele":400,"time":"2020-04-15T09:05:23Z"}]}]`
 
 	segmentsIn = strings.TrimSpace(segmentsIn)
-	var segments []byte
-	if strings.HasPrefix(segmentsIn, "<?xml") {
-		var err error
-		segments, err = UiMap_GpxToJson([]byte(segmentsIn))
-		if err != nil {
-			node.SetError(fmt.Errorf("UiMap_GpxToJson() failed: %w", err))
-		}
-	} else {
-		segments = []byte(segmentsIn) //json
-	}
 
 	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 	{
@@ -1698,16 +1688,20 @@ func UiMap_render(node *SANode) {
 		}
 
 		//segments
-		if segments != nil {
-			var items []UiCompMapSegments
-			err := json.Unmarshal(segments, &items)
+		if segmentsIn != "" {
+
+			seg, err := ui.mapp.GetSegment(segmentsIn)
+
 			if err == nil {
-				err = ui.comp_mapSegments(lon, lat, zoom, items)
+				st := OsTime()
+				err = ui.comp_mapSegments(lon, lat, zoom, seg.items) //slow ........ cache + redraw when zoom ....
+				fmt.Println("draw()", OsTime()-st)
+
 				if err != nil {
 					node.SetError(fmt.Errorf("comp_mapSegments() failed: %w", err))
 				}
 			} else {
-				node.SetError(fmt.Errorf("segments Unmarshal() failed: %w", err))
+				node.SetError(err)
 			}
 		}
 	}

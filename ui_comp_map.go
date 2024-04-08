@@ -25,10 +25,13 @@ import (
 	"strings"
 )
 
-//add:
-//- Measure ...
-
 // https://wiki.openstreetmap.org/wiki/Raster_tile_providers
+
+type UiLayoutMapSegment struct {
+	in    string
+	items []UiCompMapSegments
+	//last use ....
+}
 
 type UiLayoutMap struct {
 	active *UiLayoutDiv
@@ -37,6 +40,8 @@ type UiLayoutMap struct {
 	start_pos               OsV2f
 	start_tile              OsV2f
 	start_zoom_time         float64
+
+	cache_segments []*UiLayoutMapSegment
 }
 
 func NewUiLayoutMap() *UiLayoutMap {
@@ -45,6 +50,39 @@ func NewUiLayoutMap() *UiLayoutMap {
 }
 
 func (mp *UiLayoutMap) Destroy() {
+}
+
+func (mp *UiLayoutMap) GetSegment(in string) (*UiLayoutMapSegment, error) {
+	//find
+	for _, seg := range mp.cache_segments {
+		if seg.in == in {
+			return seg, nil
+		}
+	}
+
+	//add
+	var segments []byte
+	if strings.HasPrefix(in, "<?xml") {
+		var err error
+
+		segments, err = UiMap_GpxToJson([]byte(in)) //slow 1 ............................
+		if err != nil {
+			return nil, fmt.Errorf("UiMap_GpxToJson() failed: %w", err)
+		}
+	} else {
+		segments = []byte(in) //json
+	}
+
+	var items []UiCompMapSegments
+	err := json.Unmarshal(segments, &items) //slow 2 ............................
+	if err != nil {
+		return nil, fmt.Errorf("Unmarshal() failed: %w", err)
+	}
+
+	seg := &UiLayoutMapSegment{in: in, items: items}
+	mp.cache_segments = append(mp.cache_segments, seg)
+
+	return seg, nil
 }
 
 func (mp *UiLayoutMap) SetActive(ui *Ui) {
@@ -228,9 +266,9 @@ func (ui *Ui) comp_mapSegments(cam_lon, cam_lat, cam_zoom float64, items []UiCom
 	UiLayoutMap_camCheck(coord, tile, lon, lat, zoom)
 	bbStart, _, _ := UiLayoutMap_camBbox(coord, tile, lon, lat, zoom)
 
-	rad := 0.2
-	rad_x := rad / width
-	rad_y := rad / height
+	//rad := 0.2
+	//rad_x := rad / width
+	//rad_y := rad / height
 
 	for _, segs := range items {
 
@@ -244,9 +282,8 @@ func (ui *Ui) comp_mapSegments(cam_lon, cam_lat, cam_zoom float64, items []UiCom
 			x := float64(p.X-bbStart.X) * tileW
 			y := float64(p.Y-bbStart.Y) * tileH
 
-			ui.Paint_circle(0, 0, 1, 1, 0, x, y, 0.1, InitOsCd32(200, 20, 20, 255), 0)
-
-			ui.Paint_tooltip(x-rad_x/2, y-rad_y, rad_x, rad_y, fmt.Sprintf("%.2f, %.2f, %s", pt.Lon, pt.Lat, pt.Time))
+			//ui.Paint_circle(0, 0, 1, 1, 0, x, y, 0.1, InitOsCd32(200, 20, 20, 255), 0)
+			//ui.Paint_tooltip(x-rad_x/2, y-rad_y, rad_x, rad_y, fmt.Sprintf("%.2f, %.2f, %s", pt.Lon, pt.Lat, pt.Time))
 
 			if last_set {
 				ui.Paint_line(0, 0, 1, 1, 0, last_x, last_y, x, y, InitOsCd32(200, 20, 20, 255), 0.06)
