@@ -86,7 +86,8 @@ type SANodeCode struct {
 
 	exes []SANodeCodeExe
 
-	job *SAJobOpenAI
+	job_exe *SAJobExe
+	job_oai *SAJobOpenAI
 }
 
 func InitSANodeCode(node *SANode) SANodeCode {
@@ -629,7 +630,7 @@ func (ls *SANodeCode) GetAnswer() {
 
 	props := &SAServiceOpenAIProps{Model: "gpt-4-turbo-preview", Messages: messages}
 
-	ls.job = ls.node.app.base.jobs.AddOpenAI(ls.node.app, NewSANodePath(ls.node), props)
+	ls.job_oai = ls.node.app.base.jobs.AddOpenAI(ls.node.app, NewSANodePath(ls.node), props)
 }
 
 func (ls *SANodeCode) GetFileName() string {
@@ -716,7 +717,16 @@ func (ls *SANodeCode) Execute(exe_prms []SANodeCodeExePrm) {
 	}
 
 	//run
-	ls.node.app.base.jobs.AddExe(ls.node.app, NewSANodePath(ls.node), "/temp/go/", ls.GetFileName(), inputJs)
+	ls.job_exe = ls.node.app.base.jobs.AddExe(ls.node.app, NewSANodePath(ls.node), "/temp/go/", ls.GetFileName(), inputJs)
+}
+
+func (ls *SANodeCode) IsJobRunning() (bool, float64, string) {
+	if ls.node.IsTypeCode() && ls.job_exe != nil {
+		if !ls.job_exe.done.Load() {
+			return true, 0.5, "" //description ....
+		}
+	}
+	return false, -1, ""
 }
 
 func (ls *SANodeCode) SetOutput(outputJs []byte) {

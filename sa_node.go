@@ -59,9 +59,7 @@ type SANode struct {
 
 	ShowCodeChat bool
 
-	errExe        error
-	progress      float64 //? ......
-	progress_desc string  //? ......
+	errExe error
 
 	z_depth float64
 

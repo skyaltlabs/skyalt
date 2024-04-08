@@ -347,6 +347,11 @@ func (node *SANode) drawNode(someNodeIsDraged bool) bool {
 			backCd = pl.E
 		}
 
+		isRunning, _, _ := node.Code.IsJobRunning()
+		if node.IsTypeCode() && isRunning {
+			backCd = pl.P
+		}
+
 		// shadow
 		node.drawShadow(coord, roundc)
 
@@ -364,25 +369,24 @@ func (node *SANode) drawNode(someNodeIsDraged bool) bool {
 	}
 
 	//draw progress text
-	isJobActive := node.progress > 0
+	isJobActive, progress, progress_desc := node.Code.IsJobRunning()
 	if isJobActive {
-		if node.progress > 0 {
-			cellr := node.cellZoom(ui)
-			cq := coord.AddSpace(int(-0.3 * float64(cellr)))
-			cq.Start.Y -= int(cellr) //cq.End().X
-			cq.Size.Y = int(cellr)
-			ui.Div_startCoord(0, 0, 1, 1, cq, node.Name)
-			{
-				ui.Div_colMax(0, 100)
-				ui.Div_rowMax(0, 100)
-				str := fmt.Sprintf("%.0f%%", node.progress*100)
-				if node.progress_desc != "" {
-					str += "(" + node.progress_desc + ")"
-				}
-				ui.Comp_textSelect(0, 0, 1, 1, str, OsV2{0, 1}, false, false)
+		cellr := node.cellZoom(ui)
+		cq := coord.AddSpace(int(-0.3 * float64(cellr)))
+		cq.Start.Y -= int(cellr) //cq.End().X
+		cq.Size.Y = int(cellr)
+		ui.Div_startCoord(0, 0, 1, 1, cq, node.Name)
+		{
+			ui.Div_colMax(0, 100)
+			ui.Div_rowMax(0, 100)
+			str := fmt.Sprintf("%.0f%%", progress*100)
+			if progress_desc != "" {
+				str += "(" + progress_desc + ")"
 			}
-			ui.Div_end()
+			ui.Comp_textSelect(0, 0, 1, 1, str, OsV2{0, 1}, false, false)
 		}
+		ui.Div_end()
+
 	}
 
 	//select rect

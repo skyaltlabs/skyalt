@@ -1282,19 +1282,19 @@ func UiCodeGo_AttrChat(node *SANode) {
 
 		y := 0
 		for i, str := range node.Code.Messages {
-			if i+1 < len(node.Code.Messages) || node.Code.job != nil {
+			if i+1 < len(node.Code.Messages) || node.Code.job_oai != nil {
 				nlines := WinFontProps_NumRows(str.User)
 				ui.Comp_text(0, y, 1, 1, "User", 0)
 				ui.Comp_textSelectMulti(1, y, 2, nlines, str.User, OsV2{0, 0}, true, false, false)
 				y += nlines
 
 				assist := str.Assistent
-				if node.Code.job != nil {
-					assist = node.Code.job.wip_answer
-					if node.Code.job.done.Load() {
+				if node.Code.job_oai != nil {
+					assist = node.Code.job_oai.wip_answer
+					if node.Code.job_oai.done.Load() {
 						//save
-						node.Code.Messages[len(node.Code.Messages)-1].Assistent = string(node.Code.job.output)
-						node.Code.job = nil
+						node.Code.Messages[len(node.Code.Messages)-1].Assistent = string(node.Code.job_oai.output)
+						node.Code.job_oai = nil
 					}
 				}
 
@@ -1311,7 +1311,7 @@ func UiCodeGo_AttrChat(node *SANode) {
 					ui.Comp_text(0, 0, 1, 1, "Bot", 0)
 					ui.Comp_textSelectMulti(1, 0, 2, nlines, assist, OsV2{0, 0}, true, false, false)
 
-					if ui.Comp_buttonLight(2, nlines, 1, 1, "Use this code", Comp_buttonProp().Enable(node.Code.job == nil)) > 0 {
+					if ui.Comp_buttonLight(2, nlines, 1, 1, "Use this code", Comp_buttonProp().Enable(node.Code.job_oai == nil)) > 0 {
 						node.Code.UseCodeFromAnswer(str.Assistent)
 					}
 				}
