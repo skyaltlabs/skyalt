@@ -64,11 +64,9 @@ func InitSAGroups() SAGroups {
 		{name: "date", render: UiDate_render, attrs: UiDate_Attrs},
 		{name: "microphone", render: UiMicrophone_render, attrs: UiMicrophone_Attrs},
 		{name: "map", render: UiMap_render, attrs: UiMap_Attrs},
-
 		{name: "layout", render: UiLayout_render, attrs: UiLayout_Attrs},
 		{name: "list", render: UiList_render, attrs: UiList_Attrs},
-
-		//{name: "chart", render: UiChart_render, attrs: UiChart_Attrs},
+		{name: "chart", render: UiChart_render, attrs: UiChart_Attrs},
 
 		/*	{name: "image", render: SAExe_Render_Image},
 			{name: "dialog", render: SAExe_Render_Dialog},*/
