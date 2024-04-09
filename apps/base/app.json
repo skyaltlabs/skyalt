@@ -3,8 +3,8 @@
 {
 "Name": "counter",
 "IDE": true,
-"Cam_x": 32.43081283569336,
-"Cam_y": -9.515911102294922,
+"Cam_x": 30.04607582092285,
+"Cam_y": -9.261539459228516,
 "Cam_z": 0.8499999999999996,
 "EnableExecution": true,
 "ExePos": -1,
@@ -23,8 +23,8 @@
 {
 "Name": "srt",
 "IDE": true,
-"Cam_x": 3.7463622093200684,
-"Cam_y": 5.622127532958984,
+"Cam_x": 4.205821514129639,
+"Cam_y": 6.0005059242248535,
 "Cam_z": 1,
 "EnableExecution": true,
 "ExePos": -1,
@@ -53,8 +53,8 @@
 {
 "Name": "running",
 "IDE": true,
-"Cam_x": 23.905624389648438,
-"Cam_y": -1.8026065826416016,
+"Cam_x": 15.830229759216309,
+"Cam_y": -0.5540010333061218,
 "Cam_z": 0.7,
 "EnableExecution": true,
 "ExePos": -1,
