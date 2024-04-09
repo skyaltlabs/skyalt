@@ -235,7 +235,7 @@ type Disk_file struct {
 	Enable    bool   `json:"enable"`
 }
 
-type Tables struct {
+type Db struct {
 	Grid_x    int    `json:"grid_x"`
 	Grid_y    int    `json:"grid_y"`
 	Grid_w    int    `json:"grid_w"`

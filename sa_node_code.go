@@ -198,7 +198,7 @@ func (ls *SANodeCode) buildSqlInfos(msgs_depends []*SANodeCodeFn) (string, error
 	str := ""
 
 	for _, fn := range msgs_depends {
-		if fn.node.IsTypeTables() {
+		if fn.node.IsTypeDB() {
 			str += fmt.Sprintf("'%s' is SQLite database which includes these tables(columns): ", fn.node.Name)
 
 			tablesStr := ""
@@ -439,7 +439,7 @@ type Disk_file struct {
 	Write bool
 }`
 
-	case "Tables":
+	case "Db":
 		return `
 type Tables struct {
 	Path  string
