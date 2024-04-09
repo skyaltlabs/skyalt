@@ -530,9 +530,12 @@ func (app *SAApp) drawCreateNodeGroup(start OsV2, gr *SAGroup, searches []string
 			if !only_ui || nd.render != nil {
 				if app.canvas.addnode_search == "" || SAApp_IsSearchedName(nd.name, searches) {
 					if keys.enter || ui.Comp_buttonMenuIcon(0, y, 1, 1, nd.name, gr.icon, 0.2, false, Comp_buttonProp()) > 0 {
-
 						//add new node
 						parent := app.canvas.addParent.FindPath(app.root)
+						if only_ui {
+							parent = app.Selected_canvas.FindPath(app.root)
+						}
+
 						nw := parent.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name, nd.name)
 						nw.SelectOnlyThis()
 						ui.CloseAll()
