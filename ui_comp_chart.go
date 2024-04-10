@@ -116,7 +116,7 @@ func _UiLayoutChart_drawAxisY(min, max UiLayoutChartItem, left_margin, right_mar
 	if drawAxis {
 		//0
 		x := (0 - min.X) / vx
-		x, y, w, h := cellMargin(left_margin, 0, 0, bottom_margin, x, 0, 0, 1, ui)
+		x, y, w, h := cellMargin(left_margin, 0, top_margin, bottom_margin, x, 0, 0, 1, ui)
 		ui.Paint_line(0, 0, 1, 1, 0, x, y, x+w, y+h, cdAxis, 0.03)
 
 	}
