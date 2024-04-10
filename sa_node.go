@@ -213,8 +213,8 @@ func (node *SANode) IsTypeButton() bool {
 	return strings.EqualFold(node.Exe, "button")
 }
 
-func (node *SANode) IsTypeDB() bool {
-	return strings.EqualFold(node.Exe, "db")
+func (node *SANode) IsTypeDbFile() bool {
+	return strings.EqualFold(node.Exe, "db_file")
 }
 
 func (node *SANode) IsTypeList() bool {

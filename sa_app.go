@@ -175,7 +175,7 @@ func (app *SAApp) TryExecute() {
 
 	//update "changed" for sqlite dbs
 	for _, nd := range app.all_nodes {
-		if nd.IsTypeDB() {
+		if nd.IsTypeDbFile() {
 			path := nd.GetAttrString("path", "")
 			db, _, err := app.base.ui.win.disk.OpenDb(path)
 			if err == nil {

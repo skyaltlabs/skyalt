@@ -235,7 +235,7 @@ type Disk_file struct {
 	Enable    bool   `json:"enable"`
 }
 
-type Db struct {
+type Db_file struct {
 	Grid_x    int    `json:"grid_x"`
 	Grid_y    int    `json:"grid_y"`
 	Grid_w    int    `json:"grid_w"`
@@ -309,6 +309,12 @@ type Chart struct {
 
 	Point_rad  float64    `json:"point_rad"`
 	Line_thick  float64    `json:"line_thick"`
+
+	X_unit  string    `json:"x_unit"`
+	Y_unit  string    `json:"y_unit"`
+
+	Bound_x0  bool    `json:"bound_x0"`
+	Bound_y0  bool    `json:"bound_y0"`
 
 	Column_margin  float64    `json:"column_margin"`
 }
