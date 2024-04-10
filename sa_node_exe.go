@@ -41,6 +41,8 @@ func UiButton_Attrs(node *SANode) {
 	node.ShowAttrIntCombo(&grid, "background", 1, []string{"Transparent", "Full", "Light"}, []string{"0", "1", "2"})
 
 	node.ShowAttrString(&grid, "label", "", false)
+	node.ShowAttrFilePicker(&grid, "icon", "", true, "select_icon")
+	node.ShowAttrFloat(&grid, "icon_margin", 0.15, 2)
 	node.ShowAttrString(&grid, "tooltip", "", false)
 	node.ShowAttrBool(&grid, "enable", true)
 	//node.ShowAttrBool(&grid, "triggered", false)
@@ -51,12 +53,20 @@ func UiButton_render(node *SANode) {
 	grid := node.GetGrid()
 	background := node.GetAttrInt("background", 1)
 	label := node.GetAttrString("label", "")
+	icon_path := node.GetAttrString("icon", "")
+	icon_margin := node.GetAttrFloat("icon_margin", 0.15)
 	tooltip := node.GetAttrString("tooltip", "")
 	enable := node.GetAttrBool("enable", true)
 	confirmation := node.GetAttrString("confirmation", "")
 	//triggered := node.GetAttrBool("triggered", false)
 
 	props := Comp_buttonProp().Enable(enable).Tooltip(tooltip)
+
+	if icon_path != "" {
+		icon := InitWinMedia_url("file:" + icon_path)
+		props.Icon(&icon).ImgMargin(icon_margin)
+	}
+
 	if confirmation != "" {
 		path := NewSANodePath(node)
 		props.Confirmation(confirmation, "confirm_"+path.String())

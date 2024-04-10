@@ -319,6 +319,7 @@ func (db *EditboxDB) SetValue(db_path, table, column string, rowid int) {
 		return `
 type Button struct {
 	Label   string
+	Icon string	//path to image file
 	Enable  bool
 	Confirmation string
 	Background  int	//0=transparent, 1=full, 2=light

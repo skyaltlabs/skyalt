@@ -55,6 +55,8 @@ type Button struct {
 	Show    bool   `json:"show"`
 	Background int  `json:"background"`
 	Label   string `json:"label"`
+	Icon    string `json:"icon"`
+	Icon_margin    float64 `json:"icon_margin"`
 	Tooltip string `json:"tooltip"`
 	Enable  bool   `json:"enable"`
 	Triggered bool   `json:"triggered"`
