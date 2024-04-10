@@ -22,8 +22,9 @@ import (
 )
 
 type UiLayoutChartItem struct {
-	X, Y  float64
-	Label string
+	X     float64 `json:"x"`
+	Y     float64 `json:"y"`
+	Label string  `json:"label"`
 }
 
 func UiLayoutChart_getBound(items []UiLayoutChartItem) (UiLayoutChartItem, UiLayoutChartItem) {
@@ -194,6 +195,8 @@ func _UiLayoutChart_drawColumns(items []UiLayoutChartItem, min, max UiLayoutChar
 func _UiLayoutChart_drawAxisXlabels(items []UiLayoutChartItem, left_margin, right_margin, top_margin2, bottom_margin float64, ui *Ui) {
 
 	top_margin2 = float64(ui.GetCall().call.canvas.Size.Y)/float64(ui.win.Cell()) - bottom_margin
+
+	//slow: too dense .............................
 
 	jump_x := 1 / float64(len(items))
 	for i, it := range items {

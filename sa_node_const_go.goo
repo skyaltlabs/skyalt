@@ -282,6 +282,42 @@ type Map struct {
 	Segments   string    `json:"segments"`
 }
 
+type ChartItem struct {
+	X float64    `json:"x"`
+	Y float64    `json:"y"`
+	Label string `json:"label"`
+}
+type Chart struct {
+	Grid_x    int    `json:"grid_x"`
+	Grid_y    int    `json:"grid_y"`
+	Grid_w    int    `json:"grid_w"`
+	Grid_h    int    `json:"grid_h"`
+	Show      bool   `json:"show"`
+	Enable    bool   `json:"enable"`
+
+	Values    string    `json:"values"`
+	//Values  []*ChartItem `json:"values"`
+	Typee     string    `json:"typee"`
+
+	Cd_r int  `json:"cd_r"` //<0-255>
+	Cd_g int  `json:"cd_g"` //<0-255>
+	Cd_b int  `json:"cd_b"` //<0-255>
+	Cd_a int  `json:"cd_a"` //<0-255>
+
+	Left_margin    float64    `json:"left_margin"`
+	Bottom_margin  float64    `json:"bottom_margin"`
+
+	Point_rad  float64    `json:"point_rad"`
+	Line_thick  float64    `json:"line_thick"`
+
+	Column_margin  float64    `json:"column_margin"`
+}
+/*func (c *Chart)ClearItems() {
+	c.Values = nil
+}
+func (c *Chart)AddItem(x, y float64, label string) {
+	c.Values = append(c.Values, &ChartItem{X:x, Y:y, Label: label})
+}*/
 
 type Net struct {
 	Node     string `json:"node"`

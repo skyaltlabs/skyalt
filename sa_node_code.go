@@ -455,12 +455,25 @@ type Microphone struct {
 }`
 
 	case "Map":
+
+		//type MapItem struct { .................
 		return `
 type Map struct {
 	Locators string	//XML(GPX) or JSON format: [{"label":"LocatorA", "lon":14.4, "lat":50.0}, {"label":"LocatorB", "lon":14.5, "lat":50.1}]
 	Segments string	//XML(GPX) or JSON format: [{"label":"SegmentA", "Trkpt":[{"lat":50,"lon":16,"ele":400,"time":"2020-04-15T09:05:20Z"},{"lat":50.4,"lon":16.1,"ele":400,"time":"2020-04-15T09:05:23Z"}]}]
 
 	Enable  bool
+}`
+
+	case "Chart":
+		return `
+type ChartItem struct {
+	X, Y  float64
+	Label string
+}
+type Chart struct {
+	Values string	//JSON: []ChartItem
+	Enable bool
 }`
 
 	case "Net":
@@ -991,7 +1004,7 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 		var st MainStruct
 		err := json.Unmarshal(body, &st)
 		if err != nil {
-			return nil, fmt.Errorf("Unmarshal() failed: %w", err)
+			return nil, fmt.Errorf("Unmarshal(import) failed: %w", err)
 		}
 		`
 	params := ""
@@ -1010,7 +1023,7 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 	
 		res, err := json.Marshal(st)
 		if err != nil {
-			return nil, fmt.Errorf("Marshal() failed: %w", err)
+			return nil, fmt.Errorf("Marshal(export) failed: %w", err)
 		}
 		return res, nil
 	}`

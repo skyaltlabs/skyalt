@@ -221,6 +221,10 @@ func (node *SANode) IsTypeList() bool {
 	return strings.EqualFold(node.Exe, "list")
 }
 
+func (node *SANode) IsTypeChart() bool {
+	return strings.EqualFold(node.Exe, "chart")
+}
+
 func (node *SANode) IsTypeCode() bool {
 	return strings.EqualFold(node.Exe, "code")
 }
