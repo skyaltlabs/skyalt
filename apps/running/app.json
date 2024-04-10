@@ -1,0 +1,535 @@
+{
+"Pos": {
+"X": 0,
+"Y": 0
+},
+"Name": "root",
+"Exe": "layout",
+"Code": {
+"Messages": null,
+"Code": "",
+"ArgsProps": null
+},
+"Attrs": {
+"grid_h": 0,
+"grid_w": 0,
+"grid_x": 0,
+"grid_y": 0,
+"show": true
+},
+"Cols": [
+{
+"Pos": 0,
+"Min": 2,
+"Max": 10,
+"Resize": 4.45945945945946,
+"ResizeName": "sz"
+},
+{
+"Pos": 1,
+"Min": 1,
+"Max": 100,
+"Resize": 1
+}
+],
+"Rows": [
+{
+"Pos": 0,
+"Min": 1,
+"Max": 100,
+"Resize": 1
+}
+],
+"Subs": [
+{
+"Pos": {
+"X": 17.990988,
+"Y": 10.205489
+},
+"Name": "layout",
+"Exe": "layout",
+"Code": {
+"Messages": null,
+"Code": "",
+"ArgsProps": null
+},
+"Attrs": {
+"enable": true,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 1,
+"grid_y": 0,
+"show": true,
+"write": false
+},
+"Cols": [
+{
+"Pos": 0,
+"Min": 1,
+"Max": 100,
+"Resize": 1
+},
+{
+"Pos": 1,
+"Min": 1,
+"Max": 3,
+"Resize": 1
+}
+],
+"Rows": [
+{
+"Pos": 2,
+"Min": 1,
+"Max": 100,
+"Resize": 1
+},
+{
+"Pos": 3,
+"Min": 1,
+"Max": 1,
+"Resize": 1
+},
+{
+"Pos": 4,
+"Min": 1,
+"Max": 10,
+"Resize": 1
+}
+],
+"Subs": [
+{
+"Pos": {
+"X": 22.633999,
+"Y": 10.141934
+},
+"Name": "elev_chart",
+"Exe": "chart",
+"Selected": true,
+"Code": {
+"Messages": null,
+"Code": "",
+"ArgsProps": null
+},
+"Attrs": {
+"bottom_margin": 1.2,
+"bound_x0": true,
+"bound_y0": false,
+"cd_a": 255,
+"cd_b": 181,
+"cd_g": 181,
+"cd_r": 42,
+"column_margin": 0.1,
+"enable": true,
+"grid_h": 1,
+"grid_w": 2,
+"grid_x": 0,
+"grid_y": 4,
+"left_margin": 2,
+"line_thick": 0.03,
+"point_rad": 0.03,
+"show": true,
+"typee": "lines",
+"values": "[]",
+"x_unit": "km",
+"y_unit": "km"
+},
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": 17.323252,
+"Y": 11.848991
+},
+"Name": "typee",
+"Exe": "combo",
+"Code": {
+"Messages": null,
+"Code": "",
+"ArgsProps": null
+},
+"Attrs": {
+"db_value": true,
+"enable": true,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 1,
+"grid_y": 0,
+"options_names": "run;ride;walk;hike;swim",
+"options_values": "run;ride;walk;hike;swim",
+"search": false,
+"show": true,
+"tooltip": "",
+"value": "apps/running/db.sqlite:activities:type:2"
+},
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": 17.248281,
+"Y": 13.7778845
+},
+"Name": "mapp",
+"Exe": "map",
+"Code": {
+"Messages": null,
+"Code": "",
+"ArgsProps": null
+},
+"Attrs": {
+"copyright": "(c)OpenStreetMap contributors",
+"copyright_url": "https://www.openstreetmap.org/copyright",
+"enable": true,
+"file": "temp/maps/osm.sqlite",
+"grid_h": 1,
+"grid_w": 2,
+"grid_x": 0,
+"grid_y": 2,
+"lat": 50.44412797682855,
+"locators": "",
+"lon": 16.1104416847229,
+"segments": "",
+"show": true,
+"url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+"zoom": 13
+},
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": 17.230585,
+"Y": 10.098669
+},
+"Name": "title",
+"Exe": "editbox",
+"Code": {
+"Messages": null,
+"Code": "",
+"ArgsProps": null
+},
+"Attrs": {
+"align_h": 0,
+"align_v": 1,
+"db_value": true,
+"enable": true,
+"ghost": "",
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 0,
+"grid_y": 0,
+"multi_line": false,
+"multi_line_enter_finish": false,
+"show": true,
+"temp_to_value": false,
+"value": "apps/running/db.sqlite:activities:title:2"
+},
+"ShowCodeChat": false
+}
+],
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": 12.120012,
+"Y": -10.807379
+},
+"Name": "list",
+"Exe": "list",
+"Code": {
+"Messages": [
+{
+"User": "Copy table \"activities\" from 'run_db' into 'list'.\nSet button label as title column.",
+"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc list(db *Db, list *ListList) error {\n\tsqliteDB, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer sqliteDB.Close()\n\n\trows, err := sqliteDB.Query(\"SELECT rowid, title FROM activities\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar rowid int\n\t\tvar title string\n\t\tif err := rows.Scan(\u0026rowid, \u0026title); err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\tnewRow := list.AddRow()\n\t\tnewRow.Rowid.Label = string(rowid)\n\t\tnewRow.Button.Label = title\n\t}\n\treturn nil\n}\n```"
+},
+{
+"User": "",
+"Assistent": ""
+}
+],
+"Code": "func list() error {\n\treturn nil\n}",
+"ArgsProps": [
+{
+"Node": "run_db",
+"Write": false
+}
+]
+},
+"Attrs": {
+"changed": false,
+"defRow": {
+"button": {
+"background": 0,
+"confirmation": "",
+"enable": true,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 0,
+"grid_y": 0,
+"label": "Afternoon run",
+"show": true,
+"tooltip": "",
+"triggered": false
+},
+"context": {
+"background": 1,
+"confirmation": "",
+"enable": true,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 1,
+"grid_y": 0,
+"label": "",
+"show": true,
+"tooltip": "",
+"triggered": false
+},
+"rowid": {
+"align_h": 1,
+"align_v": 1,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 2,
+"grid_y": 0,
+"label": "2",
+"multi_line": false,
+"selection": true,
+"show": false,
+"show_border": false
+}
+},
+"direction": 0,
+"enable": true,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 0,
+"grid_y": 0,
+"max_height": 1,
+"max_width": 100,
+"selected_button": "button",
+"selected_index": 1,
+"show": true,
+"show_border": false
+},
+"Cols": [
+{
+"Pos": 0,
+"Min": 1,
+"Max": 100,
+"Resize": 1
+}
+],
+"Subs": [
+{
+"Pos": {
+"X": 11.045366,
+"Y": -6.673424
+},
+"Name": "rowid",
+"Exe": "text",
+"Code": {
+"Messages": null,
+"Code": "",
+"ArgsProps": null
+},
+"Attrs": {
+"align_h": 1,
+"align_v": 1,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 2,
+"grid_y": 0,
+"label": "2",
+"multi_line": false,
+"selection": true,
+"show": false,
+"show_border": false
+},
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": 10.998713,
+"Y": -10.521021
+},
+"Name": "button",
+"Exe": "button",
+"Code": {
+"Messages": null,
+"Code": "",
+"ArgsProps": null
+},
+"Attrs": {
+"background": 0,
+"confirmation": "",
+"enable": true,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 0,
+"grid_y": 0,
+"label": "Afternoon run",
+"show": true,
+"tooltip": ""
+},
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": 11.034746,
+"Y": -8.588535
+},
+"Name": "context",
+"Exe": "button",
+"Code": {
+"Messages": null,
+"Code": "",
+"ArgsProps": null
+},
+"Attrs": {
+"background": 1,
+"confirmation": "",
+"enable": true,
+"grid_h": 1,
+"grid_w": 1,
+"grid_x": 1,
+"grid_y": 0,
+"label": "",
+"show": true,
+"tooltip": ""
+},
+"ShowCodeChat": false
+}
+],
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": 18.426645,
+"Y": -10.174711
+},
+"Name": "run_db",
+"Exe": "db",
+"Code": {
+"Messages": null,
+"Code": "",
+"ArgsProps": null
+},
+"Attrs": {
+"enable": true,
+"grid_h": 1,
+"grid_w": 12,
+"grid_x": 2,
+"grid_y": 0,
+"init_sql": "CREATE TABLE IF NOT EXISTS activities (rowid INTEGER, date INTEGER, route BLOB, time INTEGER, distance INTEGER, title TEXT, place TEXT, description TEXT, type TEXT);\n",
+"path": "apps/running/db.sqlite",
+"selected_table": "activities",
+"show": false,
+"show_path": true,
+"show_table_list": true,
+"write": false
+},
+"ShowCodeChat": false
+},
+{
+"Pos": {
+"X": 7.343951,
+"Y": 3.6518664
+},
+"Name": "exe",
+"Exe": "exe",
+"Code": {
+"Messages": null,
+"Code": "",
+"ArgsProps": null
+},
+"Attrs": {
+"show": true
+},
+"Subs": [
+{
+"Pos": {
+"X": 7.343951,
+"Y": 3.6518664
+},
+"Name": "build_list",
+"Exe": "code",
+"Code": {
+"Messages": [
+{
+"User": "Copy table \"activities\" from 'run_db' into 'list'.\nSet button label as title column.\nSet rowid label as rowid column.",
+"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t_ \"github.com/mattn/go-sqlite3\"\n\t\"strconv\"\n)\n\nfunc build_list(db *Db, list *ListList) error {\n\tconnection, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer connection.Close()\n\n\trows, err := connection.Query(\"SELECT rowid, title FROM activities\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar rowid int\n\t\tvar title string\n\n\t\terr = rows.Scan(\u0026rowid, \u0026title)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\tnewRow := list.AddRow()\n\t\tnewRow.Rowid.Label = strconv.Itoa(rowid)\n\t\tnewRow.Button.Label = title\n\t}\n\n\treturn nil\n}\n```"
+},
+{
+"User": "",
+"Assistent": ""
+}
+],
+"Code": "\nimport (\n\t\"database/sql\"\n\t_ \"github.com/mattn/go-sqlite3\"\n\t\"strconv\"\n)\n\nfunc build_list(run_db *Db, list *ListList) error {\n\tconnection, err := sql.Open(\"sqlite3\", run_db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer connection.Close()\n\n\trows, err := connection.Query(\"SELECT rowid, title FROM activities\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar rowid int\n\t\tvar title string\n\n\t\terr = rows.Scan(\u0026rowid, \u0026title)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\tnewRow := list.AddRow()\n\t\tnewRow.Rowid.Label = strconv.Itoa(rowid)\n\t\tnewRow.Button.Label = title\n\t}\n\n\treturn nil\n}\n",
+"ArgsProps": null
+},
+"Attrs": {
+"bypass": false,
+"language": "go",
+"show": true
+},
+"ShowCodeChat": true
+},
+{
+"Pos": {
+"X": 14.343951,
+"Y": 3.6518664
+},
+"Name": "update_details",
+"Exe": "code",
+"Code": {
+"Messages": [
+{
+"User": "Get run data from 'run_db'. Use rowid from 'list' selected row.\nMatch columns into 'title', 'typee'(type column) and 'mapp'(route column).",
+"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t\"encoding/json\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc update_details(db *Db, list *ListList, title *EditboxDB, typee *ComboDB, mapp *Map) error {\n\tselectedRow := list.GetSelectedRow()\n\tif selectedRow == nil {\n\t\treturn fmt.Errorf(\"no row selected\")\n\t}\n\n\tdatabase, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer database.Close()\n\n\tquery := \"SELECT title, type, route FROM activities WHERE rowid = ?\"\n\tstmt, err := database.Prepare(query)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer stmt.Close()\n\n\tvar titleLabel string\n\tvar typeLabel string\n\tvar routeBlob []byte\n\terr = stmt.QueryRow(selectedRow.Rowid.Label).Scan(\u0026titleLabel, \u0026typeLabel, \u0026routeBlob)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\ttitle.SetValue(db.Path, \"activities\", \"title\", 0)\n\ttitle.Value = titleLabel\n\n\ttypee.SetValue(db.Path, \"activities\", \"type\", 0)\n\ttypee.Value = typeLabel\n\n\tmapp.Segments = string(routeBlob)\n\n\treturn nil\n}\n```"
+},
+{
+"User": "",
+"Assistent": ""
+}
+],
+"Code": "\nimport (\n\t\"database/sql\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc update_details(run_db *Db, list *ListList, title *EditboxDB, typee *ComboDB, mapp *Map) error {\n\tselectedRow := list.GetSelectedRow()\n\tif selectedRow == nil {\n\t\treturn nil\n\t}\n\n\trowID, _ := strconv.Atoi(selectedRow.Rowid.Label)\n\n\tdatabase, err := sql.Open(\"sqlite3\", run_db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer database.Close()\n\n\tvar routeBlob []byte\n\tquery := `SELECT route FROM activities WHERE rowid = ?`\n\terr = database.QueryRow(query, rowID).Scan(\u0026routeBlob)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\ttitle.SetValue(run_db.Path, \"activities\", \"title\", rowID)\n\ttypee.SetValue(run_db.Path, \"activities\", \"type\", rowID)\n\tmapp.Segments = string(routeBlob)\n\n\treturn nil\n}\n",
+"ArgsProps": null
+},
+"Attrs": {
+"bypass": false,
+"language": "go",
+"show": true
+},
+"ShowCodeChat": true
+},
+{
+"Pos": {
+"X": 21.830437,
+"Y": 3.6518664
+},
+"Name": "update_elev_chart",
+"Exe": "code",
+"Code": {
+"Messages": [
+{
+"User": "Get run data from 'run_db'. Use rowid from 'list' selected row.\nBlob from route column is GPX file.\nGet elevations from GPX and add them to 'elev_chart' as y axis.\nx axis is distance from beginning in km.",
+"Assistent": "```go\nimport (\n\t\"encoding/xml\"\n\t\"fmt\"\n\t\"github.com/mattn/go-sqlite3\" // Assuming usage of \"github.com/mattn/go-sqlite3\"\n\t\"io\"\n\t\"math\"\n\t\"strings\"\n)\n\nfunc update_elev_chart(db *Db, list *ListList, elev_chart *Chart) error {\n\tselectedRow := list.GetSelectedRow()\n\tif selectedRow == nil {\n\t\treturn fmt.Errorf(\"no selected row\")\n\t}\n\n\tvar routeBlob []byte\n\terr := db.QueryRow(\"SELECT route FROM activities WHERE rowid = ?\", selectedRow.Rowid.Label).Scan(\u0026routeBlob)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\ttype Trkpt struct {\n\t\tLat  string `xml:\"lat,attr\"`\n\t\tLon  string `xml:\"lon,attr\"`\n\t\tEle  float64 `xml:\"ele\"`\n\t\tTime string `xml:\"time\"`\n\t}\n\ttype Trkseg struct {\n\t\tTrkpt []Trkpt `xml:\"trkpt\"`\n\t}\n\ttype Trk struct {\n\t\tTrkseg []Trkseg `xml:\"trkseg\"`\n\t}\n\ttype Gpx struct {\n\t\tTrk []Trk `xml:\"trk\"`\n\t}\n\n\tgpxData := \u0026Gpx{}\n\tif err := xml.Unmarshal(routeBlob, gpxData); err != nil {\n\t\treturn err\n\t}\n\n\tvar chartItems []ChartItem\n\tvar totalDistance float64\n\tfor _, trk := range gpxData.Trk {\n\t\tfor i, point := range trk.Trkseg[0].Trkpt {\n\t\t\tif i \u003e 0 {\n\t\t\t\tprevPoint := trk.Trkseg[0].Trkpt[i-1]\n\t\t\t\tdistance := calcDistance(prevPoint.Lat, prevPoint.Lon, point.Lat, point.Lon)\n\t\t\t\ttotalDistance += distance\n\t\t\t\tchartItems = append(chartItems, ChartItem{X: totalDistance, Y: point.Ele})\n\t\t\t} else {\n\t\t\t\t// Assuming the starting point as 0 distance\n\t\t\t\tchartItems = append(chartItems, ChartItem{X: 0, Y: point.Ele})\n\t\t\t}\n\t\t}\n\t}\n\n\tchartJson, err := json.Marshal(chartItems)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\telev_chart.Values = string(chartJson)\n\telev_chart.Enable = true\n\treturn nil\n}\n\nfunc calcDistance(lat1Str, lon1Str, lat2Str, lon2Str string) float64 {\n\tlat1, _ := strconv.ParseFloat(lat1Str, 64)\n\tlon1, _ := strconv.ParseFloat(lon1Str, 64)\n\tlat2, _ := strconv.ParseFloat(lat2Str, 64)\n\tlon2, _ := strconv.ParseFloat(lon2Str, 64)\n\n\tvar radians = func(deg float64) float64 { return deg * math.Pi / 180 }\n\tlat1 = radians(lat1)\n\tlat2 = radians(lat2)\n\tlon1 = radians(lon1)\n\tlon2 = radians(lon2)\n\n\tdlon := lon2 - lon1\n\tdlat := lat2 - lat1\n\n\ta := math.Pow(math.Sin(dlat/2), 2) + math.Cos(lat1)*math.Cos(lat2)*math.Pow(math.Sin(dlon/2), 2)\n\tc := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))\n\n\t// Distance in Kilometers\n\tdistance := 6371 * c\n\n\treturn distance\n}\n```"
+},
+{
+"User": "",
+"Assistent": ""
+}
+],
+"Code": "\nimport (\n\t\"database/sql\"\n\t_ \"github.com/mattn/go-sqlite3\"\n\t\"encoding/xml\"\n\t\"errors\"\n\t\"fmt\"\n\t\"math\"\n)\n\nfunc update_elev_chart(run_db *Db, list *ListList, elev_chart *Chart) error {\n\tselectedRow := list.GetSelectedRow()\n\tif selectedRow == nil {\n\t\treturn errors.New(\"no row selected\")\n\t}\n\n\trowID, _ := strconv.Atoi(selectedRow.Rowid.Label)\n\n\tdatabase, err := sql.Open(\"sqlite3\", run_db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer database.Close()\n\n\t// Query the database for the route blob using the selected rowID\n\tvar routeBlob []byte\n\tquery := \"SELECT route FROM activities WHERE rowid = ?\"\n\terr = database.QueryRow(query, rowID).Scan(\u0026routeBlob)\n\tif err != nil {\n\t\treturn fmt.Errorf(\"querying route blob: %w\", err)\n\t}\n\n\ttype Trkpt struct {\n\t\tLat  string `xml:\"lat,attr\"`\n\t\tLon  string `xml:\"lon,attr\"`\n\t\tEle  float64 `xml:\"ele\"`\n\t\tTime string `xml:\"time\"`\n\t}\n\ttype Trkseg struct {\n\t\tTrkpt []Trkpt `xml:\"trkpt\"`\n\t}\n\ttype Trk struct {\n\t\tTrkseg []Trkseg `xml:\"trkseg\"`\n\t}\n\ttype Gpx struct {\n\t\tTrk []Trk `xml:\"trk\"`\n\t}\n\n\tgpxData := \u0026Gpx{}\n\tif err := xml.Unmarshal(routeBlob, gpxData); err != nil {\n\t\treturn err\n\t}\n\n\tvar chartItems []ChartItem\n\tvar totalDistance float64\n\tfor _, trk := range gpxData.Trk {\n\t\tfor i, point := range trk.Trkseg[0].Trkpt {\n\t\t\tif i \u003e 0 {\n\t\t\t\tprevPoint := trk.Trkseg[0].Trkpt[i-1]\n\t\t\t\tdistance := calcDistance(prevPoint.Lat, prevPoint.Lon, point.Lat, point.Lon)\n\t\t\t\ttotalDistance += distance\n\t\t\t\tchartItems = append(chartItems, ChartItem{X: totalDistance, Y: point.Ele})\n\t\t\t} else {\n\t\t\t\t// Assuming the starting point as 0 distance\n\t\t\t\tchartItems = append(chartItems, ChartItem{X: 0, Y: point.Ele})\n\t\t\t}\n\t\t}\n\t}\n\n\tchartJson, err := json.Marshal(chartItems)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\telev_chart.Values = string(chartJson)\n\telev_chart.Enable = true\n\treturn nil\n}\n\nfunc calcDistance(lat1Str, lon1Str, lat2Str, lon2Str string) float64 {\n\tlat1, _ := strconv.ParseFloat(lat1Str, 64)\n\tlon1, _ := strconv.ParseFloat(lon1Str, 64)\n\tlat2, _ := strconv.ParseFloat(lat2Str, 64)\n\tlon2, _ := strconv.ParseFloat(lon2Str, 64)\n\n\tvar radians = func(deg float64) float64 { return deg * math.Pi / 180 }\n\tlat1 = radians(lat1)\n\tlat2 = radians(lat2)\n\tlon1 = radians(lon1)\n\tlon2 = radians(lon2)\n\n\tdlon := lon2 - lon1\n\tdlat := lat2 - lat1\n\n\ta := math.Pow(math.Sin(dlat/2), 2) + math.Cos(lat1)*math.Cos(lat2)*math.Pow(math.Sin(dlon/2), 2)\n\tc := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))\n\n\t// Distance in Kilometers\n\tdistance := 6371 * c\n\n\treturn distance\n}",
+"ArgsProps": null
+},
+"Attrs": {
+"bypass": false,
+"show": true
+},
+"ShowCodeChat": false
+}
+],
+"ShowCodeChat": false
+}
+],
+"ShowCodeChat": false
+}
