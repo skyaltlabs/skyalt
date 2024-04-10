@@ -833,10 +833,22 @@ func UiChart_Attrs(node *SANode) {
 	node.ShowAttrBool(&grid, "show", true)
 	node.ShowAttrBool(&grid, "enable", true)
 	node.ShowAttrString(&grid, "values", "[]", true)
-	node.ShowAttrStringCombo(&grid, "typee", "lines", []string{"Lines", "Columns"}, []string{"lines", "columns"})
+	typee := node.ShowAttrStringCombo(&grid, "typee", "lines", []string{"Lines", "Columns"}, []string{"lines", "columns"})
 
 	pl := ui.win.io.GetPalette()
 	node.ShowAttrCd(&grid, "cd", pl.P)
+
+	node.ShowAttrFloat(&grid, "left_margin", 1.5, 2)
+	node.ShowAttrFloat(&grid, "bottom_margin", 1.0, 2)
+
+	if typee == "lines" {
+		node.ShowAttrFloat(&grid, "point_rad", 0.15, 2)
+		node.ShowAttrFloat(&grid, "line_thick", 0.06, 2)
+	}
+	if typee == "columns" {
+		node.ShowAttrFloat(&grid, "column_margin", 0.1, 2)
+	}
+
 }
 
 func UiChart_render(node *SANode) {
@@ -847,17 +859,21 @@ func UiChart_render(node *SANode) {
 	typee := node.GetAttrString("typee", "lines")
 	values := node.GetAttrString("values", "[]")
 
+	left_margin := node.GetAttrFloat("left_margin", 1.5)
+	bottom_margin := node.GetAttrFloat("bottom_margin", 1)
+	right_margin := 0.5
+	top_margin := 0.5
+
+	point_rad := node.GetAttrFloat("point_rad", 0.15)
+	line_thick := node.GetAttrFloat("line_thick", 0.06)
+	column_margin := node.GetAttrFloat("column_margin", 0.1)
+
 	pl := ui.win.io.GetPalette()
 	cdAxis := pl.GetGrey(0)
 	cdAxisGrey := pl.GetGrey(0.8)
 	cd := node.GetAttrCd("cd", pl.P)
 
-	type Item struct {
-		X, Y  float64
-		Label string
-	}
-	var items []Item
-
+	var items []UiLayoutChartItem
 	err := json.Unmarshal([]byte(values), &items)
 	if err != nil {
 		node.SetError(err)
@@ -865,141 +881,31 @@ func UiChart_render(node *SANode) {
 	}
 
 	//bound
-	var min Item
-	var max Item
-	/*if len(items) > 0 {
-		min = items[0]
-		max = items[0]
-	}*/
-	for _, it := range items {
-		min.X = OsMinFloat(min.X, it.X)
-		min.Y = OsMinFloat(min.Y, it.Y)
-		max.X = OsMaxFloat(max.X, it.X)
-		max.Y = OsMaxFloat(max.Y, it.Y)
-	}
-	vx := max.X - min.X
-	vy := max.Y - min.Y
+	min, max := UiLayoutChart_getBound(items)
 
 	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 	{
+
+		ui.Div_colMax(0, 100)
+		ui.Div_rowMax(0, 100)
+
 		if typee == "lines" {
+			//axis
+			_UiLayoutChart_drawAxisX(min, max, left_margin, right_margin, top_margin, bottom_margin, cdAxis, cdAxisGrey, ui, true, true)
+			_UiLayoutChart_drawAxisY(min, max, left_margin, right_margin, top_margin, bottom_margin, cdAxis, cdAxisGrey, ui, true, true)
 
-			margin := 1.5
-			rad := 0.15
-
-			ui.Div_colMax(0, 100)
-			ui.Div_rowMax(0, 100)
-
-			//axis_x
-			{
-				y := (0 - min.Y) / vy
-				ui.Paint_line(0, 0, 1, 1, margin, 0, 1-y, 1, 1-y, cdAxis, 0.03)
-
-				cx := float64(ui.CellWidth(2)) / float64(ui.GetCall().call.canvas.Size.X)
-				marx := float64(ui.CellWidth(margin)) / float64(ui.GetCall().call.canvas.Size.X)
-				mary := float64(ui.CellWidth(margin)) / float64(ui.GetCall().call.canvas.Size.Y)
-
-				ui.Paint_line(0, 0, 1, 1, margin, 0, 0, 0, 1, cdAxisGrey, 0.03)
-				ui.Div_startEx(0, 0, 1, 1, marx-cx/2, 1-mary, cx, mary, "axis_x1")
-				ui.Div_colMax(0, 100)
-				ui.Div_row(0, margin)
-				ui.Comp_text(0, 0, 1, 1, strconv.FormatFloat(min.X, 'f', 1, 64), 1)
-				ui.Div_end()
-
-				jp := (max.X - min.X) / ((1 - 2*marx) / cx)
-				for p := min.X + jp; p < max.X-jp/2; p += jp {
-					d := (p - min.X) / (max.X - min.X)
-					ui.Paint_line(0, 0, 1, 1, margin, d, 0, d, 1, cdAxisGrey, 0.03)
-
-					pp := marx + (1-2*marx)*d
-
-					ui.Div_startEx(0, 0, 1, 1, pp-(cx/2), 1-mary, cx, mary, fmt.Sprintf("axis_x%f", p))
-					ui.Div_colMax(0, 100)
-					ui.Div_row(0, margin)
-					ui.Comp_text(0, 0, 1, 1, strconv.FormatFloat(p, 'f', 1, 64), 1)
-					//ui.Paint_rect(0, 0, 1, 1, 0, InitOsCdBlack(), 0.03)
-					ui.Div_end()
-				}
-
-				ui.Paint_line(0, 0, 1, 1, margin, 1, 0, 1, 1, cdAxisGrey, 0.03)
-				ui.Div_startEx(0, 0, 1, 1, 1-marx-cx/2, 1-mary, cx, mary, "axis_x2")
-				ui.Div_colMax(0, 100)
-				ui.Div_row(0, margin)
-				ui.Comp_text(0, 0, 1, 1, strconv.FormatFloat(max.X, 'f', 1, 64), 1)
-				ui.Div_end()
-			}
-
-			//axis_y
-			{
-				x := (0 - min.X) / vx
-				ui.Paint_line(0, 0, 1, 1, margin, x, 0, x, 1, cdAxis, 0.03)
-
-				cy := float64(ui.CellWidth(2)) / float64(ui.GetCall().call.canvas.Size.Y)
-				marx := float64(ui.CellWidth(margin)) / float64(ui.GetCall().call.canvas.Size.X)
-				mary := float64(ui.CellWidth(margin)) / float64(ui.GetCall().call.canvas.Size.Y)
-
-				ui.Paint_line(0, 0, 1, 1, margin, 0, 0, 1, 0, cdAxisGrey, 0.03)
-				ui.Div_startEx(0, 0, 1, 1, 0, mary-cy/2, marx, cy, "axis_y1")
-				ui.Div_rowMax(0, 100)
-				ui.Div_col(0, margin)
-				ui.Comp_text(0, 0, 1, 1, strconv.FormatFloat(max.Y, 'f', 1, 64), 1)
-				ui.Div_end()
-
-				jp := (max.Y - min.Y) / ((1 - 2*mary) / cy)
-				for p := min.Y + jp; p < max.Y-jp/2; p += jp {
-					d := (p - min.Y) / (max.Y - min.Y)
-					d = (1 - d)
-					ui.Paint_line(0, 0, 1, 1, margin, 0, d, 1, d, cdAxisGrey, 0.03)
-
-					pp := mary + (1-2*mary)*d
-
-					ui.Div_startEx(0, 0, 1, 1, 0, pp-(cy/2), marx, cy, fmt.Sprintf("axis_y%f", p))
-					ui.Div_rowMax(0, 100)
-					ui.Div_col(0, margin)
-					ui.Comp_text(0, 0, 1, 1, strconv.FormatFloat(p, 'f', 1, 64), 1)
-					//ui.Paint_rect(0, 0, 1, 1, 0, InitOsCdBlack(), 0.03)
-					ui.Div_end()
-				}
-
-				ui.Paint_line(0, 0, 1, 1, margin, 0, 1, 1, 1, cdAxisGrey, 0.03)
-				ui.Div_startEx(0, 0, 1, 1, 0, 1-mary-cy/2, marx, cy, "axis_y2")
-				ui.Div_rowMax(0, 100)
-				ui.Div_col(0, margin)
-				ui.Comp_text(0, 0, 1, 1, strconv.FormatFloat(min.Y, 'f', 1, 64), 1)
-				ui.Div_end()
-
-			}
-
-			last_x := float64(0)
-			last_y := float64(0)
-			for i, it := range items {
-				x := (it.X - min.X) / vx
-				y := (it.Y - min.Y) / vy
-
-				ui.Paint_circle(0, 0, 1, 1, margin, x, 1-y, rad, cd, 0)
-				if i > 0 {
-					ui.Paint_line(0, 0, 1, 1, margin, last_x, 1-last_y, x, 1-y, cd, 0.06)
-				}
-
-				last_x = x
-				last_y = y
-			}
+			//values
+			_UiLayoutChart_drawLines(items, min, max, left_margin, right_margin, top_margin, bottom_margin, cd, point_rad, line_thick, ui)
 
 		} else if typee == "columns" {
+			//axis
+			_UiLayoutChart_drawAxisX(min, max, left_margin, right_margin, top_margin, bottom_margin, cdAxis, cdAxisGrey, ui, true, false)
+			_UiLayoutChart_drawAxisY(min, max, left_margin, right_margin, top_margin, bottom_margin, cdAxis, cdAxisGrey, ui, false, true)
 
-			//axis: x=label, y=value
+			_UiLayoutChart_drawAxisXlabels(items, left_margin, right_margin, top_margin, bottom_margin, ui)
 
-			//margin := 0.2
-			jump_x := 1 / float64(len(items))
-			for i, it := range items {
-				x := float64(i) * jump_x
-				y := (it.Y - min.Y) / vy
-
-				ui.Paint_rect(x, 1-y, jump_x, 1, 0.1, cd, 0)
-			}
-
-			//ignore x, x=len(items)
-			//........
+			//values
+			_UiLayoutChart_drawColumns(items, min, max, left_margin, right_margin, top_margin, bottom_margin, column_margin, cd, ui)
 		}
 	}
 	ui.Div_end()
