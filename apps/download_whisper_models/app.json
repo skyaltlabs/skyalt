@@ -69,7 +69,7 @@
 "Messages": [
 {
 "User": "Clear 'table' and copy table \"Link\" from 'db' into 'table'.\nSet \"size\" column as \u003cvalue\u003e+\"MB\".",
-"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc table(table *ListTable, db *Db) error {\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\trows, err := conn.Query(\"SELECT model, size FROM links\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tvar size int\n\t\t\n\t\terr = rows.Scan(\u0026model, \u0026size)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\trow := table.AddRow()\n\t\trow.Model.Label = model\n\t\trow.Size.Label = fmt.Sprintf(\"%dMB\", size)\n\t}\n\n\treturn nil\n}\n```"
+"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc table(table *ListTable, db *Db_file) error {\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\trows, err := conn.Query(\"SELECT model, size FROM links\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tvar size int\n\t\t\n\t\terr = rows.Scan(\u0026model, \u0026size)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\trow := table.AddRow()\n\t\trow.Model.Label = model\n\t\trow.Size.Label = fmt.Sprintf(\"%dMB\", size)\n\t}\n\n\treturn nil\n}\n```"
 },
 {
 "User": "",
@@ -79,7 +79,7 @@
 "Code": "func table() error {\n\treturn nil\n}",
 "ArgsProps": [
 {
-"Node": "db",
+"Node": "db_file",
 "Write": false
 }
 ]
@@ -306,7 +306,7 @@
 "Y": 9.849707
 },
 "Name": "db",
-"Exe": "db",
+"Exe": "db_file",
 "Code": {
 "Messages": null,
 "Code": "",
@@ -355,21 +355,21 @@
 "Messages": [
 {
 "User": "Clear 'table' and copy table \"Link\" from 'db' into 'table'.\nSet \"size\" column as \u003cvalue\u003e+\"MB\".",
-"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc init_table(table *ListTable, db *Db) error {\n\ttable.Rows = nil // Clearing the existing table\n\n\t// Open the SQLite database\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\t// Execute a query to get all the links\n\trows, err := conn.Query(\"SELECT model, size FROM links\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tvar size int\n\t\terr = rows.Scan(\u0026model, \u0026size)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\t// Append each row to the table\n\t\tnewRow := table.AddRow()\n\t\tnewRow.Model.Label = model\n\t\tnewRow.Size.Label = fmt.Sprintf(\"%dMB\", size)\n\t}\n\n\treturn rows.Err() // In case of any iteration error\n}\n```"
+"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc init_table(table *ListTable, db *Db_file) error {\n\ttable.Rows = nil // Clearing the existing table\n\n\t// Open the SQLite database\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\t// Execute a query to get all the links\n\trows, err := conn.Query(\"SELECT model, size FROM links\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tvar size int\n\t\terr = rows.Scan(\u0026model, \u0026size)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\t// Append each row to the table\n\t\tnewRow := table.AddRow()\n\t\tnewRow.Model.Label = model\n\t\tnewRow.Size.Label = fmt.Sprintf(\"%dMB\", size)\n\t}\n\n\treturn rows.Err() // In case of any iteration error\n}\n```"
 },
 {
 "User": "",
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc init_table(table *ListTable, db *Db) error {\n\ttable.Rows = nil // Clearing the existing table\n\n\t// Open the SQLite database\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\t// Execute a query to get all the links\n\trows, err := conn.Query(\"SELECT model, size FROM links\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tvar size int\n\t\terr = rows.Scan(\u0026model, \u0026size)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\t// Append each row to the table\n\t\tnewRow := table.AddRow()\n\t\tnewRow.Model.Label = model\n\t\tnewRow.Size.Label = fmt.Sprintf(\"%dMB\", size)\n\t}\n\n\treturn rows.Err() // In case of any iteration error\n}\n",
+"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc init_table(table *ListTable, db *Db_file) error {\n\ttable.Rows = nil // Clearing the existing table\n\n\t// Open the SQLite database\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\t// Execute a query to get all the links\n\trows, err := conn.Query(\"SELECT model, size FROM links\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tvar size int\n\t\terr = rows.Scan(\u0026model, \u0026size)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\t// Append each row to the table\n\t\tnewRow := table.AddRow()\n\t\tnewRow.Model.Label = model\n\t\tnewRow.Size.Label = fmt.Sprintf(\"%dMB\", size)\n\t}\n\n\treturn rows.Err() // In case of any iteration error\n}\n",
 "ArgsProps": [
 {
 "Node": "table",
 "Write": false
 },
 {
-"Node": "db",
+"Node": "db_file",
 "Write": false
 }
 ]
@@ -388,6 +388,7 @@
 },
 "Name": "update_table",
 "Exe": "code",
+"Selected": true,
 "Code": {
 "Messages": [
 {

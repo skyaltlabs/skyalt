@@ -143,7 +143,7 @@
 "Y": 18.077469
 },
 "Name": "db",
-"Exe": "db",
+"Exe": "db_file",
 "Code": {
 "Messages": null,
 "Code": "",
@@ -391,25 +391,26 @@
 },
 "Name": "chat",
 "Exe": "code",
+"Selected": true,
 "Code": {
 "Messages": [
 {
 "User": "If 'button' is clicked, build messages from 'db'. Add 'user_msg' to messages and send it to 'llamacpp' to get answer.\nSave answer and 'user_msg' into 'db'. Reset 'user_msg' editbox.",
-"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc chat(button *Button, db *Db, user_msg *Editbox, llamacpp *Llamacpp) error {\n\tif button.Triggered {\n\t\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer conn.Close()\n\n\t\tmessages := []string{}\n\t\trows, err := conn.Query(\"SELECT content FROM chat\")\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer rows.Close()\n\n\t\tfor rows.Next() {\n\t\t\tvar message string\n\t\t\tif err := rows.Scan(\u0026message); err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t\tmessages = append(messages, message)\n\t\t}\n\n\t\tmessages = append(messages, user_msg.Value)\n\t\tanswer := llamacpp.Send(messages)\n\t\tuser_msg.Value = \"\"\n\n\t\ttx, err := conn.Begin()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\t_, err = tx.Exec(\"INSERT INTO chat (role, content) VALUES (?, ?)\", \"user\", user_msg.Value)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\t_, err = tx.Exec(\"INSERT INTO chat (role, content) VALUES (?, ?)\", \"llama\", answer)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\terr = tx.Commit()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tbutton.Triggered = false\n\t}\n\treturn nil\n}\n```"
+"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc chat(button *Button, db *Db_file, user_msg *Editbox, llamacpp *Llamacpp) error {\n\tif button.Triggered {\n\t\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer conn.Close()\n\n\t\tmessages := []string{}\n\t\trows, err := conn.Query(\"SELECT content FROM chat\")\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer rows.Close()\n\n\t\tfor rows.Next() {\n\t\t\tvar message string\n\t\t\tif err := rows.Scan(\u0026message); err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t\tmessages = append(messages, message)\n\t\t}\n\n\t\tmessages = append(messages, user_msg.Value)\n\t\tanswer := llamacpp.Send(messages)\n\t\tuser_msg.Value = \"\"\n\n\t\ttx, err := conn.Begin()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\t_, err = tx.Exec(\"INSERT INTO chat (role, content) VALUES (?, ?)\", \"user\", user_msg.Value)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\t_, err = tx.Exec(\"INSERT INTO chat (role, content) VALUES (?, ?)\", \"llama\", answer)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\terr = tx.Commit()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tbutton.Triggered = false\n\t}\n\treturn nil\n}\n```"
 },
 {
 "User": "",
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc chat(button *Button, db *Db, user_msg *Editbox, llamacpp *Llamacpp) error {\n\tif button.Triggered {\n\t\tdatabase, err := sql.Open(\"sqlite3\", db.Path)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer database.Close()\n\n\t\trows, err := database.Query(\"SELECT role, content FROM chat\")\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer rows.Close()\n\n\t\tvar messages []LlamaMessage\n\t\tfor rows.Next() {\n\t\t\tvar role, content string\n\t\t\tif err := rows.Scan(\u0026role, \u0026content); err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t\tmessages = append(messages, LlamaMessage{Role: role, Content: content})\n\t\t}\n\t\tif err := rows.Err(); err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\tuserMessage := LlamaMessage{Role: \"user\", Content: user_msg.Value}\n\t\tmessages = append(messages, userMessage)\n\n\t\tanswer, err := llamacpp.GetAnswer(messages)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\ttx, err := database.Begin()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tstmt, err := tx.Prepare(\"INSERT INTO chat(role, content) VALUES(?, ?)\")\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer stmt.Close()\n\n\t\t_, err = stmt.Exec(\"user\", user_msg.Value)\n\t\tif err != nil {\n\t\t\ttx.Rollback()\n\t\t\treturn err\n\t\t}\n\n\t\t_, err = stmt.Exec(\"assistant\", answer)\n\t\tif err != nil {\n\t\t\ttx.Rollback()\n\t\t\treturn err\n\t\t}\n\n\t\terr = tx.Commit()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\tuser_msg.Value = \"\" // Reset user message editbox after sending\n\n\t\tfmt.Printf(\"The assistant's answer is: %s\\n\", answer)\n\t}\n\treturn nil\n}\n",
+"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc chat(button *Button, db *Db_file, user_msg *Editbox, llamacpp *Llamacpp) error {\n\tif button.Triggered {\n\t\tdatabase, err := sql.Open(\"sqlite3\", db.Path)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer database.Close()\n\n\t\trows, err := database.Query(\"SELECT role, content FROM chat\")\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer rows.Close()\n\n\t\tvar messages []LlamaMessage\n\t\tfor rows.Next() {\n\t\t\tvar role, content string\n\t\t\tif err := rows.Scan(\u0026role, \u0026content); err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t\tmessages = append(messages, LlamaMessage{Role: role, Content: content})\n\t\t}\n\t\tif err := rows.Err(); err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\tuserMessage := LlamaMessage{Role: \"user\", Content: user_msg.Value}\n\t\tmessages = append(messages, userMessage)\n\n\t\tanswer, err := llamacpp.GetAnswer(messages)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\ttx, err := database.Begin()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tstmt, err := tx.Prepare(\"INSERT INTO chat(role, content) VALUES(?, ?)\")\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tdefer stmt.Close()\n\n\t\t_, err = stmt.Exec(\"user\", user_msg.Value)\n\t\tif err != nil {\n\t\t\ttx.Rollback()\n\t\t\treturn err\n\t\t}\n\n\t\t_, err = stmt.Exec(\"assistant\", answer)\n\t\tif err != nil {\n\t\t\ttx.Rollback()\n\t\t\treturn err\n\t\t}\n\n\t\terr = tx.Commit()\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\tuser_msg.Value = \"\" // Reset user message editbox after sending\n\n\t\tfmt.Printf(\"The assistant's answer is: %s\\n\", answer)\n\t}\n\treturn nil\n}\n",
 "ArgsProps": [
 {
 "Node": "button",
 "Write": false
 },
 {
-"Node": "db",
+"Node": "db_file",
 "Write": false
 },
 {
@@ -440,17 +441,17 @@
 "Messages": [
 {
 "User": "From 'db' create text in form: \u003crole\u003e: \u003ccontent\u003e\\n.  Save text into 'text'.",
-"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc build_output(db *Db, text *Text) error {\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\trows, err := conn.Query(\"SELECT role, content FROM chat\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tresult := \"\"\n\tfor rows.Next() {\n\t\tvar role, content string\n\t\tif err := rows.Scan(\u0026role, \u0026content); err != nil {\n\t\t\treturn err\n\t\t}\n\t\tresult += fmt.Sprintf(\"%s: %s\\n\", role, content)\n\t}\n\n\tif err := rows.Err(); err != nil {\n\t\treturn err\n\t}\n\n\ttext.Label = result\n\treturn nil\n}\n```"
+"Assistent": "```go\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc build_output(db *Db_file, text *Text) error {\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\trows, err := conn.Query(\"SELECT role, content FROM chat\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tresult := \"\"\n\tfor rows.Next() {\n\t\tvar role, content string\n\t\tif err := rows.Scan(\u0026role, \u0026content); err != nil {\n\t\t\treturn err\n\t\t}\n\t\tresult += fmt.Sprintf(\"%s: %s\\n\", role, content)\n\t}\n\n\tif err := rows.Err(); err != nil {\n\t\treturn err\n\t}\n\n\ttext.Label = result\n\treturn nil\n}\n```"
 },
 {
 "User": "",
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc build_output(db *Db, text *Text) error {\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\trows, err := conn.Query(\"SELECT role, content FROM chat\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tresult := \"\"\n\tfor rows.Next() {\n\t\tvar role, content string\n\t\tif err := rows.Scan(\u0026role, \u0026content); err != nil {\n\t\t\treturn err\n\t\t}\n\t\tresult += fmt.Sprintf(\"%s: %s\\n\", role, content)\n\t}\n\n\tif err := rows.Err(); err != nil {\n\t\treturn err\n\t}\n\n\ttext.Label = result\n\treturn nil\n}\n",
+"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc build_output(db *Db_file, text *Text) error {\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\trows, err := conn.Query(\"SELECT role, content FROM chat\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tresult := \"\"\n\tfor rows.Next() {\n\t\tvar role, content string\n\t\tif err := rows.Scan(\u0026role, \u0026content); err != nil {\n\t\t\treturn err\n\t\t}\n\t\tresult += fmt.Sprintf(\"%s: %s\\n\", role, content)\n\t}\n\n\tif err := rows.Err(); err != nil {\n\t\treturn err\n\t}\n\n\ttext.Label = result\n\treturn nil\n}\n",
 "ArgsProps": [
 {
-"Node": "db",
+"Node": "db_file",
 "Write": false
 },
 {

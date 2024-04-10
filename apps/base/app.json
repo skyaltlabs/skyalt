@@ -3,8 +3,8 @@
 {
 "Name": "counter",
 "IDE": true,
-"Cam_x": 30.04607582092285,
-"Cam_y": -9.261539459228516,
+"Cam_x": 29.505535125732422,
+"Cam_y": -8.6256103515625,
 "Cam_z": 0.8499999999999996,
 "EnableExecution": true,
 "ExePos": -1,
@@ -53,9 +53,9 @@
 {
 "Name": "running",
 "IDE": true,
-"Cam_x": 15.830229759216309,
-"Cam_y": -0.5540010333061218,
-"Cam_z": 0.7,
+"Cam_x": 20.756553649902344,
+"Cam_y": 3.083064556121826,
+"Cam_z": 0.6,
 "EnableExecution": true,
 "ExePos": -1,
 "Selected_canvas": {}
