@@ -27,13 +27,18 @@ type UiLayoutChartItem struct {
 	Label string  `json:"label"`
 }
 
-func UiLayoutChart_getBound(items []UiLayoutChartItem) (UiLayoutChartItem, UiLayoutChartItem) {
-
+func UiLayoutChart_getBound(items []UiLayoutChartItem, bound_x0, bound_y0 bool) (UiLayoutChartItem, UiLayoutChartItem) {
 	var min, max UiLayoutChartItem
-	//	if len(items) > 0 {
-	//		min = items[0]
-	//		max = items[0]
-	//	}
+
+	if len(items) > 0 {
+		//bound==false => can be in range 5-10(no 0)
+		min.X = OsTrnFloat(bound_x0, 0, items[0].X)
+		max.X = OsTrnFloat(bound_x0, 0, items[0].X)
+
+		min.Y = OsTrnFloat(bound_y0, 0, items[0].Y)
+		max.Y = OsTrnFloat(bound_y0, 0, items[0].Y)
+	}
+
 	for _, it := range items {
 		min.X = OsMinFloat(min.X, it.X)
 		min.Y = OsMinFloat(min.Y, it.Y)
@@ -60,7 +65,7 @@ func cellMargin(cell_left, cell_right, cell_top, cell_bottom float64, x, y, w, h
 	return x, y, w, h
 }
 
-func _UiLayoutChart_drawAxisX(min, max UiLayoutChartItem, left_margin, right_margin, top_margin, bottom_margin float64, cdAxis, cdAxisGrey OsCd, ui *Ui, drawAxis, drawValues bool) {
+func _UiLayoutChart_drawAxisX(min, max UiLayoutChartItem, left_margin, right_margin, top_margin, bottom_margin float64, cdAxis, cdAxisGrey OsCd, ui *Ui, drawAxis, drawValues bool, unit string) {
 	vx := max.X - min.X
 	vy := max.Y - min.Y
 
@@ -88,7 +93,7 @@ func _UiLayoutChart_drawAxisX(min, max UiLayoutChartItem, left_margin, right_mar
 			ui.Div_colMax(0, 100)
 			ui.Div_row(0, bottom_margin)
 			ui.GetCall().call.data.scrollV.show = false
-			ui.Comp_text(0, 0, 1, 1, strconv.FormatFloat(min.X+(vx*p), 'f', 2, 64), 1)
+			ui.Comp_text(0, 0, 1, 1, strconv.FormatFloat(min.X+(vx*p), 'f', 2, 64)+OsTrnString(p == 1, unit, ""), 1)
 			//ui.Paint_rect(0, 0, 1, 1, 0, InitOsCdBlack(), 0.03)
 			ui.Div_end()
 
@@ -104,7 +109,7 @@ func _UiLayoutChart_drawAxisX(min, max UiLayoutChartItem, left_margin, right_mar
 	}
 }
 
-func _UiLayoutChart_drawAxisY(min, max UiLayoutChartItem, left_margin, right_margin, top_margin, bottom_margin float64, cdAxis, cdAxisGrey OsCd, ui *Ui, drawAxis, drawValues bool) {
+func _UiLayoutChart_drawAxisY(min, max UiLayoutChartItem, left_margin, right_margin, top_margin, bottom_margin float64, cdAxis, cdAxisGrey OsCd, ui *Ui, drawAxis, drawValues bool, unit string) {
 	vx := max.X - min.X
 	vy := max.Y - min.Y
 
@@ -130,7 +135,7 @@ func _UiLayoutChart_drawAxisY(min, max UiLayoutChartItem, left_margin, right_mar
 			ui.Div_colMax(0, 100)
 			ui.Div_rowMax(0, 100)
 			ui.GetCall().call.data.scrollV.show = false
-			ui.Comp_text(0, 0, 1, 1, strconv.FormatFloat(max.Y-(vy*p), 'f', 2, 64), 1)
+			ui.Comp_text(0, 0, 1, 1, strconv.FormatFloat(max.Y-(vy*p), 'f', 2, 64)+OsTrnString(p == 0, unit, ""), 1)
 			//ui.Paint_rect(0, 0, 1, 1, 0, InitOsCdBlack(), 0.03)
 			ui.Div_end()
 
@@ -180,37 +185,39 @@ func _UiLayoutChart_drawColumns(items []UiLayoutChartItem, min, max UiLayoutChar
 	_, _, cmar, _ := cellMargin(left_margin, right_margin, top_margin, bottom_margin, 0, 0, cmarx, 0, ui)
 
 	//values
-	y0 := (0 - min.Y) / vy
 	jump_x := 1 / float64(len(items))
 	for i, it := range items {
 		x := float64(i) * jump_x
-		y := (it.Y - 0) / vy
+		y := (it.Y - min.Y) / vy
 
-		x, y, w, h := cellMargin(left_margin, right_margin, top_margin, bottom_margin, x, 1-y0, jump_x, -y, ui)
+		x, y, w, h := cellMargin(left_margin, right_margin, top_margin, bottom_margin, x, 1, jump_x, -y, ui) //y is reverse!
 
 		ui.Paint_rect(x+cmar, y, w-2*cmar, h, 0, cd, 0)
 	}
 }
 
-func _UiLayoutChart_drawAxisXlabels(items []UiLayoutChartItem, left_margin, right_margin, top_margin2, bottom_margin float64, ui *Ui) {
-
-	top_margin2 = float64(ui.GetCall().call.canvas.Size.Y)/float64(ui.win.Cell()) - bottom_margin
-
-	//slow: too dense .............................
+func _UiLayoutChart_drawAxisXlabels(items []UiLayoutChartItem, left_margin, right_margin, top_margin, bottom_margin float64, ui *Ui) {
+	top_margin2 := float64(ui.GetCall().call.canvas.Size.Y)/float64(ui.win.Cell()) - bottom_margin
 
 	jump_x := 1 / float64(len(items))
+
+	next_x := 0.0
+	cell_x := float64(ui.CellWidth(2)) / float64(ui.GetCall().call.canvas.Size.X)
 	for i, it := range items {
 		x := float64(i) * jump_x
 
-		x, y, w, h := cellMargin(left_margin, right_margin, top_margin2, 0, x, 0, jump_x, 1, ui)
+		x, y, w, h := cellMargin(left_margin, right_margin, top_margin2, 0, x, 0, cell_x, 1, ui)
 
-		ui.Div_startEx(0, 0, 1, 1, x, y, w, h, fmt.Sprintf("label%d", i))
-		ui.Div_colMax(0, 100)
-		ui.Div_row(0, bottom_margin)
-		ui.GetCall().call.data.scrollV.show = false
-		ui.Comp_text(0, 0, 1, 1, it.Label, 1)
-		//ui.Paint_rect(0, 0, 1, 1, 0, InitOsCdBlack(), 0.03)
-		ui.Div_end()
+		if x >= next_x {
+			ui.Div_startEx(0, 0, 1, 1, x, y, w, h, fmt.Sprintf("label%d", i))
+			ui.Div_colMax(0, 100)
+			ui.Div_row(0, bottom_margin)
+			ui.GetCall().call.data.scrollV.show = false
+			ui.Comp_text(0, 0, 1, 1, it.Label, 1)
+			//ui.Paint_rect(0, 0, 1, 1, 0, InitOsCdBlack(), 0.03)
+			ui.Div_end()
 
+			next_x = x + cell_x
+		}
 	}
 }

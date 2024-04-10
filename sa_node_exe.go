@@ -844,11 +844,17 @@ func UiChart_Attrs(node *SANode) {
 	if typee == "lines" {
 		node.ShowAttrFloat(&grid, "point_rad", 0.15, 2)
 		node.ShowAttrFloat(&grid, "line_thick", 0.06, 2)
+		node.ShowAttrString(&grid, "x_unit", "", false)
+		node.ShowAttrString(&grid, "y_unit", "", false)
+		node.ShowAttrBool(&grid, "bound_x0", true)
+		node.ShowAttrBool(&grid, "bound_y0", true)
+
 	}
 	if typee == "columns" {
 		node.ShowAttrFloat(&grid, "column_margin", 0.1, 2)
+		node.ShowAttrString(&grid, "y_unit", "", false)
+		node.ShowAttrBool(&grid, "bound_y0", true)
 	}
-
 }
 
 func UiChart_render(node *SANode) {
@@ -861,12 +867,18 @@ func UiChart_render(node *SANode) {
 
 	left_margin := node.GetAttrFloat("left_margin", 1.5)
 	bottom_margin := node.GetAttrFloat("bottom_margin", 1)
-	right_margin := 0.5
-	top_margin := 0.5
+	right_margin := OsMinFloat(left_margin, 1)
+	top_margin := OsMinFloat(bottom_margin, 1)
 
 	point_rad := node.GetAttrFloat("point_rad", 0.15)
 	line_thick := node.GetAttrFloat("line_thick", 0.06)
 	column_margin := node.GetAttrFloat("column_margin", 0.1)
+
+	x_unit := node.GetAttrString("x_unit", "")
+	y_unit := node.GetAttrString("y_unit", "")
+
+	bound_x0 := node.GetAttrBool("bound_x0", true)
+	bound_y0 := node.GetAttrBool("bound_y0", true)
 
 	pl := ui.win.io.GetPalette()
 	cdAxis := pl.GetGrey(0)
@@ -881,7 +893,7 @@ func UiChart_render(node *SANode) {
 	}
 
 	//bound
-	min, max := UiLayoutChart_getBound(items)
+	min, max := UiLayoutChart_getBound(items, bound_x0, bound_y0)
 
 	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 	{
@@ -891,16 +903,16 @@ func UiChart_render(node *SANode) {
 
 		if typee == "lines" {
 			//axis
-			_UiLayoutChart_drawAxisX(min, max, left_margin, right_margin, top_margin, bottom_margin, cdAxis, cdAxisGrey, ui, true, true)
-			_UiLayoutChart_drawAxisY(min, max, left_margin, right_margin, top_margin, bottom_margin, cdAxis, cdAxisGrey, ui, true, true)
+			_UiLayoutChart_drawAxisX(min, max, left_margin, right_margin, top_margin, bottom_margin, cdAxis, cdAxisGrey, ui, true, true, x_unit)
+			_UiLayoutChart_drawAxisY(min, max, left_margin, right_margin, top_margin, bottom_margin, cdAxis, cdAxisGrey, ui, true, true, y_unit)
 
 			//values
 			_UiLayoutChart_drawLines(items, min, max, left_margin, right_margin, top_margin, bottom_margin, cd, point_rad, line_thick, ui)
 
 		} else if typee == "columns" {
 			//axis
-			_UiLayoutChart_drawAxisX(min, max, left_margin, right_margin, top_margin, bottom_margin, cdAxis, cdAxisGrey, ui, true, false)
-			_UiLayoutChart_drawAxisY(min, max, left_margin, right_margin, top_margin, bottom_margin, cdAxis, cdAxisGrey, ui, false, true)
+			_UiLayoutChart_drawAxisX(min, max, left_margin, right_margin, top_margin, bottom_margin, cdAxis, cdAxisGrey, ui, true, false, x_unit)
+			_UiLayoutChart_drawAxisY(min, max, left_margin, right_margin, top_margin, bottom_margin, cdAxis, cdAxisGrey, ui, false, true, y_unit)
 
 			_UiLayoutChart_drawAxisXlabels(items, left_margin, right_margin, top_margin, bottom_margin, ui)
 
