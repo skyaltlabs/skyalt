@@ -195,7 +195,7 @@ func (node *SANode) ShowAttrCd(grid *OsV4, namePrefix string, defValue OsCd) OsC
 
 	node.showAttrName(grid, namePrefix, value.Cmp(defValue))
 
-	if ui.comp_colorPicker(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, "pick_cd_"+node.Name, "", true) {
+	if ui.comp_colorPicker(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, namePrefix+"_"+node.Name, "", true) {
 		node.SetAttrCd(namePrefix, value)
 		node.SetStructChange()
 	}
