@@ -65,11 +65,10 @@ func InitSAGroups() SAGroups {
 		{name: "microphone", render: UiMicrophone_render, attrs: UiMicrophone_Attrs},
 		{name: "map", render: UiMap_render, attrs: UiMap_Attrs},
 		{name: "layout", render: UiLayout_render, attrs: UiLayout_Attrs},
+		{name: "dialog", render: UiDialog_render, attrs: UiDialog_Attrs},
 		{name: "list", render: UiList_render, attrs: UiList_Attrs},
 		{name: "chart", render: UiChart_render, attrs: UiChart_Attrs},
-
-		/*	{name: "image", render: SAExe_Render_Image},
-			{name: "dialog", render: SAExe_Render_Dialog},*/
+		//	{name: "image", render: SAExe_Render_Image},
 	}})
 
 	grs.groups = append(grs.groups, &SAGroup{name: "Access", icon: InitWinMedia_url(path + "node_file.png"), nodes: []*SAGroupNode{
