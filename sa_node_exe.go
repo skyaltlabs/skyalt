@@ -1758,7 +1758,11 @@ func UiMap_Attrs(node *SANode) {
 	node.ShowAttrString(&grid, "copyright_url", "https://www.openstreetmap.org/copyright", false)
 
 	node.ShowAttrString(&grid, "locators", "", true)
+	node.ShowAttrCd(&grid, "locators_cd", OsCd{50, 50, 200, 255})
+
 	node.ShowAttrString(&grid, "segments", "", true)
+	node.ShowAttrCd(&grid, "segments_cd", OsCd{200, 50, 50, 255})
+
 }
 
 func UiMap_render(node *SANode) {
@@ -1778,8 +1782,10 @@ func UiMap_render(node *SANode) {
 
 	locators := node.GetAttrString("locators", "")   //`[{"label":"Example Title", "lon":14.4071117049, "lat":50.0852013259}, {"label":"2", "lon":14, "lat":50}]`
 	segmentsIn := node.GetAttrString("segments", "") //`[{"label":"Example Title", "Trkpt":[{"lat":50,"lon":16,"ele":400,"time":"2020-04-15T09:05:20Z"},{"lat":50.4,"lon":16.1,"ele":400,"time":"2020-04-15T09:05:23Z"}]}]`
-
 	segmentsIn = strings.TrimSpace(segmentsIn)
+
+	locators_cd := node.GetAttrCd("locators_cd", OsCd{50, 50, 200, 255})
+	segments_cd := node.GetAttrCd("segments_cd", OsCd{200, 50, 50, 255})
 
 	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
 	{
@@ -1803,7 +1809,7 @@ func UiMap_render(node *SANode) {
 			var items []UiCompMapLocator
 			err := json.Unmarshal([]byte(locators), &items)
 			if err == nil {
-				err = ui.comp_mapLocators(lon, lat, zoom, items, "map_"+node.Name)
+				err = ui.comp_mapLocators(lon, lat, zoom, items, locators_cd, "map_"+node.Name)
 				if err != nil {
 					node.SetError(fmt.Errorf("comp_mapLocators() failed: %w", err))
 				}
@@ -1819,7 +1825,7 @@ func UiMap_render(node *SANode) {
 
 			if err == nil {
 				st := OsTime()
-				err = ui.comp_mapSegments(lon, lat, zoom, seg.items) //slow ........ cache + redraw when zoom ....
+				err = ui.comp_mapSegments(lon, lat, zoom, seg.items, segments_cd) //slow ........ cache + redraw when zoom ....
 				fmt.Println("draw()", OsTime()-st)
 
 				if err != nil {

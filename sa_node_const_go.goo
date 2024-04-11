@@ -208,10 +208,10 @@ type Color struct {
 	Grid_w  int  `json:"grid_w"`
 	Grid_h  int  `json:"grid_h"`
 	Show    bool `json:"show"`
-	Value_r int  `json:"value_r"` //<0-255>
-	Value_g int  `json:"value_g"` //<0-255>
-	Value_b int  `json:"value_b"` //<0-255>
-	Value_a int  `json:"value_a"` //<0-255>
+	Value_r int  `json:"value_r"` 
+	Value_g int  `json:"value_g"` 
+	Value_b int  `json:"value_b"` 
+	Value_a int  `json:"value_a"` 
 	Enable  bool `json:"enable"`
 }
 
@@ -282,6 +282,16 @@ type Map struct {
 
 	Locators   string    `json:"locators"`
 	Segments   string    `json:"segments"`
+
+	Locators_cd_r int  `json:"locators_cd_r"`
+	Locators_cd_g int  `json:"locators_cd_g"`
+	Locators_cd_b int  `json:"locators_cd_b"`
+	Locators_cd_a int  `json:"locators_cd_a"`
+
+	Segments_cd_r int  `json:"segments_cd_r"`
+	Segments_cd_g int  `json:"segments_cd_g"`
+	Segments_cd_b int  `json:"segments_cd_b"`
+	Segments_cd_a int  `json:"segments_cd_a"`
 }
 
 type ChartItem struct {
@@ -301,10 +311,10 @@ type Chart struct {
 	//Values  []*ChartItem `json:"values"`
 	Typee     string    `json:"typee"`
 
-	Cd_r int  `json:"cd_r"` //<0-255>
-	Cd_g int  `json:"cd_g"` //<0-255>
-	Cd_b int  `json:"cd_b"` //<0-255>
-	Cd_a int  `json:"cd_a"` //<0-255>
+	Cd_r int  `json:"cd_r"`
+	Cd_g int  `json:"cd_g"`
+	Cd_b int  `json:"cd_b"`
+	Cd_a int  `json:"cd_a"`
 
 	Left_margin    float64    `json:"left_margin"`
 	Bottom_margin  float64    `json:"bottom_margin"`

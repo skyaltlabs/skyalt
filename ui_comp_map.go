@@ -202,7 +202,7 @@ type UiCompMapSegments struct {
 	Trkpt []UiCompMapLocator
 }
 
-func (ui *Ui) comp_mapLocators(cam_lon, cam_lat, cam_zoom float64, items []UiCompMapLocator, dialogName string) error {
+func (ui *Ui) comp_mapLocators(cam_lon, cam_lat, cam_zoom float64, items []UiCompMapLocator, cd OsCd, dialogName string) error {
 	cell := ui.DivInfo_get(SA_DIV_GET_cell, 0)
 	width := ui.DivInfo_get(SA_DIV_GET_screenWidth, 0)
 	height := ui.DivInfo_get(SA_DIV_GET_screenHeight, 0)
@@ -233,6 +233,7 @@ func (ui *Ui) comp_mapLocators(cam_lon, cam_lat, cam_zoom float64, items []UiCom
 			//ui.Paint_file(0, 0, 1, 1, 0, "file:apps/base/resources/locator.png", InitOsCd32(200, 20, 20, 255), 1, 0, false) //red
 
 			dnm := dialogName + "_" + strconv.Itoa(i)
+			//cd ......
 			if ui.Comp_buttonIcon(0, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/locator.png"), 0, it.Label, Comp_buttonProp()) > 0 {
 				ui.Dialog_open(dnm, 1)
 			}
@@ -250,7 +251,7 @@ func (ui *Ui) comp_mapLocators(cam_lon, cam_lat, cam_zoom float64, items []UiCom
 	return nil
 }
 
-func (ui *Ui) comp_mapSegments(cam_lon, cam_lat, cam_zoom float64, items []UiCompMapSegments) error {
+func (ui *Ui) comp_mapSegments(cam_lon, cam_lat, cam_zoom float64, items []UiCompMapSegments, cd OsCd) error {
 	cell := ui.DivInfo_get(SA_DIV_GET_cell, 0)
 	width := ui.DivInfo_get(SA_DIV_GET_screenWidth, 0)
 	height := ui.DivInfo_get(SA_DIV_GET_screenHeight, 0)
@@ -286,7 +287,7 @@ func (ui *Ui) comp_mapSegments(cam_lon, cam_lat, cam_zoom float64, items []UiCom
 			//ui.Paint_tooltip(x-rad_x/2, y-rad_y, rad_x, rad_y, fmt.Sprintf("%.2f, %.2f, %s", pt.Lon, pt.Lat, pt.Time))
 
 			if last_set {
-				ui.Paint_line(0, 0, 1, 1, 0, last_x, last_y, x, y, InitOsCd32(200, 20, 20, 255), 0.06)
+				ui.Paint_line(0, 0, 1, 1, 0, last_x, last_y, x, y, cd, 0.06)
 			}
 			last_set = true
 			last_x = x
