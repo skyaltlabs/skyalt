@@ -425,19 +425,26 @@ func (ui *Ui) _UiPaint_TextSelectKeys(text string, lines []int, editable bool, p
 		}
 		if ui.Dialog_start(dnm) {
 			ui.Div_col(0, 5)
-			if ui.Comp_buttonMenu(0, 0, 1, 1, "Copy", false, Comp_buttonProp()) > 0 {
+
+			if ui.Comp_buttonMenu(0, 0, 1, 1, "Select All", false, Comp_buttonProp()) > 0 {
+				keys.selectAll = true
+				ui.Dialog_close()
+			}
+
+			if ui.Comp_buttonMenu(0, 1, 1, 1, "Copy", false, Comp_buttonProp()) > 0 {
 				keys.copy = true
 				ui.Dialog_close()
 			}
-			if ui.Comp_buttonMenu(0, 1, 1, 1, "Cut", false, Comp_buttonProp().Enable(editable)) > 0 {
+			if ui.Comp_buttonMenu(0, 2, 1, 1, "Cut", false, Comp_buttonProp().Enable(editable)) > 0 {
 				keys.cut = true
 				ui.Dialog_close()
 			}
-			if ui.Comp_buttonMenu(0, 2, 1, 1, "Paste", false, Comp_buttonProp().Enable(editable)) > 0 {
+			if ui.Comp_buttonMenu(0, 3, 1, 1, "Paste", false, Comp_buttonProp().Enable(editable)) > 0 {
 				keys.paste = true
 				ui.win.RefreshClipboard()
 				ui.Dialog_close()
 			}
+
 			ui.Dialog_end()
 		}
 	}
