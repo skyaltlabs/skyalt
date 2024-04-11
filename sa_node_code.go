@@ -642,7 +642,7 @@ func (ls *SANodeCode) GetAnswer() {
 		}
 	}
 
-	props := &SAServiceOpenAIProps{Model: "gpt-4-turbo-preview", Messages: messages}
+	props := &SAServiceOpenAIProps{Model: "gpt-4-turbo-2024-04-09", Messages: messages}
 
 	ls.job_oai = ls.node.app.base.jobs.AddOpenAI(ls.node.app, NewSANodePath(ls.node), props)
 }
@@ -899,9 +899,21 @@ func (ls *SANodeCode) extractImports(code string) ([]SANodeCodeImport, error) {
 	return imports, nil
 }
 
-func (ls *SANodeCode) extractFunc(code string) (string, error) {
+func (ls *SANodeCode) extractContent(code string) (string, error) {
+	d := strings.Index(code, "\nfunc")
+	dd := strings.Index(code, "\ntype")
+	if dd >= 0 && dd < d {
+		d = dd
+	}
+	dd = strings.Index(code, "\nvar")
+	if dd >= 0 && dd < d {
+		d = dd
+	}
+	dd = strings.Index(code, "\nconst")
+	if dd >= 0 && dd < d {
+		d = dd
+	}
 
-	d := strings.Index(code, "func "+ls.node.Name)
 	if d >= 0 {
 		code = code[d:]
 	} else {
@@ -956,7 +968,7 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 		ls.Code = fmt.Sprintf("func %s() error {\n\treturn nil\n}", ls.node.Name)
 	}
 
-	fn, err := ls.extractFunc(ls.Code)
+	fn, err := ls.extractContent(ls.Code)
 	if err != nil {
 		return nil, err
 	}
