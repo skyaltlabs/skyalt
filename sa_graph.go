@@ -823,16 +823,24 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 	ui.DivInfo_set(SA_DIV_SET_scrollVnarrow, 1, 0)
 	ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
 
-	ui.Div_colMax(3, 100)
+	ui.Div_colMax(4, 100)
 
 	path := "file:apps/base/resources/"
 
-	if ui.Comp_buttonLight(0, 0, 1, 1, "←", Comp_buttonProp().Enable(gr.canHistoryBack()).Tooltip(fmt.Sprintf("%s(%d)", ui.trns.BACKWARD, gr.history_pos))) > 0 {
-		gr.stepHistoryBack()
+	if ui.Comp_buttonLight(0, 0, 1, 1, "+", Comp_buttonProp().Tooltip("Add new node")) > 0 {
 
+		gr.app.canvas.addGrid = InitOsV4(0, 0, 1, 1)
+		gr.app.canvas.addPos = OsV2f{float32(gr.app.Cam_x), float32(gr.app.Cam_y)}
+		gr.app.canvas.addnode_search = ""
+		gr.app.canvas.addParent = NewSANodePath(gr.app.root)
+		ui.Dialog_open("nodes_list_graph", 1)
 	}
 
-	if ui.Comp_buttonLight(1, 0, 1, 1, "→", Comp_buttonProp().Enable(gr.canHistoryForward()).Tooltip(fmt.Sprintf("%s(%d)", ui.trns.FORWARD, len(gr.history)-gr.history_pos-1))) > 0 {
+	if ui.Comp_buttonLight(2, 0, 1, 1, "←", Comp_buttonProp().Enable(gr.canHistoryBack()).Tooltip(fmt.Sprintf("%s(%d)", ui.trns.BACKWARD, gr.history_pos))) > 0 {
+		gr.stepHistoryBack()
+	}
+
+	if ui.Comp_buttonLight(3, 0, 1, 1, "→", Comp_buttonProp().Enable(gr.canHistoryForward()).Tooltip(fmt.Sprintf("%s(%d)", ui.trns.FORWARD, len(gr.history)-gr.history_pos-1))) > 0 {
 		gr.stepHistoryForward()
 	}
 
@@ -840,7 +848,7 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 	{
 		progressStr, progressProc := gr.app.base.jobs.FindAppProgress(gr.app)
 		if progressProc >= 0 {
-			ui.Div_start(3, 0, 1, 1)
+			ui.Div_start(4, 0, 1, 1)
 			{
 				dnm := "progress"
 				ui.Div_colMax(0, 100)
