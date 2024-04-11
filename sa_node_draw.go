@@ -183,7 +183,7 @@ func (node *SANode) drawHeader() bool {
 		ui.Div_col(2, 1)
 		ui.Div_col(3, 1)
 		ui.Div_col(4, 0.5)
-	} else if node.IsTypeCode() {
+	} else if node.IsTypeCode() || node.IsTypeExe() {
 		//chat icon
 		ui.Div_col(2, 1)
 		ui.Div_col(3, 0.5)
@@ -207,6 +207,20 @@ func (node *SANode) drawHeader() bool {
 		//ui.Paint_tooltip(0, 0, 1, 1, "Type: "+node.Exe)
 	}
 	ui.Div_end()
+
+	if node.IsTypeExe() {
+		if ui.Comp_buttonText(2, 0, 1, 1, "+", Comp_buttonProp().Tooltip("Add Code node")) > 0 {
+			node.app.canvas.addGrid = InitOsV4(0, 0, 1, 1)
+			node.app.canvas.addPos = OsV2f{}
+			if len(node.Subs) > 0 {
+				node.app.canvas.addPos = node.Subs[len(node.Subs)-1].Pos
+				node.app.canvas.addPos.X += 2
+			}
+			node.app.canvas.addnode_search = ""
+			node.app.canvas.addParent = NewSANodePath(node)
+			ui.Dialog_open("nodes_list_exe", 1)
+		}
+	}
 
 	//chat icon
 	if node.IsTypeCode() {

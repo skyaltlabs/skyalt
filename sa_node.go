@@ -229,6 +229,10 @@ func (node *SANode) IsTypeCode() bool {
 	return strings.EqualFold(node.Exe, "code")
 }
 
+func (node *SANode) IsTypeExe() bool {
+	return strings.EqualFold(node.Exe, "exe")
+}
+
 func (node *SANode) HasNodeSubs() bool {
 	return strings.EqualFold(node.Exe, "layout") || strings.EqualFold(node.Exe, "dialog") || strings.EqualFold(node.Exe, "exe") || node.IsTypeList()
 }
