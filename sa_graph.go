@@ -531,7 +531,7 @@ func (gr *SAGraph) drawGraph() (OsV4, bool) {
 
 	//fade "press tab" bottom - middle in background
 	lv := ui.GetCall()
-	ui._compDrawText(lv.call.canvas.AddSpace(ui.CellWidth(0.5)), "press tab", "", pl.GetGrey(1), InitWinFontPropsDef(ui.win), false, false, OsV2{1, 2}, false, false)
+	ui._compDrawText(lv.call.canvas.AddSpace(ui.CellWidth(0.5)), "press tab", "", pl.GetGrey(1), InitWinFontPropsDef(ui.win), false, false, OsV2{1, 2}, false, false, false)
 
 	//+
 	gr.drawCreateNode()

@@ -22,12 +22,21 @@ import (
 	"unicode/utf8"
 )
 
+func (ui *Ui) _Paint_getMaxLinePx(multi_line, line_wrapping bool) int {
+	max_line_px := -1
+	if multi_line && line_wrapping {
+		max_line_px = ui.GetCall().call.crop.Size.X - ui.CellWidth(3*0.1) //3 ...
+	}
+
+	return max_line_px
+}
+
 func (ui *Ui) Paint_textGrid(
 	frontCd OsCd, style *UiComp,
 	value string, valueOrigEdit string,
 	prop WinFontProps, icon *WinMedia,
 	selection bool, editable bool,
-	multi_line bool, multi_line_enter_finish bool) {
+	multi_line bool, multi_line_enter_finish, line_wrapping bool) {
 
 	lv := ui.GetCall()
 	if lv.call == nil /*|| lv.call.crop.IsZero()*/ {
@@ -54,7 +63,8 @@ func (ui *Ui) Paint_textGrid(
 
 		var mx, my int
 		if multi_line {
-			mx, my = ui.win.GetTextSizeMax(value, prop)
+			max_line_px := ui._Paint_getMaxLinePx(multi_line, line_wrapping)
+			mx, my = ui.win.GetTextSizeMax(value, max_line_px, prop)
 		} else {
 			mx = ui.win.GetTextSize(-1, value, prop).X
 			my = 1
@@ -62,15 +72,16 @@ func (ui *Ui) Paint_textGrid(
 		sizePx = OsV2{mx, my * prop.lineH}
 
 		size = sizePx.toV2f().DivV(float32((ui.win.Cell()))) //conver into cell
-		size.X += 2 * 0.1                                    //because rect_border
-		size.Y += 2 * 0.1
+		//size.X += 2 * 0.1                                    //because rect_border
+		//size.Y += 2 * 0.1
+		//size.Y = 4*0.1
 	}
 
 	if !multi_line {
 		size.Y -= 0.5 //make space for narrow h-scroll
 	}
 
-	size.X = OsMaxFloat32(size.X, float32(lv.call.canvas.Size.X)/float32((ui.win.Cell()))) //minimum sizeX is over whole div(user can click at the end)
+	size.X = OsMaxFloat32(size.X, float32(lv.call.crop.Size.X)/float32((ui.win.Cell()))) //minimum sizeX is over whole div(user can click at the end)
 
 	ui.Div_col(0, float64(size.X))
 	ui.Div_row(0, float64(size.Y))
@@ -83,7 +94,7 @@ func (ui *Ui) Paint_textGrid(
 			ui._compDrawImage(coordImage, *icon, frontCd, style.image_margin, OsV2{int(style.image_alignH), int(style.image_alignV)}, style.image_fill)
 		}
 		if editable || len(value) > 0 {
-			ui._compDrawText(coordText, value, valueOrigEdit, frontCd, prop, selection, editable, style.label_align, multi_line, multi_line_enter_finish)
+			ui._compDrawText(coordText, value, valueOrigEdit, frontCd, prop, selection, editable, style.label_align, multi_line, multi_line_enter_finish, line_wrapping)
 		}
 	}
 	ui.Div_end()
@@ -179,22 +190,22 @@ func _UiPaint_CursorMoveLR(text string, cursor int, move int, prop WinFontProps)
 	return cursor
 }
 
-func _UiPaint_CursorMoveU(text string, lines []int, cursor int) int {
-	y := _UiPaint_CursorLineY(lines, cursor)
+func _UiPaint_CursorMoveU(text string, lines []WinGphLine, cursor int) int {
+	y := WinGph_CursorLineY(lines, cursor)
 	if y > 0 {
-		_, pos := _UiPaint_CursorLine(text, lines, cursor)
+		_, pos := WinGph_CursorLine(text, lines, cursor)
 
-		st, en := _UiPaint_PosLineRange(lines, y-1) //up line
+		st, en := WinGph_PosLineRange(lines, y-1) //up line
 		cursor = st + OsMin(pos, en-st)
 	}
 	return cursor
 }
-func _UiPaint_CursorMoveD(text string, lines []int, cursor int) int {
-	y := _UiPaint_CursorLineY(lines, cursor)
+func _UiPaint_CursorMoveD(text string, lines []WinGphLine, cursor int) int {
+	y := WinGph_CursorLineY(lines, cursor)
 	if y+1 < len(lines) {
-		_, pos := _UiPaint_CursorLine(text, lines, cursor)
+		_, pos := WinGph_CursorLine(text, lines, cursor)
 
-		st, en := _UiPaint_PosLineRange(lines, y+1) //down line
+		st, en := WinGph_PosLineRange(lines, y+1) //down line
 		cursor = st + OsMin(pos, en-st)
 	}
 	return cursor
@@ -227,48 +238,6 @@ func _UiPaint_CursorWordRange(text string, cursor int) (int, int) {
 	return start, end
 }
 
-func _UiPaint_Split(text string) []int {
-	var ret []int
-	for p, ch := range text {
-		if ch == '\n' {
-			ret = append(ret, p)
-		}
-	}
-	ret = append(ret, len(text)) //last
-
-	return ret
-}
-func _UiPaint_CursorLineY(lines []int, cursor int) int {
-	for i, p := range lines {
-		if cursor <= p {
-			return i
-		}
-	}
-	return len(lines) - 1
-}
-
-func _UiPaint_PosLineRange(lines []int, i int) (int, int) {
-	var st, en int
-	if i == 0 {
-		st = 0
-		en = lines[i]
-	} else {
-		st = lines[i-1] + 1 //+1 - after \n
-		en = lines[i]
-	}
-	return st, en
-}
-
-func _UiPaint_CursorLineRange(lines []int, cursor int) (int, int) {
-	i := _UiPaint_CursorLineY(lines, cursor)
-	return _UiPaint_PosLineRange(lines, i)
-}
-
-func _UiPaint_CursorLine(text string, lines []int, cursor int) (string, int) {
-	st, en := _UiPaint_CursorLineRange(lines, cursor)
-	return text[st:en], cursor - st
-}
-
 func _UiPaint_GetLineYCrop(startY int, num_lines int, crop OsV4, prop WinFontProps) (int, int) {
 
 	sy := (crop.Start.Y - startY) / prop.lineH
@@ -281,16 +250,16 @@ func _UiPaint_GetLineYCrop(startY int, num_lines int, crop OsV4, prop WinFontPro
 	return sy, ey
 }
 
-func (ui *Ui) _UiPaint_Text_VScrollInto(lines []int, cursor int, prop WinFontProps) {
+func (ui *Ui) _UiPaint_Text_VScrollInto(lines []WinGphLine, cursor int, prop WinFontProps) {
 
 	lv := ui.GetCall()
 	if lv.call.parent == nil {
 		return
 	}
-	v_pos := _UiPaint_CursorLineY(lines, cursor) * prop.lineH
+	v_pos := WinGph_CursorLineY(lines, cursor) * prop.lineH
 
 	v_st := lv.call.parent.data.scrollV.GetWheel()
-	v_sz := lv.call.crop.Size.Y - prop.lineH - ui.CellWidth(2*0.1)
+	v_sz := lv.call.crop.Size.Y - prop.lineH //- ui.CellWidth(2*0.1)
 	v_en := v_st + v_sz
 
 	if v_pos <= v_st {
@@ -300,18 +269,18 @@ func (ui *Ui) _UiPaint_Text_VScrollInto(lines []int, cursor int, prop WinFontPro
 	}
 }
 
-func (ui *Ui) _UiPaint_Text_HScrollInto(text string, lines []int, cursor int, prop WinFontProps) error {
+func (ui *Ui) _UiPaint_Text_HScrollInto(text string, lines []WinGphLine, cursor int, prop WinFontProps) error {
 
 	lv := ui.GetCall()
 	if lv.call.parent == nil {
 		return nil
 	}
 
-	ln, curr := _UiPaint_CursorLine(text, lines, cursor)
+	ln, curr := WinGph_CursorLine(text, lines, cursor)
 	h_pos := ui.win.GetTextSize(curr, ln, prop).X
 
 	h_st := lv.call.parent.data.scrollH.GetWheel()
-	h_sz := lv.call.crop.Size.X - ui.CellWidth(2*0.1) //text is shifted 0.1 to left
+	h_sz := lv.call.crop.Size.X //- ui.CellWidth(2*0.1) //text is shifted 0.1 to left
 	h_en := h_st + h_sz
 
 	if h_pos <= h_st {
@@ -322,7 +291,7 @@ func (ui *Ui) _UiPaint_Text_HScrollInto(text string, lines []int, cursor int, pr
 	return nil
 }
 
-func (ui *Ui) _UiPaint_TextSelectTouch(text string, lines []int, strEditOrig string, cursor int, editable bool, prop WinFontProps) {
+func (ui *Ui) _UiPaint_TextSelectTouch(text string, lines []WinGphLine, strEditOrig string, cursor int, editable bool, prop WinFontProps) {
 
 	lv := ui.GetCall()
 	if !lv.call.enableInput {
@@ -383,7 +352,7 @@ func (ui *Ui) _UiPaint_TextSelectTouch(text string, lines []int, strEditOrig str
 			edit.start = st //set start
 			edit.end = en   //set end
 		case 3:
-			st, en := _UiPaint_CursorLineRange(lines, cursor)
+			st, en := WinGph_CursorLineRange(lines, cursor)
 			edit.start = st //set start
 			edit.end = en   //set end
 		}
@@ -401,7 +370,7 @@ func (ui *Ui) _UiPaint_TextSelectTouch(text string, lines []int, strEditOrig str
 	}
 }
 
-func (ui *Ui) _UiPaint_TextSelectKeys(text string, lines []int, editable bool, prop WinFontProps, multi_line bool) {
+func (ui *Ui) _UiPaint_TextSelectKeys(text string, lines []WinGphLine, editable bool, prop WinFontProps, multi_line bool) {
 
 	touch := &ui.win.io.touch
 	keys := &ui.win.io.keys
@@ -464,7 +433,7 @@ func (ui *Ui) _UiPaint_TextSelectKeys(text string, lines []int, editable bool, p
 			lastCur := OsTrn(*s > *e, *s, *e)
 
 			if firstCur == lastCur {
-				firstCur, lastCur = _UiPaint_CursorLineRange(lines, firstCur) //select whole line
+				firstCur, lastCur = WinGph_CursorLineRange(lines, firstCur) //select whole line
 			}
 			keys.clipboard = text[firstCur:lastCur]
 
@@ -513,10 +482,10 @@ func (ui *Ui) _UiPaint_TextSelectKeys(text string, lines []int, editable bool, p
 
 		//home & end
 		if keys.home {
-			*e, _ = _UiPaint_CursorLineRange(lines, *e) //line start
+			*e, _ = WinGph_CursorLineRange(lines, *e) //line start
 		}
 		if keys.end {
-			_, *e = _UiPaint_CursorLineRange(lines, *e) //line end
+			_, *e = WinGph_CursorLineRange(lines, *e) //line end
 		}
 	}
 
@@ -530,7 +499,7 @@ func (ui *Ui) _UiPaint_TextSelectKeys(text string, lines []int, editable bool, p
 	}
 }
 
-func (ui *Ui) _UiPaint_TextEditKeys(text string, lines []int, tabIsChar bool, prop WinFontProps, multi_line bool, multi_line_enter_finish bool) (string, bool) {
+func (ui *Ui) _UiPaint_TextEditKeys(text string, lines []WinGphLine, tabIsChar bool, prop WinFontProps, multi_line bool, multi_line_enter_finish bool) (string, bool) {
 	edit := &ui.edit
 	keys := &ui.win.io.keys
 
@@ -717,7 +686,7 @@ func (ui *Ui) _UiPaint_TextEditKeys(text string, lines []int, tabIsChar bool, pr
 		//home/end
 		if keys.home {
 			if multi_line {
-				firstCur, _ = _UiPaint_CursorLineRange(lines, *e) //line start
+				firstCur, _ = WinGph_CursorLineRange(lines, *e) //line start
 			} else {
 				firstCur = 0
 			}
@@ -725,7 +694,7 @@ func (ui *Ui) _UiPaint_TextEditKeys(text string, lines []int, tabIsChar bool, pr
 			*e = firstCur
 		} else if keys.end {
 			if multi_line {
-				_, firstCur = _UiPaint_CursorLineRange(lines, *e) //line start
+				_, firstCur = WinGph_CursorLineRange(lines, *e) //line start
 			} else {
 				firstCur = len(text)
 			}
@@ -765,7 +734,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 	prop WinFontProps,
 	align OsV2,
 	selection, editable, tabIsChar bool,
-	multi_line bool, multi_line_enter_finish bool) bool {
+	multi_line, multi_line_enter_finish, line_wrapping bool) bool {
 
 	lv := ui.GetCall()
 
@@ -777,7 +746,8 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 	oldCursor := edit.end
 	cursorPos := -1
 
-	lines := _UiPaint_Split(value)
+	max_line_px := ui._Paint_getMaxLinePx(multi_line, line_wrapping)
+	lines := ui.win.GetTextLines(value, max_line_px, prop)
 	startY := ui.win.GetTextStart(value, prop, coord, align, len(lines)).Y
 
 	if selection || editable {
@@ -796,7 +766,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 				y := (ui.win.io.touch.pos.Y - startY) / prop.lineH
 				y = OsClamp(y, 0, len(lines)-1)
 
-				st, en := _UiPaint_PosLineRange(lines, y)
+				st, en := WinGph_PosLineRange(lines, y)
 				touchCursor = st + ui.win.GetTextPos(ui.win.io.touch.pos.X, value[st:en], prop, coord, align)
 			} else {
 				touchCursor = ui.win.GetTextPos(ui.win.io.touch.pos.X, value, prop, coord, align)
@@ -813,7 +783,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 				var tryMoveScroll bool
 				value, tryMoveScroll = ui._UiPaint_TextEditKeys(edit.temp, lines, tabIsChar, prop, multi_line, multi_line_enter_finish) //rewrite 'str' with temp value
 
-				lines = _UiPaint_Split(value) //refresh
+				lines = ui.win.GetTextLines(value, max_line_px, prop) //refresh
 
 				if tryMoveScroll {
 					ui._UiPaint_Text_VScrollInto(lines, edit.end, prop)
@@ -856,8 +826,8 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 			curr_ex := OsMax(edit.start, edit.end)
 
 			if multi_line {
-				curr_sy := _UiPaint_CursorLineY(lines, curr_sx)
-				curr_ey := _UiPaint_CursorLineY(lines, curr_ex)
+				curr_sy := WinGph_CursorLineY(lines, curr_sx)
+				curr_ey := WinGph_CursorLineY(lines, curr_ex)
 				if curr_sy > curr_ey {
 					curr_sy, curr_ey = curr_ey, curr_sy //swap
 				}
@@ -869,15 +839,15 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 
 				for y := yst; y <= yen; y++ { //less or equal!
 
-					st, en := _UiPaint_PosLineRange(lines, y)
+					st, en := WinGph_PosLineRange(lines, y)
 					ln := value[st:en]
 
 					sx, ex := 0, len(ln) //whole line
 					if y == curr_sy {    //first line
-						_, sx = _UiPaint_CursorLine(value, lines, curr_sx)
+						_, sx = WinGph_CursorLine(value, lines, curr_sx)
 					}
 					if y == curr_ey { //last line
-						_, ex = _UiPaint_CursorLine(value, lines, curr_ex)
+						_, ex = WinGph_CursorLine(value, lines, curr_ex)
 					}
 
 					ui.buff.AddTextBack(OsV2{sx, ex}, ln, prop, coord, ui.win.io.GetPalette().GetGrey(0.5), align, false, y, len(lines))
@@ -896,7 +866,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 	if multi_line {
 		sy, ey := _UiPaint_GetLineYCrop(startY, len(lines), lv.call.crop, prop) //only rows which are on screen
 		for y := sy; y < ey; y++ {
-			st, en := _UiPaint_PosLineRange(lines, y)
+			st, en := WinGph_PosLineRange(lines, y)
 			ui.buff.AddText(value[st:en], prop, coord, frontCd, align, y, len(lines))
 		}
 
@@ -912,8 +882,8 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 		}
 
 		if multi_line {
-			y := _UiPaint_CursorLineY(lines, cursorPos)
-			ln, ln_cursorPos := _UiPaint_CursorLine(value, lines, cursorPos)
+			y := WinGph_CursorLineY(lines, cursorPos)
+			ln, ln_cursorPos := WinGph_CursorLine(value, lines, cursorPos)
 
 			ui.buff.AddTextCursor(ln, prop, coord, frontCd, align, ln_cursorPos, y, len(lines))
 		} else {

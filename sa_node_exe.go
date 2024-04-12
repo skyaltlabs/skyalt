@@ -113,6 +113,7 @@ func UiText_Attrs(node *SANode) {
 	node.ShowAttrIntCombo(&grid, "align_h", 0, []string{"Left", "Center", "Right"}, []string{"0", "1", "2"})
 	node.ShowAttrIntCombo(&grid, "align_v", 0, []string{"Left", "Center", "Right"}, []string{"0", "1", "2"})
 	node.ShowAttrBool(&grid, "multi_line", false)
+	node.ShowAttrBool(&grid, "line_wrapping", true)
 	node.ShowAttrBool(&grid, "selection", true)
 	node.ShowAttrBool(&grid, "show_border", false)
 }
@@ -124,9 +125,10 @@ func UiText_render(node *SANode) {
 	align_h := node.GetAttrInt("align_h", 0)
 	selection := node.GetAttrBool("selection", true)
 	show_border := node.GetAttrBool("show_border", false)
+	line_wrapping := node.GetAttrBool("line_wrapping", true)
 
 	if node.GetAttrBool("multi_line", false) {
-		node.app.base.ui.Comp_textSelectMulti(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, OsV2{align_h, align_v}, selection, show_border, true)
+		node.app.base.ui.Comp_textSelectMulti(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, OsV2{align_h, align_v}, selection, show_border, true, line_wrapping)
 	} else {
 		node.app.base.ui.Comp_textSelect(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, OsV2{align_h, align_v}, selection, show_border)
 	}
@@ -148,6 +150,7 @@ func UiEditbox_Attrs(node *SANode) {
 	node.ShowAttrBool(&grid, "enable", true)
 	node.ShowAttrBool(&grid, "multi_line", false)
 	node.ShowAttrBool(&grid, "multi_line_enter_finish", false)
+	node.ShowAttrBool(&grid, "line_wrapping", true)
 
 	node.ShowAttrBool(&grid, "temp_to_value", false)
 
@@ -230,6 +233,7 @@ func UiEditbox_render(node *SANode) {
 	enable := node.GetAttrBool("enable", true)
 	multi_line := node.GetAttrBool("multi_line", false)
 	multi_line_enter_finish := node.GetAttrBool("multi_line_enter_finish", false)
+	line_wrapping := node.GetAttrBool("line_wrapping", true)
 	temp_to_value := node.GetAttrBool("temp_to_value", false)
 
 	db_value := node.GetAttrBool("db_value", false)
@@ -238,7 +242,7 @@ func UiEditbox_render(node *SANode) {
 	}
 
 	origValue := value
-	editedValue, active, _, fnshd, _ := node.app.base.ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, Comp_editboxProp().Ghost(ghost).MultiLine(multi_line).MultiLineEnterFinish(multi_line_enter_finish).Enable(enable).Align(align_h, align_v))
+	editedValue, active, _, fnshd, _ := node.app.base.ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, Comp_editboxProp().Ghost(ghost).MultiLine(multi_line, line_wrapping).MultiLineEnterFinish(multi_line_enter_finish).Enable(enable).Align(align_h, align_v))
 
 	if temp_to_value && active {
 		if node.Attrs["value"] != editedValue {
@@ -1408,9 +1412,10 @@ func UiCodeGo_AttrChat(node *SANode) {
 		y := 0
 		for i, str := range node.Code.Messages {
 			if i+1 < len(node.Code.Messages) || node.Code.job_oai != nil {
-				nlines := WinFontProps_NumRows(str.User)
+				max_line_px := ui.GetCall().call.crop.Size.X //ui.GetCall().call.canvas.Size.X
+				nlines := ui.win.GetTextNumLines(str.User, max_line_px, InitWinFontPropsDef(ui.win))
 				ui.Comp_text(0, y, 1, 1, "User", 0)
-				ui.Comp_textSelectMulti(1, y, 2, nlines, str.User, OsV2{0, 0}, true, false, false)
+				ui.Comp_textSelectMulti(1, y, 2, nlines, str.User, OsV2{0, 0}, true, false, false, max_line_px > 0)
 				y += nlines
 
 				assist := str.Assistent
@@ -1423,7 +1428,8 @@ func UiCodeGo_AttrChat(node *SANode) {
 					}
 				}
 
-				nlines = WinFontProps_NumRows(assist)
+				max_line_px = -1
+				nlines = ui.win.GetTextNumLines(assist, max_line_px, InitWinFontPropsDef(ui.win))
 				ui.Div_start(0, y, 3, nlines+1)
 				{
 					ui.Div_colMax(0, 1.5)
@@ -1434,7 +1440,7 @@ func UiCodeGo_AttrChat(node *SANode) {
 					ui.Paint_rect(0, 0, 1, 1, 0, pl.GetGrey(0.85), 0)
 
 					ui.Comp_text(0, 0, 1, 1, "Bot", 0)
-					ui.Comp_textSelectMulti(1, 0, 2, nlines, assist, OsV2{0, 0}, true, false, false)
+					ui.Comp_textSelectMulti(1, 0, 2, nlines, assist, OsV2{0, 0}, true, false, false, max_line_px > 0)
 
 					if ui.Comp_buttonLight(2, nlines, 1, 1, "Use this code", Comp_buttonProp().Enable(node.Code.job_oai == nil)) > 0 {
 						node.Code.UseCodeFromAnswer(str.Assistent)
@@ -1447,8 +1453,9 @@ func UiCodeGo_AttrChat(node *SANode) {
 				y += 2 //space
 			} else {
 				//last one is user editbox
-				nlines := WinFontProps_NumRows(str.User) + 2
-				ui.Comp_editbox(0, y, 3, nlines, &node.Code.Messages[i].User, Comp_editboxProp().MultiLine(true).Align(0, 0).Formating(false))
+				max_line_px := -1
+				nlines := ui.win.GetTextNumLines(str.User, max_line_px, InitWinFontPropsDef(ui.win)) + 2
+				ui.Comp_editbox(0, y, 3, nlines, &node.Code.Messages[i].User, Comp_editboxProp().MultiLine(true, max_line_px > 0).Align(0, 0).Formating(false))
 				y += nlines
 
 				//or ctrl+enter ..........
@@ -1574,8 +1581,9 @@ func _UiCode_attrs(node *SANode, grid *OsV4) {
 	{
 		ui.Comp_text(0, grid.Start.Y, 1, 1, "Code", 0)
 
-		nlines := WinFontProps_NumRows(node.Code.Code)
-		_, _, _, fnshd, _ := ui.Comp_editbox(1, grid.Start.Y, 1, nlines, &node.Code.Code, Comp_editboxProp().Align(0, 0).MultiLine(true).Formating(false))
+		max_line_px := -1
+		nlines := ui.win.GetTextNumLines(node.Code.Code, max_line_px, InitWinFontPropsDef(ui.win))
+		_, _, _, fnshd, _ := ui.Comp_editbox(1, grid.Start.Y, 1, nlines, &node.Code.Code, Comp_editboxProp().Align(0, 0).MultiLine(true, max_line_px > 0).Formating(false))
 		if fnshd {
 			node.Code.UpdateFile()
 		}
@@ -1594,8 +1602,11 @@ func _UiCode_attrs(node *SANode, grid *OsV4) {
 	//output
 	{
 		ui.Comp_text(0, grid.Start.Y, 1, 1, "Output", 0)
-		nlines := OsClamp(WinFontProps_NumRows(node.Code.cmd_output), 2, 5)
-		ui.Comp_textSelectMulti(1, grid.Start.Y, 1, nlines, node.Code.cmd_output, OsV2{0, 0}, true, true, false)
+
+		max_line_px := -1
+		nlines := ui.win.GetTextNumLines(node.Code.cmd_output, max_line_px, InitWinFontPropsDef(ui.win))
+		nlines = OsClamp(nlines, 2, 5)
+		ui.Comp_textSelectMulti(1, grid.Start.Y, 1, nlines, node.Code.cmd_output, OsV2{0, 0}, true, true, false, max_line_px > 0)
 		grid.Start.Y += nlines
 	}
 }

@@ -263,16 +263,16 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 		//ui.Comp_editbox_desc(ui.trns.THREADS, 0, 4, 1, y, 1, 2, &ini.Threads, Comp_editboxProp().Precision(0))
 		//y += 2
 
-		ui.Comp_switch(1, y, 1, 1, &ini.Stats, false, ui.trns.SHOW_STATS, "", true)
+		ui.Comp_switch(1, y, 2, 1, &ini.Stats, false, ui.trns.SHOW_STATS, "", true)
 		y++
 
-		ui.Comp_switch(1, y, 1, 1, &ini.Grid, false, ui.trns.SHOW_GRID, "", true)
+		ui.Comp_switch(1, y, 2, 1, &ini.Grid, false, ui.trns.SHOW_GRID, "", true)
 		y++
 
-		ui.Comp_switch(1, y, 1, 1, &ini.Offline, true, ui.trns.ONLINE, "", true) //true = reverseValue
+		ui.Comp_switch(1, y, 2, 1, &ini.Offline, true, ui.trns.ONLINE, "", true) //true = reverseValue
 		y++
 
-		ui.Comp_switch(1, y, 1, 1, &ini.MicOff, true, ui.trns.MICROPHONE, "", true) //true = reverseValue
+		ui.Comp_switch(1, y, 2, 1, &ini.MicOff, true, ui.trns.MICROPHONE, "", true) //true = reverseValue
 		y++
 
 		y++ //space

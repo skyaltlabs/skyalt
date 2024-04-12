@@ -98,7 +98,8 @@ func (ui *Ui) _compDrawImage(coord OsV4, icon WinMedia, cd OsCd, margin float64,
 func (ui *Ui) _compDrawText(coord OsV4,
 	value string, valueOrigEdit string,
 	frontCd OsCd, prop WinFontProps,
-	selection bool, editable bool, align OsV2, multi_line bool, multi_line_enter_finish bool) {
+	selection bool, editable bool, align OsV2,
+	multi_line, multi_line_enter_finish, line_wrapping bool) {
 
 	lv := ui.GetCall()
 
@@ -117,7 +118,8 @@ func (ui *Ui) _compDrawText(coord OsV4,
 		frontCd,
 		prop,
 		align,
-		selection, editable, true, multi_line, multi_line_enter_finish)
+		selection, editable, true,
+		multi_line, multi_line_enter_finish, line_wrapping)
 
 	if active {
 		ui._UiPaint_resetKeys(false)
@@ -445,7 +447,7 @@ func (ui *Ui) Comp_button_s(label string, prop *Comp_buttonP) (int, int) {
 	if len(label) > 0 {
 		pr := InitWinFontPropsDef(ui.win)
 		pr.formating = prop.formating
-		ui._compDrawText(coordText, label, "", onCd, pr, false, false, prop.align, true, false)
+		ui._compDrawText(coordText, label, "", onCd, pr, false, false, prop.align, true, false, false)
 	}
 
 	if prop.enable {
@@ -496,7 +498,7 @@ func (ui *Ui) Comp_textIcon(x, y, w, h int, label string, icon WinMedia, iconMar
 	style.image_alignV = 1
 	style.image_margin = iconMargin
 
-	ui.Comp_text_s(&style, label, &icon, false, false, false)
+	ui.Comp_text_s(&style, label, &icon, false, false, false, false)
 
 	ui.Div_end()
 }
@@ -511,7 +513,7 @@ func (ui *Ui) Comp_text(x, y, w, h int, label string, alignH int) *UiLayoutDiv {
 	style.label_align = OsV2{alignH, 1}
 	style.label_formating = true
 
-	ui.Comp_text_s(&style, label, nil, true, false, false)
+	ui.Comp_text_s(&style, label, nil, true, false, false, false)
 
 	ui.Div_end()
 	return div
@@ -532,7 +534,7 @@ func (ui *Ui) Comp_textCd(x, y, w, h int, label string, alignH int, cd uint8) *U
 	//ui.Paint_rect(0, 0, 1, 1, 0, backCd, 0)
 
 	//text
-	ui.Comp_text_s(&style, label, nil, true, false, false)
+	ui.Comp_text_s(&style, label, nil, true, false, false, false)
 
 	ui.Div_end()
 	return div
@@ -548,7 +550,7 @@ func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, align OsV2, selectio
 	style.label_align = align
 	style.label_formating = true
 
-	ui.Comp_text_s(&style, label, nil, selection, false, false)
+	ui.Comp_text_s(&style, label, nil, selection, false, false, false)
 
 	if drawBorder {
 		pl := ui.win.io.GetPalette()
@@ -558,7 +560,7 @@ func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, align OsV2, selectio
 	ui.Div_end()
 	return div
 }
-func (ui *Ui) Comp_textSelectMulti(x, y, w, h int, label string, align OsV2, selection bool, drawBorder bool, formating bool) *UiLayoutDiv {
+func (ui *Ui) Comp_textSelectMulti(x, y, w, h int, label string, align OsV2, selection bool, drawBorder bool, formating bool, line_wrapping bool) *UiLayoutDiv {
 	ui.Div_start(x, y, w, h)
 	div := ui.GetCall().call
 
@@ -569,7 +571,7 @@ func (ui *Ui) Comp_textSelectMulti(x, y, w, h int, label string, align OsV2, sel
 	style.label_formating = true
 	style.label_formating = formating
 
-	ui.Comp_text_s(&style, label, nil, selection, true, false)
+	ui.Comp_text_s(&style, label, nil, selection, true, false, line_wrapping)
 
 	if drawBorder {
 		pl := ui.win.io.GetPalette()
@@ -580,7 +582,7 @@ func (ui *Ui) Comp_textSelectMulti(x, y, w, h int, label string, align OsV2, sel
 	return div
 }
 
-func (ui *Ui) Comp_text_s(style *UiComp, value string, icon *WinMedia, selection bool, multi_line bool, multi_line_enter_finish bool) {
+func (ui *Ui) Comp_text_s(style *UiComp, value string, icon *WinMedia, selection bool, multi_line bool, multi_line_enter_finish, line_wrapping bool) {
 
 	pl := ui.win.io.GetPalette()
 	cd, onCd := pl.GetCd(style.cd, style.fade, style.enable, false, false)
@@ -598,7 +600,7 @@ func (ui *Ui) Comp_text_s(style *UiComp, value string, icon *WinMedia, selection
 	prop := InitWinFontPropsDef(ui.win)
 	prop.formating = style.label_formating
 
-	ui.Paint_textGrid(onCd, style, value, "", prop, icon, selection, false, multi_line, multi_line_enter_finish)
+	ui.Paint_textGrid(onCd, style, value, "", prop, icon, selection, false, multi_line, multi_line_enter_finish, line_wrapping)
 }
 
 type Comp_editboxP struct {
@@ -610,6 +612,7 @@ type Comp_editboxP struct {
 	tempToValue             bool
 	multi_line              bool
 	multi_line_enter_finish bool
+	line_wrapping           bool
 	enable                  bool
 	formating               bool
 }
@@ -648,8 +651,9 @@ func (p *Comp_editboxP) TempToValue(v bool) *Comp_editboxP {
 	p.tempToValue = v
 	return p
 }
-func (p *Comp_editboxP) MultiLine(v bool) *Comp_editboxP {
-	p.multi_line = v
+func (p *Comp_editboxP) MultiLine(enable, line_wrapping bool) *Comp_editboxP {
+	p.multi_line = enable
+	p.line_wrapping = line_wrapping
 	return p
 }
 func (p *Comp_editboxP) MultiLineEnterFinish(v bool) *Comp_editboxP {
@@ -724,7 +728,7 @@ func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, prop *Comp_editb
 	style.label_align = prop.align
 	style.label_formating = prop.formating
 
-	editedValue, active, changed, finished := ui.Comp_edit_s(&style, value, value, prop.icon, prop.ghost, prop.highlight, prop.tempToValue, prop.multi_line, prop.multi_line_enter_finish)
+	editedValue, active, changed, finished := ui.Comp_edit_s(&style, value, value, prop.icon, prop.ghost, prop.highlight, prop.tempToValue, prop.multi_line, prop.multi_line_enter_finish, prop.line_wrapping)
 
 	if finished || prop.tempToValue {
 		switch v := valueIn.(type) {
@@ -744,13 +748,12 @@ func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, prop *Comp_editb
 		case *[]byte:
 			if v != nil {
 				*v = []byte(editedValue)
-				//int8/16/32, uint8, byte, etc ...
 			}
 		case *string:
 			if v != nil {
 				*v = editedValue
-				//int8/16/32, uint8, byte, etc ...
 			}
+			//int8/16/32, uint8, byte, etc ...
 		}
 	}
 
@@ -758,7 +761,7 @@ func (ui *Ui) Comp_editbox(x, y, w, h int, valueIn interface{}, prop *Comp_editb
 
 	return editedValue, active, changed, finished, div
 }
-func (ui *Ui) Comp_edit_s(style *UiComp, valueIn string, valueInOrig string, icon *WinMedia, ghost string, highlight bool, tempToValue bool, multi_line bool, multi_line_enter_finish bool) (string, bool, bool, bool) {
+func (ui *Ui) Comp_edit_s(style *UiComp, valueIn string, valueInOrig string, icon *WinMedia, ghost string, highlight bool, tempToValue bool, multi_line bool, multi_line_enter_finish, line_wrapping bool) (string, bool, bool, bool) {
 
 	lv := ui.GetCall()
 
@@ -802,11 +805,11 @@ func (ui *Ui) Comp_edit_s(style *UiComp, valueIn string, valueInOrig string, ico
 
 	prop := InitWinFontPropsDef(ui.win)
 	prop.formating = style.label_formating
-	ui.Paint_textGrid(onCd, style, value, valueInOrig, prop, icon, true, true, multi_line, multi_line_enter_finish)
+	ui.Paint_textGrid(onCd, style, value, valueInOrig, prop, icon, true, true, multi_line, multi_line_enter_finish, line_wrapping)
 
 	//ghost
 	if len(edit.last_edit) == 0 && len(ghost) > 0 {
-		ui._compDrawText(coord, ghost, "", pl.GetGrey(0.7), prop, false, false, OsV2{1, 1}, false, false)
+		ui._compDrawText(coord, ghost, "", pl.GetGrey(0.7), prop, false, false, OsV2{1, 1}, false, false, false)
 	}
 
 	if style.enable {
@@ -848,7 +851,7 @@ func (ui *Ui) Comp_progress_s(style *UiComp, value float64, prec int) {
 	//ui.Paint_textGrid(coord, onCd, style, strconv.FormatFloat(value*100, 'f', prec, 64)+"%", "", "", true, false)
 	prop := InitWinFontPropsDef(ui.win)
 	prop.formating = style.label_formating
-	ui._compDrawText(coord, strconv.FormatFloat(value*100, 'f', prec, 64)+"%", "", onCd, prop, true, false, style.label_align, false, false)
+	ui._compDrawText(coord, strconv.FormatFloat(value*100, 'f', prec, 64)+"%", "", onCd, prop, true, false, style.label_align, false, false, false)
 
 	if style.enable {
 		if len(style.tooltip) > 0 {
@@ -1137,10 +1140,10 @@ func (ui *Ui) Comp_combo_s(style *UiComp, value string, options_names []string, 
 		}
 		prop := InitWinFontPropsDef(ui.win)
 		prop.formating = style.label_formating
-		ui._compDrawText(coord, label, "", onCd, prop, false, false, style.label_align, false, false)
+		ui._compDrawText(coord, label, "", onCd, prop, false, false, style.label_align, false, false, false)
 		style.label_align.X = 2
 		prop.formating = true
-		ui._compDrawText(coord.AddSpaceX(ui.CellWidth(0.1)), "###▼###", "", onCd, prop, false, false, style.label_align, false, false) //### aka smaller
+		ui._compDrawText(coord.AddSpaceX(ui.CellWidth(0.1)), "###▼###", "", onCd, prop, false, false, style.label_align, false, false, false) //### aka smaller
 	}
 
 	//dialog
@@ -1286,7 +1289,7 @@ func (ui *Ui) Comp_checkbox_s(style *UiComp, value float64, label string) float6
 		//text
 		prop := InitWinFontPropsDef(ui.win)
 		prop.formating = style.label_formating
-		ui._compDrawText(coordText, label, "", onCd, prop, false, false, style.label_align, true, false)
+		ui._compDrawText(coordText, label, "", onCd, prop, false, false, style.label_align, true, false, true)
 
 		coord = coordImg
 
@@ -1426,7 +1429,7 @@ func (ui *Ui) Comp_switch_s(style *UiComp, value bool, label string) bool {
 		//text
 		prop := InitWinFontPropsDef(ui.win)
 		prop.formating = style.label_formating
-		ui._compDrawText(coordText, label, "", labelOnCd, prop, false, false, style.label_align, true, false)
+		ui._compDrawText(coordText, label, "", labelOnCd, prop, false, false, style.label_align, true, false, true)
 
 		coord = coordImg
 

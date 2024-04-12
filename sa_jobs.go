@@ -315,7 +315,7 @@ func (jb *SAJobLLamaCpp) RenderProgress(y *int) bool {
 	ui.Comp_text(0, *y, 1, 1, fmt.Sprintf("%s ... %.1f%%", str, proc*100), 0)
 	(*y)++
 
-	ui.Comp_textSelectMulti(0, *y, 1, 5, jb.wip_answer, OsV2{0, 0}, true, true, false)
+	ui.Comp_textSelectMulti(0, *y, 1, 5, jb.wip_answer, OsV2{0, 0}, true, true, false, true)
 	*y = *y + 5
 
 	if ui.Comp_button(0, *y, 1, 1, "Stop", Comp_buttonProp().SetError(true)) > 0 {
@@ -380,7 +380,7 @@ func (jb *SAJobOpenAI) RenderProgress(y *int) bool {
 	ui.Comp_text(0, *y, 1, 1, fmt.Sprintf("%s ... %.1f%%", str, proc*100), 0)
 	(*y)++
 
-	ui.Comp_textSelectMulti(0, *y, 1, 5, jb.wip_answer, OsV2{0, 0}, true, true, false)
+	ui.Comp_textSelectMulti(0, *y, 1, 5, jb.wip_answer, OsV2{0, 0}, true, true, false, true)
 	*y = *y + 5
 
 	if ui.Comp_button(0, *y, 1, 1, "Stop", Comp_buttonProp().SetError(true)) > 0 {

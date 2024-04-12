@@ -1029,7 +1029,7 @@ func (win *Win) DrawPolyStart(start OsV2, poly *WinGphItemPoly, depth int, cd Os
 	win.DrawPolyRect(OsV4{Start: start, Size: poly.size}, poly, depth, cd)
 }
 
-func (win *Win) DrawText(ln string, prop WinFontProps, coord OsV4, depth int, align OsV2, frontCd OsCd, yLine, numLines int) {
+func (win *Win) DrawText(ln string, prop WinFontProps, coord OsV4, depth int, align OsV2, frontCd OsCd, yLine, numLines int) { // single line
 	item := win.gph.GetText(prop, ln)
 	if item != nil {
 		start := win.GetTextStart(ln, prop, coord, align, numLines)
@@ -1041,11 +1041,32 @@ func (win *Win) DrawText(ln string, prop WinFontProps, coord OsV4, depth int, al
 	}
 }
 
-func (win *Win) GetTextSize(cur_pos int, ln string, prop WinFontProps) OsV2 {
-	return win.gph.GetTextSize(prop, cur_pos, ln)
+func (win *Win) GetTextSize(cur int, ln string, prop WinFontProps) OsV2 {
+	return win.gph.GetTextSize(prop, cur, ln)
 }
-func (win *Win) GetTextSizeMax(text string, prop WinFontProps) (int, int) {
-	return win.gph.GetTextSizeMax(prop, text)
+func (win *Win) GetTextSizeMax(text string, max_line_px int, prop WinFontProps) (int, int) {
+	tx := win.gph.GetTextMax(text, max_line_px, prop)
+	if tx == nil {
+		return 0, 1
+	}
+
+	return tx.max_size_x, len(tx.lines)
+}
+func (win *Win) GetTextLines(text string, max_line_px int, prop WinFontProps) []WinGphLine {
+	tx := win.gph.GetTextMax(text, max_line_px, prop)
+	if tx == nil {
+		return []WinGphLine{{s: 0, e: len(text)}}
+	}
+
+	return tx.lines
+}
+func (win *Win) GetTextNumLines(text string, max_line_px int, prop WinFontProps) int {
+	tx := win.gph.GetTextMax(text, max_line_px, prop)
+	if tx == nil {
+		return 1
+	}
+
+	return len(tx.lines)
 }
 
 func (win *Win) GetTextPos(touchPx int, ln string, prop WinFontProps, coord OsV4, align OsV2) int {
@@ -1091,7 +1112,6 @@ func (win *Win) RenderTile(text string, coord OsV4, priorUp bool, frontCd OsCd) 
 		return nil
 	}
 
-	num_lines := strings.Count(text, "\n") + 1
 	cq := coord
 	cq.Size = win.GetTextSize(-1, text, InitWinFontPropsDef(win))
 	cq = cq.AddSpace(-win.io.GetDPI() / 20)
@@ -1103,7 +1123,6 @@ func (win *Win) RenderTile(text string, coord OsV4, priorUp bool, frontCd OsCd) 
 	depth := 900 //...
 	win.DrawRect(cq.Start, cq.End(), depth, win.io.GetPalette().B)
 	win.DrawRect_border(cq.Start, cq.End(), depth, win.io.GetPalette().OnB, 1)
-	cq.Size.Y /= num_lines
 	win.DrawText(text, InitWinFontPropsDef(win), cq, depth, OsV2{1, 1}, frontCd, 0, 1)
 
 	return nil
