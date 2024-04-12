@@ -217,9 +217,7 @@ func _UiPaint_CursorWordRange(text string, cursor int) (int, int) {
 
 	text = strings.ToLower(text)
 
-	p := 0
-	for _, ch := range text {
-
+	for p, ch := range text {
 		if OsIsTextWord(ch) {
 			end = p + 1
 		} else {
@@ -229,7 +227,6 @@ func _UiPaint_CursorWordRange(text string, cursor int) (int, int) {
 				break
 			}
 		}
-		p++
 	}
 	if end < start {
 		end = start
