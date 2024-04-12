@@ -546,23 +546,34 @@ func (gph *WinGph) GetTextMax(text string, const_max_line_px int, prop WinFontPr
 
 		if ch != '\n' && prop.formating && !gph.processLetter(text[p:], &prop, &act_prop, &skip) {
 			//i++
-			continue
+			continue //skip formating
 		}
 
 		_, l := utf8.DecodeRuneInString(string(ch))
 
-		//word wrapping ...
-		px := txt.letters[i] - startLinePx
+		//word wrapping
+		word_start := 0
+		if OsIsTextWord(ch) || (ch == ' ' && OsIsTextWord(rune(text[p+l]))) { //word OR <space>+word
+			for _, ch2 := range text[p+l:] {
+				if !OsIsTextWord(ch2) {
+					if word_start > 0 && (ch2 == ' ' || ch2 == '\t') {
+						word_start++ //add space at the end of line
+					}
+					break
+				}
+				word_start++
+			}
+		}
+
+		px := txt.letters[i+word_start] - startLinePx
 
 		if ch == '\n' || (const_max_line_px > 0 && px >= const_max_line_px) {
-			s := OsTrn(ch == '\n', i+1, i) //+1 = skip '/n'
+			s := OsTrn(ch == '\n' || ch == ' ' || ch == '\t', i+1, i) //+1 = skip '/n' or ' '
 			lines = append(lines, WinGphLine{s: s, e: s})
 
 			startLinePx = txt.letters[i]
-
 		} else {
-
-			lines[len(lines)-1].e = i + l //rewrite
+			lines[len(lines)-1].e = i + l //shift last
 			max_size_x = OsMax(max_size_x, px)
 		}
 
