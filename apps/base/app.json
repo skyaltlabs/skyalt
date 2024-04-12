@@ -13,9 +13,9 @@
 {
 "Name": "summary",
 "IDE": true,
-"Cam_x": 35.1477165222168,
-"Cam_y": 0.6402062177658081,
-"Cam_z": 0.6,
+"Cam_x": 33.8765983581543,
+"Cam_y": 0.31840944290161133,
+"Cam_z": 1,
 "EnableExecution": true,
 "ExePos": -1,
 "Selected_canvas": {}
@@ -53,14 +53,14 @@
 {
 "Name": "running",
 "IDE": true,
-"Cam_x": 20.756553649902344,
-"Cam_y": 3.083064556121826,
+"Cam_x": 21.74754524230957,
+"Cam_y": 4.929911136627197,
 "Cam_z": 0.6,
 "EnableExecution": true,
 "ExePos": -1,
 "Selected_canvas": {}
 }
 ],
-"Selected": 5,
+"Selected": 0,
 "NewAppName": ""
 }

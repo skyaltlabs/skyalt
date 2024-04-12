@@ -128,6 +128,8 @@
 "grid_w": 1,
 "grid_x": 1,
 "grid_y": 3,
+"icon": "",
+"icon_margin": 0.15,
 "label": "Transcribe",
 "show": true,
 "tooltip": ""

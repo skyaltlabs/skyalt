@@ -53,7 +53,7 @@
 {
 "Pos": 2,
 "Min": 1,
-"Max": 5,
+"Max": 10,
 "Resize": 1
 }
 ],
@@ -78,11 +78,12 @@
 },
 {
 "Pos": {
-"X": 36.919605,
-"Y": -4.0806384
+"X": 36.78447,
+"Y": -3.9725304
 },
 "Name": "text",
 "Exe": "text",
+"Selected": true,
 "Code": {
 "Messages": null,
 "Code": "",
@@ -96,6 +97,7 @@
 "grid_x": 1,
 "grid_y": 2,
 "label": "- The Velvet Revolution was a non-violent transition of power that occurred in Czechoslovakia from 17 to 28 November 1989\n- Popular demonstrations against the Communist Party of Czechoslovakia led to the end of 41 years of one-party rule\n- The revolution began with a student demonstration that was violently suppressed by riot police on 17 November\n- The protests grew in size, with an estimated 500,000 protesters in Prague on 20 November\n- The top leadership of the Communist Party, including General Secretary Miloš Jakeš, resigned on 24 November\n- A two-hour general strike involving all citizens of Czechoslovakia was held on 27 November",
+"line_wrapping": true,
 "multi_line": true,
 "selection": true,
 "show": true,
@@ -123,6 +125,8 @@
 "grid_w": 1,
 "grid_x": 1,
 "grid_y": 1,
+"icon": "",
+"icon_margin": 0.15,
 "label": "Summarize",
 "show": true,
 "tooltip": ""
@@ -131,8 +135,8 @@
 },
 {
 "Pos": {
-"X": 31.547195,
-"Y": -4.101844
+"X": 31.790442,
+"Y": -3.9937358
 },
 "Name": "editbox",
 "Exe": "editbox",
@@ -151,6 +155,7 @@
 "grid_w": 1,
 "grid_x": 1,
 "grid_y": 0,
+"line_wrapping": true,
 "multi_line": true,
 "multi_line_enter_finish": false,
 "show": true,
@@ -161,8 +166,8 @@
 },
 {
 "Pos": {
-"X": 34.002575,
-"Y": 5.476191
+"X": 33.840412,
+"Y": 4.692407
 },
 "Name": "exe",
 "Exe": "exe",
@@ -177,12 +182,11 @@
 "Subs": [
 {
 "Pos": {
-"X": 34.002575,
-"Y": 5.476191
+"X": 33.840412,
+"Y": 4.692407
 },
 "Name": "summarize",
 "Exe": "code",
-"Selected": true,
 "Code": {
 "Messages": [
 {
@@ -194,7 +198,7 @@
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"errors\"\n)\n\nfunc summarize(button *Button, openai *Openai, editbox *Editbox, text *Text) error {\n\tif !button.Triggered || !editbox.Enable || !button.Enable {\n\t\treturn errors.New(\"Button not clicked or Editbox/Button not enabled\")\n\t}\n\t\n\tprompt := \"Please summarize this article into a few bullet points:\\n\" + editbox.Value\n\tanswer, err := openai.GetAnswer([]OpenaiMessage{\n\t\t{\n\t\t\tRole:    \"user\",\n\t\t\tContent: prompt,\n\t\t},\n\t})\n\tif err != nil {\n\t\treturn err\n\t}\n\t\n\ttext.Label = answer\n\treturn nil\n}\n",
+"Code": "\nimport (\n)\n\nfunc summarize(button *Button, openai *Openai, editbox *Editbox, text *Text) error {\n\tif !button.Triggered || !editbox.Enable || !button.Enable {\n\t\treturn nil\n\t}\n\t\n\tprompt := \"Please summarize this article into a few bullet points:\\n\" + editbox.Value\n\tanswer, err := openai.GetAnswer([]OpenaiMessage{\n\t\t{\n\t\t\tRole:    \"user\",\n\t\t\tContent: prompt,\n\t\t},\n\t})\n\tif err != nil {\n\t\treturn err\n\t}\n\t\n\ttext.Label = answer\n\treturn nil\n}\n",
 "ArgsProps": [
 {
 "Node": "button",
