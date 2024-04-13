@@ -532,28 +532,22 @@ func (gph *WinGph) GetTextMax(text string, const_max_line_px int, prop WinFontPr
 	}
 
 	//build lines
-	var lines []WinGphLine
 	max_size_x := 0
 	startLinePx := 0
-
 	txt := gph.GetText(prop, text)
-	skip := 0
-	act_prop := prop
-	i := 0
 
+	var lines []WinGphLine
 	lines = append(lines, WinGphLine{s: 0, e: 0})
 	for p, ch := range text {
-
-		if ch != '\n' && prop.formating && !gph.processLetter(text[p:], &prop, &act_prop, &skip) {
-			//i++
-			continue //skip formating
-		}
-
 		_, l := utf8.DecodeRuneInString(string(ch))
 
 		//word wrapping
 		word_start := 0
-		if OsIsTextWord(ch) || (ch == ' ' && OsIsTextWord(rune(text[p+l]))) { //word OR <space>+word
+		var next_ch rune
+		if len(text) > p+l {
+			next_ch = rune(text[p+l])
+		}
+		if OsIsTextWord(ch) || (ch == ' ' && OsIsTextWord(next_ch)) { //word OR <space>+word
 			for _, ch2 := range text[p+l:] {
 				if !OsIsTextWord(ch2) {
 					if word_start > 0 && (ch2 == ' ' || ch2 == '\t') {
@@ -565,19 +559,17 @@ func (gph *WinGph) GetTextMax(text string, const_max_line_px int, prop WinFontPr
 			}
 		}
 
-		px := txt.letters[i+word_start] - startLinePx
+		px := txt.letters[p+word_start] - startLinePx
 
 		if ch == '\n' || (const_max_line_px > 0 && px >= const_max_line_px) {
-			s := OsTrn(ch == '\n' || ch == ' ' || ch == '\t', i+1, i) //+1 = skip '/n' or ' '
+			s := OsTrn(ch == '\n' || ch == ' ' || ch == '\t', p+1, p) //+1 = skip '/n' or ' '
 			lines = append(lines, WinGphLine{s: s, e: s})
 
-			startLinePx = txt.letters[i]
+			startLinePx = txt.letters[p]
 		} else {
-			lines[len(lines)-1].e = i + l //shift last
+			lines[len(lines)-1].e = p + l //shift last
 			max_size_x = OsMax(max_size_x, px)
 		}
-
-		i += l
 	}
 
 	it := &WinGphItemTextMax{text: text, const_max_line_px: const_max_line_px, prop: prop, lines: lines, max_size_x: max_size_x}
@@ -871,6 +863,7 @@ func (gph *WinGph) drawString(prop WinFontProps, str string) *WinGphItemText {
 	for p, ch := range str {
 		if prop.formating && !gph.processLetter(str[p:], &prop, &act_prop, &skip) {
 			i++
+			letters = append(letters, int(d.Dot.X>>6)) //same
 			continue
 		}
 
