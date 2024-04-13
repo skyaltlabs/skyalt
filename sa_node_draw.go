@@ -202,7 +202,7 @@ func (node *SANode) drawHeader() bool {
 		ui.Div_colMax(0, 100)
 
 		//name
-		div := ui.Comp_textSelect(0, 0, 1, 1, node.GetNodeLabel(), OsV2{1, 1}, false, false)
+		div := ui.Comp_textSelect(0, 0, 1, 1, node.GetNodeLabel(), OsV2{1, 1}, false, true, false)
 		if div.IsTouchEndSubs(ui) && ui.win.io.touch.rm {
 			ui.win.io.keys.clipboard = "'" + node.Name + "'"
 		}
@@ -400,7 +400,7 @@ func (node *SANode) drawNode(someNodeIsDraged bool) bool {
 			if progress_desc != "" {
 				str += "(" + progress_desc + ")"
 			}
-			ui.Comp_textSelect(0, 0, 1, 1, str, OsV2{0, 1}, false, false)
+			ui.Comp_textSelect(0, 0, 1, 1, str, OsV2{0, 1}, false, true, false)
 		}
 		ui.Div_end()
 

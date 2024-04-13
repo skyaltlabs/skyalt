@@ -540,7 +540,7 @@ func (ui *Ui) Comp_textCd(x, y, w, h int, label string, alignH int, cd uint8) *U
 	return div
 }
 
-func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, align OsV2, selection bool, drawBorder bool) *UiLayoutDiv {
+func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, align OsV2, selection bool, formating bool, drawBorder bool) *UiLayoutDiv {
 	ui.Div_start(x, y, w, h)
 	div := ui.GetCall().call
 
@@ -548,7 +548,7 @@ func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, align OsV2, selectio
 	style.enable = true
 	style.cd = CdPalette_B
 	style.label_align = align
-	style.label_formating = true
+	style.label_formating = formating
 
 	ui.Comp_text_s(&style, label, nil, selection, false, false, false)
 
