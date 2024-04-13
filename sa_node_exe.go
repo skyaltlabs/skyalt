@@ -1378,15 +1378,12 @@ func UiCodeGo_AttrChat(node *SANode) {
 	//header
 	ui.Div_start(0, 0, 1, 1)
 	{
-		ui.Div_colMax(1, 100)
+		ui.Div_colMax(0, 100)
 
-		if ui.Comp_buttonLight(0, 0, 1, 1, "X", Comp_buttonProp()) > 0 {
-			node.ShowCodeChat = false
-		}
-		ui.Comp_text(1, 0, 1, 1, "Code Chat", 1)
+		ui.Comp_text(0, 0, 1, 1, "Code chat", 1)
 
 		dnm := "chat_" + node.Name
-		if ui.Comp_buttonIcon(2, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/context.png"), 0.3, "", Comp_buttonProp().Cd(CdPalette_B)) > 0 {
+		if ui.Comp_buttonIcon(1, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/context.png"), 0.3, "", Comp_buttonProp().Cd(CdPalette_B)) > 0 {
 			ui.Dialog_open(dnm, 1)
 		}
 		if ui.Dialog_start(dnm) {
@@ -1496,94 +1493,6 @@ func _UiCode_attrs(node *SANode, grid *OsV4) {
 	//language
 	//node.ShowAttrStringCombo(grid, "language", "go", []string{"go"}, []string{"go"})
 	//grid.Start.Y++
-
-	//triggers
-	/*{
-		ui.Comp_text(0, y, 1, 1, "Triggers", 0)
-		nTrigs := len(node.Code.Triggers)
-		ui.Div_start(1, y, 1, nTrigs+1)
-		{
-			ui.Div_colMax(1, 100)
-			for i, tr := range node.Code.Triggers {
-				if ui.Comp_buttonLight(0, i, 1, 1, "X", Comp_buttonProp().Tooltip("Un-link")) > 0 {
-					node.Code.Triggers = append(node.Code.Triggers[:i], node.Code.Triggers[i+1:]...) //remove
-				}
-				ui.Comp_text(1, i, 1, 1, tr, 0)
-			}
-
-			ui.Div_start(0, nTrigs, 2, 1)
-			{
-				ui.Div_colMax(1, 5)
-				ui.Comp_text(0, 0, 1, 1, "+", 1)
-				var pick_node string
-				if ui.Comp_combo(1, 0, 1, 1, &pick_node, node.app.all_triggers_str, node.app.all_triggers_str, "", true, true) {
-					node.Code.addTrigger(pick_node)
-				}
-			}
-			ui.Div_end()
-
-		}
-		ui.Div_end()
-		y += nTrigs + 1
-
-		if len(node.Code.Triggers) == 0 {
-			node.SetError(fmt.Errorf("no triggered(s)"))
-		}
-	}
-
-	ui.Div_SpacerRow(0, y, 2, 1)
-	y++*/
-
-	//Features
-	/*{
-		ui.Comp_text(0, y, 1, 1, "Features", 0)
-		for i, str := range node.Code.Messages {
-			if str.User != "" && i+1 < len(node.Code.Messages) { //must exist, not last one(because it's without answer yet)
-				nlines := WinFontProps_NumRows(str.User)
-				ui.Comp_textSelectMulti(1, y, 1, nlines, str.User, OsV2{0, 0}, true, false)
-				y += nlines
-			}
-		}
-
-		str := OsTrnString(node.ShowCodeChat, "Close Assistent", "Open Assistent")
-		if ui.Comp_buttonLight(1, y, 1, 1, str, "", true) > 0 {
-			node.ShowCodeChat = !node.ShowCodeChat
-		}
-		y++
-	}
-
-	ui.Div_SpacerRow(0, y, 2, 1)
-	y++*/
-
-	// Open chat
-	{
-		str := OsTrnString(node.ShowCodeChat, "Close Code chat", "Open Code chat")
-		if ui.Comp_buttonLight(1, grid.Start.Y, 1, 1, str, Comp_buttonProp()) > 0 {
-			node.ShowCodeChat = !node.ShowCodeChat
-		}
-		grid.Start.Y++
-	}
-
-	//Imports
-	/*{
-		ui.Comp_text(0, y, 1, 1, "Imports", 0)
-		n := len(node.Code.Imports)
-		ui.Div_start(1, y, 1, n+1)
-		{
-			ui.Div_colMax(1, 3)
-			ui.Div_colMax(2, 100)
-			//ui.Div_colMax(1, 100)
-			for i, im := range node.Code.Imports {
-				if ui.Comp_buttonLight(0, i, 1, 1, "X", "Remove", true) > 0 {
-					node.Code.Imports = append(node.Code.Imports[:i], node.Code.Imports[i+1:]...) //remove
-				}
-				ui.Comp_text(1, i, 1, 1, im.Name, 0)
-				ui.Comp_text(2, i, 1, 1, im.Path, 0)
-			}
-		}
-		ui.Div_end()
-		y += OsMax(1, n)
-	}*/
 
 	//Code
 	{

@@ -225,17 +225,7 @@ func (node *SANode) drawHeader() bool {
 		}
 	}
 
-	//chat icon
-	if node.IsTypeCode() {
-		cd := CdPalette_B
-		if node.ShowCodeChat {
-			cd = CdPalette_P
-		}
-		if ui.Comp_buttonIcon(2, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/chat.png"), 0.2, "Code Chat", Comp_buttonProp().Cd(cd)) > 0 {
-			node.ShowCodeChat = !node.ShowCodeChat
-		}
-	}
-
+	//Open/Quit sub-layout
 	if node.IsTypeList() {
 		cd := CdPalette_B
 
@@ -246,7 +236,7 @@ func (node *SANode) drawHeader() bool {
 			cd = CdPalette_P
 			file = "layout_full.png"
 		}
-		if ui.Comp_buttonIcon(3, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/"+file), 0.2, "Code Chat", Comp_buttonProp().Cd(cd)) > 0 {
+		if ui.Comp_buttonIcon(3, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/"+file), 0.2, "Open/Quit Layout", Comp_buttonProp().Cd(cd)) > 0 {
 			if isCanvasSelected {
 				node.app.Selected_canvas = SANodePath{}
 			} else {

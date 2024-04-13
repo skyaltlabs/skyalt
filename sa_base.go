@@ -270,11 +270,8 @@ func (base *SABase) Render() bool {
 			ui.Div_colMax(0, 100)
 			ui.Div_rowMax(0, 100)
 
-			sel_node := app.root.FindSelected()
-			if app.graph.showNodeList || (sel_node != nil && sel_node.ShowCodeChat) {
-				ui.Div_col(1, 3) //min
-				ui.Div_colResize(1, "right_panel", 7, false)
-			}
+			ui.Div_col(1, 3) //min
+			ui.Div_colResize(1, "chat", 7, false)
 
 			ui.Div_start(0, 0, 1, 1)
 			{
@@ -293,7 +290,7 @@ func (base *SABase) Render() bool {
 					} else {
 						ui.Div_colMax(0, 100)
 						ui.Div_rowMax(0, 100)
-						ui.Comp_text(0, 0, 1, 1, "No node selected", 1)
+						ui.Comp_text(0, 0, 1, 1, "Select a node", 1)
 					}
 
 				}
@@ -305,6 +302,11 @@ func (base *SABase) Render() bool {
 					ui.Div_colMax(0, 100)
 					ui.Div_rowMax(1, 100)
 
+					if app.graph.showNodeList {
+						ui.Div_col(1, 3) //min
+						ui.Div_colResize(1, "node_list", 1, false)
+					}
+
 					if app.Cam_z <= 0 {
 						app.Cam_z = 1
 					}
@@ -314,6 +316,13 @@ func (base *SABase) Render() bool {
 					var keyAllow bool
 					graphCanvas, keyAllow = app.graph.drawGraph()
 					ui.Div_end()
+
+					//node list
+					if app.graph.showNodeList {
+						ui.Div_start(1, 0, 1, 2)
+						app.graph.drawNodeList(graphCanvas)
+						ui.Div_end()
+					}
 
 					//panel
 					ui.Div_start(0, 0, 1, 1)
@@ -325,15 +334,22 @@ func (base *SABase) Render() bool {
 			ui.Div_end()
 
 			//node list
-			if app.graph.showNodeList {
-				ui.Div_start(1, 0, 1, 1)
-				app.graph.drawNodeList(graphCanvas)
-				ui.Div_end()
-			} else if sel_node != nil && sel_node.ShowCodeChat {
-				ui.Div_start(1, 0, 1, 1)
+			/*if app.graph.showNodeList {
+			ui.Div_start(1, 0, 1, 1)
+			app.graph.drawNodeList(graphCanvas)
+			ui.Div_end()*/
+			//} else if sel_node != nil && sel_node.ShowCodeChat {
+			ui.Div_start(1, 0, 1, 1)
+			sel_node := app.root.FindSelected()
+			if sel_node != nil && sel_node.IsTypeCode() {
 				UiCodeGo_AttrChat(sel_node)
-				ui.Div_end()
+			} else {
+				ui.Div_colMax(0, 100)
+				ui.Div_rowMax(0, 100)
+				ui.Comp_text(0, 0, 1, 1, "Select a Code node", 1)
 			}
+			ui.Div_end()
+			//}
 
 		}
 		ui.Div_end()

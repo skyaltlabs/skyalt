@@ -38,7 +38,7 @@ type SAGraph struct {
 	//connect_out *SANode
 
 	showNodeList          bool
-	showNodeList_justOpen bool
+	showNodeList_justOpen bool //for setFirstEditbox
 	node_search           string
 
 	history     [][]byte //JSONs
@@ -898,7 +898,8 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 	//}
 	//y++
 
-	if ui.Comp_buttonIcon(11, 0, 1, 1, InitWinMedia_url(path+"list.png"), 0.2, "Show/Hide list of all nodes(Ctrl+F)", Comp_buttonProp().DrawBack(gr.showNodeList)) > 0 || strings.EqualFold(keys.ctrlChar, "f") {
+	icon := InitWinMedia_url(path + "list.png")
+	if ui.Comp_button(11, 0, 1, 1, "", Comp_buttonProp().Icon(&icon).ImgMargin(0.2).Tooltip("Show/Hide list of all nodes(Ctrl+F)").DrawBack(gr.showNodeList)) > 0 || strings.EqualFold(keys.ctrlChar, "f") {
 		gr.showNodeList = !gr.showNodeList
 		if gr.showNodeList {
 			gr.showNodeList_justOpen = true

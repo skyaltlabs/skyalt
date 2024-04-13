@@ -57,8 +57,6 @@ type SANode struct {
 
 	listSubs []*SANode
 
-	ShowCodeChat bool
-
 	errExe error
 
 	z_depth float64
