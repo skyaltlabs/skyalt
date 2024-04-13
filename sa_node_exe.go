@@ -114,6 +114,7 @@ func UiText_Attrs(node *SANode) {
 	node.ShowAttrIntCombo(&grid, "align_v", 0, []string{"Left", "Center", "Right"}, []string{"0", "1", "2"})
 	node.ShowAttrBool(&grid, "multi_line", false)
 	node.ShowAttrBool(&grid, "line_wrapping", true)
+	node.ShowAttrBool(&grid, "formating", true)
 	node.ShowAttrBool(&grid, "selection", true)
 	node.ShowAttrBool(&grid, "show_border", false)
 }
@@ -126,11 +127,12 @@ func UiText_render(node *SANode) {
 	selection := node.GetAttrBool("selection", true)
 	show_border := node.GetAttrBool("show_border", false)
 	line_wrapping := node.GetAttrBool("line_wrapping", true)
+	formating := node.GetAttrBool("formating", true)
 
 	if node.GetAttrBool("multi_line", false) {
-		node.app.base.ui.Comp_textSelectMulti(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, OsV2{align_h, align_v}, selection, show_border, true, line_wrapping)
+		node.app.base.ui.Comp_textSelectMulti(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, OsV2{align_h, align_v}, selection, show_border, formating, line_wrapping)
 	} else {
-		node.app.base.ui.Comp_textSelect(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, OsV2{align_h, align_v}, selection, show_border)
+		node.app.base.ui.Comp_textSelect(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, OsV2{align_h, align_v}, selection, formating, show_border)
 	}
 }
 
@@ -151,6 +153,7 @@ func UiEditbox_Attrs(node *SANode) {
 	node.ShowAttrBool(&grid, "multi_line", false)
 	node.ShowAttrBool(&grid, "multi_line_enter_finish", false)
 	node.ShowAttrBool(&grid, "line_wrapping", true)
+	node.ShowAttrBool(&grid, "formating", true)
 
 	node.ShowAttrBool(&grid, "temp_to_value", false)
 
@@ -234,6 +237,7 @@ func UiEditbox_render(node *SANode) {
 	multi_line := node.GetAttrBool("multi_line", false)
 	multi_line_enter_finish := node.GetAttrBool("multi_line_enter_finish", false)
 	line_wrapping := node.GetAttrBool("line_wrapping", true)
+	formating := node.GetAttrBool("formating", true)
 	temp_to_value := node.GetAttrBool("temp_to_value", false)
 
 	db_value := node.GetAttrBool("db_value", false)
@@ -242,7 +246,7 @@ func UiEditbox_render(node *SANode) {
 	}
 
 	origValue := value
-	editedValue, active, _, fnshd, _ := node.app.base.ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, Comp_editboxProp().Ghost(ghost).MultiLine(multi_line, line_wrapping).MultiLineEnterFinish(multi_line_enter_finish).Enable(enable).Align(align_h, align_v))
+	editedValue, active, _, fnshd, _ := node.app.base.ui.Comp_editbox(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, Comp_editboxProp().Ghost(ghost).MultiLine(multi_line, line_wrapping).MultiLineEnterFinish(multi_line_enter_finish).Formating(formating).Enable(enable).Align(align_h, align_v))
 
 	if temp_to_value && active {
 		if node.Attrs["value"] != editedValue {

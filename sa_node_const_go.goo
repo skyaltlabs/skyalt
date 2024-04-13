@@ -9,6 +9,7 @@ type Text struct {
 	Align_v     int    `json:"align_v"`
 	Multi_line  bool   `json:"multi_line"`
 	Line_wrapping bool   `json:"line_wrapping"`
+	Formating   bool   `json:"formating"`
 	Selection   bool   `json:"selection"`
 	Show_border bool   `json:"show_border"`
 }
@@ -26,6 +27,7 @@ type Editbox struct {
 	Multi_line              bool   `json:"multi_line"`
 	Multi_line_enter_finish bool   `json:"multi_line_enter_finish"`
 	Line_wrapping           bool   `json:"line_wrapping"`
+	Formating               bool   `json:"formating"`
 	Temp_to_value           bool   `json:"temp_to_value"`
 	Db_value 				bool   `json:"db_value"`
 }
