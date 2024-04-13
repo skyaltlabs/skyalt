@@ -86,6 +86,9 @@ func (node *SANode) nodeToPixels(p OsV2f, canvas OsV4) OsV2 {
 }
 
 func (node *SANode) GetNodeLabel() string {
+	if node.IsTypeExe() {
+		return "Execution"
+	}
 	return node.Name + "(" + node.Exe + ")"
 }
 
