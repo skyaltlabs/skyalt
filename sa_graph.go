@@ -767,10 +767,10 @@ func (gr *SAGraph) drawGraph() (OsV4, bool) {
 
 		if over && touch.numClicks > 1 {
 			sel := gr.app.root.FindSelected()
-			if sel == nil {
-				gr.app.Selected_canvas = SANodePath{}
-			} else {
+			if sel != nil && sel.IsTypeList() {
 				gr.app.Selected_canvas = NewSANodePath(sel)
+			} else {
+				gr.app.Selected_canvas = SANodePath{}
 			}
 		}
 
