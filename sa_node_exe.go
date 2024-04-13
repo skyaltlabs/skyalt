@@ -1462,8 +1462,12 @@ func UiCodeGo_AttrChat(node *SANode) {
 				ui.Comp_editbox(0, y, 3, nlines, &node.Code.Messages[i].User, Comp_editboxProp().MultiLine(true, max_line_px > 0).Align(0, 0).Formating(false))
 				y += nlines
 
-				//or ctrl+enter ..........
-				if ui.Comp_buttonLight(2, y, 1, 1, "Send", Comp_buttonProp()) > 0 {
+				//model
+				models := []string{"gpt-4-turbo", "gpt-3.5-turbo"} //https://platform.openai.com/docs/models/
+				ui.Comp_combo(1, y, 1, 1, &node.app.base.ui.win.io.ini.ChatModel, models, models, "Model", true, true)
+
+				//button
+				if ui.Comp_buttonLight(2, y, 1, 1, "Send", Comp_buttonProp()) > 0 { //or ctrl+enter ..........
 					node.Code.GetAnswer()
 				}
 			}

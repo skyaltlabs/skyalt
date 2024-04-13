@@ -642,7 +642,7 @@ func (ls *SANodeCode) GetAnswer() {
 		}
 	}
 
-	props := &SAServiceOpenAIProps{Model: "gpt-4-turbo-2024-04-09", Messages: messages}
+	props := &SAServiceOpenAIProps{Model: ls.node.app.base.ui.win.io.ini.ChatModel, Messages: messages}
 
 	ls.job_oai = ls.node.app.base.jobs.AddOpenAI(ls.node.app, NewSANodePath(ls.node), props)
 }

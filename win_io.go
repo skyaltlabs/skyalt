@@ -120,6 +120,8 @@ type WinIni struct {
 	Offline bool
 	MicOff  bool
 
+	ChatModel string
+
 	OpenAI_key string
 }
 
@@ -233,6 +235,10 @@ func (io *WinIO) _IO_setDefault() error {
 	//theme
 	if io.ini.Theme == "" {
 		io.ini.Theme = "light"
+	}
+
+	if io.ini.ChatModel == "" {
+		io.ini.ChatModel = "gpt-4-turbo"
 	}
 
 	if io.ini.CustomPalette.P.A == 0 {
