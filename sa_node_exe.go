@@ -1413,11 +1413,20 @@ func UiCodeGo_AttrChat(node *SANode) {
 		y := 0
 		for i, str := range node.Code.Messages {
 			if i+1 < len(node.Code.Messages) || node.Code.job_oai != nil {
-				max_line_px := ui.GetCall().call.crop.Size.X //ui.GetCall().call.canvas.Size.X
-				nlines := ui.win.GetTextNumLines(str.User, max_line_px, InitWinFontPropsDef(ui.win))
-				ui.Comp_text(0, y, 1, 1, "User", 0)
-				ui.Comp_textSelectMulti(1, y, 2, nlines, str.User, OsV2{0, 0}, true, false, false, max_line_px > 0)
-				y += nlines
+
+				//user
+				{
+					line_wrapping := true
+					nlines := 1
+					dd := ui.GetCall().call.FindFromGridPos(OsV2{1, y})
+					if dd != nil {
+						nlines = OsRoundUp(float64(ui._Paint_getMaxCellSize(dd, str.User, InitWinFontPropsDef(ui.win), true, line_wrapping).Y))
+					}
+
+					ui.Comp_text(0, y, 1, 1, "User", 0)
+					ui.Comp_textSelectMulti(1, y, 2, nlines, str.User, OsV2{0, 0}, true, false, false, line_wrapping)
+					y += nlines
+				}
 
 				assist := str.Assistent
 				if node.Code.job_oai != nil {
@@ -1429,34 +1438,45 @@ func UiCodeGo_AttrChat(node *SANode) {
 					}
 				}
 
-				max_line_px = -1
-				nlines = ui.win.GetTextNumLines(assist, max_line_px, InitWinFontPropsDef(ui.win))
-				ui.Div_start(0, y, 3, nlines+1)
 				{
-					ui.Div_colMax(0, 1.5)
-					ui.Div_colMax(1, 100)
-					ui.Div_colMax(2, 100)
+					line_wrapping := false
+					nlines := 1
+					dd := ui.GetCall().call.FindFromGridPos(OsV2{1, y})
+					if dd != nil {
+						sz := ui._Paint_getMaxCellSize(dd, assist, InitWinFontPropsDef(ui.win), true, line_wrapping)
+						nlines = OsRoundUp(float64(sz.Y + 0.5))
+					}
 
+					//background
+					ui.Div_start(0, y, 3, nlines)
 					pl := ui.win.io.GetPalette()
 					ui.Paint_rect(0, 0, 1, 1, 0, pl.GetGrey(0.85), 0)
+					ui.Div_end()
 
-					ui.Comp_text(0, 0, 1, 1, "Bot", 0)
-					ui.Comp_textSelectMulti(1, 0, 2, nlines, assist, OsV2{0, 0}, true, false, false, max_line_px > 0)
+					ui.Comp_text(0, y, 1, 1, "Bot", 0)
+					ui.Comp_textSelectMulti(1, y, 2, nlines, assist, OsV2{0, 0}, true, false, false, line_wrapping)
+					y += nlines
 
-					if ui.Comp_buttonLight(2, nlines, 1, 1, "Use this code", Comp_buttonProp().Enable(node.Code.job_oai == nil)) > 0 {
+					if ui.Comp_buttonLight(2, y, 1, 1, "Use this code", Comp_buttonProp().Enable(node.Code.job_oai == nil)) > 0 {
 						node.Code.UseCodeFromAnswer(str.Assistent)
 					}
+					y++
 				}
-				ui.Div_end()
-				y += nlines + 1
-
-				//ui.Div_SpacerRow(0, y, 3, 1)
-				y += 2 //space
+				y += 1 //space
 			} else {
 				//last one is user editbox
-				max_line_px := -1
-				nlines := ui.win.GetTextNumLines(str.User, max_line_px, InitWinFontPropsDef(ui.win)) + 2
-				ui.Comp_editbox(0, y, 3, nlines, &node.Code.Messages[i].User, Comp_editboxProp().MultiLine(true, max_line_px > 0).Align(0, 0).Formating(false))
+				line_wrapping := true
+				nlines := 1
+				dd := ui.GetCall().call.FindFromGridPos(OsV2{1, y})
+				if dd != nil {
+					nlines = OsRoundUp(float64(ui._Paint_getMaxCellSize(dd, node.Code.Messages[i].User, InitWinFontPropsDef(ui.win), true, line_wrapping).Y))
+				}
+				nlines = OsMax(2, nlines)
+
+				if dd != nil {
+					dd.grid.Size.Y = nlines //dirty hack! Editbox active=div pointer, If nlines changed, then new div is allocated and editbox is deactivated
+				}
+				ui.Comp_editbox(0, y, 3, nlines, &node.Code.Messages[i].User, Comp_editboxProp().MultiLine(true, line_wrapping).TempToValue(true).Align(0, 0).Formating(false))
 				y += nlines
 
 				//model
@@ -1469,8 +1489,6 @@ func UiCodeGo_AttrChat(node *SANode) {
 				}
 			}
 		}
-
-		//delete last one ...
 	}
 	ui.Div_end()
 }

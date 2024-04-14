@@ -22,13 +22,34 @@ import (
 	"unicode/utf8"
 )
 
-func (ui *Ui) _Paint_getMaxLinePx(multi_line, line_wrapping bool) int {
+func (ui *Ui) _Paint_getMaxLinePx(div *UiLayoutDiv, multi_line, line_wrapping bool) int {
 	max_line_px := -1
 	if multi_line && line_wrapping {
-		max_line_px = ui.GetCall().call.crop.Size.X - ui.CellWidth(3*0.1) //3 ...
+		max_line_px = div.crop.Size.X - ui.CellWidth(3*0.1) //3 ...
 	}
 
 	return max_line_px
+}
+
+func (ui *Ui) _Paint_getMaxCellSize(div *UiLayoutDiv, value string, prop WinFontProps, multi_line, line_wrapping bool) OsV2f {
+
+	var size OsV2f
+	var mx, my int
+	if multi_line {
+		max_line_px := ui._Paint_getMaxLinePx(div, multi_line, line_wrapping)
+		mx, my = ui.win.GetTextSizeMax(value, max_line_px, prop)
+	} else {
+		mx = ui.win.GetTextSize(-1, value, prop).X
+		my = 1
+	}
+	sizePx := OsV2{mx, my * prop.lineH}
+	size = sizePx.toV2f().DivV(float32((ui.win.Cell()))) //conver into cell
+
+	if !multi_line {
+		size.Y -= 0.5 //make space for narrow h-scroll
+	}
+
+	return size
 }
 
 func (ui *Ui) Paint_textGrid(
@@ -57,29 +78,7 @@ func (ui *Ui) Paint_textGrid(
 		lv.call.data.scrollV.show = true
 	}
 
-	var size OsV2f
-	{
-		var sizePx OsV2
-
-		var mx, my int
-		if multi_line {
-			max_line_px := ui._Paint_getMaxLinePx(multi_line, line_wrapping)
-			mx, my = ui.win.GetTextSizeMax(value, max_line_px, prop)
-		} else {
-			mx = ui.win.GetTextSize(-1, value, prop).X
-			my = 1
-		}
-		sizePx = OsV2{mx, my * prop.lineH}
-
-		size = sizePx.toV2f().DivV(float32((ui.win.Cell()))) //conver into cell
-		//size.X += 2 * 0.1                                    //because rect_border
-		//size.Y += 2 * 0.1
-		//size.Y = 4*0.1
-	}
-
-	if !multi_line {
-		size.Y -= 0.5 //make space for narrow h-scroll
-	}
+	size := ui._Paint_getMaxCellSize(ui.GetCall().call, value, prop, multi_line, line_wrapping)
 
 	size.X = OsMaxFloat32(size.X, float32(lv.call.crop.Size.X)/float32((ui.win.Cell()))) //minimum sizeX is over whole div(user can click at the end)
 
@@ -743,7 +742,7 @@ func (ui *Ui) _UiPaint_Text_line(coord OsV4,
 	oldCursor := edit.end
 	cursorPos := -1
 
-	max_line_px := ui._Paint_getMaxLinePx(multi_line, line_wrapping)
+	max_line_px := ui._Paint_getMaxLinePx(ui.GetCall().call, multi_line, line_wrapping)
 	lines := ui.win.GetTextLines(value, max_line_px, prop)
 	startY := ui.win.GetTextStart(value, prop, coord, align, len(lines)).Y
 
