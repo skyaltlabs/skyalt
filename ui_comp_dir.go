@@ -22,7 +22,7 @@ import (
 	"strings"
 )
 
-func (ui *Ui) Comp_dirPicker(x, y, w, h int, path *string, selectFile bool, dialogName string, enable bool) bool {
+func (ui *Ui) Comp_dirPicker(x, y, w, h int, path *string, selectFile bool, errWhenEmpty bool, dialogName string, enable bool) bool {
 	origPath := *path
 
 	ui.Div_start(x, y, w, h)
@@ -35,6 +35,9 @@ func (ui *Ui) Comp_dirPicker(x, y, w, h int, path *string, selectFile bool, dial
 		nm := *path
 		if nm == "" {
 			nm = OsTrnString(selectFile, "< Select File >", "< Select Folder >")
+			if !errWhenEmpty {
+				exist = true
+			}
 		} else {
 			if !exist {
 				nm = "Error - Not Found: " + nm

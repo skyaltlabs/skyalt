@@ -314,14 +314,14 @@ func (node *SANode) ShowAttrStringCombo(grid *OsV4, name string, defValue string
 	return value
 }
 
-func (node *SANode) ShowAttrFilePicker(grid *OsV4, name string, defValue string, selectFile bool, dialogName string) string {
+func (node *SANode) ShowAttrFilePicker(grid *OsV4, name string, defValue string, selectFile bool, errWhenEmpty bool, dialogName string) string {
 	ui := node.app.base.ui
 
 	value := node.GetAttrString(name, defValue)
 
 	node.showAttrName(grid, name, value == defValue)
 
-	if ui.Comp_dirPicker(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, selectFile, dialogName, true) {
+	if ui.Comp_dirPicker(grid.Start.X+1, grid.Start.Y, grid.Size.X, grid.Size.Y, &value, selectFile, errWhenEmpty, dialogName, true) {
 		node.Attrs[name] = value
 		node.SetStructChange()
 	}

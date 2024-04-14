@@ -41,7 +41,7 @@ func UiButton_Attrs(node *SANode) {
 	node.ShowAttrIntCombo(&grid, "background", 1, []string{"Transparent", "Full", "Light"}, []string{"0", "1", "2"})
 
 	node.ShowAttrString(&grid, "label", "", false)
-	node.ShowAttrFilePicker(&grid, "icon", "", true, "select_icon")
+	node.ShowAttrFilePicker(&grid, "icon", "", true, false, "select_icon")
 	node.ShowAttrFloat(&grid, "icon_margin", 0.15, 2)
 	node.ShowAttrString(&grid, "tooltip", "", false)
 	node.ShowAttrBool(&grid, "enable", true)
@@ -589,7 +589,7 @@ func UiDiskDir_Attrs(node *SANode) {
 	grid := InitOsV4(0, 0, 1, 1)
 	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
 	node.ShowAttrBool(&grid, "show", true)
-	node.ShowAttrFilePicker(&grid, "path", "", false, "disk_dir_"+node.Name)
+	node.ShowAttrFilePicker(&grid, "path", "", false, true, "disk_dir_"+node.Name)
 	node.ShowAttrBool(&grid, "write", false)
 	node.ShowAttrBool(&grid, "enable", true)
 }
@@ -599,7 +599,7 @@ func UiDiskDir_render(node *SANode) {
 	path := node.GetAttrString("path", "")
 	enable := node.GetAttrBool("enable", true)
 
-	if node.app.base.ui.Comp_dirPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &path, false, "dir_picker_"+node.Name, enable) {
+	if node.app.base.ui.Comp_dirPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &path, false, true, "dir_picker_"+node.Name, enable) {
 		node.Attrs["path"] = path
 		node.SetChange(nil)
 	}
@@ -613,7 +613,7 @@ func UiDiskFile_Attrs(node *SANode) {
 	grid := InitOsV4(0, 0, 1, 1)
 	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
 	node.ShowAttrBool(&grid, "show", true)
-	node.ShowAttrFilePicker(&grid, "path", "", true, "disk_file_"+node.Name)
+	node.ShowAttrFilePicker(&grid, "path", "", true, true, "disk_file_"+node.Name)
 	node.ShowAttrBool(&grid, "write", false)
 	node.ShowAttrBool(&grid, "enable", true)
 }
@@ -623,7 +623,7 @@ func UiDiskFile_render(node *SANode) {
 	path := node.GetAttrString("path", "")
 	enable := node.GetAttrBool("enable", true)
 
-	if node.app.base.ui.Comp_dirPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &path, true, "dir_picker_"+node.Name, enable) {
+	if node.app.base.ui.Comp_dirPicker(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, &path, true, true, "dir_picker_"+node.Name, enable) {
 		node.Attrs["path"] = path
 		node.SetChange(nil)
 	}
@@ -637,7 +637,7 @@ func UiMicrophone_Attrs(node *SANode) {
 	grid := InitOsV4(0, 0, 1, 1)
 	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
 	node.ShowAttrBool(&grid, "show", true)
-	node.ShowAttrFilePicker(&grid, "path", "", true, "microphone_path_"+node.Name)
+	node.ShowAttrFilePicker(&grid, "path", "", true, true, "microphone_path_"+node.Name)
 	node.ShowAttrBool(&grid, "enable", true)
 }
 
@@ -975,7 +975,7 @@ func UiSQLite_Attrs(node *SANode) {
 	node.ShowAttrBool(&grid, "write", false)
 	node.ShowAttrBool(&grid, "enable", true)
 
-	path := node.ShowAttrFilePicker(&grid, "path", "", true, "render_sqlite_"+node.Name)
+	path := node.ShowAttrFilePicker(&grid, "path", "", true, true, "render_sqlite_"+node.Name)
 	if !OsFileExists(path) {
 		node.SetError(errors.New("file not exist"))
 		return
