@@ -519,6 +519,22 @@ func (ui *Ui) Comp_text(x, y, w, h int, label string, alignH int) *UiLayoutDiv {
 	return div
 }
 
+func (ui *Ui) Comp_textAlign(x, y, w, h int, label string, alignH, alignV int) *UiLayoutDiv {
+	ui.Div_start(x, y, w, h)
+	div := ui.GetCall().call
+
+	var style UiComp
+	style.enable = true
+	style.cd = CdPalette_B
+	style.label_align = OsV2{alignH, alignV}
+	style.label_formating = true
+
+	ui.Comp_text_s(&style, label, nil, true, false, false, false)
+
+	ui.Div_end()
+	return div
+}
+
 func (ui *Ui) Comp_textCd(x, y, w, h int, label string, alignH int, cd uint8) *UiLayoutDiv {
 	ui.Div_start(x, y, w, h)
 	div := ui.GetCall().call
