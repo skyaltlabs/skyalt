@@ -218,6 +218,9 @@ func (node *SANode) IsTypeDbFile() bool {
 func (node *SANode) IsTypeList() bool {
 	return strings.EqualFold(node.Exe, "list")
 }
+func (node *SANode) IsTypeLayout() bool {
+	return strings.EqualFold(node.Exe, "layout")
+}
 
 func (node *SANode) IsTypeChart() bool {
 	return strings.EqualFold(node.Exe, "chart")
@@ -231,8 +234,16 @@ func (node *SANode) IsTypeExe() bool {
 	return strings.EqualFold(node.Exe, "exe")
 }
 
+func (node *SANode) IsTypeDialog() bool {
+	return strings.EqualFold(node.Exe, "dialog")
+}
+
+func (node *SANode) IsTypeWithSubLayoutNodes() bool {
+	return node.IsTypeList() || node.IsTypeLayout() || node.IsTypeDialog()
+}
+
 func (node *SANode) HasNodeSubs() bool {
-	return strings.EqualFold(node.Exe, "layout") || strings.EqualFold(node.Exe, "dialog") || strings.EqualFold(node.Exe, "exe") || node.IsTypeList()
+	return node.IsTypeWithSubLayoutNodes() || node.IsTypeExe()
 }
 
 func (node *SANode) HasAttrNode() bool {
