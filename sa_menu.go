@@ -244,7 +244,7 @@ func (base *SABase) drawMenuDialogs(ui *Ui) {
 
 		ui.Div_start(1, y, 1, 1)
 		{
-			ui.Div_colMax(0, 4) //empty space
+			ui.Div_col(0, 4) //empty space
 			ui.Div_colMax(1, 100)
 			ui.Div_colMax(2, 2.1)
 			ui.Div_colMax(3, 2)
