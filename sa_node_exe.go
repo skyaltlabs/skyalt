@@ -1390,7 +1390,7 @@ func UiCodeGo_AttrChat(node *SANode) {
 			ui.Div_colMax(0, 5)
 			y := 0
 
-			if ui.Comp_buttonMenu(0, y, 1, 1, "Clear all", false, Comp_buttonProp()) > 0 {
+			if ui.Comp_buttonMenu(0, y, 1, 1, "Clear all", false, Comp_buttonProp().Confirmation("Are you sure?", "clear_chat")) > 0 {
 				node.Code.Messages = nil
 				node.Code.CheckLastChatEmpty()
 				ui.Dialog_close()
@@ -1406,88 +1406,143 @@ func UiCodeGo_AttrChat(node *SANode) {
 	{
 		ui.Div_colMax(0, 1.5)
 		ui.Div_colMax(1, 100)
-		ui.Div_colMax(2, 100)
 
 		node.Code.CheckLastChatEmpty()
 
+		//set rows heights
 		y := 0
 		for i, str := range node.Code.Messages {
-			if i+1 < len(node.Code.Messages) || node.Code.job_oai != nil {
+			isLast := (i+1 >= len(node.Code.Messages))
+			isAssistRunning := (node.Code.job_oai != nil && node.Code.job_oai_index == i)
 
-				//user
-				{
-					line_wrapping := true
-					nlines := 1
-					dd := ui.GetCall().call.FindFromGridPos(OsV2{1, y})
-					if dd != nil {
-						nlines = OsRoundUp(float64(ui._Paint_getMaxCellSize(dd, str.User, InitWinFontPropsDef(ui.win), true, line_wrapping).Y))
-					}
-
-					ui.Comp_text(0, y, 1, 1, "User", 0)
-					ui.Comp_textSelectMulti(1, y, 2, nlines, str.User, OsV2{0, 0}, true, false, false, line_wrapping)
-					y += nlines
-				}
-
-				assist := str.Assistent
-				if node.Code.job_oai != nil {
-					assist = node.Code.job_oai.wip_answer
-					if node.Code.job_oai.done.Load() {
-						//save
-						node.Code.Messages[len(node.Code.Messages)-1].Assistent = string(node.Code.job_oai.output)
-						node.Code.job_oai = nil
-					}
-				}
-
-				{
-					line_wrapping := false
-					nlines := 1
-					dd := ui.GetCall().call.FindFromGridPos(OsV2{1, y})
-					if dd != nil {
-						sz := ui._Paint_getMaxCellSize(dd, assist, InitWinFontPropsDef(ui.win), true, line_wrapping)
-						nlines = OsRoundUp(float64(sz.Y + 0.5))
-					}
-
-					//background
-					ui.Div_start(0, y, 3, nlines)
-					pl := ui.win.io.GetPalette()
-					ui.Paint_rect(0, 0, 1, 1, 0, pl.GetGrey(0.85), 0)
-					ui.Div_end()
-
-					ui.Comp_text(0, y, 1, 1, "Bot", 0)
-					ui.Comp_textSelectMulti(1, y, 2, nlines, assist, OsV2{0, 0}, true, false, false, line_wrapping)
-					y += nlines
-
-					if ui.Comp_buttonLight(2, y, 1, 1, "Use this code", Comp_buttonProp().Enable(node.Code.job_oai == nil)) > 0 {
-						node.Code.UseCodeFromAnswer(str.Assistent)
-					}
-					y++
-				}
-				y += 1 //space
-			} else {
-				//last one is user editbox
+			//user
+			{
 				line_wrapping := true
 				nlines := 1
 				dd := ui.GetCall().call.FindFromGridPos(OsV2{1, y})
 				if dd != nil {
-					nlines = OsRoundUp(float64(ui._Paint_getMaxCellSize(dd, node.Code.Messages[i].User, InitWinFontPropsDef(ui.win), true, line_wrapping).Y))
+					nlines = OsRoundUp(float64(ui._Paint_getMaxCellSize(dd, str.User, InitWinFontPropsDef(ui.win), true, line_wrapping).Y))
 				}
 				nlines = OsMax(2, nlines)
 
-				if dd != nil {
-					dd.grid.Size.Y = nlines //dirty hack! Editbox active=div pointer, If nlines changed, then new div is allocated and editbox is deactivated
+				ui.Div_row(y, float64(nlines))
+				y++
+			}
+
+			y++ //model, button
+
+			//y++ //space
+
+			if !isLast || isAssistRunning {
+				assist := str.Assistent
+				if isAssistRunning {
+					assist = node.Code.job_oai.wip_answer
+					if node.Code.job_oai.done.Load() {
+						//save
+						node.Code.Messages[node.Code.job_oai_index].Assistent = string(node.Code.job_oai.output)
+						node.Code.job_oai = nil
+						node.Code.job_oai_index = -1
+					}
 				}
-				ui.Comp_editbox(0, y, 3, nlines, &node.Code.Messages[i].User, Comp_editboxProp().MultiLine(true, line_wrapping).TempToValue(true).Align(0, 0).Formating(false))
-				y += nlines
+
+				line_wrapping := false
+				nlines := 1
+				dd := ui.GetCall().call.FindFromGridPos(OsV2{1, y})
+				if dd != nil {
+					sz := ui._Paint_getMaxCellSize(dd, assist, InitWinFontPropsDef(ui.win), true, line_wrapping)
+					nlines = OsRoundUp(float64(sz.Y + 0.5))
+				}
+				ui.Div_row(y, float64(nlines))
+				y++
+
+				y++ //"Use this code"
+			}
+
+			y++ //space
+		}
+
+		//add UI
+		y = 0
+		for i := 0; i < len(node.Code.Messages); i++ {
+			str := node.Code.Messages[i]
+			//for i, str := range node.Code.Messages {
+			isLast := (i+1 >= len(node.Code.Messages))
+			isAssistRunning := (node.Code.job_oai != nil && node.Code.job_oai_index == i)
+
+			//user
+			{
+				line_wrapping := true
+				ui.Comp_textSelect(0, y, 1, 1, "User", OsV2{}, true, true, false)
+				ui.Comp_editbox(1, y, 1, 1, &node.Code.Messages[i].User, Comp_editboxProp().Align(0, 0).MultiLine(true, line_wrapping).TempToValue(true))
+				y++
+			}
+
+			ui.Div_start(1, y, 1, 1)
+			{
+				ui.Div_colMax(0, 100)
+				ui.Div_colMax(1, 4)
+				ui.Div_colMax(2, 5)
+				//ui.Div_colMax(3, 1)
 
 				//model
 				models := []string{"gpt-4-turbo", "gpt-3.5-turbo"} //https://platform.openai.com/docs/models/
-				ui.Comp_combo(1, y, 1, 1, &node.app.base.ui.win.io.ini.ChatModel, models, models, "Model", true, true)
+				ui.Comp_combo(1, 0, 1, 1, &node.app.base.ui.win.io.ini.ChatModel, models, models, "Model", true, true)
 
-				//button
-				if ui.Comp_buttonLight(2, y, 1, 1, "Send", Comp_buttonProp()) > 0 { //or ctrl+enter ..........
-					node.Code.GetAnswer()
+				//send
+				if ui.Comp_buttonLight(2, 0, 1, 1, OsTrnString(isLast, "Send", "Re-send"), Comp_buttonProp()) > 0 {
+					node.Code.GetAnswer(i)
+				}
+
+				//delete
+				if ui.Comp_buttonLight(3, 0, 1, 1, "X", Comp_buttonProp().Confirmation("Are you sure?", "delete_chat_item_"+strconv.Itoa(i))) > 0 {
+					node.Code.Messages = append(node.Code.Messages[:i], node.Code.Messages[i+1:]...) //remove
+					node.Code.CheckLastChatEmpty()
 				}
 			}
+			ui.Div_end()
+			y++
+
+			//y++ //space
+
+			//answer
+			if !isLast || isAssistRunning {
+				assist := str.Assistent
+				if isAssistRunning {
+					assist = node.Code.job_oai.wip_answer
+				}
+
+				{
+					line_wrapping := false
+
+					//background
+					ui.Div_start(0, y, 2, 2)
+					pl := ui.win.io.GetPalette()
+					ui.Paint_rect(0, 0, 1, 1, 0, pl.GetGrey(0.85), 0)
+					ui.Div_end()
+
+					ui.Comp_textSelect(0, y, 1, 1, "Bot", OsV2{}, true, true, false)
+					ui.Comp_textSelectMulti(1, y, 1, 1, assist, OsV2{0, 0}, true, false, false, line_wrapping)
+					y++
+
+					ui.Div_start(1, y, 1, 1)
+					{
+						ui.Div_colMax(0, 100)
+						ui.Div_colMax(1, 5)
+						ui.Div_colMax(2, 5)
+						if ui.Comp_buttonLight(1, 0, 1, 1, "Copy code", Comp_buttonProp().Enable(!isAssistRunning)) > 0 {
+							node.Code.CopyCodeToClipboard(str.Assistent)
+						}
+						if ui.Comp_buttonLight(2, 0, 1, 1, "Use this code", Comp_buttonProp().Enable(!isAssistRunning)) > 0 {
+							node.Code.UseCodeFromAnswer(str.Assistent)
+						}
+					}
+					ui.Div_end()
+					y++
+				}
+			}
+
+			ui.Div_SpacerRow(0, y, 2, 1)
+			y++ //space
 		}
 	}
 	ui.Div_end()

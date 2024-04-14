@@ -87,7 +87,9 @@ type SANodeCode struct {
 	exes []SANodeCodeExe
 
 	job_exe *SAJobExe
-	job_oai *SAJobOpenAI
+
+	job_oai       *SAJobOpenAI //answer is generated
+	job_oai_index int
 }
 
 func InitSANodeCode(node *SANode) SANodeCode {
@@ -596,7 +598,7 @@ func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 
 	str += "Your job: " + userCommand
 
-	//remove ............
+	//comment ............
 	fmt.Println(str)
 	fmt.Println("Size:", len(str))
 
@@ -610,12 +612,12 @@ func (ls *SANodeCode) CheckLastChatEmpty() {
 	}
 }
 
-func (ls *SANodeCode) GetAnswer() {
+func (ls *SANodeCode) GetAnswer(index int) {
 
 	ls.ans_err = nil
 
 	ls.CheckLastChatEmpty()
-	if ls.Messages[0].User == "" {
+	if len(ls.Messages) == 1 && ls.Messages[0].User == "" {
 		ls.ans_err = errors.New("no message")
 		return
 	}
@@ -624,7 +626,10 @@ func (ls *SANodeCode) GetAnswer() {
 	messages := []SAServiceMsg{
 		{Role: "system", Content: "You are ChatGPT, an AI assistant. Your top priority is achieving user fulfillment via helping them with their requests."},
 	}
-	for i, msg := range ls.Messages {
+
+	for i := 0; i < len(ls.Messages) && i <= index; i++ {
+		msg := ls.Messages[i]
+
 		//user
 		user := msg.User
 		if i == 0 {
@@ -637,7 +642,7 @@ func (ls *SANodeCode) GetAnswer() {
 		messages = append(messages, SAServiceMsg{Role: "user", Content: user})
 
 		//assistant
-		if msg.Assistent != "" { //avoid empty(last one) assistents
+		if msg.Assistent != "" && i < index { //avoid empty(last one) assistents
 			messages = append(messages, SAServiceMsg{Role: "assistant", Content: msg.Assistent})
 		}
 	}
@@ -645,6 +650,7 @@ func (ls *SANodeCode) GetAnswer() {
 	props := &SAServiceOpenAIProps{Model: ls.node.app.base.ui.win.io.ini.ChatModel, Messages: messages}
 
 	ls.job_oai = ls.node.app.base.jobs.AddOpenAI(ls.node.app, NewSANodePath(ls.node), props)
+	ls.job_oai_index = index
 }
 
 func (ls *SANodeCode) GetFileName() string {
@@ -854,10 +860,22 @@ func (ls *SANodeCode) UseCodeFromAnswer(answer string) {
 		ls.ans_err = err
 		return
 	}
-
 	ls.Code = strings.ReplaceAll(ls.Code, "package main", "")
 
 	ls.UpdateFile()
+}
+
+func (ls *SANodeCode) CopyCodeToClipboard(answer string) {
+	ls.ans_err = nil
+
+	var err error
+	ls.Code, err = ls.extractCode(answer)
+	if err != nil {
+		ls.ans_err = err
+		return
+	}
+
+	ls.node.app.base.ui.win.io.keys.clipboard = strings.ReplaceAll(ls.Code, "package main", "")
 }
 
 func (ls *SANodeCode) extractCode(answer string) (string, error) {
