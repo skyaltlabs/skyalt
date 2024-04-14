@@ -1106,24 +1106,3 @@ func (win *Win) SetTextCursorMove() {
 func (win *Win) Cell() int {
 	return win.io.Cell()
 }
-
-func (win *Win) RenderTile(text string, coord OsV4, priorUp bool, frontCd OsCd) error {
-	if win == nil {
-		return nil
-	}
-
-	cq := coord
-	cq.Size = win.GetTextSize(-1, text, InitWinFontPropsDef(win))
-	cq = cq.AddSpace(-win.io.GetDPI() / 20)
-
-	// user can set priority(up, down, etc.) ...
-	cq = OsV4_relativeSurround(coord, cq, OsV4{OsV2{}, OsV2{X: win.io.ini.WinW, Y: win.io.ini.WinH}}, priorUp)
-
-	win.SetClipRect(cq)
-	depth := 900 //...
-	win.DrawRect(cq.Start, cq.End(), depth, win.io.GetPalette().B)
-	win.DrawRect_border(cq.Start, cq.End(), depth, win.io.GetPalette().OnB, 1)
-	win.DrawText(text, InitWinFontPropsDef(win), cq, depth, OsV2{1, 1}, frontCd, 0, 1)
-
-	return nil
-}

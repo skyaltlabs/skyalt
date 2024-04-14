@@ -330,16 +330,6 @@ func (ui *Ui) UpdateTile(win *Win) bool {
 	return redraw
 }
 
-func (ui *Ui) RenderTile(win *Win) {
-
-	if ui.tile.IsActive(win.io.touch.pos) {
-		err := win.RenderTile(ui.tile.text, ui.tile.coord, ui.tile.priorUp, ui.tile.cd)
-		if err != nil {
-			fmt.Printf("RenderTile() failed: %v\n", err)
-		}
-	}
-}
-
 func (ui *Ui) StartRender() {
 	winRect, _ := ui.win.GetScreenCoord()
 	ui.GetBaseDialog().base.canvas = winRect
@@ -362,6 +352,24 @@ func (ui *Ui) StartRender() {
 	}
 }
 
+func (ui *Ui) renderTile() {
+
+	prop := InitWinFontPropsDef(ui.win)
+	mx, my := ui.win.GetTextSizeMax(ui.tile.text, -1, prop)
+
+	cq := ui.tile.coord
+	cq.Size = OsV2{mx, my * prop.lineH}
+	cq = cq.AddSpace(-ui.CellWidth(0.1)) //bigger
+	cq = OsV4_relativeSurround(ui.tile.coord, cq, OsV4{OsV2{}, OsV2{X: ui.win.io.ini.WinW, Y: ui.win.io.ini.WinH}}, ui.tile.priorUp)
+
+	ui.buff.depth = 900
+	ui.win.DrawRect(cq.Start, cq.End(), ui.buff.depth, ui.win.io.GetPalette().B)
+	ui.win.DrawRect_border(cq.Start, cq.End(), ui.buff.depth, ui.win.io.GetPalette().OnB, 1)
+
+	cq = cq.AddSpace(ui.CellWidth(0.1)) //smaller - align(0,0)
+	ui._UiPaint_Text_line(cq, ui.tile.text, "", ui.tile.cd, prop, OsV2{0, 0}, false, false, false, true, false, false)
+}
+
 func (ui *Ui) EndRender() {
 
 	if ui.win.io.touch.end {
@@ -371,10 +379,7 @@ func (ui *Ui) EndRender() {
 
 	// tile - redraw If mouse is over tile
 	if ui.tile.IsActive(ui.win.io.touch.pos) {
-		err := ui.win.RenderTile(ui.tile.text, ui.tile.coord, ui.tile.priorUp, ui.tile.cd)
-		if err != nil {
-			fmt.Printf("RenderTile() failed: %v\n", err)
-		}
+		ui.renderTile()
 	}
 
 	ui.Maintenance()
