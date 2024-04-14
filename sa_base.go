@@ -342,7 +342,7 @@ func (base *SABase) Render() bool {
 			ui.Div_start(1, 0, 1, 1)
 			sel_node := app.root.FindSelected()
 			if sel_node != nil && sel_node.IsTypeCode() {
-				UiCodeGo_AttrChat(sel_node)
+				UiCode_AttrChat(sel_node)
 			} else {
 				ui.Div_colMax(0, 100)
 				ui.Div_rowMax(0, 100)

@@ -327,7 +327,7 @@ func (base *SABase) drawLauncher(app *SAApp, icon_rad float64) {
 
 	//Menu
 	{
-		if ui.Comp_buttonIcon(0, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/logo_small.png"), 0.1, "", Comp_buttonProp().Cd(CdPalette_B)) > 0 {
+		if ui.Comp_buttonIcon(0, 0, 1, 1, InitWinMedia_url("file:apps/base/resources/logo_small.png"), 0.1, "Main menu", Comp_buttonProp().Cd(CdPalette_B)) > 0 {
 			ui.Dialog_open("menu", 1)
 		}
 		if ui.Dialog_start("menu") {

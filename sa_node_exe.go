@@ -1369,7 +1369,7 @@ func UiSQLite_renderEditor(node *SANode) {
 	}
 }
 
-func UiCodeGo_AttrChat(node *SANode) {
+func UiCode_AttrChat(node *SANode) {
 	ui := node.app.base.ui
 
 	ui.Div_colMax(0, 100)
@@ -1472,7 +1472,7 @@ func UiCodeGo_AttrChat(node *SANode) {
 			//user
 			{
 				line_wrapping := true
-				ui.Comp_textSelect(0, y, 1, 1, "User", OsV2{}, true, true, false)
+				ui.Comp_textAlign(0, y, 1, 1, "User", 0, 0)
 				ui.Comp_editbox(1, y, 1, 1, &node.Code.Messages[i].User, Comp_editboxProp().Align(0, 0).MultiLine(true, line_wrapping).TempToValue(true))
 				y++
 			}
@@ -1520,7 +1520,7 @@ func UiCodeGo_AttrChat(node *SANode) {
 					ui.Paint_rect(0, 0, 1, 1, 0, pl.GetGrey(0.85), 0)
 					ui.Div_end()
 
-					ui.Comp_textSelect(0, y, 1, 1, "Bot", OsV2{}, true, true, false)
+					ui.Comp_textAlign(0, y, 1, 1, "Bot", 0, 0)
 					ui.Comp_textSelectMulti(1, y, 1, 1, assist, OsV2{0, 0}, true, false, false, line_wrapping)
 					y++
 
@@ -1560,44 +1560,31 @@ func UiCode_Attrs(node *SANode) {
 func _UiCode_attrs(node *SANode, grid *OsV4) {
 	ui := node.app.base.ui
 
+	ui.Div_rowMax(1, 100)                   //code
+	ui.Div_rowResize(3, "output", 2, false) //output
+
 	//bypass
 	node.ShowAttrBool(grid, "bypass", false)
 
-	//language
-	//node.ShowAttrStringCombo(grid, "language", "go", []string{"go"}, []string{"go"})
-	//grid.Start.Y++
-
 	//Code
 	{
-		ui.Comp_text(0, grid.Start.Y, 1, 1, "Code", 0)
+		ui.Comp_textAlign(0, 1, 1, 1, "Code", 0, 0)
 
-		max_line_px := -1
-		nlines := ui.win.GetTextNumLines(node.Code.Code, max_line_px, InitWinFontPropsDef(ui.win))
-		_, _, _, fnshd, _ := ui.Comp_editbox(1, grid.Start.Y, 1, nlines, &node.Code.Code, Comp_editboxProp().Align(0, 0).MultiLine(true, max_line_px > 0).Formating(false))
+		_, _, _, fnshd, _ := ui.Comp_editbox(1, 1, 1, 1, &node.Code.Code, Comp_editboxProp().Align(0, 0).MultiLine(true, false).Formating(false).TempToValue(true))
 		if fnshd {
 			node.Code.UpdateFile()
 		}
-		grid.Start.Y += nlines
 
 		//run button
-		if ui.Comp_button(1, grid.Start.Y, 1, 1, "Run", Comp_buttonProp()) > 0 {
+		if ui.Comp_button(1, 2, 1, 1, "Run", Comp_buttonProp()) > 0 {
 			node.Code.Execute(nil)
 		}
-		grid.Start.Y++
 	}
-
-	ui.Div_SpacerRow(0, grid.Start.Y, 2, 1)
-	grid.Start.Y++
 
 	//output
 	{
-		ui.Comp_text(0, grid.Start.Y, 1, 1, "Output", 0)
-
-		max_line_px := -1
-		nlines := ui.win.GetTextNumLines(node.Code.cmd_output, max_line_px, InitWinFontPropsDef(ui.win))
-		nlines = OsClamp(nlines, 2, 5)
-		ui.Comp_textSelectMulti(1, grid.Start.Y, 1, nlines, node.Code.cmd_output, OsV2{0, 0}, true, true, false, max_line_px > 0)
-		grid.Start.Y += nlines
+		ui.Comp_textAlign(0, 3, 1, 1, "Output", 0, 0)
+		ui.Comp_textSelectMulti(1, 3, 1, 1, node.Code.cmd_output, OsV2{0, 0}, true, true, false, false)
 	}
 }
 
