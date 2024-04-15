@@ -1808,14 +1808,10 @@ func UiMap_render(node *SANode) {
 
 		//segments
 		if segmentsIn != "" {
-
 			seg, err := ui.mapp.GetSegment(segmentsIn)
 
 			if err == nil {
-				st := OsTime()
 				err = ui.comp_mapSegments(lon, lat, zoom, seg.items, segments_cd) //slow ........ cache + redraw when zoom ....
-				fmt.Println("draw()", OsTime()-st)
-
 				if err != nil {
 					node.SetError(fmt.Errorf("comp_mapSegments() failed: %w", err))
 				}
