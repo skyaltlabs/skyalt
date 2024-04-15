@@ -465,13 +465,13 @@ func (ui *Ui) comp_map(cam_lon, cam_lat, cam_zoom *float64, file, url, copyright
 
 	//copyright
 	if copyright != "" {
-		h := 1 / height / 2
+		h := (1 / height) * 0.75
 		ui.Div_startEx(0, 0, 1, 1, 0, 1-h, 1, h, "copyright")
 		ui.DivInfo_set(SA_DIV_SET_scrollHshow, 0, 0)
 		ui.DivInfo_set(SA_DIV_SET_scrollVshow, 0, 0)
 		ui.Div_colMax(0, 100)
-		ui.Div_col(1, 5)
-		ui.Div_row(0, 0.5)
+		ui.Div_col(1, 5.5)
+		ui.Div_row(0, 0.75)
 		ui.Comp_buttonText(1, 0, 1, 1, copyright, Comp_buttonProp().Tooltip(copyright_url))
 		ui.Div_end()
 	}
