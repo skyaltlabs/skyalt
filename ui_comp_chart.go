@@ -88,14 +88,17 @@ func _UiLayoutChart_drawAxisX(min, max UiLayoutChartItem, left_margin, right_mar
 			x, y, w, h := cellMargin(left_margin, right_margin, top_margin, bottom_margin, p, 0, 0, 1, ui)
 			ui.Paint_line(0, 0, 1, 1, 0, x, y, x+w, y+h, cdAxisGrey, 0.03)
 
-			x, y, w, h = cellMargin(left_margin, right_margin, top_margin2, 0, p-cx/2, 0, cx, 1, ui)
-			ui.Div_startEx(0, 0, 1, 1, x, y, w, h, fmt.Sprintf("axis_x%f", p))
-			ui.Div_colMax(0, 100)
-			ui.Div_row(0, bottom_margin)
-			ui.GetCall().call.data.scrollV.show = false
-			ui.Comp_text(0, 0, 1, 1, strconv.FormatFloat(min.X+(vx*p), 'f', 2, 64)+OsTrnString(p == 1, unit, ""), 1)
-			//ui.Paint_rect(0, 0, 1, 1, 0, InitOsCdBlack(), 0.03)
-			ui.Div_end()
+			if p == 0 || p == 1 || p+(cx*0.75) < 1 { //skip pre-last
+				x, y, w, h = cellMargin(left_margin, right_margin, top_margin2, 0, p-cx/2, 0, cx, 1, ui)
+				ui.Div_startEx(0, 0, 1, 1, x, y, w, h, fmt.Sprintf("axis_x%f", p))
+				ui.Div_colMax(0, 100)
+				ui.Div_row(0, bottom_margin)
+				ui.GetCall().call.data.scrollV.show = false
+				ui.GetCall().call.data.scrollH.show = false
+				ui.Comp_text(0, 0, 1, 1, strconv.FormatFloat(min.X+(vx*p), 'f', 2, 64)+OsTrnString(p == 1, unit, ""), 1)
+				//ui.Paint_rect(0, 0, 1, 1, 0, InitOsCdBlack(), 0.03)
+				ui.Div_end()
+			}
 
 			if p == 1 {
 				break
