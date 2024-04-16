@@ -66,7 +66,8 @@ type Button struct {
 	Tooltip string `json:"tooltip"`
 	Enable  bool   `json:"enable"`
 	Triggered bool   `json:"triggered"`
-	Confirmation string   `json:"confirmation"`
+	Confirmation string `json:"confirmation"`
+	Close_dialog bool `json:"close_dialog"`
 }
 
 type Checkbox struct {

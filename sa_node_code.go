@@ -355,6 +355,7 @@ type Button struct {
 	Icon string	//path to image file
 	Enable  bool
 	Background  int	//0=transparent, 1=full, 2=light
+	Align int	//0=left, 1=center, 2=right
 	Confirmation string
 	Triggered bool	//true, when button is clicked
 }`

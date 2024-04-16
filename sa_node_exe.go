@@ -40,13 +40,13 @@ func UiButton_Attrs(node *SANode) {
 	node.ShowAttrBool(&grid, "show", true)
 	node.ShowAttrIntCombo(&grid, "background", 1, []string{"Transparent", "Full", "Light"}, []string{"0", "1", "2"})
 	node.ShowAttrIntCombo(&grid, "align", 1, []string{"Left", "Center", "Right"}, []string{"0", "1", "2"})
-
 	node.ShowAttrString(&grid, "label", "", false)
 	node.ShowAttrFilePicker(&grid, "icon", "", true, false, "select_icon")
 	node.ShowAttrFloat(&grid, "icon_margin", 0.15, 2)
 	node.ShowAttrString(&grid, "tooltip", "", false)
 	node.ShowAttrBool(&grid, "enable", true)
 	node.ShowAttrString(&grid, "confirmation", "", false)
+	node.ShowAttrBool(&grid, "close_dialog", false)
 }
 
 func UiButton_render(node *SANode) {
@@ -59,6 +59,7 @@ func UiButton_render(node *SANode) {
 	tooltip := node.GetAttrString("tooltip", "")
 	enable := node.GetAttrBool("enable", true)
 	confirmation := node.GetAttrString("confirmation", "")
+	close_dialog := node.GetAttrBool("close_dialog", false)
 
 	props := Comp_buttonProp().Enable(enable).Tooltip(tooltip).Align(align, 1)
 
@@ -83,6 +84,10 @@ func UiButton_render(node *SANode) {
 
 	if node.app.base.ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, props) > 0 {
 		node.SetChange([]SANodeCodeExePrm{{Node: node.Name, Attr: "triggered", Value: true}})
+
+		if close_dialog {
+			node.app.base.ui.Dialog_close()
+		}
 
 		if node.parent != nil && node.parent.parent != nil && node.parent.parent.IsTypeList() {
 			list := node.parent.parent
