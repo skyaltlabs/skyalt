@@ -299,6 +299,7 @@ func (ls *SANodeCode) buildMenuSt(node *SANode, addExtraAttrs bool) string {
 		"\tGrid_h  int    `json:\"grid_h\"`\n" +
 		"\tShow    bool   `json:\"show\"`\n" +
 		"\tBackground int  `json:\"background\"`\n" +
+		"\tAlign      int  `json:\"align\"`\n" +
 		"\tLabel   string `json:\"label\"`\n" +
 		"\tIcon    string `json:\"icon\"`\n" +
 		"\tIcon_margin    float64 `json:\"icon_margin\"`\n" +

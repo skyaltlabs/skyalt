@@ -39,6 +39,7 @@ func UiButton_Attrs(node *SANode) {
 	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
 	node.ShowAttrBool(&grid, "show", true)
 	node.ShowAttrIntCombo(&grid, "background", 1, []string{"Transparent", "Full", "Light"}, []string{"0", "1", "2"})
+	node.ShowAttrIntCombo(&grid, "align", 1, []string{"Left", "Center", "Right"}, []string{"0", "1", "2"})
 
 	node.ShowAttrString(&grid, "label", "", false)
 	node.ShowAttrFilePicker(&grid, "icon", "", true, false, "select_icon")
@@ -51,6 +52,7 @@ func UiButton_Attrs(node *SANode) {
 func UiButton_render(node *SANode) {
 	grid := node.GetGrid()
 	background := node.GetAttrInt("background", 1)
+	align := node.GetAttrInt("align", 1)
 	label := node.GetAttrString("label", "")
 	icon_path := node.GetAttrString("icon", "")
 	icon_margin := node.GetAttrFloat("icon_margin", 0.15)
@@ -58,7 +60,7 @@ func UiButton_render(node *SANode) {
 	enable := node.GetAttrBool("enable", true)
 	confirmation := node.GetAttrString("confirmation", "")
 
-	props := Comp_buttonProp().Enable(enable).Tooltip(tooltip)
+	props := Comp_buttonProp().Enable(enable).Tooltip(tooltip).Align(align, 1)
 
 	if icon_path != "" {
 		icon := InitWinMedia_url("file:" + icon_path)
@@ -106,7 +108,7 @@ func UiMenu_Attrs(node *SANode) {
 	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
 	node.ShowAttrBool(&grid, "show", true)
 	node.ShowAttrIntCombo(&grid, "background", 1, []string{"Transparent", "Full", "Light"}, []string{"0", "1", "2"})
-
+	node.ShowAttrIntCombo(&grid, "align", 1, []string{"Left", "Center", "Right"}, []string{"0", "1", "2"})
 	node.ShowAttrString(&grid, "label", "", false)
 	node.ShowAttrFilePicker(&grid, "icon", "", true, false, "select_icon")
 	node.ShowAttrFloat(&grid, "icon_margin", 0.15, 2)
@@ -117,13 +119,14 @@ func UiMenu_Attrs(node *SANode) {
 func UiMenu_render(node *SANode) {
 	grid := node.GetGrid()
 	background := node.GetAttrInt("background", 1)
+	align := node.GetAttrInt("align", 1)
 	label := node.GetAttrString("label", "")
 	icon_path := node.GetAttrString("icon", "")
 	icon_margin := node.GetAttrFloat("icon_margin", 0.15)
 	tooltip := node.GetAttrString("tooltip", "")
 	enable := node.GetAttrBool("enable", true)
 
-	props := Comp_buttonProp().Enable(enable).Tooltip(tooltip)
+	props := Comp_buttonProp().Enable(enable).Tooltip(tooltip).Align(align, 1)
 
 	if icon_path != "" {
 		icon := InitWinMedia_url("file:" + icon_path)

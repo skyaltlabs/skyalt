@@ -59,6 +59,7 @@ type Button struct {
 	Grid_h  int    `json:"grid_h"`
 	Show    bool   `json:"show"`
 	Background int  `json:"background"`
+	Align      int  `json:"align"`
 	Label   string `json:"label"`
 	Icon    string `json:"icon"`
 	Icon_margin    float64 `json:"icon_margin"`
