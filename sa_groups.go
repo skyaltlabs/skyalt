@@ -52,6 +52,7 @@ func InitSAGroups() SAGroups {
 
 	grs.groups = append(grs.groups, &SAGroup{name: "UI", icon: InitWinMedia_url(path + "node_ui.png"), nodes: []*SAGroupNode{
 		{name: "button", render: UiButton_render, attrs: UiButton_Attrs},
+		{name: "menu", render: UiMenu_render, attrs: UiMenu_Attrs},
 		{name: "text", render: UiText_render, attrs: UiText_Attrs},
 		{name: "editbox", render: UiEditbox_render, attrs: UiEditbox_Attrs},
 		{name: "checkbox", render: UiCheckbox_render, attrs: UiCheckbox_Attrs},

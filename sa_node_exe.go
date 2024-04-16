@@ -45,7 +45,6 @@ func UiButton_Attrs(node *SANode) {
 	node.ShowAttrFloat(&grid, "icon_margin", 0.15, 2)
 	node.ShowAttrString(&grid, "tooltip", "", false)
 	node.ShowAttrBool(&grid, "enable", true)
-	//node.ShowAttrBool(&grid, "triggered", false)
 	node.ShowAttrString(&grid, "confirmation", "", false)
 }
 
@@ -58,7 +57,6 @@ func UiButton_render(node *SANode) {
 	tooltip := node.GetAttrString("tooltip", "")
 	enable := node.GetAttrBool("enable", true)
 	confirmation := node.GetAttrString("confirmation", "")
-	//triggered := node.GetAttrBool("triggered", false)
 
 	props := Comp_buttonProp().Enable(enable).Tooltip(tooltip)
 
@@ -80,9 +78,8 @@ func UiButton_render(node *SANode) {
 	case 2:
 		props.DrawBackLight(true)
 	}
-	if node.app.base.ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, props) > 0 {
-		//node.Attrs["triggered"] = true
 
+	if node.app.base.ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, props) > 0 {
 		node.SetChange([]SANodeCodeExePrm{{Node: node.Name, Attr: "triggered", Value: true}})
 
 		if node.parent != nil && node.parent.parent != nil && node.parent.parent.IsTypeList() {
@@ -96,7 +93,71 @@ func UiButton_render(node *SANode) {
 				}
 			}
 		}
+	}
+}
 
+func UiMenu_Attrs(node *SANode) {
+	ui := node.app.base.ui
+	ui.Div_colMax(0, 3)
+	ui.Div_colMax(1, 100)
+
+	grid := InitOsV4(0, 0, 1, 1)
+
+	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
+	node.ShowAttrBool(&grid, "show", true)
+	node.ShowAttrIntCombo(&grid, "background", 1, []string{"Transparent", "Full", "Light"}, []string{"0", "1", "2"})
+
+	node.ShowAttrString(&grid, "label", "", false)
+	node.ShowAttrFilePicker(&grid, "icon", "", true, false, "select_icon")
+	node.ShowAttrFloat(&grid, "icon_margin", 0.15, 2)
+	node.ShowAttrString(&grid, "tooltip", "", false)
+	node.ShowAttrBool(&grid, "enable", true)
+}
+
+func UiMenu_render(node *SANode) {
+	grid := node.GetGrid()
+	background := node.GetAttrInt("background", 1)
+	label := node.GetAttrString("label", "")
+	icon_path := node.GetAttrString("icon", "")
+	icon_margin := node.GetAttrFloat("icon_margin", 0.15)
+	tooltip := node.GetAttrString("tooltip", "")
+	enable := node.GetAttrBool("enable", true)
+
+	props := Comp_buttonProp().Enable(enable).Tooltip(tooltip)
+
+	if icon_path != "" {
+		icon := InitWinMedia_url("file:" + icon_path)
+		props.Icon(&icon).ImgMargin(icon_margin)
+	}
+
+	switch background {
+	case 0:
+		props.DrawBack(false)
+	case 1:
+		props.DrawBack(true)
+	case 2:
+		props.DrawBackLight(true)
+	}
+
+	ui := node.app.base.ui
+
+	dnm := node.Name
+	if node.parent != nil && node.parent.parent != nil && node.parent.parent.IsTypeList() {
+
+		lay := node.parent
+		list := node.parent.parent
+		dnm = list.Name + "_" + lay.Name + "_" + node.Name
+	}
+
+	//button
+	if ui.Comp_button(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, props) > 0 {
+		ui.Dialog_open(dnm, 1)
+	}
+
+	//dialog
+	if ui.Dialog_start(dnm) {
+		node.renderLayout()
+		ui.Dialog_end()
 	}
 }
 
