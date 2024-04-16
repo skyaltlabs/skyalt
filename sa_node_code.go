@@ -257,7 +257,7 @@ func (ls *SANodeCode) buildListStructs(depends []*SANodeCodeFn, addExtraAttrs bo
 		StructName := fn.node.getStructName()
 
 		//List<name>Row
-		str += fmt.Sprintf("type %sRow struct {\n", StructName)
+		str += fmt.Sprintf("type %sItem struct {\n", StructName)
 		for _, it := range fn.node.Subs {
 			itVarName := strings.ToUpper(it.Name[0:1]) + it.Name[1:] //1st letter must be upper
 			itStructName := it.getStructName()                       //list inside list? .........
@@ -282,11 +282,11 @@ func (ls *SANodeCode) buildListStructs(depends []*SANodeCodeFn, addExtraAttrs bo
 			extraAttrs = ""
 		}
 
-		str += fmt.Sprintf("type %s struct {\n%s\tDefRow %sRow `json:\"defRow\"`\n\tRows []*%sRow `json:\"rows\"`\n\tSelected_button string `json:\"selected_button\"`\n\tSelected_index int `json:\"selected_index\"`\n}\n", StructName, extraAttrs, StructName, StructName)
+		str += fmt.Sprintf("type %s struct {\n%s\tDefItem %sItem `json:\"defItem\"`\n\tItems []*%sItem `json:\"items\"`\n\tSelected_button string `json:\"selected_button\"`\n\tSelected_index int `json:\"selected_index\"`\n}\n", StructName, extraAttrs, StructName, StructName)
 
 		//Funcs
-		str += fmt.Sprintf("func (tb *%s) GetSelectedRow() * %sRow {\t//Can return nil\n\tif tb.Selected_index >= 0 && tb.Selected_index < len(tb.Rows) {\n\t\treturn tb.Rows[tb.Selected_index]\n\t}\n\treturn nil\n}\n", StructName, StructName)
-		str += fmt.Sprintf("func (tb *%s) AddRow() * %sRow {\t//Use this instead of Rows = append()\n\tr := &%sRow{}\n\t*r = tb.DefRow\n\ttb.Rows = append(tb.Rows, r)\n\treturn r\n}\n", StructName, StructName, StructName)
+		str += fmt.Sprintf("func (tb *%s) GetSelectedItem() * %sItem {\t//Can return nil\n\tif tb.Selected_index >= 0 && tb.Selected_index < len(tb.Items) {\n\t\treturn tb.Items[tb.Selected_index]\n\t}\n\treturn nil\n}\n", StructName, StructName)
+		str += fmt.Sprintf("func (tb *%s) AddItem() * %sItem {\t//Use this instead of Items = append()\n\tr := &%sItem{}\n\t*r = tb.DefItem\n\ttb.Items = append(tb.Items, r)\n\treturn r\n}\n", StructName, StructName, StructName)
 	}
 	return str
 }
@@ -323,9 +323,18 @@ type Button struct {
 	Label   string
 	Icon string	//path to image file
 	Enable  bool
-	Confirmation string
 	Background  int	//0=transparent, 1=full, 2=light
+	Confirmation string
 	Triggered bool	//true, when button is clicked
+}`
+
+	case "Menu":
+		return `
+type Menu struct {
+Label   string
+Icon string	//path to image file
+Enable  bool
+Background  int	//0=transparent, 1=full, 2=light
 }`
 
 	case "Checkbox":
@@ -695,14 +704,14 @@ func (ls *SANodeCode) Execute(exe_prms []SANodeCodeExePrm) {
 
 		if prmNode.IsTypeList() {
 			//defaults
-			defRows := make(map[string]interface{})
+			defItem := make(map[string]interface{})
 			for _, it := range prmNode.Subs {
-				defRows[it.Name] = it.Attrs
+				defItem[it.Name] = it.Attrs
 			}
-			attrs["defRow"] = defRows
+			attrs["defItem"] = defItem
 
-			//rows
-			rows := make([]map[string]interface{}, len(prmNode.listSubs))
+			//items
+			items := make([]map[string]interface{}, len(prmNode.listSubs))
 			for i, it := range prmNode.listSubs {
 
 				rws := make(map[string]interface{})
@@ -722,9 +731,9 @@ func (ls *SANodeCode) Execute(exe_prms []SANodeCodeExePrm) {
 
 					rws[it.Name] = itAttrs
 				}
-				rows[i] = rws
+				items[i] = rws
 			}
-			attrs["rows"] = rows
+			attrs["items"] = items
 		}
 
 		vars[prmNode.Name] = attrs
@@ -779,16 +788,17 @@ func (ls *SANodeCode) SetOutput(outputJs []byte) {
 			}
 
 			if prmNode.IsTypeList() {
-				rw := prmNode.Attrs["rows"]
-				delete(prmNode.Attrs, "rows")
+				rw := prmNode.Attrs["items"]
+				delete(prmNode.Attrs, "items")
+				delete(prmNode.Attrs, "defItem")
 
-				rows, ok := rw.([]interface{})
+				items, ok := rw.([]interface{})
 				if ok {
 					//alloc
-					listSubs := make([]*SANode, len(rows))
+					listSubs := make([]*SANode, len(items))
 
 					//set
-					for i, r := range rows {
+					for i, r := range items {
 
 						vars, ok := r.(map[string]interface{})
 						if ok {
@@ -918,18 +928,23 @@ func (ls *SANodeCode) extractImports(code string) ([]SANodeCodeImport, error) {
 }
 
 func (ls *SANodeCode) extractContent(code string) (string, error) {
-	d := strings.Index(code, "\nfunc")
-	dd := strings.Index(code, "\ntype")
-	if dd >= 0 && dd < d {
-		d = dd
-	}
-	dd = strings.Index(code, "\nvar")
-	if dd >= 0 && dd < d {
-		d = dd
-	}
-	dd = strings.Index(code, "\nconst")
-	if dd >= 0 && dd < d {
-		d = dd
+
+	tps := []string{"func", "type", "var", "const"}
+
+	d := -1
+	for _, it := range tps {
+		if strings.HasPrefix(code, it) {
+			d = 0
+			break
+		}
+		dd := strings.Index(code, "\n"+it)
+		if dd >= 0 {
+			if d < 0 {
+				d = dd
+			} else {
+				d = OsMin(d, dd)
+			}
+		}
 	}
 
 	if d >= 0 {
@@ -1122,7 +1137,7 @@ var g_ops = []token.Token{
 }
 
 //problems:
-//1) table.AddRow() //ignorováno
+//1) table.AddItem() //ignorováno
 //2) row := range table.Rows	//ignorováno
 //3) clickButton code is mess
 
