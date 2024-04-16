@@ -67,6 +67,19 @@ type Button struct {
 	Triggered bool   `json:"triggered"`
 	Confirmation string   `json:"confirmation"`
 }
+type Menu struct {
+	Grid_x  int    `json:"grid_x"`
+	Grid_y  int    `json:"grid_y"`
+	Grid_w  int    `json:"grid_w"`
+	Grid_h  int    `json:"grid_h"`
+	Show    bool   `json:"show"`
+	Background int  `json:"background"`
+	Label   string `json:"label"`
+	Icon    string `json:"icon"`
+	Icon_margin    float64 `json:"icon_margin"`
+	Tooltip string `json:"tooltip"`
+	Enable  bool   `json:"enable"`
+}
 type Checkbox struct {
 	Grid_x  int    `json:"grid_x"`
 	Grid_y  int    `json:"grid_y"`

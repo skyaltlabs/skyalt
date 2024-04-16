@@ -222,6 +222,10 @@ func (node *SANode) IsTypeLayout() bool {
 	return strings.EqualFold(node.Exe, "layout")
 }
 
+func (node *SANode) IsTypeMenu() bool {
+	return strings.EqualFold(node.Exe, "menu")
+}
+
 func (node *SANode) IsTypeChart() bool {
 	return strings.EqualFold(node.Exe, "chart")
 }
@@ -239,7 +243,7 @@ func (node *SANode) IsTypeDialog() bool {
 }
 
 func (node *SANode) IsTypeWithSubLayoutNodes() bool {
-	return node.IsTypeList() || node.IsTypeLayout() || node.IsTypeDialog()
+	return node.IsTypeList() || node.IsTypeLayout() || node.IsTypeDialog() || node.IsTypeMenu()
 }
 
 func (node *SANode) HasNodeSubs() bool {
