@@ -141,12 +141,11 @@ func UiMenu_render(node *SANode) {
 
 	ui := node.app.base.ui
 
-	dnm := node.Name
+	dnm := "app_" + node.Name
 	if node.parent != nil && node.parent.parent != nil && node.parent.parent.IsTypeList() {
-
 		lay := node.parent
 		list := node.parent.parent
-		dnm = list.Name + "_" + lay.Name + "_" + node.Name
+		dnm = "app_" + list.Name + "_" + lay.Name + "_" + node.Name
 	}
 
 	//button
@@ -782,7 +781,6 @@ func UiLayout_Attrs(node *SANode) {
 	grid := InitOsV4(0, 0, 1, 1)
 	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
 	node.ShowAttrBool(&grid, "show", true)
-	node.ShowAttrBool(&grid, "write", false)
 	node.ShowAttrBool(&grid, "enable", true)
 }
 

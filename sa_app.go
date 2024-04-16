@@ -205,13 +205,13 @@ func (app *SAApp) TryExecute() {
 	if app.ExePos < len(app.exe.Subs) {
 		nd := app.exe.Subs[app.ExePos]
 
-		var prms []SANodeCodeExePrm
+		var exe_prms []SANodeCodeExePrm
 		if len(nd.Code.exes) > 0 {
-			prms = nd.Code.exes[0].prms
+			exe_prms = nd.Code.exes[0].prms
 			nd.Code.exes = nd.Code.exes[1:] //remove
 		}
 
-		nd.Code.Execute(prms)
+		nd.Code.Execute(exe_prms)
 		app.last_trigger_ticks = 0 //test for new changes immidiatly
 
 		app.ExePos++

@@ -114,33 +114,30 @@ func (node *SANode) SetError(err error) {
 	node.errExe = err
 }
 
-func (node *SANode) addIntoDependedCodes(changedNode *SANode, prms []SANodeCodeExePrm) {
+func (node *SANode) addIntoDependedCodes(changedNode *SANode, exe_prms []SANodeCodeExePrm) {
 	for _, nd := range node.app.exe.Subs {
 		if nd.IsTypeCode() && !nd.IsBypassed() && nd != changedNode {
 			if nd.Code.findFuncDepend(changedNode) != nil {
-				nd.Code.AddExe(prms)
+				nd.Code.AddExe(exe_prms)
 			}
 		}
 	}
 }
 
-func (node *SANode) SetChange(prms []SANodeCodeExePrm) {
+func (node *SANode) SetChange(exe_prms []SANodeCodeExePrm) {
 
-	//convert copySubs
-	if node.parent != nil && node.parent.parent != nil && node.parent.parent.IsTypeList() {
-		for i := range prms {
-			prms[i].Node = node.parent.parent.Name //Copy
-			prms[i].ListNode = node.Name
-			prms[i].ListPos = node.parent.parent.FindCopyPos(node.parent) //'node.parent' = layout
+	list, pos := node.FindSubListInfo()
+	if list != nil {
+		for i := range exe_prms {
+			exe_prms[i].ListNode = list.Name
+			exe_prms[i].ListPos = pos
+			exe_prms[i].Node = node.Name
 		}
+
+		node = list //set exe_prms into List
 	}
 
-	//from sub -> copy node(aka base)
-	for node.parent != nil && node.parent.parent != nil {
-		node = node.parent
-	}
-
-	node.GetParentRoot().addIntoDependedCodes(node, prms)
+	node.GetParentRoot().addIntoDependedCodes(node, exe_prms)
 }
 
 func (node *SANode) SetStructChange() {
@@ -613,6 +610,24 @@ func (node *SANode) FindListSubNodePos(lay *SANode) int {
 	return -1
 }
 
+func (node *SANode) FindSubListInfo() (*SANode, int) {
+
+	if node == nil {
+		return nil, -1
+	}
+
+	if node.IsTypeList() {
+		return node, -1
+	}
+
+	list, pos := node.parent.FindSubListInfo()
+	if list != nil && pos < 0 {
+		pos = list.FindListSubNodePos(node)
+	}
+
+	return list, pos
+}
+
 func (node *SANode) FindSelected() *SANode {
 	for _, it := range node.Subs {
 		if it.Selected {
@@ -705,6 +720,13 @@ func (node *SANode) NumSubNames(name string) int {
 
 func (node *SANode) GetParentRoot() *SANode {
 	for node.parent != nil {
+		node = node.parent
+	}
+	return node
+}
+
+func (node *SANode) GetSubRootNode() *SANode {
+	for node.parent != nil && node.parent.parent != nil {
 		node = node.parent
 	}
 	return node
