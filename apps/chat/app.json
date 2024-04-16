@@ -111,8 +111,7 @@
 "tinydiarize": false,
 "translate": false,
 "word_thold": 0.01
-},
-"ShowCodeChat": false
+}
 },
 {
 "Pos": {
@@ -134,8 +133,7 @@
 "grid_y": 2,
 "path": "apps/chat/mic.wav",
 "show": true
-},
-"ShowCodeChat": false
+}
 },
 {
 "Pos": {
@@ -162,8 +160,7 @@
 "show_path": true,
 "show_table_list": true,
 "write": false
-},
-"ShowCodeChat": false
+}
 },
 {
 "Pos": {
@@ -204,8 +201,7 @@
 "top_k": 40,
 "top_p": 0.5,
 "typical_p": 1
-},
-"ShowCodeChat": false
+}
 },
 {
 "Pos": {
@@ -232,8 +228,7 @@
 "label": "Send",
 "show": true,
 "tooltip": ""
-},
-"ShowCodeChat": false
+}
 },
 {
 "Pos": {
@@ -252,6 +247,7 @@
 "align_v": 0,
 "db_value": false,
 "enable": true,
+"formating": true,
 "ghost": "",
 "grid_h": 1,
 "grid_w": 1,
@@ -263,8 +259,7 @@
 "show": true,
 "temp_to_value": true,
 "value": ""
-},
-"ShowCodeChat": false
+}
 },
 {
 "Pos": {
@@ -273,7 +268,6 @@
 },
 "Name": "text",
 "Exe": "text",
-"Selected": true,
 "Code": {
 "Messages": null,
 "Code": "",
@@ -282,6 +276,7 @@
 "Attrs": {
 "align_h": 0,
 "align_v": 0,
+"formating": true,
 "grid_h": 1,
 "grid_w": 3,
 "grid_x": 1,
@@ -292,8 +287,7 @@
 "selection": true,
 "show": true,
 "show_border": true
-},
-"ShowCodeChat": false
+}
 },
 {
 "Pos": {
@@ -349,8 +343,7 @@
 "bypass": false,
 "language": "go",
 "show": true
-},
-"ShowCodeChat": true
+}
 },
 {
 "Pos": {
@@ -386,8 +379,7 @@
 "bypass": false,
 "language": "go",
 "show": true
-},
-"ShowCodeChat": true
+}
 },
 {
 "Pos": {
@@ -431,8 +423,7 @@
 "bypass": false,
 "language": "go",
 "show": true
-},
-"ShowCodeChat": true
+}
 },
 {
 "Pos": {
@@ -441,6 +432,7 @@
 },
 "Name": "build_output",
 "Exe": "code",
+"Selected": true,
 "Code": {
 "Messages": [
 {
@@ -468,12 +460,9 @@
 "bypass": false,
 "language": "go",
 "show": true
-},
-"ShowCodeChat": true
 }
-],
-"ShowCodeChat": false
 }
-],
-"ShowCodeChat": false
+]
+}
+]
 }

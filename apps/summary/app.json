@@ -73,8 +73,7 @@
 "Attrs": {
 "model": "gpt-3.5-turbo",
 "show": true
-},
-"ShowCodeChat": false
+}
 },
 {
 "Pos": {
@@ -83,7 +82,6 @@
 },
 "Name": "text",
 "Exe": "text",
-"Selected": true,
 "Code": {
 "Messages": null,
 "Code": "",
@@ -92,6 +90,7 @@
 "Attrs": {
 "align_h": 0,
 "align_v": 0,
+"formating": true,
 "grid_h": 1,
 "grid_w": 1,
 "grid_x": 1,
@@ -102,8 +101,7 @@
 "selection": true,
 "show": true,
 "show_border": true
-},
-"ShowCodeChat": false
+}
 },
 {
 "Pos": {
@@ -130,8 +128,7 @@
 "label": "Summarize",
 "show": true,
 "tooltip": ""
-},
-"ShowCodeChat": false
+}
 },
 {
 "Pos": {
@@ -150,6 +147,7 @@
 "align_v": 0,
 "db_value": false,
 "enable": true,
+"formating": true,
 "ghost": "",
 "grid_h": 1,
 "grid_w": 1,
@@ -161,8 +159,7 @@
 "show": true,
 "temp_to_value": false,
 "value": "The Velvet Revolution (Czech: Sametová revoluce) or Gentle Revolution (Slovak: Nežná revolúcia) was a non-violent transition of power in what was then Czechoslovakia, occurring from 17 November to 28 November 1989. Popular demonstrations against the one-party government of the Communist Party of Czechoslovakia included students and older dissidents. The result was the end of 41 years of one-party rule in Czechoslovakia, and the subsequent dismantling of the command economy and conversion to a parliamentary republic.[3]\n\nOn 17 November 1989 (International Students' Day), riot police suppressed a student demonstration in Prague.[4] The event marked the 50th anniversary of a violently suppressed demonstration against the Nazi storming of Prague University in 1939 where 1,200 students were arrested and 9 killed (see Origin of International Students' Day). The 1989 event sparked a series of demonstrations from 17 November to late December and turned into an anti-communist demonstration. On 20 November, the number of protesters assembled in Prague grew from 200,000 the previous day to an estimated 500,000. The entire top leadership of the Communist Party, including General Secretary Miloš Jakeš, resigned on 24 November. On 27 November, a two-hour general strike involving all citizens of Czechoslovakia was held."
-},
-"ShowCodeChat": false
+}
 },
 {
 "Pos": {
@@ -187,6 +184,7 @@
 },
 "Name": "summarize",
 "Exe": "code",
+"Selected": true,
 "Code": {
 "Messages": [
 {
@@ -222,12 +220,9 @@
 "bypass": false,
 "language": "go",
 "show": true
-},
-"ShowCodeChat": true
 }
-],
-"ShowCodeChat": false
 }
-],
-"ShowCodeChat": false
+]
+}
+]
 }

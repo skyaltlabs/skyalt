@@ -27,7 +27,7 @@
 {
 "Pos": 1,
 "Min": 1,
-"Max": 100,
+"Max": 10,
 "Resize": 1
 },
 {
@@ -105,8 +105,7 @@
 "tinydiarize": false,
 "translate": false,
 "word_thold": 0.01
-},
-"ShowCodeChat": false
+}
 },
 {
 "Pos": {
@@ -133,8 +132,7 @@
 "label": "Transcribe",
 "show": true,
 "tooltip": ""
-},
-"ShowCodeChat": false
+}
 },
 {
 "Pos": {
@@ -157,8 +155,7 @@
 "path": "./tracks/",
 "show": true,
 "write": false
-},
-"ShowCodeChat": false
+}
 },
 {
 "Pos": {
@@ -183,6 +180,7 @@
 },
 "Name": "transcribe",
 "Exe": "code",
+"Selected": true,
 "Code": {
 "Messages": [
 {
@@ -214,12 +212,9 @@
 "bypass": false,
 "language": "go",
 "show": true
-},
-"ShowCodeChat": true
 }
-],
-"ShowCodeChat": false
 }
-],
-"ShowCodeChat": false
+]
+}
+]
 }
