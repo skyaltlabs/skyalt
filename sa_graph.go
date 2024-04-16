@@ -160,9 +160,7 @@ func (gr *SAGraph) drawArrow(a, b, c, d OsV2, tt float64, reverse bool, cd OsCd)
 	//ui.buff.AddCircle(InitOsV4Mid(top_mid.toV2(), OsV2{int(cellr * 0.2), int(cellr * 0.2)}), cd, 0)
 }
 
-func (gr *SAGraph) drawConnectionDirect(startRect OsV4, endRect OsV4, dash float32, selectedCd bool, move float32, arrow_t float64, arrow_reverse bool) {
-
-	//H-H nebo V-V
+func (gr *SAGraph) drawConnectionDirect(startRect OsV4, endRect OsV4, dash float32, selectedCd bool, move float32, arrow_t float64, arrow_reverse bool, onlyTopBottomStart bool) {
 
 	stMid := startRect.Middle()
 	stStart := startRect.Start
@@ -173,7 +171,8 @@ func (gr *SAGraph) drawConnectionDirect(startRect OsV4, endRect OsV4, dash float
 	enEnd := endRect.End()
 
 	var start, end OsV2
-	isV := false
+	isVs := false
+	isVe := false
 
 	v := endRect.Middle().Sub(startRect.Middle()) //opačně? ...
 	rad := v.Angle()
@@ -182,16 +181,27 @@ func (gr *SAGraph) drawConnectionDirect(startRect OsV4, endRect OsV4, dash float
 		//right
 		start = OsV2{stEnd.X, stMid.Y}
 		end = OsV2{enStart.X, enMid.Y}
+
+		if onlyTopBottomStart {
+			if stMid.Y > enMid.Y {
+				start = OsV2{stMid.X, stStart.Y}
+			} else {
+				start = OsV2{stMid.X, stEnd.Y}
+			}
+			isVs = true
+		}
 	}
 	if rad > math.Pi/4 && rad < math.Pi*3/4 {
 		//down
-		isV = true
+		isVs = true
+		isVe = true
 		start = OsV2{stMid.X, stEnd.Y}
 		end = OsV2{enMid.X, enStart.Y}
 	}
 	if rad < -math.Pi/4 && rad >= -math.Pi*3/4 {
 		//up
-		isV = true
+		isVs = true
+		isVe = true
 		start = OsV2{stMid.X, stStart.Y}
 		end = OsV2{enMid.X, enEnd.Y}
 	}
@@ -199,6 +209,16 @@ func (gr *SAGraph) drawConnectionDirect(startRect OsV4, endRect OsV4, dash float
 		//left
 		start = OsV2{stStart.X, stMid.Y}
 		end = OsV2{enEnd.X, enMid.Y}
+
+		if onlyTopBottomStart {
+			if stMid.Y > enMid.Y {
+				start = OsV2{stMid.X, stStart.Y}
+			} else {
+				start = OsV2{stMid.X, stEnd.Y}
+			}
+			isVs = true
+		}
+
 	}
 
 	ui := gr.app.base.ui
@@ -206,11 +226,14 @@ func (gr *SAGraph) drawConnectionDirect(startRect OsV4, endRect OsV4, dash float
 
 	mm := start.Aprox(end, 0.5)
 	var mS, mE OsV2
-	if isV {
+	if isVs {
 		mS = OsV2{start.X, mm.Y}
-		mE = OsV2{end.X, mm.Y}
 	} else {
 		mS = OsV2{mm.X, start.Y}
+	}
+	if isVe {
+		mE = OsV2{end.X, mm.Y}
+	} else {
 		mE = OsV2{mm.X, end.Y}
 	}
 
@@ -395,7 +418,7 @@ func (gr *SAGraph) drawConnections() {
 				coordIn = selCoordIn
 			}
 
-			gr.drawConnectionDirect(coordOut, coordIn, 0, in.node.Selected || out.Selected, 0, OsTrnFloat(in.updated && in.write, 0.5, -1), true)
+			gr.drawConnectionDirect(coordOut, coordIn, 0, in.node.Selected || out.Selected, 0, OsTrnFloat(in.updated && in.write, 0.5, -1), true, true)
 		}
 
 		/*for _, inName := range out.Code.Triggers {
@@ -419,6 +442,7 @@ func (gr *SAGraph) drawConnections() {
 		}*/
 	}
 
+	//between code nodes inside exeRect
 	for i := 1; i < len(gr.app.exe.Subs); i++ {
 
 		in := gr.app.exe.Subs[i-1]
@@ -434,7 +458,7 @@ func (gr *SAGraph) drawConnections() {
 			coordOut = selCoordOut
 		}
 
-		gr.drawConnectionDirect(coordOut, coordIn, 0, false, 0, 1, false)
+		gr.drawConnectionDirect(coordOut, coordIn, 0, false, 0, 1, false, false)
 	}
 
 }
