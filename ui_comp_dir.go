@@ -43,7 +43,7 @@ func (ui *Ui) Comp_dirPicker(x, y, w, h int, path *string, selectFile bool, errW
 				nm = "Error - Not Found: " + nm
 			}
 		}
-		if ui.Comp_button(0, 0, 1, 1, nm, Comp_buttonProp().Tooltip("Select file/folder").SetError(!exist).Enable(enable)) > 0 {
+		if ui.Comp_buttonOutlined(0, 0, 1, 1, nm, Comp_buttonProp().Tooltip("Select file/folder").SetError(!exist).Enable(enable)) > 0 {
 			ui.Dialog_open(dialogName, 1)
 			ui.dir = UiDir{tempPath: *path} //reset
 		}
