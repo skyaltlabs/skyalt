@@ -804,28 +804,6 @@ func UiLayout_render(node *SANode) {
 	ui.Div_end()
 }
 
-func UiDialog_Attrs(node *SANode) {
-	ui := node.app.base.ui
-	ui.Div_colMax(0, 3)
-	ui.Div_colMax(1, 100)
-
-	grid := InitOsV4(0, 0, 1, 1)
-	node.ShowAttrV4(&grid, "grid", InitOsV4(0, 0, 1, 1))
-	node.ShowAttrBool(&grid, "show", true)
-	node.ShowAttrBool(&grid, "enable", true)
-	//....
-}
-
-func UiDialog_render(node *SANode) {
-	grid := node.GetGrid()
-
-	ui := node.app.base.ui
-
-	ui.Div_start(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y)
-	//....
-	ui.Div_end()
-}
-
 func UiList_Attrs(node *SANode) {
 	ui := node.app.base.ui
 	ui.Div_colMax(0, 3)

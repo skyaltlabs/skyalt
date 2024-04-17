@@ -235,12 +235,8 @@ func (node *SANode) IsTypeExe() bool {
 	return strings.EqualFold(node.Exe, "exe")
 }
 
-func (node *SANode) IsTypeDialog() bool {
-	return strings.EqualFold(node.Exe, "dialog")
-}
-
 func (node *SANode) IsTypeWithSubLayoutNodes() bool {
-	return node.IsTypeList() || node.IsTypeLayout() || node.IsTypeDialog() || node.IsTypeMenu()
+	return node.IsTypeList() || node.IsTypeLayout() || node.IsTypeMenu()
 }
 
 func (node *SANode) HasNodeSubs() bool {
@@ -626,6 +622,19 @@ func (node *SANode) FindSubListInfo() (*SANode, int) {
 	}
 
 	return list, pos
+}
+
+func (node *SANode) FindSubMenu() *SANode {
+
+	if node == nil {
+		return nil
+	}
+
+	if node.IsTypeMenu() {
+		return node
+	}
+
+	return node.parent.FindSubMenu()
 }
 
 func (node *SANode) FindSelected() *SANode {
