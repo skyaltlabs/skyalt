@@ -199,7 +199,7 @@ func (node *SANode) drawHeader() bool {
 		//name
 		div := ui.Comp_textSelect(0, 0, 1, 1, node.GetNodeLabel(), OsV2{1, 1}, false, true, false)
 		if div.IsTouchEndSubs(ui) && ui.win.io.touch.rm {
-			ui.win.io.keys.clipboard = "'" + node.Name + "'"
+			ui.win.io.keys.clipboard = "`" + node.Name + "`"
 		}
 
 		//ui.Paint_tooltip(0, 0, 1, 1, "Type: "+node.Exe)

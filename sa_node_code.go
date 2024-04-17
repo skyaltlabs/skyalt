@@ -184,7 +184,7 @@ func (ls *SANodeCode) buildSqlInfos(msgs_depends []*SANodeCodeFn) (string, error
 
 	for _, fn := range msgs_depends {
 		if fn.node.IsTypeDbFile() {
-			str += fmt.Sprintf("'%s' is SQLite database which includes these tables(columns): ", fn.node.Name)
+			str += fmt.Sprintf("`%s` is SQLite database which includes these tables(columns): ", fn.node.Name)
 
 			tablesStr := ""
 			db, _, err := ls.node.app.base.ui.win.disk.OpenDb(fn.node.GetAttrString("path", ""))
@@ -1234,13 +1234,13 @@ func (ls *SANodeCode) buildArgs() ([]*SANodeCodeFn, error) {
 	for _, msg := range ls.Messages {
 		ln := msg.User
 		for {
-			d1 := strings.IndexByte(ln, '\'')
+			d1 := strings.IndexByte(ln, '`')
 			if d1 >= 0 {
 				ln = ln[d1+1:]
 			} else {
 				break
 			}
-			d2 := strings.IndexByte(ln, '\'')
+			d2 := strings.IndexByte(ln, '`')
 			if d2 >= 0 {
 				nm := ln[:d2]
 
@@ -1305,8 +1305,8 @@ func (ls *SANodeCode) RenameNode(old_name string, new_name string) {
 
 	//chat
 	for _, it := range ls.Messages {
-		it.User = strings.ReplaceAll(it.User, "'"+old_name+"'", "'"+new_name+"'")
-		it.Assistent = strings.ReplaceAll(it.Assistent, "'"+old_name+"'", "'"+new_name+"'")
+		it.User = strings.ReplaceAll(it.User, "`"+old_name+"`", "`"+new_name+"`")
+		it.Assistent = strings.ReplaceAll(it.Assistent, "`"+old_name+"`", "`"+new_name+"`")
 
 		it.Assistent = ReplaceWord(it.Assistent, old_name, new_name)
 	}
