@@ -96,20 +96,6 @@ func InitSANodeCode(node *SANode) SANodeCode {
 	return ls
 }
 
-func (ls *SANodeCode) findNodeName(nm string) (*SANode, error) {
-	found := ls.node.FindNode(nm)
-	if found == nil {
-		return nil, fmt.Errorf("node '%s' not found", nm)
-	}
-	if found == ls.node && !found.IsTypeList() {
-		return nil, fmt.Errorf("can't connect to it self")
-	}
-	if found.IsTypeCode() && !found.IsTypeList() {
-		return nil, fmt.Errorf("can't connect to node(%s) which is type code", nm)
-	}
-	return found, nil
-}
-
 func (ls *SANodeCode) AddExe(exe_prms []SANodeCodeExePrm) {
 	if !ls.node.app.EnableExecution || !ls.node.IsTypeCode() || ls.node.IsBypassed() {
 		return
@@ -132,7 +118,7 @@ func (ls *SANodeCode) findFuncDepend(node *SANode) *SANodeCodeFn {
 }
 
 func (ls *SANodeCode) addFuncDepend(nm string) error {
-	node, err := ls.findNodeName(nm)
+	node, err := ls.findNodeAndCheck(nm)
 	if err != nil {
 		return err
 	}
@@ -146,25 +132,6 @@ func (ls *SANodeCode) addFuncDepend(nm string) error {
 
 	//add
 	ls.func_depends = append(ls.func_depends, &SANodeCodeFn{node: node})
-
-	return nil
-}
-
-func (ls *SANodeCode) addMsgDepend(args *[]*SANodeCodeFn, nm string) error {
-	node, err := ls.findNodeName(nm)
-	if err != nil {
-		return err
-	}
-
-	//find
-	for _, fn := range *args {
-		if fn.node == node {
-			return nil //already added
-		}
-	}
-
-	//add
-	*args = append(*args, &SANodeCodeFn{node: node})
 
 	return nil
 }
@@ -226,10 +193,13 @@ func (ls *SANodeCode) buildSqlInfos(msgs_depends []*SANodeCodeFn) (string, error
 func (node *SANode) getStructName() string {
 
 	if node.IsTypeList() {
-		return "List" + strings.ToUpper(node.Name[0:1]) + node.Name[1:] //List<name>
+		return "List" + strings.ToUpper(node.Name[0:1]) + node.Name[1:] //Menu<name>
 	}
 	if node.IsTypeMenu() {
 		return "Menu" + strings.ToUpper(node.Name[0:1]) + node.Name[1:] //List<name>
+	}
+	if node.IsTypeLayout() {
+		return "Layout" + strings.ToUpper(node.Name[0:1]) + node.Name[1:] //Layout<name>
 	}
 
 	exe := node.Exe
@@ -255,27 +225,37 @@ func (ls *SANodeCode) buildListSt(node *SANode, addExtraAttrs bool) string {
 		itVarName := strings.ToUpper(it.Name[0:1]) + it.Name[1:] //1st letter must be upper
 		itStructName := it.getStructName()                       //list inside list? .........
 
-		str += fmt.Sprintf("\t%s %s `json:\"%s\"`\n", itVarName, itStructName, it.Name)
+		if addExtraAttrs {
+			str += fmt.Sprintf("\t%s %s `json:\"%s\"`\n", itVarName, itStructName, it.Name)
+		} else {
+			str += fmt.Sprintf("\t%s %s\n", itVarName, itStructName)
+		}
 	}
 	str += "}\n"
 
 	//List<name>
-	extraAttrs := "\tGrid_x  int     `json:\"grid_x\"`\n" +
-		"\tGrid_y  int     `json:\"grid_y\"`\n" +
-		"\tGrid_w int      `json:\"grid_w\"`\n" +
-		"\tGrid_h  int     `json:\"grid_h\"`\n" +
-		"\tShow    bool    `json:\"show\"`\n" +
-		"\tEnable  bool    `json:\"enable\"`\n" +
-		"\tChanged bool    `json:\"changed\"`\n" +
-		"\tDirection int   `json:\"direction\"`\n" +
-		"\tMax_width float64  `json:\"max_width\"`\n" +
-		"\tMax_height float64 `json:\"max_height\"`\n" +
-		"\tShow_border bool `json:\"show_border\"`\n"
-	if !addExtraAttrs {
-		extraAttrs = ""
+	var extraAttrs string
+	if addExtraAttrs {
+		extraAttrs = "\tGrid_x  int     `json:\"grid_x\"`\n" +
+			"\tGrid_y  int     `json:\"grid_y\"`\n" +
+			"\tGrid_w int      `json:\"grid_w\"`\n" +
+			"\tGrid_h  int     `json:\"grid_h\"`\n" +
+			"\tShow    bool    `json:\"show\"`\n" +
+			"\tEnable  bool    `json:\"enable\"`\n" +
+			"\tChanged bool    `json:\"changed\"`\n" +
+			"\tDirection int   `json:\"direction\"`\n" +
+			"\tMax_width float64  `json:\"max_width\"`\n" +
+			"\tMax_height float64 `json:\"max_height\"`\n" +
+			"\tShow_border bool `json:\"show_border\"`\n"
+	} else {
+		extraAttrs = "\tShow    bool\n"
 	}
 
-	str += fmt.Sprintf("type %s struct {\n%s\tDefItem %sItem `json:\"defItem\"`\n\tItems []*%sItem `json:\"items\"`\n\tSelected_button string `json:\"selected_button\"`\n\tSelected_index int `json:\"selected_index\"`\n}\n", StructName, extraAttrs, StructName, StructName)
+	if addExtraAttrs {
+		str += fmt.Sprintf("type %s struct {\n%s\tDefItem %sItem `json:\"defItem\"`\n\tItems []*%sItem `json:\"items\"`\n\tSelected_button string `json:\"selected_button\"`\n\tSelected_index int `json:\"selected_index\"`\n}\n", StructName, extraAttrs, StructName, StructName)
+	} else {
+		str += fmt.Sprintf("type %s struct {\n%s\tDefItem %sItem\n\tItems []*%sItem\n\tSelected_button string\n\tSelected_index int\n}\n", StructName, extraAttrs, StructName, StructName)
+	}
 
 	//Funcs
 	str += fmt.Sprintf("func (tb *%s) GetSelectedItem() * %sItem {\t//Can return nil\n\tif tb.Selected_index >= 0 && tb.Selected_index < len(tb.Items) {\n\t\treturn tb.Items[tb.Selected_index]\n\t}\n\treturn nil\n}\n", StructName, StructName)
@@ -293,20 +273,22 @@ func (ls *SANodeCode) buildMenuSt(node *SANode, addExtraAttrs bool) string {
 	StructName := node.getStructName()
 
 	//Menu<name>
-	extraAttrs := "\tGrid_x  int    `json:\"grid_x\"`\n" +
-		"\tGrid_y  int    `json:\"grid_y\"`\n" +
-		"\tGrid_w  int    `json:\"grid_w\"`\n" +
-		"\tGrid_h  int    `json:\"grid_h\"`\n" +
-		"\tShow    bool   `json:\"show\"`\n" +
-		"\tBackground int  `json:\"background\"`\n" +
-		"\tAlign      int  `json:\"align\"`\n" +
-		"\tLabel   string `json:\"label\"`\n" +
-		"\tIcon    string `json:\"icon\"`\n" +
-		"\tIcon_margin    float64 `json:\"icon_margin\"`\n" +
-		"\tTooltip string `json:\"tooltip\"`\n" +
-		"\tEnable  bool   `json:\"enable\"`\n"
-	if !addExtraAttrs {
-		extraAttrs = ""
+	var extraAttrs string
+	if addExtraAttrs {
+		extraAttrs = "\tGrid_x  int    `json:\"grid_x\"`\n" +
+			"\tGrid_y  int    `json:\"grid_y\"`\n" +
+			"\tGrid_w  int    `json:\"grid_w\"`\n" +
+			"\tGrid_h  int    `json:\"grid_h\"`\n" +
+			"\tShow    bool   `json:\"show\"`\n" +
+			"\tBackground int  `json:\"background\"`\n" +
+			"\tAlign      int  `json:\"align\"`\n" +
+			"\tLabel   string `json:\"label\"`\n" +
+			"\tIcon    string `json:\"icon\"`\n" +
+			"\tIcon_margin    float64 `json:\"icon_margin\"`\n" +
+			"\tTooltip string `json:\"tooltip\"`\n" +
+			"\tEnable  bool   `json:\"enable\"`\n"
+	} else {
+		extraAttrs = "\tShow    bool\n"
 	}
 
 	//Subs list
@@ -314,7 +296,51 @@ func (ls *SANodeCode) buildMenuSt(node *SANode, addExtraAttrs bool) string {
 	for _, it := range node.Subs {
 		itVarName := strings.ToUpper(it.Name[0:1]) + it.Name[1:] //1st letter must be upper
 		itStructName := it.getStructName()                       //list inside list? .........
-		subStructLns += fmt.Sprintf("\t%s %s `json:\"%s\"`\n", itVarName, itStructName, it.Name)
+
+		if addExtraAttrs {
+			subStructLns += fmt.Sprintf("\t%s %s `json:\"%s\"`\n", itVarName, itStructName, it.Name)
+		} else {
+			subStructLns += fmt.Sprintf("\t%s %s\n", itVarName, itStructName)
+		}
+	}
+
+	str += fmt.Sprintf("type %s struct {\n%s\n%s}\n", StructName, extraAttrs, subStructLns)
+
+	return str
+}
+
+func (ls *SANodeCode) buildLayoutSt(node *SANode, addExtraAttrs bool) string {
+	str := ""
+	if !node.IsTypeLayout() {
+		return str
+	}
+
+	StructName := node.getStructName()
+
+	//Menu<name>
+	var extraAttrs string
+	if addExtraAttrs {
+		extraAttrs = "\tGrid_x  int    `json:\"grid_x\"`\n" +
+			"\tGrid_y  int    `json:\"grid_y\"`\n" +
+			"\tGrid_w  int    `json:\"grid_w\"`\n" +
+			"\tGrid_h  int    `json:\"grid_h\"`\n" +
+			"\tShow    bool   `json:\"show\"`\n" +
+			"\tEnable  bool   `json:\"enable\"`\n"
+	} else {
+		extraAttrs = "\tShow    bool\n"
+	}
+
+	//Subs list
+	subStructLns := ""
+	for _, it := range node.Subs {
+		itVarName := strings.ToUpper(it.Name[0:1]) + it.Name[1:] //1st letter must be upper
+		itStructName := it.getStructName()                       //list inside list? .........
+
+		if addExtraAttrs {
+			subStructLns += fmt.Sprintf("\t%s %s `json:\"%s\"`\n", itVarName, itStructName, it.Name)
+		} else {
+			subStructLns += fmt.Sprintf("\t%s %s\n", itVarName, itStructName)
+		}
 	}
 
 	str += fmt.Sprintf("type %s struct {\n%s\n%s}\n", StructName, extraAttrs, subStructLns)
@@ -583,7 +609,7 @@ func (oai *Openai) GetAnswer(messages []OpenaiMessage) (string, error) {
 	return ""
 }
 
-func (ls *SANodeCode) addDependStruct(depends_structs *[]string, node *SANode, menuAndListStructs *string, menuAndListAddExtraAttrs bool) {
+func (ls *SANodeCode) addDependStruct(depends_structs *[]string, node *SANode, extraStructs *string, addExtraAttrs bool) {
 
 	stName := node.getStructName()
 
@@ -598,17 +624,23 @@ func (ls *SANodeCode) addDependStruct(depends_structs *[]string, node *SANode, m
 	*depends_structs = append(*depends_structs, stName)
 
 	//subs
-	if node.IsTypeList() || node.IsTypeMenu() {
+	addDepepend := false
+	if node.IsTypeList() {
+		*extraStructs += ls.buildListSt(node, addExtraAttrs)
+		addDepepend = true
+	}
+	if node.IsTypeMenu() {
+		*extraStructs += ls.buildMenuSt(node, addExtraAttrs)
+		addDepepend = true
+	}
+	if node.IsTypeLayout() {
+		*extraStructs += ls.buildLayoutSt(node, addExtraAttrs)
+		addDepepend = true
+	}
 
-		if node.IsTypeList() {
-			*menuAndListStructs += ls.buildListSt(node, menuAndListAddExtraAttrs)
-		}
-		if node.IsTypeMenu() {
-			*menuAndListStructs += ls.buildMenuSt(node, menuAndListAddExtraAttrs)
-		}
-
+	if addDepepend {
 		for _, nd := range node.Subs {
-			ls.addDependStruct(depends_structs, nd, menuAndListStructs, menuAndListAddExtraAttrs)
+			ls.addDependStruct(depends_structs, nd, extraStructs, addExtraAttrs)
 		}
 	}
 }
@@ -622,10 +654,10 @@ func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 
 	str := "I have this golang code:\n\n"
 
-	menuAndListStructs := ""
+	extraAttrs := ""
 	var depends_structs []string
 	for _, fn := range msgs_depends {
-		ls.addDependStruct(&depends_structs, fn.node, &menuAndListStructs, false)
+		ls.addDependStruct(&depends_structs, fn.node, &extraAttrs, false)
 	}
 
 	//add structs
@@ -635,7 +667,7 @@ func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 	str += "\n"
 
 	//add list, menu structs
-	str += menuAndListStructs
+	str += extraAttrs
 
 	params := ""
 	for _, fn := range msgs_depends {
@@ -657,7 +689,7 @@ func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 
 	str += "Your job: " + userCommand
 
-	//comment ............
+	//remove this ............
 	fmt.Println(str)
 	fmt.Println("Size:", len(str))
 
@@ -749,6 +781,12 @@ func (node *SANode) getAttributes(exe_prms []SANodeCodeExePrm) map[string]interf
 		}
 	}
 
+	if node.IsTypeLayout() {
+		for _, it := range node.Subs {
+			attrs[it.Name] = it.getAttributes(exe_prms)
+		}
+	}
+
 	if node.IsTypeList() {
 		//defaults
 		defItem := make(map[string]interface{})
@@ -797,6 +835,95 @@ func (ls *SANodeCode) Execute(exe_prms []SANodeCodeExePrm) {
 	ls.job_exe = ls.node.app.base.jobs.AddExe(ls.node.app, NewSANodePath(ls.node), "/temp/go/", ls.GetFileName(), inputJs)
 }
 
+func (ls *SANodeCode) setAttributes(node *SANode, attrs map[string]interface{}) {
+
+	if node.HasAttrNode() {
+		return
+	}
+
+	delete(attrs, "triggered")
+
+	if node.IsTypeLayout() || node.IsTypeMenu() {
+		for _, nd := range node.Subs {
+			attr, found := attrs[nd.Name]
+			if found {
+				vv, ok := attr.(map[string]interface{})
+				if ok {
+					ls.setAttributes(nd, vv)
+				} else {
+					fmt.Println("cast failed 1")
+				}
+				delete(attrs, nd.Name)
+			}
+		}
+	}
+
+	if node.IsTypeList() {
+		rw := attrs["items"]
+		delete(attrs, "items")
+		delete(attrs, "defItem")
+
+		items, ok := rw.([]interface{})
+		if ok {
+			//alloc
+			listSubs := make([]*SANode, len(items))
+
+			//set
+			for i, r := range items {
+
+				vars, ok := r.(map[string]interface{})
+				if ok {
+					var err error
+					listSubs[i], err = node.Copy(false)
+					listSubs[i].DeselectAll()
+					listSubs[i].Name = strconv.Itoa(i)
+					listSubs[i].Exe = "layout" //list -> layout
+					//listSubs[i].parent = prmNode
+					listSubs[i].updateLinks(node, node.app) //set parent
+					if err == nil {
+						for key, attrs2 := range vars {
+							prmNode2 := listSubs[i].FindNode(key)
+							if prmNode2 != nil {
+								vv, ok := attrs2.(map[string]interface{})
+								if ok {
+									ls.setAttributes(prmNode2, vv)
+								} else {
+									fmt.Println("cast failed 3")
+								}
+							} else {
+								fmt.Println("Error: Node not found", key)
+							}
+						}
+						//prmNode.copySubs[i].Attrs = vars
+					}
+				} else {
+					fmt.Println("cast failed 2")
+				}
+			}
+
+			selected_button := node.GetAttrString("selected_button", "")
+			selected_index := node.GetAttrInt("selected_index", -1)
+			if selected_button != "" && selected_index >= 0 && selected_index < len(listSubs) {
+				selBut := listSubs[selected_index].FindNode(selected_button)
+				if selBut != nil {
+					selBut.Attrs["background"] = 1 //full
+				}
+			}
+
+			node.listSubs = listSubs
+		}
+	}
+
+	fn := ls.findFuncDepend(node)
+	if fn != nil {
+		fn.updated = true
+		fn.write = !node.CmpAttrs(attrs)
+	}
+
+	node.Attrs = attrs
+
+}
+
 func (ls *SANodeCode) IsJobRunning() (bool, float64, string) {
 	if ls.node.IsTypeCode() && ls.job_exe != nil {
 		if !ls.job_exe.done.Load() {
@@ -816,92 +943,12 @@ func (ls *SANodeCode) SetOutput(outputJs []byte) {
 	}
 
 	for key, attrs := range vars {
-		prmNode := ls.node.FindNode(key)
+		prmNode := ls.node.GetRoot().FindNode(key)
 
 		if prmNode != nil {
-			if !prmNode.HasAttrNode() {
-				switch vv := attrs.(type) {
-				case map[string]interface{}:
-					delete(vv, "triggered")
-
-					//read/write
-					fn := ls.findFuncDepend(prmNode)
-					if fn != nil {
-						fn.updated = true
-						fn.write = !prmNode.CmpAttrs(vv)
-					}
-
-					prmNode.Attrs = vv
-				}
-			}
-
-			if prmNode.IsTypeList() {
-				rw := prmNode.Attrs["items"]
-				delete(prmNode.Attrs, "items")
-				delete(prmNode.Attrs, "defItem")
-
-				items, ok := rw.([]interface{})
-				if ok {
-					//alloc
-					listSubs := make([]*SANode, len(items))
-
-					//set
-					for i, r := range items {
-
-						vars, ok := r.(map[string]interface{})
-						if ok {
-							listSubs[i], err = prmNode.Copy(false)
-							listSubs[i].DeselectAll()
-							listSubs[i].Name = strconv.Itoa(i)
-							listSubs[i].Exe = "layout" //list -> layout
-							//listSubs[i].parent = prmNode
-							listSubs[i].updateLinks(prmNode, prmNode.app) //set parent
-							if err == nil {
-								for key, attrs := range vars {
-									prmNode2 := listSubs[i].FindNodeSubs(key)
-									if prmNode2 != nil {
-										if !prmNode2.HasAttrNode() {
-											switch vv := attrs.(type) {
-											case map[string]interface{}:
-												delete(vv, "triggered")
-												prmNode2.Attrs = vv
-											}
-										}
-									} else {
-										fmt.Println("Error: Node not found", key)
-									}
-								}
-								//prmNode.copySubs[i].Attrs = vars
-							}
-						}
-					}
-
-					/*diff := len(prmNode.listSubs) != len(listSubs)
-					if !diff {
-						for i, nd := range prmNode.listSubs {
-							if !nd.CmpListSub(listSubs[i]) {
-								diff = true
-								break
-							}
-						}
-					}*/
-
-					selected_button := prmNode.GetAttrString("selected_button", "")
-					selected_index := prmNode.GetAttrInt("selected_index", -1)
-					if selected_button != "" && selected_index >= 0 && selected_index < len(listSubs) {
-						selBut := listSubs[selected_index].FindNodeSubs(selected_button)
-						if selBut != nil {
-							selBut.Attrs["background"] = 1 //full
-						}
-					}
-
-					prmNode.listSubs = listSubs
-					//prmNode.ResetTriggers() //reset sub-buttons clicks
-
-					//if diff {
-					//	prmNode.SetChange(nil)
-					//}
-				}
+			vv, ok := attrs.(map[string]interface{})
+			if ok {
+				ls.setAttributes(prmNode, vv)
 			}
 		} else {
 			fmt.Println("Error: Node not found", key)
@@ -1124,12 +1171,12 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 
 	//add list, menu structs
 	var depends_structs []string
-	menuAndListStructs := ""
+	extraAttrs := ""
 	for _, fn := range ls.func_depends {
-		ls.addDependStruct(&depends_structs, fn.node, &menuAndListStructs, true)
+		ls.addDependStruct(&depends_structs, fn.node, &extraAttrs, true)
 	}
 	str += "\n"
-	str += menuAndListStructs
+	str += extraAttrs
 
 	//default structs
 	str += "\n" + g_code_const_go
@@ -1227,6 +1274,48 @@ func (v *visitor) Visit(n ast.Node) ast.Visitor {
 	return v
 }*/
 
+func (ls *SANodeCode) findNodeAndCheck(path string) (*SANode, error) {
+
+	pt := NewSANodePathFromString(path)
+	node := pt.Find(ls.node.GetRoot())
+	if node == nil {
+		return nil, fmt.Errorf("node '%s' not found", path)
+	}
+	if node == ls.node {
+		return nil, fmt.Errorf("can't connect to it self")
+	}
+	if node.IsTypeCode() {
+		return nil, fmt.Errorf("can't connect to node(%s) which is type code", path)
+	}
+	if node.IsTypeExe() {
+		return nil, fmt.Errorf("can't connect to node(%s) which is type exe", path)
+	}
+
+	node = node.GetSubRootNode()
+
+	return node, nil
+}
+
+func (ls *SANodeCode) addArg(args *[]*SANodeCodeFn, nm string) error {
+
+	node, err := ls.findNodeAndCheck(nm)
+	if err != nil {
+		return err
+	}
+
+	//find
+	for _, fn := range *args {
+		if fn.node == node {
+			return nil //already added
+		}
+	}
+
+	//add
+	*args = append(*args, &SANodeCodeFn{node: node})
+
+	return nil
+}
+
 func (ls *SANodeCode) buildArgs() ([]*SANodeCodeFn, error) {
 
 	var msgs_depends []*SANodeCodeFn
@@ -1244,13 +1333,7 @@ func (ls *SANodeCode) buildArgs() ([]*SANodeCodeFn, error) {
 			if d2 >= 0 {
 				nm := ln[:d2]
 
-				//only first(rest is for LLM)
-				d3 := strings.IndexByte(nm, '.')
-				if d3 >= 0 {
-					nm = nm[:d3]
-				}
-
-				err := ls.addMsgDepend(&msgs_depends, nm)
+				err := ls.addArg(&msgs_depends, nm)
 				if err != nil {
 					return nil, err
 				}
@@ -1262,9 +1345,6 @@ func (ls *SANodeCode) buildArgs() ([]*SANodeCodeFn, error) {
 	return msgs_depends, nil
 }
 
-func IsWordLetter(ch byte) bool {
-	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_'
-}
 func ReplaceWord(str string, oldWord string, newWord string) string {
 	act := 0
 	for {
@@ -1274,10 +1354,10 @@ func ReplaceWord(str string, oldWord string, newWord string) string {
 			en := act + d + len(oldWord)
 
 			isValid := true
-			if st > 0 && IsWordLetter(str[st-1]) {
+			if st > 0 && OsIsTextWord(rune(str[st-1])) {
 				isValid = false
 			}
-			if en < len(str) && IsWordLetter(str[en]) {
+			if en < len(str) && OsIsTextWord(rune(str[en])) {
 				isValid = false
 			}
 
@@ -1294,15 +1374,8 @@ func ReplaceWord(str string, oldWord string, newWord string) string {
 	return str
 }
 
+// a.b.c -> a.b.d
 func (ls *SANodeCode) RenameNode(old_name string, new_name string) {
-
-	//arguments
-	/*for i, arg := range ls.ArgsProps {
-		if arg.Node == old_name {
-			ls.ArgsProps[i].Node = new_name
-		}
-	}*/
-
 	//chat
 	for _, it := range ls.Messages {
 		it.User = strings.ReplaceAll(it.User, "`"+old_name+"`", "`"+new_name+"`")

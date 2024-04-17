@@ -115,7 +115,7 @@ func (jb *SAJobCompile) RenderProgress(y *int) bool {
 }
 
 func (jb *SAJobCompile) PostRun() {
-	node := jb.node.FindPath(jb.app.root)
+	node := jb.node.Find(jb.app.root)
 	if node == nil {
 		fmt.Printf("Warning: SAJobCompile node '%s' not found\n", jb.node.String())
 		return
@@ -191,7 +191,7 @@ func (jb *SAJobExe) RenderProgress(y *int) bool {
 
 func (jb *SAJobExe) PostRun() {
 
-	node := jb.node.FindPath(jb.app.root)
+	node := jb.node.Find(jb.app.root)
 	if node == nil {
 		fmt.Printf("Warning: SAJobExe node '%s' not found\n", jb.node.String())
 		return

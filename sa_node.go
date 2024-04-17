@@ -114,18 +114,7 @@ func (node *SANode) SetError(err error) {
 	node.errExe = err
 }
 
-func (node *SANode) addIntoDependedCodes(changedNode *SANode, exe_prms []SANodeCodeExePrm) {
-	for _, nd := range node.app.exe.Subs {
-		if nd.IsTypeCode() && !nd.IsBypassed() && nd != changedNode {
-			if nd.Code.findFuncDepend(changedNode) != nil {
-				nd.Code.AddExe(exe_prms)
-			}
-		}
-	}
-}
-
 func (node *SANode) SetChange(exe_prms []SANodeCodeExePrm) {
-
 	list, pos := node.FindSubListInfo()
 	if list != nil {
 		for i := range exe_prms {
@@ -137,7 +126,15 @@ func (node *SANode) SetChange(exe_prms []SANodeCodeExePrm) {
 		node = list //set exe_prms into List
 	}
 
-	node.GetParentRoot().addIntoDependedCodes(node, exe_prms)
+	node = node.GetSubRootNode()
+
+	for _, nd := range node.app.exe.Subs {
+		if nd.IsTypeCode() && !nd.IsBypassed() && nd != node {
+			if nd.Code.findFuncDepend(node) != nil {
+				nd.Code.AddExe(exe_prms)
+			}
+		}
+	}
 }
 
 func (node *SANode) SetStructChange() {
@@ -218,7 +215,6 @@ func (node *SANode) IsTypeList() bool {
 func (node *SANode) IsTypeLayout() bool {
 	return strings.EqualFold(node.Exe, "layout")
 }
-
 func (node *SANode) IsTypeMenu() bool {
 	return strings.EqualFold(node.Exe, "menu")
 }
@@ -245,10 +241,6 @@ func (node *SANode) HasNodeSubs() bool {
 
 func (node *SANode) HasAttrNode() bool {
 	return node.Exe == "whispercpp" || node.Exe == "llamacpp" || node.Exe == "openai" || node.Exe == "net"
-}
-
-func (node *SANode) IsTypeWithAttrLabel() bool {
-	return strings.EqualFold(node.Exe, "text") || strings.EqualFold(node.Exe, "button") //|| strings.EqualFold(node.Exe, "checkbox") || strings.EqualFold(node.Exe, "switch")
 }
 
 func (node *SANode) IsBypassed() bool {
@@ -450,36 +442,20 @@ func (node *SANode) FindNodeOrig(name string) *SANode {
 	return nil
 }
 
-func (node *SANode) _findNodeInner(name string) *SANode {
+func (node *SANode) FindNode(name string) *SANode {
 	if node.Name == name {
 		return node
 	}
 
 	//subs
 	for _, it := range node.Subs {
-		nd := it._findNodeInner(name)
+		nd := it.FindNode(name)
 		if nd != nil {
 			return nd
 		}
 	}
 
 	return nil
-}
-
-func (node *SANode) FindNodeSubs(name string) *SANode {
-	nd := node._findNodeInner(name)
-	if nd == nil {
-		fmt.Printf("Node '%s' not found ", name)
-	}
-	return nd
-}
-
-func (node *SANode) FindNode(name string) *SANode {
-	nd := node.GetParentRoot()._findNodeInner(name)
-	if nd == nil {
-		fmt.Printf("Node '%s' not found ", name)
-	}
-	return nd
 }
 
 func (node *SANode) FindParent(parent *SANode) bool {
@@ -545,7 +521,7 @@ func (dst *SANode) CopyPoses(src *SANode) {
 }
 
 func (node *SANode) SelectOnlyThis() {
-	node.GetParentRoot().DeselectAll()
+	node.GetRoot().DeselectAll()
 	node.Selected = true
 }
 
@@ -625,16 +601,31 @@ func (node *SANode) FindSubListInfo() (*SANode, int) {
 }
 
 func (node *SANode) FindSubMenu() *SANode {
-
 	if node == nil {
 		return nil
 	}
-
 	if node.IsTypeMenu() {
 		return node
 	}
-
 	return node.parent.FindSubMenu()
+}
+func (node *SANode) FindSubLayout() *SANode {
+	if node == nil {
+		return nil
+	}
+	if node.IsTypeLayout() {
+		return node
+	}
+	return node.parent.FindSubLayout()
+}
+func (node *SANode) FindSubList() *SANode {
+	if node == nil {
+		return nil
+	}
+	if node.IsTypeList() {
+		return node
+	}
+	return node.parent.FindSubList()
 }
 
 func (node *SANode) FindSelected() *SANode {
@@ -680,32 +671,6 @@ func (node *SANode) BypassSelectedCodeNodes() {
 	}
 }
 
-/*func (node *SANode) GetPath() string {
-
-	var path string
-
-	if node.parent != nil {
-		path += node.parent.GetPath()
-	}
-
-	path += node.Name + "/"
-
-	return path
-}*/
-
-/*func (node *SANode) GetPathSplit() string {
-
-	var path string
-
-	if node.parent != nil && node.parent.parent != nil {
-		path += node.parent.GetPathSplit() + "___"
-	}
-
-	path += node.Name
-
-	return path
-}*/
-
 func (node *SANode) NumAttrNames(name string) int {
 	n := 0
 	for nm := range node.Attrs {
@@ -727,7 +692,7 @@ func (node *SANode) NumSubNames(name string) int {
 	return n
 }
 
-func (node *SANode) GetParentRoot() *SANode {
+func (node *SANode) GetRoot() *SANode {
 	for node.parent != nil {
 		node = node.parent
 	}
@@ -742,14 +707,16 @@ func (node *SANode) GetSubRootNode() *SANode {
 }
 
 func (node *SANode) CheckUniqueName() {
-	//check
 	if node.Name == "" {
 		node.Name = "node"
 	}
-	node.Name = strings.ReplaceAll(node.Name, ".", "") //remove all '.'
+
+	//clean name
+	node.Name = strings.ToLower(node.Name)
+	node.Name = strings.ReplaceAll(node.Name, ".", "_")
 
 	//set unique
-	for node.GetParentRoot().NumSubNames(node.Name) >= 2 {
+	for node.GetRoot().NumSubNames(node.Name) >= 2 {
 		node.Name += "1"
 	}
 

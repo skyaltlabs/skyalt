@@ -364,11 +364,12 @@ func (node *SANode) RenderAttrs() {
 
 		ui.Div_colMax(0, 100)
 		ui.Div_colMax(2, 4)
-		old_name := node.Name
+
+		old_path := NewSANodePath(node).String()
 		_, _, _, fnshd, _ := ui.Comp_editbox_desc("Name", 0, 3, 0, 0, 1, 1, &node.Name, Comp_editboxProp())
 		if fnshd {
 			node.CheckUniqueName()
-			node.GetParentRoot().RenameSubDepends(old_name, node.Name)
+			node.parent.RenameSubDepends(old_path, NewSANodePath(node).String())
 		}
 
 		//type

@@ -71,7 +71,7 @@ func (node *SANode) pixelsToNode(touchPos OsV2, lvDiv *UiLayoutDiv) OsV2f {
 func (node *SANode) nodeToPixels(p OsV2f, canvas OsV4) OsV2 {
 	ui := node.app.base.ui
 
-	node = node.GetParentRoot()
+	node = node.GetRoot()
 
 	cell := ui.win.Cell()
 
@@ -199,7 +199,7 @@ func (node *SANode) drawHeader() bool {
 		//name
 		div := ui.Comp_textSelect(0, 0, 1, 1, node.GetNodeLabel(), OsV2{1, 1}, false, true, false)
 		if div.IsTouchEndSubs(ui) && ui.win.io.touch.rm {
-			ui.win.io.keys.clipboard = "`" + node.Name + "`"
+			ui.win.io.keys.clipboard = "`" + NewSANodePath(node).String() + "`"
 		}
 
 		//ui.Paint_tooltip(0, 0, 1, 1, "Type: "+node.Exe)
@@ -299,7 +299,7 @@ func (node *SANode) drawRectNode(someNodeIsDraged bool, app *SAApp) (bool, bool)
 	ui.buff.AddRectRound(coord, ui.CellWidth(roundc), backkCd, ui.CellWidth((0.03)))
 
 	//acutal layout
-	if node.app.Selected_canvas.FindPath(node.app.root) == node {
+	if node.app.Selected_canvas.Find(node.app.root) == node {
 		cq := coord
 		cq.Start.Y += ui.CellWidth(1)
 		cq.Size.Y -= ui.CellWidth(1)

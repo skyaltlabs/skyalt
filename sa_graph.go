@@ -653,7 +653,7 @@ func (gr *SAGraph) drawGraph() (OsV4, bool) {
 			for _, src := range origNodes {
 
 				path := NewSANodePath(src.parent)
-				dstParent := path.FindPath(gr.app.root)
+				dstParent := path.Find(gr.app.root)
 				if dstParent == nil {
 					dstParent = gr.app.root
 				}
@@ -668,13 +668,11 @@ func (gr *SAGraph) drawGraph() (OsV4, bool) {
 
 			//rename expressions access to keep links between copied nodes
 			for i := 0; i < len(newNodes); i++ {
-
 				node := newNodes[i]
-				//node.ParseExpresions()
 
 				for j := 0; j < len(newNodes); j++ {
-					oldName := origNodes[j].Name
-					newName := newNodes[j].Name
+					oldName := NewSANodePath(origNodes[j]).String()
+					newName := NewSANodePath(newNodes[j]).String()
 
 					node.RenameDepends(oldName, newName)
 				}
@@ -790,7 +788,7 @@ func (gr *SAGraph) drawGraph() (OsV4, bool) {
 					n.Selected = false
 				}
 
-				sn := gr.node_move_selected.FindPath(gr.app.root)
+				sn := gr.node_move_selected.Find(gr.app.root)
 				if sn != nil {
 					sn.Selected = true
 				}

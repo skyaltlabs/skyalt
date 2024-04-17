@@ -164,7 +164,7 @@ func (srv *SAServices) handlerWhisper(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//find node
-	node := jb.app.root.FindNode(st.Node)
+	node := NewSANodePathFromString(st.Node).Find(jb.app.root)
 	if node == nil {
 		http.Error(w, "Node not found", http.StatusInternalServerError)
 		return
@@ -210,7 +210,7 @@ func (srv *SAServices) _prepareMessages(jb *SAJobExe, body []byte) ([]SAServiceM
 	}
 
 	//find node
-	node := jb.app.root.FindNode(st.Node)
+	node := NewSANodePathFromString(st.Node).Find(jb.app.root)
 	if node == nil {
 		return nil, nil, fmt.Errorf("node '%s' not found", st.Node)
 	}
@@ -346,7 +346,7 @@ func (srv *SAServices) handlerNetwork(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//find node
-	node := jb.app.root.FindNode(st.Node)
+	node := NewSANodePathFromString(st.Node).Find(jb.app.root)
 	if node == nil {
 		http.Error(w, "Node not found", http.StatusInternalServerError)
 		return

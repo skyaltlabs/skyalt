@@ -18,6 +18,7 @@ package main
 
 import (
 	"sort"
+	"strings"
 )
 
 type SANodeColRow struct {
@@ -138,6 +139,12 @@ func NewSANodePath(w *SANode) SANodePath {
 	}
 	return path
 }
+func NewSANodePathFromString(str string) SANodePath {
+	var path SANodePath
+	path.names = strings.Split(str, ".")
+	return path
+}
+
 func (path *SANodePath) Is() bool {
 	return len(path.names) > 0
 }
@@ -153,7 +160,7 @@ func (a SANodePath) Cmp(b SANodePath) bool {
 
 	return true
 }
-func (path *SANodePath) FindPath(root *SANode) *SANode {
+func (path SANodePath) Find(root *SANode) *SANode {
 	node := root
 	for _, nm := range path.names {
 		node = node.FindNode(nm)
@@ -163,10 +170,10 @@ func (path *SANodePath) FindPath(root *SANode) *SANode {
 	}
 	return node
 }
-func (path *SANodePath) String() string {
+func (path SANodePath) String() string {
 	str := ""
-	for _, nm := range path.names {
-		str += "/" + nm
+	for i, nm := range path.names {
+		str += nm + OsTrnString(i+1 < len(path.names), ".", "")
 	}
 	return str
 }
