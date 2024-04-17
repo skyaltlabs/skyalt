@@ -116,7 +116,7 @@ func (app *SAApp) IsMicNodeRecording(nodePath SANodePath) bool {
 }
 func (app *SAApp) AddMic(data audio.IntBuffer) {
 	for i := len(app.mic_nodes) - 1; i >= 0; i-- {
-		nd := app.mic_nodes[i].FindPath(app.root)
+		nd := app.mic_nodes[i].Find(app.root)
 		if nd != nil {
 			nd.temp_mic_data.SourceBitDepth = data.SourceBitDepth
 			nd.temp_mic_data.Format = data.Format
@@ -225,7 +225,7 @@ func SAApp_getYellow() OsCd {
 }
 
 func (app *SAApp) checkSelectedCanvas() *SANode {
-	node := app.Selected_canvas.FindPath(app.root)
+	node := app.Selected_canvas.Find(app.root)
 	if node == nil {
 		node = app.root
 	}
@@ -438,7 +438,7 @@ func (app *SAApp) renderAppWithColsRows() {
 
 			//select start(go to inside)
 			if keys.alt && touch.start {
-				actCanvas := app.Selected_canvas.FindPath(app.root)
+				actCanvas := app.Selected_canvas.Find(app.root)
 
 				for _, w := range app.all_nodes {
 					if !w.CanBeRenderOnCanvas() {
@@ -454,15 +454,17 @@ func (app *SAApp) renderAppWithColsRows() {
 					}
 
 					if w.GetGridShow() && w.GetGrid().Inside(touch_grid.Start) {
-
 						menu := w.FindSubMenu()
 						if w != menu && menu != nil && actCanvas != menu {
 							continue //skip nodes inside menu(if menu is NOT in canvas)
 						}
-
-						list := w.FindSubMenu()
+						lay := w.FindSubLayout()
+						if w != lay && lay != nil && actCanvas != lay {
+							continue //skip nodes inside layout(if layout is NOT in canvas)
+						}
+						list := w.FindSubList()
 						if w != list && list != nil && actCanvas != list {
-							continue //skip nodes inside menu(if menu is NOT in canvas)
+							continue //skip nodes inside list(if list is NOT in canvas)
 						}
 
 						if touch.numClicks > 1 && w.IsTypeWithSubLayoutNodes() {
@@ -484,7 +486,7 @@ func (app *SAApp) renderAppWithColsRows() {
 		//move
 		if app.canvas.startClick.Is() {
 			newPos := touch_grid.Start.Sub(app.canvas.startClickRel)
-			stClick := app.canvas.startClick.FindPath(app.root)
+			stClick := app.canvas.startClick.Find(app.root)
 			if stClick != nil {
 				stClick.SetGridStart(newPos)
 			}
@@ -494,7 +496,7 @@ func (app *SAApp) renderAppWithColsRows() {
 		if app.canvas.resize.Is() {
 			pos := appDiv.GetCloseCell(touch.pos)
 
-			res := app.canvas.resize.FindPath(app.root)
+			res := app.canvas.resize.Find(app.root)
 			if res != nil {
 				grid := res.GetGrid()
 				grid.Size.X = OsMax(0, pos.Start.X-grid.Start.X) + 1
@@ -559,9 +561,9 @@ func (app *SAApp) drawCreateNodeGroup(start OsV2, gr *SAGroup, searches []string
 				if app.canvas.addnode_search == "" || SAApp_IsSearchedName(nd.name, searches) {
 					if keys.enter || ui.Comp_buttonMenuIcon(0, y, 1, 1, nd.name, gr.icon, 0.2, false, Comp_buttonProp()) > 0 {
 						//add new node
-						parent := app.canvas.addParent.FindPath(app.root)
+						parent := app.canvas.addParent.Find(app.root)
 						if only_ui {
-							parent = app.Selected_canvas.FindPath(app.root)
+							parent = app.Selected_canvas.Find(app.root)
 						}
 
 						nw := parent.AddNode(app.canvas.addGrid, app.canvas.addPos, nd.name, nd.name)
