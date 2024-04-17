@@ -463,26 +463,31 @@ func (gr *SAGraph) drawConnections() {
 
 }
 
-func (gr *SAGraph) drawNodes(rects bool, classic bool) *SANode {
+func (gr *SAGraph) drawNodes(rects bool, classic bool) (*SANode, *SANode) {
 
 	var touchInsideNode *SANode
+	var touchInsideNodeRect *SANode
 	for _, n := range gr.app.all_nodes {
+
+		var in, inRect bool
 		if n.HasNodeSubs() {
 			if rects {
-				if n.drawRectNode(gr.node_select, gr.app) { //inside
-					touchInsideNode = n
-				}
+				in, inRect = n.drawRectNode(gr.node_select, gr.app)
 			}
 		} else {
 			if classic {
-				if n.drawNode(gr.node_select) { //inside
-					touchInsideNode = n
-				}
+				in = n.drawNode(gr.node_select)
 			}
+		}
+		if in {
+			touchInsideNode = n
+		}
+		if inRect {
+			touchInsideNodeRect = n
 		}
 	}
 
-	return touchInsideNode
+	return touchInsideNode, touchInsideNodeRect
 }
 
 func (gr *SAGraph) organizeExe() {
@@ -560,10 +565,19 @@ func (gr *SAGraph) drawGraph() (OsV4, bool) {
 	//+
 	gr.drawCreateNode()
 
-	touchInsideNode := gr.drawNodes(true, false)
+	touchInsideNode, touchInsideNodeRect := gr.drawNodes(true, false)
+
+	if over && touch.numClicks > 1 {
+		gr.app.Selected_canvas = SANodePath{}
+		if touchInsideNodeRect != nil {
+			if touchInsideNodeRect.IsTypeWithSubLayoutNodes() {
+				gr.app.Selected_canvas = NewSANodePath(touchInsideNodeRect)
+			}
+		}
+	}
 
 	gr.drawConnections()
-	tin := gr.drawNodes(false, true)
+	tin, _ := gr.drawNodes(false, true)
 	if tin != nil {
 		touchInsideNode = tin
 	}
@@ -786,15 +800,6 @@ func (gr *SAGraph) drawGraph() (OsV4, bool) {
 		if gr.node_select {
 			for _, n := range gr.app.all_nodes {
 				n.Selected = n.KeyProgessSelection(keys)
-			}
-		}
-
-		if over && touch.numClicks > 1 {
-			sel := gr.app.root.FindSelected()
-			if sel != nil && sel.IsTypeWithSubLayoutNodes() {
-				gr.app.Selected_canvas = NewSANodePath(sel)
-			} else {
-				gr.app.Selected_canvas = SANodePath{}
 			}
 		}
 

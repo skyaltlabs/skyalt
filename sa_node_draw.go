@@ -273,7 +273,7 @@ func (node *SANode) drawHeader() bool {
 
 	return inside
 }
-func (node *SANode) drawRectNode(someNodeIsDraged bool, app *SAApp) bool {
+func (node *SANode) drawRectNode(someNodeIsDraged bool, app *SAApp) (bool, bool) {
 	ui := app.base.ui
 	lv := ui.GetCall()
 	pl := ui.win.io.GetPalette()
@@ -312,6 +312,9 @@ func (node *SANode) drawRectNode(someNodeIsDraged bool, app *SAApp) bool {
 	inside := node.drawHeader()
 	ui.Div_end()
 
+	over := ui.GetCall().call.IsOver(ui)
+	insideRect := over && coord.Inside(ui.win.io.touch.pos)
+
 	//select rect
 	selectRad := ui.CellWidth(roundc * 1.3)
 	if (someNodeIsDraged && node.KeyProgessSelection(&ui.win.io.keys)) || (!someNodeIsDraged && node.Selected) {
@@ -320,7 +323,7 @@ func (node *SANode) drawRectNode(someNodeIsDraged bool, app *SAApp) bool {
 
 	ui.win.io.ini.Dpi = bck
 
-	return inside
+	return inside, insideRect
 }
 
 func (node *SANode) drawNode(someNodeIsDraged bool) bool {

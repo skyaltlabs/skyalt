@@ -435,22 +435,50 @@ func (app *SAApp) renderAppWithColsRows() {
 
 		//find select/move node
 		if !app.canvas.resize.Is() {
-			for _, w := range app.all_nodes {
-				if !w.CanBeRenderOnCanvas() {
-					continue
-				}
-				if w.GetGridShow() && w.GetGrid().Inside(touch_grid.Start) {
-					//select start(go to inside)
-					if keys.alt {
-						if touch.start {
+
+			//select start(go to inside)
+			if keys.alt && touch.start {
+				actCanvas := app.Selected_canvas.FindPath(app.root)
+
+				for _, w := range app.all_nodes {
+					if !w.CanBeRenderOnCanvas() {
+						continue
+					}
+
+					if !w.FindParent(actCanvas) {
+						continue
+					}
+
+					if w == actCanvas {
+						continue
+					}
+
+					if w.GetGridShow() && w.GetGrid().Inside(touch_grid.Start) {
+
+						menu := w.FindSubMenu()
+						if w != menu && menu != nil && actCanvas != menu {
+							continue //skip nodes inside menu(if menu is NOT in canvas)
+						}
+
+						list := w.FindSubMenu()
+						if w != list && list != nil && actCanvas != list {
+							continue //skip nodes inside menu(if menu is NOT in canvas)
+						}
+
+						if touch.numClicks > 1 && w.IsTypeWithSubLayoutNodes() {
+							//open layout
+							app.Selected_canvas = NewSANodePath(w)
+						} else {
+							//select
 							app.canvas.startClick = NewSANodePath(w)
 							app.canvas.startClickRel = touch_grid.Start.Sub(w.GetGrid().Start)
 							w.SelectOnlyThis()
 						}
+						break
 					}
-					break
 				}
 			}
+
 		}
 
 		//move
