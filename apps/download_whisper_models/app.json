@@ -7,8 +7,7 @@
 "Exe": "layout",
 "Code": {
 "Messages": null,
-"Code": "",
-"ArgsProps": null
+"Code": ""
 },
 "Attrs": {
 "grid_h": 0,
@@ -68,7 +67,7 @@
 "Code": {
 "Messages": [
 {
-"User": "Clear 'table' and copy table \"Link\" from 'db' into 'table'.\nSet \"size\" column as \u003cvalue\u003e+\"MB\".",
+"User": "Clear `table` and copy table \"Link\" from `db` into `table`.\nSet \"size\" column as \u003cvalue\u003e+\"MB\".",
 "Assistent": "```go\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc table(table *ListTable, db *Db_file) error {\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\trows, err := conn.Query(\"SELECT model, size FROM links\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tvar size int\n\t\t\n\t\terr = rows.Scan(\u0026model, \u0026size)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\trow := table.AddItem()\n\t\trow.Model.Label = model\n\t\trow.Size.Label = fmt.Sprintf(\"%dMB\", size)\n\t}\n\n\treturn nil\n}\n```"
 },
 {
@@ -76,13 +75,7 @@
 "Assistent": ""
 }
 ],
-"Code": "func table() error {\n\treturn nil\n}",
-"ArgsProps": [
-{
-"Node": "db_file",
-"Write": false
-}
-]
+"Code": "func table() error {\n\treturn nil\n}"
 },
 "Attrs": {
 "changed": false,
@@ -137,8 +130,7 @@
 "Exe": "text",
 "Code": {
 "Messages": null,
-"Code": "",
-"ArgsProps": null
+"Code": ""
 },
 "Attrs": {
 "align_h": 0,
@@ -165,11 +157,12 @@
 "Exe": "button",
 "Code": {
 "Messages": null,
-"Code": "",
-"ArgsProps": null
+"Code": ""
 },
 "Attrs": {
-"background": 1,
+"align": 1,
+"background": 2,
+"close_dialog": false,
 "confirmation": "",
 "enable": true,
 "grid_h": 1,
@@ -192,8 +185,7 @@
 "Exe": "text",
 "Code": {
 "Messages": null,
-"Code": "",
-"ArgsProps": null
+"Code": ""
 },
 "Attrs": {
 "align_h": 0,
@@ -222,8 +214,7 @@
 "Exe": "net",
 "Code": {
 "Messages": null,
-"Code": "",
-"ArgsProps": null
+"Code": ""
 },
 "Attrs": {
 "file_path": "",
@@ -245,8 +236,7 @@
 "Exe": "disk_dir",
 "Code": {
 "Messages": null,
-"Code": "",
-"ArgsProps": null
+"Code": ""
 },
 "Attrs": {
 "enable": false,
@@ -268,8 +258,7 @@
 "Exe": "db_file",
 "Code": {
 "Messages": null,
-"Code": "",
-"ArgsProps": null
+"Code": ""
 },
 "Attrs": {
 "enable": true,
@@ -295,8 +284,7 @@
 "Exe": "exe",
 "Code": {
 "Messages": null,
-"Code": "",
-"ArgsProps": null
+"Code": ""
 },
 "Attrs": {
 "show": true
@@ -309,11 +297,10 @@
 },
 "Name": "init_table",
 "Exe": "code",
-"Selected": true,
 "Code": {
 "Messages": [
 {
-"User": "Clear 'table' and copy table \"Link\" from 'db' into 'table'.\nSet \"size\" column as \u003cvalue\u003e+\"MB\".",
+"User": "Clear `table` and copy table \"Link\" from `db` into `table`.\nSet \"size\" column as \u003cvalue\u003e+\"MB\".",
 "Assistent": "```go\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc init_table(table *ListTable, db *Db_file) error {\n\ttable.Items = nil // Clearing the existing table\n\n\t// Open the SQLite database\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\t// Execute a query to get all the links\n\trows, err := conn.Query(\"SELECT model, size FROM links\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tvar size int\n\t\terr = rows.Scan(\u0026model, \u0026size)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\t// Append each row to the table\n\t\tnewRow := table.AddItem()\n\t\tnewRow.Model.Label = model\n\t\tnewRow.Size.Label = fmt.Sprintf(\"%dMB\", size)\n\t}\n\n\treturn rows.Err() // In case of any iteration error\n}\n```"
 },
 {
@@ -321,17 +308,7 @@
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc init_table(table *ListTable, db *Db_file) error {\n\ttable.Items = nil // Clearing the existing table\n\n\t// Open the SQLite database\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\t// Execute a query to get all the links\n\trows, err := conn.Query(\"SELECT model, size FROM links\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tvar size int\n\t\terr = rows.Scan(\u0026model, \u0026size)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\t// Append each row to the table\n\t\tnewRow := table.AddItem()\n\t\tnewRow.Model.Label = model\n\t\tnewRow.Size.Label = fmt.Sprintf(\"%dMB\", size)\n\t}\n\n\treturn rows.Err() // In case of any iteration error\n}\n",
-"ArgsProps": [
-{
-"Node": "table",
-"Write": false
-},
-{
-"Node": "db_file",
-"Write": false
-}
-]
+"Code": "\nimport (\n\t\"database/sql\"\n\t\"fmt\"\n\t_ \"github.com/mattn/go-sqlite3\"\n)\n\nfunc init_table(table *ListTable, db *Db_file) error {\n\ttable.Items = nil // Clearing the existing table\n\n\t// Open the SQLite database\n\tconn, err := sql.Open(\"sqlite3\", db.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer conn.Close()\n\n\t// Execute a query to get all the links\n\trows, err := conn.Query(\"SELECT model, size FROM links\")\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tvar model string\n\t\tvar size int\n\t\terr = rows.Scan(\u0026model, \u0026size)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\n\t\t// Append each row to the table\n\t\tnewRow := table.AddItem()\n\t\tnewRow.Model.Label = model\n\t\tnewRow.Size.Label = fmt.Sprintf(\"%dMB\", size)\n\t}\n\n\treturn rows.Err() // In case of any iteration error\n}\n"
 },
 "Attrs": {
 "bypass": false,
@@ -346,10 +323,11 @@
 },
 "Name": "update_table",
 "Exe": "code",
+"Selected": true,
 "Code": {
 "Messages": [
 {
-"User": "Go through 'table' and check if model + \".bin\" exist in 'dir'.\nIf it exists, set button label to \"Delete\", else \"Download\".\nIf it exists, set button confirmation to \"Are you sure?\".\nIf \"Delete\" is clicked, delete the file, else download it from 'net' with address(model + \".bin)\" and save it into 'dir'.",
+"User": "Go through `table` and check if model + \".bin\" exist in `dir`.\nIf it exists, set button label to \"Delete\", else \"Download\".\nIf it exists, set button confirmation to \"Are you sure?\".\nIf \"Delete\" is clicked, delete the file, else download it from `net` with address(model + \".bin)\" and save it into `dir`.",
 "Assistent": "```go\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\nfunc update_table(table *ListTable, dir *Disk_dir, net *Net) error {\n\tfor _, row := range table.Items {\n\t\tfilePath := filepath.Join(dir.Path, row.Model.Label+\".bin\")\n\t\tif _, err := os.Stat(filePath); err == nil {\n\t\t\trow.Button.Label = \"Delete\"\n\t\t\trow.Button.Confirmation = \"Are you sure?\"\n\t\t\tif row.Button.Triggered {\n\t\t\t\terr := os.Remove(filePath)\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t\trow.Button.Triggered = false\n\t\t\t}\n\t\t} else {\n\t\t\trow.Button.Label = \"Download\"\n\t\t\tif row.Button.Triggered {\n\t\t\t\terr := net.DownloadFile(filePath, row.Model.Label+\".bin\")\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t\trow.Button.Triggered = false\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n```"
 },
 {
@@ -357,21 +335,7 @@
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\nfunc update_table(table *ListTable, dir *Disk_dir, net *Net) error {\n\tfor _, row := range table.Items {\n\t\tfilePath := filepath.Join(dir.Path, row.Model.Label+\".bin\")\n\t\tif _, err := os.Stat(filePath); err == nil {\n\t\t\trow.Button.Label = \"Delete\"\n\t\t\trow.Button.Confirmation = \"Are you sure?\"\n\t\t\tif row.Button.Triggered {\n\t\t\t\terr := os.Remove(filePath)\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t\trow.Button.Triggered = false\n\t\t\t}\n\t\t} else {\n\t\t\trow.Button.Label = \"Download\"\n\t\t\tif row.Button.Triggered {\n\t\t\t\terr := net.DownloadFile(filePath, row.Model.Label+\".bin\")\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t\trow.Button.Triggered = false\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n",
-"ArgsProps": [
-{
-"Node": "table",
-"Write": false
-},
-{
-"Node": "dir",
-"Write": false
-},
-{
-"Node": "net",
-"Write": false
-}
-]
+"Code": "\nimport (\n\t\"os\"\n\t\"path/filepath\"\n)\n\nfunc update_table(table *ListTable, dir *Disk_dir, net *Net) error {\n\tfor _, row := range table.Items {\n\t\tfilePath := filepath.Join(dir.Path, row.Model.Label+\".bin\")\n\t\tif _, err := os.Stat(filePath); err == nil {\n\t\t\trow.Button.Label = \"Delete\"\n\t\t\trow.Button.Confirmation = \"Are you sure?\"\n\t\t\tif row.Button.Triggered {\n\t\t\t\terr := os.Remove(filePath)\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t\trow.Button.Triggered = false\n\t\t\t}\n\t\t} else {\n\t\t\trow.Button.Label = \"Download\"\n\t\t\tif row.Button.Triggered {\n\t\t\t\terr := net.DownloadFile(filePath, row.Model.Label+\".bin\")\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}\n\t\t\t\trow.Button.Triggered = false\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n"
 },
 "Attrs": {
 "bypass": false,

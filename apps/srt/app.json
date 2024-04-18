@@ -7,8 +7,7 @@
 "Exe": "layout",
 "Code": {
 "Messages": null,
-"Code": "",
-"ArgsProps": null
+"Code": ""
 },
 "Attrs": {
 "grid_h": 0,
@@ -79,8 +78,7 @@
 "Exe": "whispercpp",
 "Code": {
 "Messages": null,
-"Code": "",
-"ArgsProps": null
+"Code": ""
 },
 "Attrs": {
 "beam_size": -1,
@@ -116,11 +114,12 @@
 "Exe": "button",
 "Code": {
 "Messages": null,
-"Code": "",
-"ArgsProps": null
+"Code": ""
 },
 "Attrs": {
+"align": 1,
 "background": 1,
+"close_dialog": false,
 "confirmation": "",
 "enable": true,
 "grid_h": 1,
@@ -141,10 +140,10 @@
 },
 "Name": "disk_dir",
 "Exe": "disk_dir",
+"Selected": true,
 "Code": {
 "Messages": null,
-"Code": "",
-"ArgsProps": null
+"Code": ""
 },
 "Attrs": {
 "enable": true,
@@ -166,8 +165,7 @@
 "Exe": "exe",
 "Code": {
 "Messages": null,
-"Code": "",
-"ArgsProps": null
+"Code": ""
 },
 "Attrs": {
 "show": true
@@ -180,11 +178,10 @@
 },
 "Name": "transcribe",
 "Exe": "code",
-"Selected": true,
 "Code": {
 "Messages": [
 {
-"User": "If 'button' is clicked, use 'whispercpp' to translate all .wav files in 'disk_dir'.\nSave translations as files with same name(remove .wav) + \".srt\".",
+"User": "If `button` is clicked, use `whispercpp` to translate all .wav files in `disk_dir`.\nSave translations as files with same name(remove .wav) + \".srt\".",
 "Assistent": "```go\nimport (\n\t\"io/ioutil\"\n\t\"path/filepath\"\n\t\"strings\"\n)\n\nfunc transcribe(button *Button, whispercpp *Whispercpp, disk_dir *Disk_dir) error {\n\tif !button.Triggered {\n\t\treturn nil // Button was not clicked\n\t}\n\tfiles, err := ioutil.ReadDir(disk_dir.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tfor _, file := range files {\n\t\tif filepath.Ext(file.Name()) == \".wav\" {\n\t\t\tfilePath := filepath.Join(disk_dir.Path, file.Name())\n\t\t\ttranscription, err := whispercpp.TranscribeFile(filePath)\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t\toutputFilePath := strings.TrimSuffix(filePath, filepath.Ext(filePath)) + \".srt\"\n\t\t\terr = ioutil.WriteFile(outputFilePath, []byte(transcription), 0644)\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n```"
 },
 {
@@ -192,21 +189,7 @@
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n\t\"io/ioutil\"\n\t\"path/filepath\"\n\t\"strings\"\n)\n\nfunc transcribe(button *Button, whispercpp *Whispercpp, disk_dir *Disk_dir) error {\n\tif !button.Triggered {\n\t\treturn nil // Button was not clicked\n\t}\n\tfiles, err := ioutil.ReadDir(disk_dir.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tfor _, file := range files {\n\t\tif filepath.Ext(file.Name()) == \".wav\" {\n\t\t\tfilePath := filepath.Join(disk_dir.Path, file.Name())\n\t\t\ttranscription, err := whispercpp.TranscribeFile(filePath)\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t\toutputFilePath := strings.TrimSuffix(filePath, filepath.Ext(filePath)) + \".srt\"\n\t\t\terr = ioutil.WriteFile(outputFilePath, []byte(transcription), 0644)\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n",
-"ArgsProps": [
-{
-"Node": "button",
-"Write": false
-},
-{
-"Node": "whispercpp",
-"Write": false
-},
-{
-"Node": "disk_dir",
-"Write": false
-}
-]
+"Code": "\nimport (\n\t\"io/ioutil\"\n\t\"path/filepath\"\n\t\"strings\"\n)\n\nfunc transcribe(button *Button, whispercpp *Whispercpp, disk_dir *Disk_dir) error {\n\tif !button.Triggered {\n\t\treturn nil // Button was not clicked\n\t}\n\tfiles, err := ioutil.ReadDir(disk_dir.Path)\n\tif err != nil {\n\t\treturn err\n\t}\n\tfor _, file := range files {\n\t\tif filepath.Ext(file.Name()) == \".wav\" {\n\t\t\tfilePath := filepath.Join(disk_dir.Path, file.Name())\n\t\t\ttranscription, err := whispercpp.TranscribeFile(filePath)\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t\toutputFilePath := strings.TrimSuffix(filePath, filepath.Ext(filePath)) + \".srt\"\n\t\t\terr = ioutil.WriteFile(outputFilePath, []byte(transcription), 0644)\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t}\n\t}\n\treturn nil\n}\n"
 },
 "Attrs": {
 "bypass": false,

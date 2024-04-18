@@ -7,8 +7,7 @@
 "Exe": "layout",
 "Code": {
 "Messages": null,
-"Code": "",
-"ArgsProps": null
+"Code": ""
 },
 "Attrs": {
 "grid_h": 0,
@@ -67,8 +66,7 @@
 "Exe": "openai",
 "Code": {
 "Messages": null,
-"Code": "",
-"ArgsProps": null
+"Code": ""
 },
 "Attrs": {
 "model": "gpt-3.5-turbo",
@@ -84,8 +82,7 @@
 "Exe": "text",
 "Code": {
 "Messages": null,
-"Code": "",
-"ArgsProps": null
+"Code": ""
 },
 "Attrs": {
 "align_h": 0,
@@ -112,11 +109,12 @@
 "Exe": "button",
 "Code": {
 "Messages": null,
-"Code": "",
-"ArgsProps": null
+"Code": ""
 },
 "Attrs": {
+"align": 1,
 "background": 1,
+"close_dialog": false,
 "confirmation": "",
 "enable": true,
 "grid_h": 1,
@@ -139,8 +137,7 @@
 "Exe": "editbox",
 "Code": {
 "Messages": null,
-"Code": "",
-"ArgsProps": null
+"Code": ""
 },
 "Attrs": {
 "align_h": 0,
@@ -170,8 +167,7 @@
 "Exe": "exe",
 "Code": {
 "Messages": null,
-"Code": "",
-"ArgsProps": null
+"Code": ""
 },
 "Attrs": {
 "show": true
@@ -184,11 +180,10 @@
 },
 "Name": "summarize",
 "Exe": "code",
-"Selected": true,
 "Code": {
 "Messages": [
 {
-"User": "If 'button' is clicked, use 'openai' to create summary of 'editbox'.\nMake a prompt in the form: \"Please summarize this article into a few bullet points: \" + content of 'editbox' on the new line.\nSet answer to 'text'.",
+"User": "If `button` is clicked, use `openai` to create summary of `editbox`.\nMake a prompt in the form: \"Please summarize this article into a few bullet points: \" + content of `editbox` on the new line.\nSet answer to `text`.",
 "Assistent": "```go\nimport (\n\t\"errors\"\n)\n\nfunc summarize(button *Button, openai *Openai, editbox *Editbox, text *Text) error {\n\tif !button.Triggered || !editbox.Enable || !button.Enable {\n\t\treturn errors.New(\"Button not clicked or Editbox/Button not enabled\")\n\t}\n\t\n\tprompt := \"Please summarize this article into a few bullet points:\\n\" + editbox.Value\n\tanswer, err := openai.GetAnswer([]OpenaiMessage{\n\t\t{\n\t\t\tRole:    \"user\",\n\t\t\tContent: prompt,\n\t\t},\n\t})\n\tif err != nil {\n\t\treturn err\n\t}\n\t\n\ttext.Label = answer\n\treturn nil\n}\n```"
 },
 {
@@ -196,25 +191,7 @@
 "Assistent": ""
 }
 ],
-"Code": "\nimport (\n)\n\nfunc summarize(button *Button, openai *Openai, editbox *Editbox, text *Text) error {\n\tif !button.Triggered || !editbox.Enable || !button.Enable {\n\t\treturn nil\n\t}\n\t\n\tprompt := \"Please summarize this article into a few bullet points:\\n\" + editbox.Value\n\tanswer, err := openai.GetAnswer([]OpenaiMessage{\n\t\t{\n\t\t\tRole:    \"user\",\n\t\t\tContent: prompt,\n\t\t},\n\t})\n\tif err != nil {\n\t\treturn err\n\t}\n\t\n\ttext.Label = answer\n\treturn nil\n}\n",
-"ArgsProps": [
-{
-"Node": "button",
-"Write": false
-},
-{
-"Node": "openai",
-"Write": false
-},
-{
-"Node": "editbox",
-"Write": false
-},
-{
-"Node": "text",
-"Write": false
-}
-]
+"Code": "\nimport (\n)\n\nfunc summarize(button *Button, openai *Openai, editbox *Editbox, text *Text) error {\n\tif !button.Triggered || !editbox.Enable || !button.Enable {\n\t\treturn nil\n\t}\n\t\n\tprompt := \"Please summarize this article into a few bullet points:\\n\" + editbox.Value\n\tanswer, err := openai.GetAnswer([]OpenaiMessage{\n\t\t{\n\t\t\tRole:    \"user\",\n\t\t\tContent: prompt,\n\t\t},\n\t})\n\tif err != nil {\n\t\treturn err\n\t}\n\t\n\ttext.Label = answer\n\treturn nil\n}\n"
 },
 "Attrs": {
 "bypass": false,
