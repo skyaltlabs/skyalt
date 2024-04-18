@@ -121,7 +121,7 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 		ui.Comp_editbox(3, 0, 1, 1, &ui.dir.tempPath, Comp_editboxProp())
 
 		//open
-		if ui.Comp_button(4, 0, 1, 1, "Select", Comp_buttonProp()) > 0 {
+		if ui.Comp_button(4, 0, 1, 1, "OK", Comp_buttonProp()) > 0 {
 			ok = true
 			ui.Dialog_close()
 		}
@@ -168,6 +168,11 @@ func (ui *Ui) comp_dir(selectFile bool) bool {
 						directory += "/"
 					}
 					ui.dir.tempPath = directory + f.Name()
+				}
+
+				if ui.win.io.touch.numClicks > 1 {
+					ok = true
+					ui.Dialog_close()
 				}
 			}
 
