@@ -19,7 +19,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -39,6 +38,7 @@ var g_str_imports = []string{"\"bytes\"", "\"encoding/json\"", "\"fmt\"", "\"io\
 type SANodeCodeChat struct {
 	User      string
 	Assistent string
+	err       error
 }
 type SANodeCodeImport struct {
 	Name string
@@ -80,7 +80,7 @@ type SANodeCode struct {
 
 	file_err error
 	exe_err  error
-	ans_err  error
+	//ans_err  error
 
 	exes []SANodeCodeExe
 
@@ -141,6 +141,10 @@ func (ls *SANodeCode) UpdateLinks(node *SANode) {
 
 	if !node.IsTypeCode() {
 		return
+	}
+
+	for i := 0; i < len(node.Code.Messages); i++ {
+		ls.Messages[i].err = ls.buildArgs(node.Code.Messages[i].User, nil)
 	}
 
 	ls.UpdateFile() //create/update file + (re)compile
@@ -647,7 +651,7 @@ func (ls *SANodeCode) addDependStruct(depends_structs *[]string, node *SANode, e
 
 func (ls *SANodeCode) buildPrompt(userCommand string) (string, error) {
 
-	msgs_depends, err := ls.buildArgs()
+	msgs_depends, err := ls.buildAllPromptsArgs()
 	if err != nil {
 		return "", err
 	}
@@ -705,11 +709,8 @@ func (ls *SANodeCode) CheckLastChatEmpty() {
 
 func (ls *SANodeCode) GetAnswer(index int) {
 
-	ls.ans_err = nil
-
 	ls.CheckLastChatEmpty()
 	if len(ls.Messages) == 1 && ls.Messages[0].User == "" {
-		ls.ans_err = errors.New("no message")
 		return
 	}
 
@@ -725,10 +726,7 @@ func (ls *SANodeCode) GetAnswer(index int) {
 		user := msg.User
 		if i == 0 {
 			//1st user message is prompt
-			user, ls.ans_err = ls.buildPrompt(user)
-			if ls.ans_err != nil {
-				return
-			}
+			user, _ = ls.buildPrompt(user)
 		}
 		messages = append(messages, SAServiceMsg{Role: "user", Content: user})
 
@@ -956,31 +954,27 @@ func (ls *SANodeCode) SetOutput(outputJs []byte) {
 	}
 }
 
-func (ls *SANodeCode) UseCodeFromAnswer(answer string) {
-	ls.ans_err = nil
-
+func (ls *SANodeCode) UseCodeFromAnswer(answer string) error {
 	var err error
 	ls.Code, err = ls.extractCode(answer)
 	if err != nil {
-		ls.ans_err = err
-		return
+		return err
 	}
 	ls.Code = strings.ReplaceAll(ls.Code, "package main", "")
 
 	ls.UpdateFile()
+	return nil
 }
 
-func (ls *SANodeCode) CopyCodeToClipboard(answer string) {
-	ls.ans_err = nil
-
+func (ls *SANodeCode) CopyCodeToClipboard(answer string) error {
 	var err error
 	ls.Code, err = ls.extractCode(answer)
 	if err != nil {
-		ls.ans_err = err
-		return
+		return err
 	}
 
 	ls.node.app.base.ui.win.io.keys.clipboard = strings.ReplaceAll(ls.Code, "package main", "")
+	return nil
 }
 
 func (ls *SANodeCode) extractCode(answer string) (string, error) {
@@ -1279,7 +1273,7 @@ func (ls *SANodeCode) findNodeAndCheck(path string) (*SANode, error) {
 	pt := NewSANodePathFromString(path)
 	node := pt.Find(ls.node.GetRoot())
 	if node == nil {
-		return nil, fmt.Errorf("node '%s' not found", path)
+		return nil, fmt.Errorf("'%s' not found", path)
 	}
 	if node == ls.node {
 		return nil, fmt.Errorf("can't connect to it self")
@@ -1303,6 +1297,10 @@ func (ls *SANodeCode) addArg(args *[]*SANodeCodeFn, nm string) error {
 		return err
 	}
 
+	if args == nil {
+		return nil
+	}
+
 	//find
 	for _, fn := range *args {
 		if fn.node == node {
@@ -1316,33 +1314,37 @@ func (ls *SANodeCode) addArg(args *[]*SANodeCodeFn, nm string) error {
 	return nil
 }
 
-func (ls *SANodeCode) buildArgs() ([]*SANodeCodeFn, error) {
+func (ls *SANodeCode) buildArgs(userMsg string, msgs_depends *[]*SANodeCodeFn) error {
 
-	var msgs_depends []*SANodeCodeFn
-
-	for _, msg := range ls.Messages {
-		ln := msg.User
-		for {
-			d1 := strings.IndexByte(ln, '`')
-			if d1 >= 0 {
-				ln = ln[d1+1:]
-			} else {
-				break
-			}
-			d2 := strings.IndexByte(ln, '`')
-			if d2 >= 0 {
-				nm := ln[:d2]
-
-				err := ls.addArg(&msgs_depends, nm)
-				if err != nil {
-					return nil, err
-				}
-			}
-			ln = ln[d2+1:]
+	for {
+		d1 := strings.IndexByte(userMsg, '`')
+		if d1 >= 0 {
+			userMsg = userMsg[d1+1:]
+		} else {
+			break
 		}
+		d2 := strings.IndexByte(userMsg, '`')
+		if d2 >= 0 {
+			nm := userMsg[:d2]
+
+			err := ls.addArg(msgs_depends, nm)
+			if err != nil {
+				return err
+			}
+		}
+		userMsg = userMsg[d2+1:]
 	}
 
-	return msgs_depends, nil
+	return nil
+}
+func (ls *SANodeCode) buildAllPromptsArgs() ([]*SANodeCodeFn, error) {
+	var depends []*SANodeCodeFn
+
+	for _, msg := range ls.Messages {
+		ls.buildArgs(msg.User, &depends)
+	}
+
+	return depends, nil
 }
 
 func ReplaceWord(str string, oldWord string, newWord string) string {

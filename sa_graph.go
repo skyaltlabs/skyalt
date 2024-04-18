@@ -931,7 +931,6 @@ func (gr *SAGraph) drawPanel(graphCanvas OsV4, keyAllow bool) {
 			gr.showNodeList_justOpen = true
 		}
 	}
-
 }
 
 func (gr *SAGraph) History() {
@@ -941,6 +940,11 @@ func (gr *SAGraph) History() {
 	if len(gr.history) == 0 {
 		gr.checkAndAddHistory()
 		return
+	}
+
+	if ui.win.io.touch.end || (!ui.edit.IsActive() && ui.win.io.keys.hasChanged) {
+		gr.app.root.updateCodeLinks()
+		gr.checkAndAddHistory()
 	}
 
 	lv := ui.GetCall()

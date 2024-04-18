@@ -1456,7 +1456,7 @@ func UiCode_AttrChat(node *SANode) {
 
 		//set rows heights
 		y := 0
-		for i, str := range node.Code.Messages {
+		for i, msg := range node.Code.Messages {
 			isLast := (i+1 >= len(node.Code.Messages))
 			isAssistRunning := (node.Code.job_oai != nil && node.Code.job_oai_index == i)
 
@@ -1466,11 +1466,15 @@ func UiCode_AttrChat(node *SANode) {
 				nlines := 1
 				dd := ui.GetCall().call.FindFromGridPos(OsV2{1, y})
 				if dd != nil {
-					nlines = OsRoundUp(float64(ui._Paint_getMaxCellSize(dd, str.User, InitWinFontPropsDef(ui.win), true, line_wrapping).Y))
+					nlines = OsRoundUp(float64(ui._Paint_getMaxCellSize(dd, msg.User, InitWinFontPropsDef(ui.win), true, line_wrapping).Y))
 				}
 				nlines = OsMax(2, nlines)
 
 				ui.Div_row(y, float64(nlines))
+				y++
+			}
+
+			if msg.err != nil {
 				y++
 			}
 
@@ -1479,7 +1483,7 @@ func UiCode_AttrChat(node *SANode) {
 			//y++ //space
 
 			if !isLast || isAssistRunning {
-				assist := str.Assistent
+				assist := msg.Assistent
 				if isAssistRunning {
 					assist = node.Code.job_oai.wip_answer
 					if node.Code.job_oai.done.Load() {
@@ -1509,7 +1513,7 @@ func UiCode_AttrChat(node *SANode) {
 		//add UI
 		y = 0
 		for i := 0; i < len(node.Code.Messages); i++ {
-			str := node.Code.Messages[i]
+			msg := node.Code.Messages[i]
 			//for i, str := range node.Code.Messages {
 			isLast := (i+1 >= len(node.Code.Messages))
 			isAssistRunning := (node.Code.job_oai != nil && node.Code.job_oai_index == i)
@@ -1518,7 +1522,20 @@ func UiCode_AttrChat(node *SANode) {
 			{
 				line_wrapping := true
 				ui.Comp_textAlign(0, y, 1, 1, "User", 0, 0)
-				ui.Comp_editbox(1, y, 1, 1, &node.Code.Messages[i].User, Comp_editboxProp().Align(0, 0).MultiLine(true, line_wrapping).TempToValue(true))
+				/*_, _, _, fnshd, _ :=*/ ui.Comp_editbox(1, y, 1, 1, &node.Code.Messages[i].User, Comp_editboxProp().Align(0, 0).MultiLine(true, line_wrapping).TempToValue(true))
+				/*if fnshd {
+					//only to write error
+					var err error
+					_, err = node.Code.buildPrompt(node.Code.Messages[i].User)
+					if err != nil {
+						node.Code.Messages[i].err = err
+					}
+				}*/
+				y++
+			}
+
+			if msg.err != nil {
+				ui.Comp_textCd(1, y, 1, 1, "Error: "+msg.err.Error(), 0, CdPalette_E)
 				y++
 			}
 
@@ -1534,7 +1551,7 @@ func UiCode_AttrChat(node *SANode) {
 				ui.Comp_combo(1, 0, 1, 1, &node.app.base.ui.win.io.ini.ChatModel, models, models, "Model", true, true)
 
 				//send
-				if ui.Comp_buttonLight(2, 0, 1, 1, OsTrnString(isLast, "Send", "Re-send"), Comp_buttonProp()) > 0 {
+				if ui.Comp_buttonLight(2, 0, 1, 1, OsTrnString(isLast, "Send", "Re-send"), Comp_buttonProp().Enable(len(node.Code.Messages) > 0 && len(node.Code.Messages[0].User) > 0)) > 0 {
 					node.Code.GetAnswer(i)
 				}
 
@@ -1551,7 +1568,7 @@ func UiCode_AttrChat(node *SANode) {
 
 			//answer
 			if !isLast || isAssistRunning {
-				assist := str.Assistent
+				assist := msg.Assistent
 				if isAssistRunning {
 					assist = node.Code.job_oai.wip_answer
 				}
@@ -1575,10 +1592,16 @@ func UiCode_AttrChat(node *SANode) {
 						ui.Div_colMax(1, 5)
 						ui.Div_colMax(2, 5)
 						if ui.Comp_buttonLight(1, 0, 1, 1, "Copy code", Comp_buttonProp().Enable(!isAssistRunning)) > 0 {
-							node.Code.CopyCodeToClipboard(str.Assistent)
+							err := node.Code.CopyCodeToClipboard(msg.Assistent)
+							if err != nil {
+								node.Code.Messages[i].err = err
+							}
 						}
 						if ui.Comp_buttonLight(2, 0, 1, 1, "Use this code", Comp_buttonProp().Enable(!isAssistRunning)) > 0 {
-							node.Code.UseCodeFromAnswer(str.Assistent)
+							err := node.Code.UseCodeFromAnswer(msg.Assistent)
+							if err != nil {
+								node.Code.Messages[i].err = err
+							}
 						}
 					}
 					ui.Div_end()

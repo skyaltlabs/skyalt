@@ -341,9 +341,6 @@ func (node *SANode) RenderAttrs() {
 		}
 
 		if node.IsTypeCode() {
-			if node.Code.ans_err != nil {
-				attr_start_y++
-			}
 			if node.Code.file_err != nil {
 				attr_start_y++
 			}
@@ -413,10 +410,6 @@ func (node *SANode) RenderAttrs() {
 			attr_y++
 		}
 
-		if node.Code.ans_err != nil {
-			ui.Comp_textCd(0, attr_y, 2, 1, "Answer Error: "+node.Code.ans_err.Error(), 0, CdPalette_E)
-			attr_y++
-		}
 		if node.Code.file_err != nil {
 			ui.Comp_textCd(0, attr_y, 2, 1, "File Error: "+node.Code.file_err.Error(), 0, CdPalette_E)
 			attr_y++
