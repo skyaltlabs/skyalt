@@ -18,7 +18,6 @@ package main
 
 import (
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"math"
 	"strconv"
@@ -27,9 +26,25 @@ import (
 
 // https://wiki.openstreetmap.org/wiki/Raster_tile_providers
 
+type UiMapLocator struct {
+	Lon   float64 `json:"lon"`
+	Lat   float64 `json:"lat"`
+	Label string  `json:"label"`
+}
+type UiMapSegmentTrk struct {
+	Lon  float64 `json:"lon"`
+	Lat  float64 `json:"lat"`
+	Ele  float64 `json:"ele"`
+	Time string  `json:"time"`
+}
+type UiMapSegment struct {
+	Trkpts []UiMapSegmentTrk `json:"trkpts"`
+	Label  string            `json:"label"`
+}
+
 type UiLayoutMapSegment struct {
-	in    string
-	items []UiCompMapSegments
+	in   string
+	segs []UiMapSegment
 	//last use ....
 }
 
@@ -61,25 +76,13 @@ func (mp *UiLayoutMap) GetSegment(in string) (*UiLayoutMapSegment, error) {
 	}
 
 	//add
-	var segments []byte
-	if strings.HasPrefix(in, "<?xml") {
-		var err error
-
-		segments, err = UiMap_GpxToJson([]byte(in)) //slow 1 ............................
-		if err != nil {
-			return nil, fmt.Errorf("UiMap_GpxToJson() failed: %w", err)
-		}
-	} else {
-		segments = []byte(in) //json
-	}
-
-	var items []UiCompMapSegments
-	err := json.Unmarshal(segments, &items) //slow 2 ............................
+	var segs []UiMapSegment
+	err := json.Unmarshal([]byte(in), &segs) //slow 2 ............................
 	if err != nil {
 		return nil, fmt.Errorf("Unmarshal() failed: %w", err)
 	}
 
-	seg := &UiLayoutMapSegment{in: in, items: items}
+	seg := &UiLayoutMapSegment{in: in, segs: segs}
 	mp.cache_segments = append(mp.cache_segments, seg)
 
 	return seg, nil
@@ -190,19 +193,7 @@ func (mp *UiLayoutMap) isZooming() (bool, float64, float64) {
 	return (dt < ANIM_TIME), dt, ANIM_TIME
 }
 
-type UiCompMapLocator struct {
-	Lon   float64
-	Lat   float64
-	Ele   float64
-	Label string
-	Time  string
-}
-type UiCompMapSegments struct {
-	Label string
-	Trkpt []UiCompMapLocator
-}
-
-func (ui *Ui) comp_mapLocators(cam_lon, cam_lat, cam_zoom float64, items []UiCompMapLocator, cd OsCd, dialogName string) error {
+func (ui *Ui) comp_mapLocators(cam_lon, cam_lat, cam_zoom float64, items []UiMapLocator, cd OsCd, dialogName string) error {
 	cell := ui.DivInfo_get(SA_DIV_GET_cell, 0)
 	width := ui.DivInfo_get(SA_DIV_GET_screenWidth, 0)
 	height := ui.DivInfo_get(SA_DIV_GET_screenHeight, 0)
@@ -251,7 +242,7 @@ func (ui *Ui) comp_mapLocators(cam_lon, cam_lat, cam_zoom float64, items []UiCom
 	return nil
 }
 
-func (ui *Ui) comp_mapSegments(cam_lon, cam_lat, cam_zoom float64, items []UiCompMapSegments, cd OsCd) error {
+func (ui *Ui) comp_mapSegments(cam_lon, cam_lat, cam_zoom float64, segs []UiMapSegment, cd OsCd) error {
 	cell := ui.DivInfo_get(SA_DIV_GET_cell, 0)
 	width := ui.DivInfo_get(SA_DIV_GET_screenWidth, 0)
 	height := ui.DivInfo_get(SA_DIV_GET_screenHeight, 0)
@@ -271,13 +262,12 @@ func (ui *Ui) comp_mapSegments(cam_lon, cam_lat, cam_zoom float64, items []UiCom
 	//rad_x := rad / width
 	//rad_y := rad / height
 
-	for _, segs := range items {
-
+	for _, segs := range segs {
 		last_x := float64(0)
 		last_y := float64(0)
 		last_set := false
 
-		for _, pt := range segs.Trkpt {
+		for _, pt := range segs.Trkpts {
 			p := UiLayoutMap_lonLatToPos(pt.Lon, pt.Lat, zoom) //...
 
 			x := float64(p.X-bbStart.X) * tileW
@@ -479,7 +469,7 @@ func (ui *Ui) comp_map(cam_lon, cam_lat, cam_zoom *float64, file, url, copyright
 	return (old_cam_lon != *cam_lon || old_cam_lat != *cam_lat || old_cam_zoom != *cam_zoom), nil
 }
 
-type UiMapConvertGPX struct {
+/*type UiMapConvertGPX struct {
 	Trkseg []UiMapConvertTrkseg `xml:"trk>trkseg" json:"segments"`
 }
 
@@ -508,4 +498,4 @@ func UiMap_GpxToJson(gpx []byte) ([]byte, error) {
 	}
 
 	return js, nil
-}
+}*/

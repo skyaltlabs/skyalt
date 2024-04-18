@@ -1862,7 +1862,7 @@ func UiMap_render(node *SANode) {
 
 		//locators
 		if locators != "" {
-			var items []UiCompMapLocator
+			var items []UiMapLocator
 			err := json.Unmarshal([]byte(locators), &items)
 			if err == nil {
 				err = ui.comp_mapLocators(lon, lat, zoom, items, locators_cd, "map_"+node.Name)
@@ -1879,7 +1879,7 @@ func UiMap_render(node *SANode) {
 			seg, err := ui.mapp.GetSegment(segmentsIn)
 
 			if err == nil {
-				err = ui.comp_mapSegments(lon, lat, zoom, seg.items, segments_cd) //slow ........ cache + redraw when zoom ....
+				err = ui.comp_mapSegments(lon, lat, zoom, seg.segs, segments_cd) //slow ........ cache + redraw when zoom ....
 				if err != nil {
 					node.SetError(fmt.Errorf("comp_mapSegments() failed: %w", err))
 				}

@@ -528,21 +528,23 @@ type Microphone struct {
 	Enable  bool
 }`
 
-	case "Layout":
-		return `
-type Layout struct {
-Show bool
-Enable  bool
-}`
-
 	case "Map":
-
-		//type MapItem struct { .................
 		return `
+type MapLocator struct {
+	Lon, Lat  float64
+	Label string
+}
+type MapSegmentTrk struct {
+	Lon, Lat, Ele  float64
+	Time string
+}
+type MapSegment struct {
+	Trkpts []MapSegmentTrk
+	Label string
+}
 type Map struct {
-	Locators string	//XML(GPX) or JSON format: [{"label":"LocatorA", "lon":14.4, "lat":50.0}, {"label":"LocatorB", "lon":14.5, "lat":50.1}]
-	Segments string	//XML(GPX) or JSON format: [{"label":"SegmentA", "Trkpt":[{"lat":50,"lon":16,"ele":400,"time":"2020-04-15T09:05:20Z"},{"lat":50.4,"lon":16.1,"ele":400,"time":"2020-04-15T09:05:23Z"}]}]
-
+	Locators string	//JSON: []MapLocator
+	Segments string	//JSON: []MapSegment
 	Enable  bool
 }`
 

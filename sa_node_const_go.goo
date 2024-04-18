@@ -271,6 +271,22 @@ type Microphone struct {
 	Triggered bool   `json:"triggered"`
 }
 
+type MapLocator struct {
+	Lon float64  `json:"lon"`
+	Lat float64  `json:"lat"`
+	Label string `json:"label"`
+}
+type MapSegmentTrk struct {
+	Lon float64 `json:"lon"`
+	Lat float64 `json:"lat"`
+	Ele float64 `json:"ele"`
+	Time string `json:"time"`
+}
+type MapSegment struct {
+	Trkpts []MapSegmentTrk `json:"trkpts"`
+	Label  string          `json:"label"`
+}
+
 type Map struct {
 	Grid_x    int    `json:"grid_x"`
 	Grid_y    int    `json:"grid_y"`
