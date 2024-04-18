@@ -90,6 +90,14 @@ make
 
 
 
+## Current State
+- Technical preview
+- No sandboxing - **CHECK GENERATED CODE, BEFORE RUNNING IT!**
+- Less than 20K lines of code
+- Developed on Linux
+
+
+
 ## Inspiration
 - LLM OS:
     - https://twitter.com/karpathy/status/1723140519554105733
