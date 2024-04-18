@@ -193,13 +193,13 @@ func (ls *SANodeCode) buildSqlInfos(msgs_depends []*SANodeCodeFn) (string, error
 func (node *SANode) getStructName() string {
 
 	if node.IsTypeList() {
-		return "List" + strings.ToUpper(node.Name[0:1]) + node.Name[1:] //Menu<name>
+		return /*"List" +*/ OsGetStringStartsWithUpper(node.Name) //Menu<name>
 	}
 	if node.IsTypeMenu() {
-		return "Menu" + strings.ToUpper(node.Name[0:1]) + node.Name[1:] //List<name>
+		return /*"Menu" +*/ OsGetStringStartsWithUpper(node.Name) //List<name>
 	}
 	if node.IsTypeLayout() {
-		return "Layout" + strings.ToUpper(node.Name[0:1]) + node.Name[1:] //Layout<name>
+		return /*"Layout" +*/ OsGetStringStartsWithUpper(node.Name) //Layout<name>
 	}
 
 	exe := node.Exe
@@ -207,7 +207,7 @@ func (node *SANode) getStructName() string {
 		exe += "DB" //Editbox -> EditboxDB
 	}
 
-	return strings.ToUpper(exe[0:1]) + exe[1:] //1st letter must be upper
+	return OsGetStringStartsWithUpper(exe) //1st letter must be upper
 }
 
 func (ls *SANodeCode) buildListSt(node *SANode, addExtraAttrs bool) string {
@@ -222,8 +222,8 @@ func (ls *SANodeCode) buildListSt(node *SANode, addExtraAttrs bool) string {
 	//List<name>Row
 	str += fmt.Sprintf("type %sItem struct {\n", StructName)
 	for _, it := range node.Subs {
-		itVarName := strings.ToUpper(it.Name[0:1]) + it.Name[1:] //1st letter must be upper
-		itStructName := it.getStructName()                       //list inside list? .........
+		itVarName := OsGetStringStartsWithUpper(it.Name) //1st letter must be upper
+		itStructName := it.getStructName()               //list inside list? .........
 
 		if addExtraAttrs {
 			str += fmt.Sprintf("\t%s %s `json:\"%s\"`\n", itVarName, itStructName, it.Name)
@@ -294,8 +294,8 @@ func (ls *SANodeCode) buildMenuSt(node *SANode, addExtraAttrs bool) string {
 	//Subs list
 	subStructLns := ""
 	for _, it := range node.Subs {
-		itVarName := strings.ToUpper(it.Name[0:1]) + it.Name[1:] //1st letter must be upper
-		itStructName := it.getStructName()                       //list inside list? .........
+		itVarName := OsGetStringStartsWithUpper(it.Name) //1st letter must be upper
+		itStructName := it.getStructName()               //list inside list? .........
 
 		if addExtraAttrs {
 			subStructLns += fmt.Sprintf("\t%s %s `json:\"%s\"`\n", itVarName, itStructName, it.Name)
@@ -333,8 +333,8 @@ func (ls *SANodeCode) buildLayoutSt(node *SANode, addExtraAttrs bool) string {
 	//Subs list
 	subStructLns := ""
 	for _, it := range node.Subs {
-		itVarName := strings.ToUpper(it.Name[0:1]) + it.Name[1:] //1st letter must be upper
-		itStructName := it.getStructName()                       //list inside list? .........
+		itVarName := OsGetStringStartsWithUpper(it.Name) //1st letter must be upper
+		itStructName := it.getStructName()               //list inside list? .........
 
 		if addExtraAttrs {
 			subStructLns += fmt.Sprintf("\t%s %s `json:\"%s\"`\n", itVarName, itStructName, it.Name)
@@ -1006,12 +1006,12 @@ func (ls *SANodeCode) extractImports(code string) ([]SANodeCodeImport, error) {
 	var imports []SANodeCodeImport
 
 	fset := token.NewFileSet()
-	node, err := parser.ParseFile(fset, "test.go", "package main\n\n"+code, parser.ParseComments)
+	file, err := parser.ParseFile(fset, "test.go", "package main\n\n"+code, parser.ParseComments)
 	if err != nil {
 		return nil, fmt.Errorf("ParseFile() failed: %w", err)
 	}
 
-	for _, im := range node.Imports {
+	for _, im := range file.Imports {
 		nm := ""
 		if im.Name != nil {
 			nm = im.Name.Name
@@ -1130,7 +1130,7 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 	str += "type MainStruct struct {\n"
 	for _, fn := range ls.func_depends {
 		prmName := fn.node.Name
-		VarName := strings.ToUpper(prmName[0:1]) + prmName[1:] //1st letter must be upper
+		VarName := OsGetStringStartsWithUpper(prmName) //1st letter must be upper
 		StructName := fn.node.getStructName()
 
 		str += fmt.Sprintf("\t%s %s `json:\"%s\"`\n", VarName, StructName, prmName)
@@ -1151,7 +1151,7 @@ func (ls *SANodeCode) buildCode() ([]byte, error) {
 	params := ""
 	for _, fn := range ls.func_depends {
 		prmName := fn.node.Name
-		VarName := strings.ToUpper(prmName[0:1]) + prmName[1:] //1st letter must be upper
+		VarName := OsGetStringStartsWithUpper(prmName) //1st letter must be upper
 		params += fmt.Sprintf("&st.%s, ", VarName)
 
 	}
@@ -1190,13 +1190,13 @@ func (ls *SANodeCode) updateFuncDepends() error {
 
 	//get AST
 	fset := token.NewFileSet()
-	node, err := parser.ParseFile(fset, "test.go", "package main\n\n"+ls.Code, parser.ParseComments)
+	file, err := parser.ParseFile(fset, "test.go", "package main\n\n"+ls.Code, parser.ParseComments)
 	if err != nil {
 		return fmt.Errorf("ParseFile() failed: %w", err)
 	}
 
 	//add depends from argument names
-	for _, decl := range node.Decls {
+	for _, decl := range file.Decls {
 		if fn, ok := decl.(*ast.FuncDecl); ok {
 			if fn.Name.Name == ls.node.Name {
 				for _, prm := range fn.Type.Params.List {
@@ -1257,13 +1257,13 @@ func (v *visitor) Visit(n ast.Node) ast.Visitor {
 		if found {
 			for _, name := range d.Lhs {
 
-				for name != nil {
+				for name != nil {	//loop!
 					if ident, ok := name.(*ast.Ident); ok {
 						v.writes = append(v.writes, ident.Name)
 						break
 					}
 					if sel, ok := name.(*ast.SelectorExpr); ok {
-						name = sel.X
+						name = sel.X	//next!
 					}
 				}
 
@@ -1375,17 +1375,59 @@ func ReplaceWord(str string, oldWord string, newWord string) string {
 }
 
 // a.b.c -> a.b.d
-func (ls *SANodeCode) RenameNode(old_name string, new_name string) {
-	//chat
-	for _, it := range ls.Messages {
-		it.User = strings.ReplaceAll(it.User, "`"+old_name+"`", "`"+new_name+"`")
-		it.Assistent = strings.ReplaceAll(it.Assistent, "`"+old_name+"`", "`"+new_name+"`")
+func (ls *SANodeCode) RenameNode(old_path SANodePath, new_path SANodePath) {
 
-		it.Assistent = ReplaceWord(it.Assistent, old_name, new_name)
+	if len(old_path.names) != len(new_path.names) {
+		return
 	}
 
-	//func
-	ls.Code = ReplaceWord(ls.Code, old_name, new_name)
+	//`a.b.c` -> `a.bb.c`
+	//MenuB -> MenuBb ......................
+
+	// `a
+	// .b
+
+	//old_name := old_path.String()
+	//new_name := new_path.String()
+
+	//chat
+	for _, it := range ls.Messages {
+		//links
+		//it.User = strings.ReplaceAll(it.User, "`"+old_name+"`", "`"+new_name+"`")
+		//it.Assistent = strings.ReplaceAll(it.Assistent, "`"+old_name+"`", "`"+new_name+"`")
+
+		//User
+		for ii, wordOld := range old_path.names {
+			wordNew := new_path.names[ii]
+			it.User = ReplaceWord(it.User, wordOld, wordNew)
+
+			wordOld = OsGetStringStartsWithUpper(wordOld)
+			wordNew = OsGetStringStartsWithUpper(wordNew)
+			it.User = ReplaceWord(it.User, wordOld, wordNew)
+		}
+
+		//Assistent
+		for ii, wordOld := range old_path.names {
+			wordNew := new_path.names[ii]
+			it.Assistent = ReplaceWord(it.Assistent, wordOld, wordNew)
+
+			wordOld = OsGetStringStartsWithUpper(wordOld)
+			wordNew = OsGetStringStartsWithUpper(wordNew)
+			it.Assistent = ReplaceWord(it.Assistent, wordOld, wordNew)
+		}
+
+	}
+
+	//code
+
+	for ii, wordOld := range old_path.names {
+		wordNew := new_path.names[ii]
+		ls.Code = ReplaceWord(ls.Code, wordOld, wordNew)
+
+		wordOld = OsGetStringStartsWithUpper(wordOld)
+		wordNew = OsGetStringStartsWithUpper(wordNew)
+		ls.Code = ReplaceWord(ls.Code, wordOld, wordNew)
+	}
 
 	//refresh
 	ls.UpdateLinks(ls.node)

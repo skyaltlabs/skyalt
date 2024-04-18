@@ -671,10 +671,9 @@ func (gr *SAGraph) drawGraph() (OsV4, bool) {
 				node := newNodes[i]
 
 				for j := 0; j < len(newNodes); j++ {
-					oldName := NewSANodePath(origNodes[j]).String()
-					newName := NewSANodePath(newNodes[j]).String()
-
-					node.RenameDepends(oldName, newName)
+					oldName := NewSANodePath(origNodes[j])
+					newName := NewSANodePath(newNodes[j])
+					node.RenameCodeDepends(oldName, newName)
 				}
 			}
 

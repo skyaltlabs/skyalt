@@ -223,15 +223,6 @@ type Color struct {
 	Enable  bool `json:"enable"`
 }
 
-type Layout struct {
-	Grid_x  int  `json:"grid_x"`
-	Grid_y  int  `json:"grid_y"`
-	Grid_w  int  `json:"grid_w"`
-	Grid_h  int  `json:"grid_h"`
-	Show    bool `json:"show"`
-	Enable  bool `json:"enable"`
-}
-
 type Disk_dir struct {
 	Grid_x    int    `json:"grid_x"`
 	Grid_y    int    `json:"grid_y"`

@@ -865,19 +865,16 @@ func (node *SANode) renderLayout() {
 	}
 }
 
-func (node *SANode) RenameDepends(oldName string, newName string) {
+func (node *SANode) RenameCodeDepends(oldName SANodePath, newName SANodePath) {
 	node.Code.RenameNode(oldName, newName)
 }
 
-// use node.GetAbsoluteRoot().RenameSubDepends()
-func (node *SANode) RenameSubDepends(oldName string, newName string) {
-	//expressions
+func (node *SANode) RenameCodeSubDepends(oldName SANodePath, newName SANodePath) {
 	for _, it := range node.Subs {
-		it.RenameDepends(oldName, newName)
+		it.RenameCodeDepends(oldName, newName)
 	}
 
-	//Subs
 	for _, it := range node.Subs {
-		it.RenameSubDepends(oldName, newName)
+		it.RenameCodeSubDepends(oldName, newName)
 	}
 }
