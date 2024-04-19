@@ -335,22 +335,11 @@ func (node *SANode) RenderAttrs() {
 	ui := node.app.base.ui
 
 	attr_start_y := 1
-	if node.HasError() {
-		if node.errExe != nil {
-			attr_start_y++
-		}
-
-		if node.IsTypeCode() {
-			if node.Code.file_err != nil {
-				attr_start_y++
-			}
-			if node.Code.exe_err != nil {
-				attr_start_y++
-			}
-		}
-	}
-
 	ui.Div_colMax(0, 100)
+	if node.HasError() {
+		ui.Div_row(attr_start_y, 3)
+		attr_start_y++
+	}
 	ui.Div_rowMax(attr_start_y, 100)
 
 	//rename + type
@@ -402,22 +391,26 @@ func (node *SANode) RenderAttrs() {
 	ui.Div_end()
 
 	//error
+	attr_start_y = 1
 	if node.HasError() {
-		attr_y := 1
-
+		ui.Div_start(0, attr_start_y, 1, 1)
+		ui.Div_colMax(0, 100)
+		err_y := 0
 		if node.errExe != nil {
-			ui.Comp_textCd(0, attr_y, 1, 1, "Error: "+node.errExe.Error(), 0, CdPalette_E)
-			attr_y++
+			ui.Comp_textCd(0, err_y, 1, 1, "Error: "+node.errExe.Error(), 0, CdPalette_E)
+			err_y++
 		}
 
 		if node.Code.file_err != nil {
-			ui.Comp_textCd(0, attr_y, 2, 1, "File Error: "+node.Code.file_err.Error(), 0, CdPalette_E)
-			attr_y++
+			ui.Comp_textCd(0, err_y, 2, 1, "File Error: "+node.Code.file_err.Error(), 0, CdPalette_E)
+			err_y++
 		}
 		if node.Code.exe_err != nil {
-			ui.Comp_textCd(0, attr_y, 2, 1, "Execute Error: "+node.Code.exe_err.Error(), 0, CdPalette_E)
-			attr_y++
+			ui.Comp_textCd(0, err_y, 2, 1, "Execute Error: "+node.Code.exe_err.Error(), 0, CdPalette_E)
+			err_y++
 		}
+		ui.Div_end()
+		attr_start_y++
 	}
 
 	gnd := node.app.base.node_groups.FindNode(node.Exe)
