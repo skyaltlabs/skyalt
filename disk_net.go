@@ -21,8 +21,6 @@ import (
 	"io"
 	"net/http"
 	"sync"
-	"sync/atomic"
-	"time"
 )
 
 type DiskNetJob struct {
@@ -77,8 +75,8 @@ func (job *DiskNetJob) download() {
 }
 
 type DiskNet struct {
-	lock      sync.Mutex
-	interrupt atomic.Bool
+	lock sync.Mutex
+	ch   chan bool
 
 	jobs   []*DiskNetJob
 	online bool
@@ -91,18 +89,26 @@ func NewDiskNet() *DiskNet {
 	net := &DiskNet{}
 	net.online = true
 
+	net.ch = make(chan bool, 65536) //buffered channels - so send is non-blocking
+
 	go net.Loop()
 
 	return net
 }
 
 func (net *DiskNet) Destroy() {
-	net.interrupt.Store(true)
+	net.add("", "")
+	net.ch <- true //end loop
 }
 
 func (net *DiskNet) Loop() {
 
-	for !net.interrupt.Load() {
+	for {
+
+		ch := <-net.ch
+		if ch {
+			break
+		}
 
 		//get
 		jb := net.getNext()
@@ -120,8 +126,6 @@ func (net *DiskNet) Loop() {
 			if jb.err != nil {
 				net.num_jobs_errors++
 			}
-		} else {
-			time.Sleep(20 * time.Millisecond)
 		}
 	}
 }
@@ -130,14 +134,12 @@ func (net *DiskNet) getNext() *DiskNetJob {
 	net.lock.Lock()
 	defer net.lock.Unlock()
 
-	var found *DiskNetJob
-	for _, jb := range net.jobs {
-		if !jb.done {
-			found = jb
-			break
+	for i := len(net.jobs) - 1; i >= 0; i-- { //latest has higher priority
+		if !net.jobs[i].done {
+			return net.jobs[i]
 		}
 	}
-	return found
+	return nil
 }
 
 func (net *DiskNet) add(url string, agent string) *DiskNetJob {
@@ -157,11 +159,13 @@ func (net *DiskNet) add(url string, agent string) *DiskNetJob {
 	//add
 	jb := &DiskNetJob{url: url, agent: agent}
 	net.jobs = append(net.jobs, jb) //add
+
+	net.ch <- false
+
 	return jb
 }
 
 func (net *DiskNet) GetFile(url string, agent string) ([]byte, bool, float64, error) {
-
 	if net.online {
 		jb := net.add(url, agent)
 		return jb.data, jb.done, jb.progress, jb.err
