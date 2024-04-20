@@ -122,7 +122,7 @@ func (ui *Ui) _compDrawText(coord OsV4,
 		multi_line, multi_line_enter_finish, line_wrapping)
 
 	if active {
-		ui._UiPaint_resetKeys(false)
+		ui.win.io.keys.ResetKeys(false)
 	}
 
 	if selection {

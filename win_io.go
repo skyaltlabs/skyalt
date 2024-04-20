@@ -77,6 +77,30 @@ type WinKeys struct {
 	f12 bool
 }
 
+func (keys *WinKeys) ResetKeys(editable bool) {
+
+	//copy/cut/paste
+	keys.copy = false
+	keys.cut = false
+	keys.paste = false
+
+	//arrows
+	keys.arrowU = false
+	keys.arrowD = false
+	keys.arrowL = false
+	keys.arrowR = false
+	keys.home = false
+	keys.end = false
+
+	if editable {
+		keys.text = ""
+		keys.delete = false
+		keys.backspace = false
+
+		keys.esc = false
+	}
+}
+
 type WinTouch struct {
 	pos       OsV2
 	wheel     int

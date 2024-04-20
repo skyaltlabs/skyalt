@@ -80,7 +80,10 @@ func (ui *Ui) Paint_textGrid(
 
 	size := ui._Paint_getMaxCellSize(ui.GetCall().call, value, prop, multi_line, line_wrapping)
 
-	size.X = OsMaxFloat32(size.X, float32(lv.call.crop.Size.X)/float32((ui.win.Cell()))) //minimum sizeX is over whole div(user can click at the end)
+	size.X += 2 * 0.1
+	cszX := float32(lv.call.canvas.Size.X) / float32((ui.win.Cell()))
+
+	size.X = OsMaxFloat32(size.X, cszX) //minimum sizeX is over whole div(user can click at the end)
 
 	ui.Div_col(0, float64(size.X))
 	ui.Div_row(0, float64(size.Y))
@@ -134,7 +137,7 @@ func _UiPaint_CheckSelectionExplode(str string, start *int, end *int) {
 	}
 }
 
-func (ui *Ui) _UiPaint_resetKeys(editable bool) {
+/*func (ui *Ui) _UiPaint_resetKeys(editable bool) {
 
 	keys := &ui.win.io.keys
 
@@ -158,7 +161,7 @@ func (ui *Ui) _UiPaint_resetKeys(editable bool) {
 
 		keys.esc = false
 	}
-}
+}*/
 
 func _UiPaint_CursorMoveLR(text string, cursor int, move int, prop WinFontProps) int {
 
