@@ -172,7 +172,7 @@ func Comp_buttonProp() *Comp_buttonP {
 	p.align = OsV2{1, 1}
 	p.img_align = OsV2{0, 1}
 
-	p.draw_back = 4
+	p.draw_back = 1
 
 	return &p
 }
