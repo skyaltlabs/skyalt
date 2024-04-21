@@ -355,7 +355,7 @@ func (node *SANode) RenderAttrs() {
 		_, _, _, fnshd, _ := ui.Comp_editbox_desc("Name", 0, 3, 0, 0, 1, 1, &node.Name, Comp_editboxProp())
 		if fnshd {
 			node.CheckUniqueName()
-			node.GetRoot().RenameCodeSubDepends(old_path, NewSANodePath(node))
+			node.GetRoot().RenameCodeSubDepends(old_path, NewSANodePath(node), node.IsTypeWithSubLayoutNodes())
 		}
 
 		//type

@@ -1379,17 +1379,10 @@ func ReplaceWord(str string, oldWord string, newWord string) string {
 }
 
 // a.b.c -> a.b.d
-func (ls *SANodeCode) RenameNode(old_path SANodePath, new_path SANodePath) {
-
+func (ls *SANodeCode) RenameNode(old_path SANodePath, new_path SANodePath, replaceStructName bool) {
 	if len(old_path.names) != len(new_path.names) {
 		return
 	}
-
-	//`a.b.c` -> `a.bb.c`
-	//MenuB -> MenuBb ......................
-
-	// `a
-	// .b
 
 	//old_name := old_path.String()
 	//new_name := new_path.String()
@@ -1405,9 +1398,11 @@ func (ls *SANodeCode) RenameNode(old_path SANodePath, new_path SANodePath) {
 			wordNew := new_path.names[ii]
 			it.User = ReplaceWord(it.User, wordOld, wordNew)
 
-			wordOld = OsGetStringStartsWithUpper(wordOld)
-			wordNew = OsGetStringStartsWithUpper(wordNew)
-			it.User = ReplaceWord(it.User, wordOld, wordNew)
+			if replaceStructName {
+				wordOld = OsGetStringStartsWithUpper(wordOld)
+				wordNew = OsGetStringStartsWithUpper(wordNew)
+				it.User = ReplaceWord(it.User, wordOld, wordNew)
+			}
 		}
 
 		//Assistent
@@ -1415,9 +1410,11 @@ func (ls *SANodeCode) RenameNode(old_path SANodePath, new_path SANodePath) {
 			wordNew := new_path.names[ii]
 			it.Assistent = ReplaceWord(it.Assistent, wordOld, wordNew)
 
-			wordOld = OsGetStringStartsWithUpper(wordOld)
-			wordNew = OsGetStringStartsWithUpper(wordNew)
-			it.Assistent = ReplaceWord(it.Assistent, wordOld, wordNew)
+			if replaceStructName {
+				wordOld = OsGetStringStartsWithUpper(wordOld)
+				wordNew = OsGetStringStartsWithUpper(wordNew)
+				it.Assistent = ReplaceWord(it.Assistent, wordOld, wordNew)
+			}
 		}
 
 	}
@@ -1428,9 +1425,11 @@ func (ls *SANodeCode) RenameNode(old_path SANodePath, new_path SANodePath) {
 		wordNew := new_path.names[ii]
 		ls.Code = ReplaceWord(ls.Code, wordOld, wordNew)
 
-		wordOld = OsGetStringStartsWithUpper(wordOld)
-		wordNew = OsGetStringStartsWithUpper(wordNew)
-		ls.Code = ReplaceWord(ls.Code, wordOld, wordNew)
+		if replaceStructName {
+			wordOld = OsGetStringStartsWithUpper(wordOld)
+			wordNew = OsGetStringStartsWithUpper(wordNew)
+			ls.Code = ReplaceWord(ls.Code, wordOld, wordNew)
+		}
 	}
 
 	//refresh

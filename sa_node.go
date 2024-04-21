@@ -865,16 +865,16 @@ func (node *SANode) renderLayout() {
 	}
 }
 
-func (node *SANode) RenameCodeDepends(oldName SANodePath, newName SANodePath) {
-	node.Code.RenameNode(oldName, newName)
+func (node *SANode) RenameCodeDepends(oldName SANodePath, newName SANodePath, replaceStructName bool) {
+	node.Code.RenameNode(oldName, newName, replaceStructName)
 }
 
-func (node *SANode) RenameCodeSubDepends(oldName SANodePath, newName SANodePath) {
+func (node *SANode) RenameCodeSubDepends(oldName SANodePath, newName SANodePath, replaceStructName bool) {
 	for _, it := range node.Subs {
-		it.RenameCodeDepends(oldName, newName)
+		it.RenameCodeDepends(oldName, newName, replaceStructName)
 	}
 
 	for _, it := range node.Subs {
-		it.RenameCodeSubDepends(oldName, newName)
+		it.RenameCodeSubDepends(oldName, newName, replaceStructName)
 	}
 }
