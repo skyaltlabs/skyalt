@@ -25,7 +25,7 @@ type WinPaintBuff struct {
 	crop  OsV4
 	depth int
 
-	dialog_depth_backups []int
+	dialog_depth_backups []int //smazat .......
 }
 
 const WinPaintBuff_MAX_ITER = 2
@@ -48,7 +48,16 @@ func (b *WinPaintBuff) Prepare(crop OsV4, drawBack bool) {
 	b.depth += 10 //items or are depth=110
 }
 
-func (b *WinPaintBuff) DialogStart(crop OsV4, drawBack bool, index int) error {
+func (b *WinPaintBuff) AddLevel(crop OsV4, drawBack bool, index int) {
+	b.crop = crop
+	b.depth = index * 100 //(b.depth + 100) - ((b.depth + 100) % 100)
+	b.AddCrop(crop)
+	if drawBack {
+		b.AddRect(crop, b.win.io.GetPalette().B, 0)
+	}
+}
+
+func (b *WinPaintBuff) DialogStart(crop OsV4, drawBack bool, index int) { //smazat .......
 	b.crop = crop
 
 	b.dialog_depth_backups = append(b.dialog_depth_backups, b.depth)
@@ -60,11 +69,9 @@ func (b *WinPaintBuff) DialogStart(crop OsV4, drawBack bool, index int) error {
 	if drawBack {
 		b.AddRect(crop, b.win.io.GetPalette().B, 0)
 	}
-
-	return nil
 }
 
-func (b *WinPaintBuff) DialogEnd() error {
+func (b *WinPaintBuff) DialogEnd() { //smazat .......
 	if b.depth > 0 {
 
 		b.depth = b.dialog_depth_backups[len(b.dialog_depth_backups)-1]
@@ -73,8 +80,6 @@ func (b *WinPaintBuff) DialogEnd() error {
 		//b.depth = (b.depth - 100) - ((b.depth - 100) % 100)
 		//b.depth += 10 //items or are depth=110
 	}
-
-	return nil
 }
 
 func (b *WinPaintBuff) DrawDialogSurround(i int) {

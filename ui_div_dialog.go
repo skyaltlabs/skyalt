@@ -42,12 +42,9 @@ func (ui *Ui) Dialog_end() {
 
 	ui.renderEnd(true)
 
-	err := ui.buff.DialogEnd()
-	if err != nil {
-		lv.call.data.app.AddLogErr(err)
-	}
+	ui.buff.DialogEnd()
 
-	err = ui.EndCall()
+	err := ui.EndCall()
 	if err != nil {
 		lv.call.data.app.AddLogErr(err)
 	}
@@ -136,10 +133,7 @@ func (ui *Ui) Dialog_startEx(name string, drawBack bool, greySurround bool) bool
 	ui.renderStart(0, 0, 1, 1)
 	//a = OsTime()
 
-	err := ui.buff.DialogStart(coord, drawBack, ui.FindDialogPos(name)) //rewrite buffer with background
-	if err != nil {
-		lv.call.data.app.AddLogErr(err)
-	}
+	ui.buff.DialogStart(coord, drawBack, ui.FindDialogPos(name)) //rewrite buffer with background
 
 	return true //active/open
 }
