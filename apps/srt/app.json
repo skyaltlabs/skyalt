@@ -140,7 +140,6 @@
 },
 "Name": "disk_dir",
 "Exe": "disk_dir",
-"Selected": true,
 "Code": {
 "Messages": null,
 "Code": ""

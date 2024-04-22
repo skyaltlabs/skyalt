@@ -318,7 +318,8 @@
 "multi_line": true,
 "selection": true,
 "show": true,
-"show_border": true
+"show_border": true,
+"size": 1
 }
 },
 {

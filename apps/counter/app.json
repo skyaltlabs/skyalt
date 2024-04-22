@@ -71,8 +71,8 @@
 "Subs": [
 {
 "Pos": {
-"X": 30.315031,
-"Y": -12.825932
+"X": 30.348814,
+"Y": -12.792148
 },
 "Name": "counter",
 "Exe": "text",
@@ -93,7 +93,8 @@
 "multi_line": false,
 "selection": true,
 "show": true,
-"show_border": false
+"show_border": false,
+"size": 1
 }
 },
 {

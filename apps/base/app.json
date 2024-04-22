@@ -3,8 +3,8 @@
 {
 "Name": "counter",
 "IDE": true,
-"Cam_x": 20.580106735229492,
-"Cam_y": -7.608502388000488,
+"Cam_x": 25.95172882080078,
+"Cam_y": -8.689583778381348,
 "Cam_z": 0.7999999999999999,
 "EnableExecution": true,
 "ExePos": -1,
@@ -33,9 +33,9 @@
 {
 "Name": "chat",
 "IDE": true,
-"Cam_x": 10.85180950164795,
-"Cam_y": 22.071495056152344,
-"Cam_z": 0.6499999999999999,
+"Cam_x": 22.425928115844727,
+"Cam_y": 25.23384666442871,
+"Cam_z": 0.5499999999999999,
 "EnableExecution": true,
 "ExePos": -1,
 "Selected_canvas": {}
@@ -43,9 +43,9 @@
 {
 "Name": "download_whisper_models",
 "IDE": true,
-"Cam_x": 2.7703957557678223,
-"Cam_y": 11.111593246459961,
-"Cam_z": 0.6999999999999996,
+"Cam_x": 3.5657622814178467,
+"Cam_y": 13.134759902954102,
+"Cam_z": 0.49999999999999967,
 "EnableExecution": true,
 "ExePos": -1,
 "Selected_canvas": {}
@@ -53,8 +53,8 @@
 {
 "Name": "running",
 "IDE": true,
-"Cam_x": 43.57091522216797,
-"Cam_y": 2.5045580863952637,
+"Cam_x": 20.278329849243164,
+"Cam_y": 12.131770133972168,
 "Cam_z": 0.6,
 "EnableExecution": true,
 "ExePos": -1,
