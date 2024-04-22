@@ -1054,6 +1054,7 @@ func (ls *SANodeCode) UpdateFile() {
 	file, err := ls.buildCode()
 	if err != nil {
 		ls.file_err = err
+
 		return
 	}
 

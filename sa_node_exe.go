@@ -179,7 +179,8 @@ func UiText_Attrs(node *SANode) {
 	node.ShowAttrBool(&grid, "show", true)
 	node.ShowAttrString(&grid, "label", "", node.GetAttrBool("multi_line", false))
 	node.ShowAttrIntCombo(&grid, "align_h", 0, []string{"Left", "Center", "Right"}, []string{"0", "1", "2"})
-	node.ShowAttrIntCombo(&grid, "align_v", 0, []string{"Left", "Center", "Right"}, []string{"0", "1", "2"})
+	node.ShowAttrIntCombo(&grid, "align_v", 0, []string{"Top", "Center", "Bottom"}, []string{"0", "1", "2"})
+	node.ShowAttrFloat(&grid, "size", 1.0, 2)
 	node.ShowAttrBool(&grid, "multi_line", false)
 	node.ShowAttrBool(&grid, "line_wrapping", true)
 	node.ShowAttrBool(&grid, "formating", true)
@@ -192,15 +193,16 @@ func UiText_render(node *SANode) {
 	label := node.GetAttrString("label", "")
 	align_v := node.GetAttrInt("align_v", 0)
 	align_h := node.GetAttrInt("align_h", 0)
+	size := node.GetAttrFloat("size", 1.0)
 	selection := node.GetAttrBool("selection", true)
 	show_border := node.GetAttrBool("show_border", false)
 	line_wrapping := node.GetAttrBool("line_wrapping", true)
 	formating := node.GetAttrBool("formating", true)
 
 	if node.GetAttrBool("multi_line", false) {
-		node.app.base.ui.Comp_textSelectMulti(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, OsV2{align_h, align_v}, selection, show_border, formating, line_wrapping)
+		node.app.base.ui.Comp_textSelectMulti(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, size, OsV2{align_h, align_v}, selection, show_border, formating, line_wrapping)
 	} else {
-		node.app.base.ui.Comp_textSelect(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, OsV2{align_h, align_v}, selection, formating, show_border)
+		node.app.base.ui.Comp_textSelectAndHeight(grid.Start.X, grid.Start.Y, grid.Size.X, grid.Size.Y, label, size, OsV2{align_h, align_v}, selection, formating, show_border)
 	}
 }
 
@@ -216,7 +218,7 @@ func UiEditbox_Attrs(node *SANode) {
 	node.ShowAttrString(&grid, "value", "", node.GetAttrBool("multi_line", false))
 	node.ShowAttrString(&grid, "ghost", "", false)
 	node.ShowAttrIntCombo(&grid, "align_h", 0, []string{"Left", "Center", "Right"}, []string{"0", "1", "2"})
-	node.ShowAttrIntCombo(&grid, "align_v", 0, []string{"Left", "Center", "Right"}, []string{"0", "1", "2"})
+	node.ShowAttrIntCombo(&grid, "align_v", 0, []string{"Top", "Center", "Bottom"}, []string{"0", "1", "2"})
 	node.ShowAttrBool(&grid, "enable", true)
 	node.ShowAttrBool(&grid, "multi_line", false)
 	node.ShowAttrBool(&grid, "multi_line_enter_finish", false)
@@ -1583,7 +1585,7 @@ func UiCode_AttrChat(node *SANode) {
 					ui.Div_end()
 
 					ui.Comp_textAlign(0, y, 1, 1, "Bot", 0, 0)
-					ui.Comp_textSelectMulti(1, y, 1, 1, assist, OsV2{0, 0}, true, false, false, line_wrapping)
+					ui.Comp_textSelectMulti(1, y, 1, 1, assist, 1.0, OsV2{0, 0}, true, false, false, line_wrapping)
 					y++
 
 					ui.Div_start(1, y, 1, 1)
@@ -1652,7 +1654,7 @@ func _UiCode_attrs(node *SANode, grid *OsV4) {
 	//output
 	{
 		ui.Comp_textAlign(0, 3, 1, 1, "Output", 0, 0)
-		ui.Comp_textSelectMulti(1, 3, 1, 1, node.Code.cmd_output, OsV2{0, 0}, true, true, false, false)
+		ui.Comp_textSelectMulti(1, 3, 1, 1, node.Code.cmd_output, 1.0, OsV2{0, 0}, true, true, false, false)
 	}
 }
 

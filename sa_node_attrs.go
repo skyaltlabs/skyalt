@@ -32,8 +32,8 @@ func (node *SANode) SetGridSize(v OsV2) {
 	node.Attrs["grid_w"] = v.X
 	node.Attrs["grid_h"] = v.Y
 }
-func (node *SANode) SetGrid(coord OsV4) {
-	node.SetAttrV4("grid", coord)
+func (node *SANode) SetGrid(grid OsV4) {
+	node.SetAttrV4("grid", grid)
 }
 func (node *SANode) GetGrid() OsV4 {
 	return node.GetAttrV4("grid", InitOsV4(0, 0, 1, 1))
@@ -334,13 +334,21 @@ func (node *SANode) RenderAttrs() {
 
 	ui := node.app.base.ui
 
-	attr_start_y := 1
 	ui.Div_colMax(0, 100)
 	if node.HasError() {
-		ui.Div_row(attr_start_y, 3)
-		attr_start_y++
+		/*err_n := 0.0
+		if node.errExe != nil {
+			err_n++
+		}
+		if node.Code.file_err != nil {
+			err_n++
+		}
+		if node.Code.exe_err != nil {
+			err_n++
+		}*/
+		ui.Div_row(0, 1+3)
 	}
-	ui.Div_rowMax(attr_start_y, 100)
+	ui.Div_rowMax(1, 100)
 
 	//rename + type
 	ui.Div_start(0, 0, 1, 1)
@@ -387,36 +395,31 @@ func (node *SANode) RenderAttrs() {
 				ui.Dialog_end()
 			}
 		}
+
+		//error
+		if node.HasError() {
+			err_y := 1
+			if node.errExe != nil {
+				ui.Comp_textCd(0, err_y, 4, 1, "Error: "+node.errExe.Error(), 0, CdPalette_E)
+				err_y++
+			}
+
+			if node.Code.file_err != nil {
+				ui.Comp_textCd(0, err_y, 4, 1, "File Error: "+node.Code.file_err.Error(), 0, CdPalette_E)
+				err_y++
+			}
+			if node.Code.exe_err != nil {
+				ui.Comp_textCd(0, err_y, 4, 1, "Execute Error: "+node.Code.exe_err.Error(), 0, CdPalette_E)
+				err_y++
+			}
+		}
+
 	}
 	ui.Div_end()
 
-	//error
-	attr_start_y = 1
-	if node.HasError() {
-		ui.Div_start(0, attr_start_y, 1, 1)
-		ui.Div_colMax(0, 100)
-		err_y := 0
-		if node.errExe != nil {
-			ui.Comp_textCd(0, err_y, 1, 1, "Error: "+node.errExe.Error(), 0, CdPalette_E)
-			err_y++
-		}
-
-		if node.Code.file_err != nil {
-			ui.Comp_textCd(0, err_y, 2, 1, "File Error: "+node.Code.file_err.Error(), 0, CdPalette_E)
-			err_y++
-		}
-		if node.Code.exe_err != nil {
-			ui.Comp_textCd(0, err_y, 2, 1, "Execute Error: "+node.Code.exe_err.Error(), 0, CdPalette_E)
-			err_y++
-		}
-		ui.Div_end()
-		attr_start_y++
-	}
-
 	gnd := node.app.base.node_groups.FindNode(node.Exe)
 	if gnd != nil && gnd.attrs != nil {
-
-		ui.Div_start(0, attr_start_y, 1, 1)
+		ui.Div_start(0, 1, 1, 1)
 		ui.Div_colMax(0, 100)
 
 		node.errExe = nil //reset

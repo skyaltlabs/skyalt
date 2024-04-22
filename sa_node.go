@@ -276,7 +276,42 @@ func (node *SANode) MakeGridSpace(colStart, rowStart, colMove, rowMove int) {
 
 		if changed {
 			it.SetGrid(grid)
-			//node.app.SetExecute()
+		}
+	}
+}
+
+func (node *SANode) RemoveGridSpace(colPos, rowPos int) {
+	//move items afer pos
+	for _, it := range node.Subs {
+		grid := it.GetGrid()
+		end := grid.End()
+
+		changed := false
+
+		if colPos >= 0 {
+			if grid.Size.X > 1 && grid.Start.X < colPos && end.X > colPos {
+				grid.Size.X--
+				changed = true
+			}
+			if grid.Start.X >= colPos {
+				grid.Start.X--
+				changed = true
+			}
+		}
+
+		if rowPos >= 0 {
+			if grid.Size.Y > 1 && grid.Start.Y < rowPos && end.Y > colPos {
+				grid.Size.Y--
+				changed = true
+			}
+			if grid.Start.Y >= rowPos {
+				grid.Start.Y--
+				changed = true
+			}
+		}
+
+		if changed {
+			it.SetGrid(grid)
 		}
 	}
 }

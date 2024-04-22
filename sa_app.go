@@ -699,6 +699,7 @@ func (app *SAApp) drawColsRowsDialog(name string, node *SANode, isCol bool, pos 
 		//remove
 		if ui.Comp_button(0, 5, 1, 1, ui.trns.REMOVE, Comp_buttonProp().Enable(item != nil)) > 0 {
 			SANodeColRow_Remove(items, pos)
+			node.RemoveGridSpace(OsTrn(isCol, pos, -1), OsTrn(!isCol, pos, -1))
 			ui.Dialog_close()
 			changed = true
 		}
