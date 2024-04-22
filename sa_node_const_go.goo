@@ -5,6 +5,7 @@ type Text struct {
 	Grid_h      int    `json:"grid_h"`
 	Show   bool   `json:"show"`
 	Label       string `json:"label"`
+	Size     float64    `json:"size"`
 	Align_h     int    `json:"align_h"`
 	Align_v     int    `json:"align_v"`
 	Multi_line  bool   `json:"multi_line"`
