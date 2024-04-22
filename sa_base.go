@@ -123,6 +123,10 @@ func SABase_GetPathLayout() string {
 	dev, _ := os.Hostname()
 	return "apps/layout_" + dev + ".json"
 }
+func SABase_GetPathLayout2() string {
+	dev, _ := os.Hostname()
+	return "apps/layout2_" + dev + ".json"
+}
 
 func (base *SABase) HasApp() bool {
 	if base.Selected >= len(base.Apps) {
@@ -273,6 +277,19 @@ func (base *SABase) Render() bool {
 			ui.Div_col(1, 3) //min
 			ui.Div_colResize(1, "chat", 7, false)
 
+			//chat
+			ui.Div_start(1, 0, 1, 1)
+			sel_node := app.root.FindSelected()
+			if sel_node != nil && sel_node.IsTypeCode() {
+				UiCode_AttrChat(sel_node)
+			} else {
+				ui.Div_colMax(0, 100)
+				ui.Div_rowMax(0, 100)
+				ui.Comp_text(0, 0, 1, 1, "Select a Code node", 1)
+			}
+			ui.Div_end()
+
+			//attributes + graph
 			ui.Div_start(0, 0, 1, 1)
 			{
 				ui.Div_colMax(0, 100)
@@ -296,7 +313,7 @@ func (base *SABase) Render() bool {
 				}
 				ui.Div_end()
 
-				//graph layout
+				//graph
 				ui.Div_start(0, 1, 1, 1)
 				{
 					ui.Div_colMax(0, 100)
@@ -332,25 +349,6 @@ func (base *SABase) Render() bool {
 				ui.Div_end()
 			}
 			ui.Div_end()
-
-			//node list
-			/*if app.graph.showNodeList {
-			ui.Div_start(1, 0, 1, 1)
-			app.graph.drawNodeList(graphCanvas)
-			ui.Div_end()*/
-			//} else if sel_node != nil && sel_node.ShowCodeChat {
-			ui.Div_start(1, 0, 1, 1)
-			sel_node := app.root.FindSelected()
-			if sel_node != nil && sel_node.IsTypeCode() {
-				UiCode_AttrChat(sel_node)
-			} else {
-				ui.Div_colMax(0, 100)
-				ui.Div_rowMax(0, 100)
-				ui.Comp_text(0, 0, 1, 1, "Select a Code node", 1)
-			}
-			ui.Div_end()
-			//}
-
 		}
 		ui.Div_end()
 	}
