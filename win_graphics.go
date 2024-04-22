@@ -41,6 +41,10 @@ type WinFontProps struct {
 	formating bool
 }
 
+func WinFontProps_GetDefaultTextH() float64 {
+	return 0.37
+}
+
 // textH & lineH are in <0-1> range
 func InitWinFontProps(weight int, textH, lineH float64, italic bool, formating bool, win *Win) WinFontProps {
 	if weight <= 0 {
@@ -48,7 +52,7 @@ func InitWinFontProps(weight int, textH, lineH float64, italic bool, formating b
 	}
 
 	if textH <= 0 {
-		textH = 0.37
+		textH = WinFontProps_GetDefaultTextH()
 	}
 	tPx := int(float64(win.Cell()) * textH)
 

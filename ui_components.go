@@ -498,7 +498,7 @@ func (ui *Ui) Comp_textIcon(x, y, w, h int, label string, icon WinMedia, iconMar
 	style.image_alignV = 1
 	style.image_margin = iconMargin
 
-	ui.Comp_text_s(&style, label, &icon, false, false, false, false)
+	ui.Comp_text_s(&style, label, 1.0, &icon, false, false, false, false)
 
 	ui.Div_end()
 }
@@ -513,7 +513,7 @@ func (ui *Ui) Comp_text(x, y, w, h int, label string, alignH int) *UiLayoutDiv {
 	style.label_align = OsV2{alignH, 1}
 	style.label_formating = true
 
-	ui.Comp_text_s(&style, label, nil, true, false, false, false)
+	ui.Comp_text_s(&style, label, 1.0, nil, true, false, false, false)
 
 	ui.Div_end()
 	return div
@@ -529,7 +529,7 @@ func (ui *Ui) Comp_textAlign(x, y, w, h int, label string, alignH, alignV int) *
 	style.label_align = OsV2{alignH, alignV}
 	style.label_formating = true
 
-	ui.Comp_text_s(&style, label, nil, true, false, false, false)
+	ui.Comp_text_s(&style, label, 1.0, nil, true, false, false, false)
 
 	ui.Div_end()
 	return div
@@ -550,7 +550,28 @@ func (ui *Ui) Comp_textCd(x, y, w, h int, label string, alignH int, cd uint8) *U
 	//ui.Paint_rect(0, 0, 1, 1, 0, backCd, 0)
 
 	//text
-	ui.Comp_text_s(&style, label, nil, true, false, false, false)
+	ui.Comp_text_s(&style, label, 1.0, nil, true, false, false, false)
+
+	ui.Div_end()
+	return div
+}
+
+func (ui *Ui) Comp_textSelectAndHeight(x, y, w, h int, label string, textH_multiplier float64, align OsV2, selection bool, formating bool, drawBorder bool) *UiLayoutDiv {
+	ui.Div_start(x, y, w, h)
+	div := ui.GetCall().call
+
+	var style UiComp
+	style.enable = true
+	style.cd = CdPalette_B
+	style.label_align = align
+	style.label_formating = formating
+
+	ui.Comp_text_s(&style, label, textH_multiplier, nil, selection, false, false, false)
+
+	if drawBorder {
+		pl := ui.win.io.GetPalette()
+		ui.Paint_rect(0, 0, 1, 1, 0, pl.OnB, 0.03)
+	}
 
 	ui.Div_end()
 	return div
@@ -566,7 +587,7 @@ func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, align OsV2, selectio
 	style.label_align = align
 	style.label_formating = formating
 
-	ui.Comp_text_s(&style, label, nil, selection, false, false, false)
+	ui.Comp_text_s(&style, label, 1.0, nil, selection, false, false, false)
 
 	if drawBorder {
 		pl := ui.win.io.GetPalette()
@@ -576,7 +597,7 @@ func (ui *Ui) Comp_textSelect(x, y, w, h int, label string, align OsV2, selectio
 	ui.Div_end()
 	return div
 }
-func (ui *Ui) Comp_textSelectMulti(x, y, w, h int, label string, align OsV2, selection bool, drawBorder bool, formating bool, line_wrapping bool) *UiLayoutDiv {
+func (ui *Ui) Comp_textSelectMulti(x, y, w, h int, label string, textH_multiplier float64, align OsV2, selection bool, drawBorder bool, formating bool, line_wrapping bool) *UiLayoutDiv {
 	ui.Div_start(x, y, w, h)
 	div := ui.GetCall().call
 
@@ -587,7 +608,7 @@ func (ui *Ui) Comp_textSelectMulti(x, y, w, h int, label string, align OsV2, sel
 	style.label_formating = true
 	style.label_formating = formating
 
-	ui.Comp_text_s(&style, label, nil, selection, true, false, line_wrapping)
+	ui.Comp_text_s(&style, label, textH_multiplier, nil, selection, true, false, line_wrapping)
 
 	if drawBorder {
 		pl := ui.win.io.GetPalette()
@@ -598,7 +619,7 @@ func (ui *Ui) Comp_textSelectMulti(x, y, w, h int, label string, align OsV2, sel
 	return div
 }
 
-func (ui *Ui) Comp_text_s(style *UiComp, value string, icon *WinMedia, selection bool, multi_line bool, multi_line_enter_finish, line_wrapping bool) {
+func (ui *Ui) Comp_text_s(style *UiComp, value string, textH_multiplier float64, icon *WinMedia, selection bool, multi_line bool, multi_line_enter_finish, line_wrapping bool) {
 
 	pl := ui.win.io.GetPalette()
 	cd, onCd := pl.GetCd(style.cd, style.fade, style.enable, false, false)
@@ -613,7 +634,7 @@ func (ui *Ui) Comp_text_s(style *UiComp, value string, icon *WinMedia, selection
 		}
 	}
 
-	prop := InitWinFontPropsDef(ui.win)
+	prop := InitWinFontPropsHeight(WinFontProps_GetDefaultTextH()*textH_multiplier, ui.win)
 	prop.formating = style.label_formating
 
 	ui.Paint_textGrid(onCd, style, value, "", prop, icon, selection, false, multi_line, multi_line_enter_finish, line_wrapping)
