@@ -3,13 +3,13 @@ Build node-based, local-first, and LLM-powered apps.
 
 
 <p align="center">
-<img src="https://github.com/skyaltlabs/skyalt/blob/main/screenshots/screenshot_2024-3-13_21-33-40_small.png?raw=true" style="border:1px solid LightGrey" />
+<img src="https://github.com/skyaltlabs/skyalt/blob/main/screenshots/screenshot_2024-4-23_12-12-28.png?raw=true" style="border:1px solid LightGrey" />
 </p>
 
 
 
 ## Videos
-- Demo 1
+- Demo 1(Mar, 2024)
     - Introduction: https://www.youtube.com/watch?v=655nz44RgLY
     - Apps from scratch(no audio): https://www.youtube.com/watch?v=YDIxueaJTeo
 
